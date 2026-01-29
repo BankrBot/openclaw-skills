@@ -22,22 +22,38 @@ if [[ -z "$API_KEY" ]]; then
     exit 1
 fi
 
-# API request helper
+# API request helpers with proper error handling
 api_get() {
     local endpoint="$1"
-    curl -sf -H "x-api-key: $API_KEY" -H "Content-Type: application/json" \
-        "${API_BASE}${endpoint}"
+    local response
+    if ! response=$(curl -sf -H "x-api-key: $API_KEY" -H "Content-Type: application/json" \
+        "${API_BASE}${endpoint}" 2>&1); then
+        echo "Error: API request failed for $endpoint" >&2
+        return 1
+    fi
+    echo "$response"
 }
 
+# Use heredoc to avoid exposing data in process list
 api_post() {
     local endpoint="$1"
     local data="$2"
-    curl -sf -X POST -H "x-api-key: $API_KEY" -H "Content-Type: application/json" \
-        -d "$data" "${API_BASE}${endpoint}"
+    local response
+    if ! response=$(curl -sf -X POST -H "x-api-key: $API_KEY" -H "Content-Type: application/json" \
+        --data-binary @- "${API_BASE}${endpoint}" <<< "$data" 2>&1); then
+        echo "Error: API POST failed for $endpoint" >&2
+        return 1
+    fi
+    echo "$response"
 }
 
 # Commands
 cmd_user() {
+    if [[ $# -eq 0 ]]; then
+        echo "Error: user requires a username or FID" >&2
+        exit 1
+    fi
+    
     local identifier="$1"
     local by_fid=false
     
@@ -71,6 +87,11 @@ cmd_user() {
 }
 
 cmd_users() {
+    if [[ $# -eq 0 ]]; then
+        echo "Error: users requires comma-separated usernames" >&2
+        exit 1
+    fi
+    
     local usernames="$1"
     # Convert comma-separated to API format
     api_get "/user/bulk-by-username?usernames=$usernames" | jq '.users[] | {
@@ -146,6 +167,11 @@ cmd_feed() {
 }
 
 cmd_search() {
+    if [[ $# -eq 0 ]]; then
+        echo "Error: search requires a query" >&2
+        exit 1
+    fi
+    
     local query="$1"
     local channel=""
     local limit=10
@@ -174,6 +200,11 @@ cmd_search() {
 }
 
 cmd_search_users() {
+    if [[ $# -eq 0 ]]; then
+        echo "Error: search-users requires a query" >&2
+        exit 1
+    fi
+    
     local query="$1"
     api_get "/user/search?q=$(echo "$query" | jq -Rr @uri)&limit=10" | jq '.result.users[] | {
         fid,
@@ -184,6 +215,11 @@ cmd_search_users() {
 }
 
 cmd_cast() {
+    if [[ $# -eq 0 ]]; then
+        echo "Error: cast requires a hash or URL" >&2
+        exit 1
+    fi
+    
     local identifier="$1"
     
     # Check if it's a URL or hash
@@ -216,6 +252,11 @@ cmd_post() {
         exit 1
     fi
     
+    if [[ $# -eq 0 ]]; then
+        echo "Error: post requires text" >&2
+        exit 1
+    fi
+    
     local text="$1"
     local reply_to=""
     local channel=""
@@ -231,18 +272,18 @@ cmd_post() {
         esac
     done
     
-    local data="{\"signer_uuid\":\"$SIGNER_UUID\",\"text\":\"$text\""
-    
-    if [[ -n "$reply_to" ]]; then
-        data="${data},\"parent\":\"$reply_to\""
-    fi
-    if [[ -n "$channel" ]]; then
-        data="${data},\"channel_id\":\"$channel\""
-    fi
-    if [[ -n "$embed" ]]; then
-        data="${data},\"embeds\":[{\"url\":\"$embed\"}]"
-    fi
-    data="${data}}"
+    # Build JSON safely with jq to prevent injection
+    local data
+    data=$(jq -n \
+        --arg signer "$SIGNER_UUID" \
+        --arg text "$text" \
+        --arg reply_to "$reply_to" \
+        --arg channel "$channel" \
+        --arg embed "$embed" \
+        '{signer_uuid: $signer, text: $text} +
+        (if $reply_to != "" then {parent: $reply_to} else {} end) +
+        (if $channel != "" then {channel_id: $channel} else {} end) +
+        (if $embed != "" then {embeds: [{url: $embed}]} else {} end)')
     
     api_post "/cast" "$data" | jq '{
         success: .success,
@@ -257,8 +298,21 @@ cmd_like() {
         exit 1
     fi
     
+    if [[ $# -eq 0 ]]; then
+        echo "Error: like requires a cast hash" >&2
+        exit 1
+    fi
+    
     local cast_hash="$1"
-    api_post "/reaction" "{\"signer_uuid\":\"$SIGNER_UUID\",\"reaction_type\":\"like\",\"target\":\"$cast_hash\"}" | jq '{
+    
+    # Build JSON safely with jq
+    local data
+    data=$(jq -n \
+        --arg signer "$SIGNER_UUID" \
+        --arg target "$cast_hash" \
+        '{signer_uuid: $signer, reaction_type: "like", target: $target}')
+    
+    api_post "/reaction" "$data" | jq '{
         success: .success,
         reaction_type: .reaction.reaction_type
     }'
@@ -270,8 +324,21 @@ cmd_recast() {
         exit 1
     fi
     
+    if [[ $# -eq 0 ]]; then
+        echo "Error: recast requires a cast hash" >&2
+        exit 1
+    fi
+    
     local cast_hash="$1"
-    api_post "/reaction" "{\"signer_uuid\":\"$SIGNER_UUID\",\"reaction_type\":\"recast\",\"target\":\"$cast_hash\"}" | jq '{
+    
+    # Build JSON safely with jq
+    local data
+    data=$(jq -n \
+        --arg signer "$SIGNER_UUID" \
+        --arg target "$cast_hash" \
+        '{signer_uuid: $signer, reaction_type: "recast", target: $target}')
+    
+    api_post "/reaction" "$data" | jq '{
         success: .success,
         reaction_type: .reaction.reaction_type
     }'
@@ -283,11 +350,36 @@ cmd_follow() {
         exit 1
     fi
     
-    local username="$1"
-    # First get FID
-    local fid=$(api_get "/user/by_username?username=$username" | jq -r '.user.fid')
+    if [[ $# -eq 0 ]]; then
+        echo "Error: follow requires a username" >&2
+        exit 1
+    fi
     
-    api_post "/user/follow" "{\"signer_uuid\":\"$SIGNER_UUID\",\"target_fids\":[$fid]}" | jq '{
+    local username="$1"
+    
+    # First get FID with error handling
+    local user_response
+    if ! user_response=$(api_get "/user/by_username?username=$username"); then
+        echo "Error: Failed to look up user $username" >&2
+        exit 1
+    fi
+    
+    local fid
+    fid=$(echo "$user_response" | jq -r '.user.fid')
+    
+    if [[ -z "$fid" || "$fid" == "null" ]]; then
+        echo "Error: Could not find FID for user $username" >&2
+        exit 1
+    fi
+    
+    # Build JSON safely with jq
+    local data
+    data=$(jq -n \
+        --arg signer "$SIGNER_UUID" \
+        --argjson fid "$fid" \
+        '{signer_uuid: $signer, target_fids: [$fid]}')
+    
+    api_post "/user/follow" "$data" | jq '{
         success: .success,
         followed: .target_fids
     }'
@@ -299,10 +391,36 @@ cmd_unfollow() {
         exit 1
     fi
     
-    local username="$1"
-    local fid=$(api_get "/user/by_username?username=$username" | jq -r '.user.fid')
+    if [[ $# -eq 0 ]]; then
+        echo "Error: unfollow requires a username" >&2
+        exit 1
+    fi
     
-    api_post "/user/follow" "{\"signer_uuid\":\"$SIGNER_UUID\",\"target_fids\":[$fid],\"unfollow\":true}" | jq '{
+    local username="$1"
+    
+    # First get FID with error handling
+    local user_response
+    if ! user_response=$(api_get "/user/by_username?username=$username"); then
+        echo "Error: Failed to look up user $username" >&2
+        exit 1
+    fi
+    
+    local fid
+    fid=$(echo "$user_response" | jq -r '.user.fid')
+    
+    if [[ -z "$fid" || "$fid" == "null" ]]; then
+        echo "Error: Could not find FID for user $username" >&2
+        exit 1
+    fi
+    
+    # Build JSON safely with jq
+    local data
+    data=$(jq -n \
+        --arg signer "$SIGNER_UUID" \
+        --argjson fid "$fid" \
+        '{signer_uuid: $signer, target_fids: [$fid], unfollow: true}')
+    
+    api_post "/user/follow" "$data" | jq '{
         success: .success,
         unfollowed: .target_fids
     }'
