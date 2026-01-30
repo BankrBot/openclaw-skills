@@ -1,0 +1,9 @@
+{
+  "token": "0xf3Ce5dDAAb6C133F9875a4a46C55cf0b58111B07",
+  "tokenId": "1078751",
+  "harvestAddress": "0xcbC7E8A39A0Ec84d6B0e8e0dd98655F348ECD44F",
+  "compoundPct": 50,
+  "minUsd": 10,
+  "slippage": 1,
+  "feeContract": "0xf3622742b1e446d92e45e22923ef11c2fcd55d68"
+}

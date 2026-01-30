@@ -1,6 +1,6 @@
 ---
 name: uniswap-v4-lp
-description: Manage Uniswap V4 LP positions on Base. Add, remove, and monitor concentrated liquidity positions.
+description: Manage Uniswap V4 LP positions on Base. Add, remove, monitor, auto-compound, and harvest fees — including Clanker protocol fee claims.
 triggers:
   - uniswap
   - v4
@@ -8,7 +8,11 @@ triggers:
   - LP position
   - add liquidity
   - remove liquidity
-version: 0.1.0
+  - clanker
+  - harvest
+  - compound
+  - claim fees
+version: 0.2.0
 author: Axiom (@AxiomBot)
 license: MIT
 chain: base
@@ -66,6 +70,15 @@ node auto-compound.mjs --token-id <ID> --strategy time --loop --interval 14400
 
 # Preview
 node auto-compound.mjs --token-id <ID> --dry-run
+
+# Compound & Harvest: split fees — compound some, harvest rest as USDC
+node compound-and-harvest.mjs --token-id <ID> \
+  --harvest-address 0xYOUR_ADDRESS --compound-pct 50
+node compound-and-harvest.mjs --token-id <ID> \
+  --harvest-address 0xYOUR_ADDRESS --compound-pct 70 --slippage 3
+node compound-and-harvest.mjs --token-id <ID> \
+  --harvest-address 0xYOUR_ADDRESS --dry-run
+
 # Remove liquidity (partial)
 node remove-liquidity.mjs --token-id <ID> --percent 50
 
@@ -157,6 +170,178 @@ node auto-compound.mjs --token-id <ID> --strategy time --loop --interval 14400
 | <$100K/day | dollar | 4h | $50+ |
 
 Both strategies always enforce a gas floor — you'll never burn money on gas.
+
+## Compound & Harvest
+
+Split LP fees: compound a percentage back into the position and harvest the rest as USDC.
+
+### How It Works
+
+1. **Collect** all accrued fees (DECREASE_LIQUIDITY with 0 + CLOSE_CURRENCY)
+2. **Split** fees by compound-pct (default 50/50)
+3. **Compound** the compound portion back into the position (INCREASE_LIQUIDITY + SETTLE_PAIR)
+4. **Swap** the harvest portion of both tokens to USDC via Uniswap V3 SwapRouter02
+   - WETH → USDC direct (0.05% pool)
+   - Meme tokens → WETH → USDC multi-hop (tries 1%, 0.3%, 0.05% fee tiers)
+5. **Transfer** all USDC to the harvest address
+
+### Usage
+
+```bash
+# Preview (dry run)
+node compound-and-harvest.mjs --token-id 1078751 \
+  --harvest-address 0xcbC7E8A39A0Ec84d6B0e8e0dd98655F348ECD44F --dry-run
+
+# 50/50 split (default)
+node compound-and-harvest.mjs --token-id 1078751 \
+  --harvest-address 0xcbC7E8A39A0Ec84d6B0e8e0dd98655F348ECD44F
+
+# 70% compound, 30% harvest
+node compound-and-harvest.mjs --token-id 1078751 \
+  --harvest-address 0xcbC7E8A39A0Ec84d6B0e8e0dd98655F348ECD44F \
+  --compound-pct 70
+
+# 100% harvest (take all fees as USDC, no compounding)
+node compound-and-harvest.mjs --token-id 1078751 \
+  --harvest-address 0xcbC7E8A39A0Ec84d6B0e8e0dd98655F348ECD44F \
+  --compound-pct 0
+
+# Custom slippage
+node compound-and-harvest.mjs --token-id 1078751 \
+  --harvest-address 0xcbC7E8A39A0Ec84d6B0e8e0dd98655F348ECD44F \
+  --slippage 3
+```
+
+### Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--token-id` | required | LP NFT token ID |
+| `--harvest-address` | required | Address to receive harvested USDC |
+| `--compound-pct` | 50 | Percentage to compound (0-100) |
+| `--slippage` | 1 | Slippage tolerance for swaps (%) |
+| `--dry-run` | false | Preview without executing |
+| `--rpc` | env/default | Base RPC URL |
+
+### Swap Routing
+
+- Uses **Uniswap V3 SwapRouter02** (`0x2626664c2603336E57B271c5C0b26F421741e481`)
+- WETH → USDC: `exactInputSingle` with 500 (0.05%) fee tier
+- Other tokens → USDC: `exactInput` multi-hop through WETH, auto-tries fee tiers 10000/3000/500
+
+## 🌾 Clanker Harvest — Full Treasury Pipeline
+
+The killer feature: a complete fee management pipeline for **any Clanker-launched token**.
+
+Clanker tokens have two fee sources:
+1. **Clanker protocol fees** — stored in a separate fee contract, must be claimed
+2. **LP position fees** — accrued in the V4 position, collected via DECREASE
+
+`clanker-harvest.mjs` handles both in a single modular pipeline.
+
+### Quick Start
+
+```bash
+# Just claim Clanker protocol fees (no LP, no swap)
+node clanker-harvest.mjs --token 0xTOKEN
+
+# Claim + compound 100% into LP
+node clanker-harvest.mjs --token 0xTOKEN --token-id 12345 --compound-pct 100
+
+# Claim + harvest 100% as USDC to vault
+node clanker-harvest.mjs --token 0xTOKEN --harvest-address 0xVAULT --compound-pct 0
+
+# 50/50 split — compound half, harvest half
+node clanker-harvest.mjs --token 0xTOKEN --token-id 12345 \
+  --harvest-address 0xVAULT --compound-pct 50
+
+# 80% compound / 20% harvest, only if fees > $10
+node clanker-harvest.mjs --token 0xTOKEN --token-id 12345 \
+  --harvest-address 0xVAULT --compound-pct 80 --min-usd 10
+
+# Use a config file (perfect for cron)
+node clanker-harvest.mjs --config harvest-config.json
+```
+
+### Pipeline Steps
+
+| Step | What | When |
+|------|------|------|
+| 1. Claim | Claim WETH + token from Clanker fee contract | Always (unless `--skip-claim`) |
+| 2. Collect LP | Collect accrued fees from V4 position | If `--token-id` set (unless `--skip-lp`) |
+| 3. Threshold | Check total USD value against `--min-usd` | If threshold set |
+| 4. Compound | Add X% back into LP position | If `--compound-pct` > 0 and `--token-id` set |
+| 5. Swap | Swap remaining WETH to USDC | If `--compound-pct` < 100 and `--harvest-address` set |
+| 6. Transfer | Send USDC to vault address | If USDC was swapped |
+
+### Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--token` | required | Clanker token address |
+| `--token-id` | optional | V4 LP position NFT ID (needed for compound/LP) |
+| `--harvest-address` | optional | Vault address for USDC (needed for harvest) |
+| `--compound-pct` | 100 | % to compound back (0 = all harvest, 100 = all compound) |
+| `--min-usd` | 0 | Min USD fee value to act (0 = always) |
+| `--slippage` | 1 | Swap slippage % |
+| `--fee-contract` | 0xf362... | Clanker fee storage contract |
+| `--skip-claim` | false | Skip Clanker fee claim |
+| `--skip-lp` | false | Skip LP fee collection |
+| `--config` | optional | JSON config file path |
+| `--dry-run` | false | Simulate without executing |
+
+### Config File
+
+For cron jobs, use a JSON config:
+
+```json
+{
+  "token": "0xYOUR_TOKEN",
+  "tokenId": "12345",
+  "harvestAddress": "0xYOUR_VAULT",
+  "compoundPct": 50,
+  "minUsd": 10,
+  "slippage": 1
+}
+```
+
+### Clanker Fee Contract
+
+| Function | Description |
+|----------|-------------|
+| `claim(feeOwner, token)` | Claim fees for a specific token |
+| `availableFees(feeOwner, token)` | Check pending fee balance |
+
+Contract: `0xf3622742b1e446d92e45e22923ef11c2fcd55d68`
+
+Two separate claims needed (WETH + token) — the script handles both automatically.
+
+### Standalone Claim Script
+
+For simpler use cases, `claim-clanker-fees.mjs` just claims without any LP operations:
+
+```bash
+# Check available fees (dry run)
+node claim-clanker-fees.mjs --token 0xTOKEN --dry-run
+
+# Claim both WETH and token fees
+node claim-clanker-fees.mjs --token 0xTOKEN
+```
+
+### Self-Sustaining Agent Economics
+
+The core idea: agents launched on Clanker can **fund their own infrastructure** from LP yield.
+
+```
+LP Fees + Clanker Fees
+        ↓
+   ┌────┴────┐
+   │         │
+Compound   Harvest
+(grow LP)  (→ USDC → pay for LLM, RPC, hosting)
+```
+
+Set up a cron job with `--min-usd` threshold and the agent only acts when it's profitable to do so.
 
 ## Position Strategy Recommendations
 
