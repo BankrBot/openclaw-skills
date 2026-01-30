@@ -145,15 +145,50 @@ node x-post.mjs --reply <tweet_id> "Your reply"
 
 #### Browser Automation
 
-When API is blocked/unavailable:
+When API is blocked/unavailable, use **direct DOM automation** (preferred) or snapshot-based clicking (fallback).
+
+##### Direct DOM Method (Recommended)
+
+Uses `Runtime.evaluate` to interact directly with Twitter's DOM — no virtual mouse, no coordinate hunting:
+
+```javascript
+// Inject the library (inline - CORS blocks GitHub fetch)
+// Copy twitter-dom.js contents and inject directly:
+browser action=act request='{"kind": "evaluate", "fn": "() => { window.__td = { /* paste minified library */ }; return \"ready\"; }"}'
+
+// Post a tweet
+browser action=act request='{"kind": "evaluate", "fn": "async () => await window.__twitterDOM.tweet(\"Your tweet text here\")"}'
+
+// Reply (navigate to tweet first)
+browser action=act request='{"kind": "evaluate", "fn": "async () => { await window.__twitterDOM.reply(\"Your reply\"); return await window.__twitterDOM.post(); }"}'
+
+// Like
+browser action=act request='{"kind": "evaluate", "fn": "() => window.__twitterDOM.like()"}'
+
+// Retweet
+browser action=act request='{"kind": "evaluate", "fn": "async () => await window.__twitterDOM.retweet()"}'
+```
+
+**Why this is better:**
+- Direct `element.click()` = trusted events
+- No ARIA ref hunting between snapshots
+- No coordinate calculations
+- Works even when elements move
+- Fewer retries = fewer tokens burned
+
+**Full library:** https://github.com/ClawdiaETH/twitter-dom-automation
+
+##### Snapshot Method (Fallback)
+
+If direct DOM fails, fall back to traditional browser automation:
 ```
 1. Navigate to tweet URL or compose page
-2. Snapshot to find textbox element
+2. Snapshot to find textbox element (look for refs)
 3. Type your content
 4. Click post button
 ```
 
-This mimics human behavior and avoids API restrictions.
+This mimics human behavior but is less reliable.
 
 ---
 
@@ -193,6 +228,71 @@ First 2 hours after posting are critical:
 | Questions / hot takes | Drives replies |
 | Quote tweets with value-add | Piggyback on viral content |
 | First reply on big accounts | Visibility on their audience |
+
+---
+
+## Media Attachments (HIGH PRIORITY)
+
+**Media posts get 2-10x more engagement than text-only.** Always try to include images/GIFs when:
+- Announcing projects or milestones
+- Sharing data or stats
+- Showing something visual (websites, apps, dashboards)
+- Celebrating achievements
+
+### Available Tools
+
+| Tool | Purpose | Command |
+|------|---------|---------|
+| **Browser screenshot** | Full-page or viewport captures | `browser action=screenshot` |
+| **gifgrep** | Search/download GIFs from Tenor/Giphy | `gifgrep "query" --download` |
+| **ffmpeg** | Create GIFs from images/video | `ffmpeg -i input.mp4 output.gif` |
+
+### Screenshot Workflow
+
+```bash
+# 1. Open the page
+browser action=open targetUrl="https://example.com"
+
+# 2. Take screenshot (saved to ~/.clawdbot/media/browser/)
+browser action=screenshot targetId="<id>"
+
+# 3. Open compose
+browser action=open targetUrl="https://x.com/compose/post"
+
+# 4. Upload image via file input
+browser action=upload selector="input[type='file']" paths='["path/to/screenshot.jpg"]'
+
+# 5. Type text and post
+browser action=type ref="<textbox>" text="Your tweet"
+browser action=click ref="<post_button>"
+```
+
+### GIF Workflow
+
+```bash
+# Search and download a GIF
+gifgrep "celebration" --download --max 1
+
+# Downloaded to ~/Downloads/
+# Then upload via browser same as images
+```
+
+### When to Use Media
+
+| Content Type | Media Type | Notes |
+|--------------|------------|-------|
+| Project launch | Screenshot | Show the live site/app |
+| Stats/metrics | Screenshot | Visual proof |
+| Celebrations | GIF | Fun, shareable |
+| Tutorials | Screenshot series | Step-by-step |
+| Memes | Image/GIF | If on-brand |
+
+### Tips
+
+- Remove link preview cards when attaching images (they compete)
+- Add alt text via "Add description" for accessibility
+- GIFs autoplay and catch eyes in timeline
+- Screenshots of dashboards/leaderboards create FOMO
 
 ---
 
@@ -439,6 +539,13 @@ Welcome to the squad @newuser 🐚
 - Official API: Best when available ($100/mo credits)
 - xai-search: Game changer for real-time research
 
+### Direct DOM > Virtual Mouse
+- Virtual mouse/keyboard (Playwright) is slow and fragile
+- CDP `Runtime.evaluate` lets you run JS directly in page context
+- `document.querySelector('[data-testid="..."]').click()` = trusted events
+- Built `twitter-dom-automation` library for this — 10x more reliable
+- Saves tokens by eliminating snapshot→hunt→click→verify cycles
+
 ---
 
 ## Resources
@@ -447,6 +554,7 @@ Welcome to the squad @newuser 🐚
 - [X Automation Rules](https://help.x.com/en/rules-and-policies/x-automation)
 - [xAI Documentation](https://docs.x.ai/docs/)
 - [bird CLI](https://github.com/steipete/bird)
+- [twitter-dom-automation](https://github.com/ClawdiaETH/twitter-dom-automation) — Direct DOM automation library for reliable browser interactions
 
 ---
 
