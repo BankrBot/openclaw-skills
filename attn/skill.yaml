@@ -1,0 +1,127 @@
+name: attn
+version: 5.0.0
+description: |
+  ATTN - Autonomous Trading Agent for Base
+  
+  A self-learning, self-healing trading bot that hunts gems on Base,
+  learns from every trade, and compounds profits into ATTN token.
+  
+  Features:
+  - 24/7 gem hunting with AI-powered scoring
+  - Adaptive exit strategy (learns optimal TP/SL from trade history)
+  - Self-monitoring and healing
+  - Hype wave riding (detects and posts about trending narratives)
+  - Profit reinvestment into ATTN token
+  - Social presence on Farcaster and Moltbook
+
+author: ATTN Team
+license: MIT
+
+runtime: nodejs20
+
+entry: index.js
+
+permissions:
+  - network
+  - filesystem
+  - environment
+
+config:
+  NEYNAR_API_KEY:
+    type: string
+    required: true
+    description: Neynar API key for Farcaster posting
+  SIGNER_UUID:
+    type: string
+    required: true
+    description: Farcaster signer UUID
+  BANKR_API_KEY:
+    type: string
+    required: true
+    description: Bankr API key for trading execution
+  ATTN_CA:
+    type: string
+    default: "0x6b5267cec87a865148328d63405cc3c42b908b07"
+    description: ATTN token contract address
+  MOLTBOOK_API_KEY:
+    type: string
+    required: false
+    description: Moltbook API key for agent social network
+
+triggers:
+  # Autonomous mode - runs continuously
+  - type: cron
+    schedule: "*/5 * * * *"
+    action: gem_hunt
+    description: "Scan for new trading opportunities"
+    
+  - type: cron
+    schedule: "*/30 * * * *"
+    action: position_update
+    description: "Check positions and manage exits"
+    
+  - type: cron
+    schedule: "*/10 * * * *"
+    action: self_heal
+    description: "Health check and recovery"
+    
+  - type: cron
+    schedule: "0 * * * *"
+    action: check_hype
+    description: "Detect trending narratives"
+    
+  - type: cron
+    schedule: "59 23 * * *"
+    action: daily_pnl
+    description: "Daily PnL report and learning update"
+    
+  # Chat commands
+  - type: command
+    pattern: "^(status|stats)$"
+    action: get_status
+    description: "Get system health and stats"
+    
+  - type: command
+    pattern: "^(positions|holdings|portfolio)$"
+    action: get_positions
+    description: "List current holdings"
+    
+  - type: command
+    pattern: "^(learn|learning|stats)$"
+    action: get_learning_stats
+    description: "Show learning statistics"
+    
+  - type: command
+    pattern: "^(buy|ape)\\s+(.+)$"
+    action: manual_buy
+    capture_groups: [_, symbol]
+    description: "Manually buy a token"
+    
+  - type: command
+    pattern: "^(sell|exit)\\s+(.+)$"
+    action: manual_sell
+    capture_groups: [_, symbol]
+    description: "Manually sell a position"
+    
+  - type: command
+    pattern: "^(hype|narrative|trending)$"
+    action: check_hype
+    description: "Check current market narratives"
+    
+  - type: command
+    pattern: "^(heal|fix|repair)$"
+    action: self_heal
+    description: "Force self-healing check"
+
+metadata:
+  emoji: "👁️"
+  category: "finance"
+  tags:
+    - trading
+    - crypto
+    - base
+    - ai
+    - autonomous
+  links:
+    github: https://github.com/resided/attentionbot
+    moltbook: https://moltbook.com/u/ATTN
