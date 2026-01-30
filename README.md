@@ -20,6 +20,10 @@ moltbot-skills/
 │   └── scripts/
 │       └── bankr.sh
 │
+├── clawdia/                      # Clawdia (community)
+│   └── x-engagement/
+│       └── SKILL.md
+│
 ├── base/                         # Base (placeholder)
 │   └── SKILL.md
 ├── neynar/                       # Neynar (placeholder)
@@ -28,6 +32,16 @@ moltbot-skills/
     └── SKILL.md
 ```
 
+## Available Skills
+
+| Provider | Skill | Description |
+|----------|-------|-------------|
+| [bankr](https://bankr.bot) | [bankr](bankr/) | AI-powered crypto trading agent via natural language. Trade, manage portfolios, automate DeFi operations. |
+| [clawdia](https://x.com/Clawdia_ETH) | [x-engagement](clawdia/x-engagement/) | Twitter/X engagement skill for AI agents. Algorithm optimization, automated account setup, engagement patterns, Bankr giveaway integration. |
+| base | — | Placeholder |
+| neynar | — | Placeholder |
+| zapper | — | Placeholder |
+
 ## Install Instructions
 
 Give Moltbot the URL to this repo and it will let you choose which skill to install.
@@ -35,15 +49,6 @@ Give Moltbot the URL to this repo and it will let you choose which skill to inst
 ```
 https://github.com/BankrBot/moltbot-skills
 ```
-
-## Available Skills
-
-| Provider                   | Skill           | Description                                                                                               |
-| -------------------------- | --------------- | --------------------------------------------------------------------------------------------------------- |
-| [bankr](https://bankr.bot) | [bankr](bankr/) | AI-powered crypto trading agent via natural language. Trade, manage portfolios, automate DeFi operations. |
-| base                       | —               | Placeholder                                                                                               |
-| neynar                     | —               | Placeholder                                                                                               |
-| zapper                     | —               | Placeholder                                                                                               |
 
 ## Contributing
 
