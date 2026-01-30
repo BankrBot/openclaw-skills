@@ -1,9 +1,10 @@
-# Uniswap V4 LP Skill
+# V4 LP Skill
 
-Manage concentrated liquidity positions on Uniswap V4 (Base chain). Built for AI agents — add liquidity, collect fees, monitor positions, rebalance, auto-compound, and **claim + harvest Clanker protocol fees**.
+Manage concentrated liquidity positions on Uniswap V4 (Base chain). Built for AI agents — add liquidity, single-sided range orders, collect fees, monitor positions, rebalance, auto-compound, and **claim + harvest Clanker protocol fees**.
 
 ## Features
 
+- **Single-sided LP** — deposit one token as a range order (limit sell/buy)
 - **Add liquidity** to V4 pools with configurable range
 - **Remove liquidity** (partial or full) and burn positions
 - **Collect fees** without removing liquidity
@@ -95,12 +96,43 @@ node auto-compound.mjs --token-id <ID> --strategy time --loop --interval 14400
 
 Both strategies enforce a gas floor — you'll never burn money on gas.
 
+## Single-Sided LP (Range Orders)
+
+Deposit one token only — acts as a distributed limit order across a price range.
+
+**AXIOM single-sided** (sell AXIOM as price rises):
+```bash
+# Sell all AXIOM up to $3M mcap
+node single-sided-lp.mjs --token axiom --amount all --target-mcap 3000000
+
+# Sell 500M AXIOM across a custom tick range
+node single-sided-lp.mjs --token axiom --amount 500000000 --tick-lower 183000 --tick-upper 211800
+
+# Sell AXIOM if price rises 50%+
+node single-sided-lp.mjs --token axiom --amount all --range-above 50
+```
+
+**WETH single-sided** (buy AXIOM as price drops):
+```bash
+# Buy AXIOM with 0.5 WETH if price drops up to 50%
+node single-sided-lp.mjs --token weth --amount 0.5 --range-below 50
+
+# Buy AXIOM down to $50K mcap
+node single-sided-lp.mjs --token weth --amount 1.0 --target-mcap 50000
+```
+
+**How it works:**
+- Token1 (AXIOM) single-sided: range entirely **below** current tick → sells AXIOM as price rises through range
+- Token0 (WETH) single-sided: range entirely **above** current tick → buys AXIOM as price drops through range
+- Uses `MINT_POSITION (0x02) + SETTLE_PAIR (0x0d)` with amount0Max or amount1Max set to 0
+
 ## All Scripts
 
 ```bash
 cd scripts && npm install
 
 # === Position Management ===
+node single-sided-lp.mjs --token axiom --amount all --target-mcap 3000000
 node add-liquidity.mjs --amount 20 --range 25
 node check-position.mjs --token-id <ID>
 node monitor-position.mjs --token-id <ID>
