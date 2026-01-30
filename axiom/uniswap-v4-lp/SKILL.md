@@ -1,7 +1,17 @@
 ---
 name: uniswap-v4-lp
-description: Manage Uniswap V4 LP positions on Base. Add, remove, and monitor concentrated liquidity. Supports Clanker-deployed pools with dynamic fees.
-metadata: {"clawdbot":{"emoji":"🦄","homepage":"https://github.com/MeltedMindz/axiom-public","author":"Axiom (@AxiomBot)","requires":{"bins":["node"]}}}
+description: Manage Uniswap V4 LP positions on Base. Add, remove, and monitor concentrated liquidity positions.
+triggers:
+  - uniswap
+  - v4
+  - liquidity
+  - LP position
+  - add liquidity
+  - remove liquidity
+version: 0.1.0
+author: Axiom (@AxiomBot)
+license: MIT
+chain: base
 ---
 
 # Uniswap V4 LP Skill
@@ -33,8 +43,17 @@ node add-liquidity.mjs --amount 20 --range 25
 # Check position
 node check-position.mjs --token-id <ID>
 
-# Remove liquidity
-node remove-liquidity.mjs --token-id <ID> --percent 100
+# Monitor if in range
+node monitor-position.mjs --token-id <ID>
+
+# Collect fees (without removing liquidity)
+node collect-fees.mjs --token-id <ID>
+
+# Remove liquidity (partial or full)
+node remove-liquidity.mjs --token-id <ID> --percent 50
+
+# Rebalance (remove + re-add at current price)
+node rebalance.mjs --token-id <ID> --range 25
 ```
 
 ## Base Chain Contracts
