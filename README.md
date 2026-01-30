@@ -20,6 +20,13 @@ moltbot-skills/
 │   └── scripts/
 │       └── bankr.sh
 │
+├── promptr/
+│   ├── SKILL.md
+│   ├── references/
+│   │   └── contract-abi.md
+│   └── scripts/
+│       └── promptr.sh
+│
 ├── base/                         # Base (placeholder)
 │   └── SKILL.md
 ├── neynar/                       # Neynar (placeholder)
@@ -38,12 +45,13 @@ https://github.com/BankrBot/moltbot-skills
 
 ## Available Skills
 
-| Provider                   | Skill           | Description                                                                                               |
-| -------------------------- | --------------- | --------------------------------------------------------------------------------------------------------- |
-| [bankr](https://bankr.bot) | [bankr](bankr/) | AI-powered crypto trading agent via natural language. Trade, manage portfolios, automate DeFi operations. |
-| base                       | —               | Placeholder                                                                                               |
-| neynar                     | —               | Placeholder                                                                                               |
-| zapper                     | —               | Placeholder                                                                                               |
+| Provider                       | Skill               | Description                                                                                               |
+| ------------------------------ | ------------------- | --------------------------------------------------------------------------------------------------------- |
+| [bankr](https://bankr.bot)     | [bankr](bankr/)     | AI-powered crypto trading agent via natural language. Trade, manage portfolios, automate DeFi operations. |
+| [promptr](https://promptr.live) | [promptr](promptr/) | Participate in the Promptr auction on Base — submit prompts, vote, claim refunds, and earn keeper rewards. |
+| base                           | —                   | Placeholder                                                                                               |
+| neynar                         | —                   | Placeholder                                                                                               |
+| zapper                         | —                   | Placeholder                                                                                               |
 
 ## Contributing
 
