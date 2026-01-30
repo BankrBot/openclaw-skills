@@ -31,10 +31,10 @@ const POSITION_MANAGER_ABI = [
   { name: 'ownerOf', type: 'function', inputs: [{ type: 'uint256' }], outputs: [{ type: 'address' }] },
 ];
 
-// Action codes
+// Action codes — canonical from Actions.sol
 const Actions = {
-  DECREASE_LIQUIDITY: 0x03,
-  TAKE_PAIR: 0x0e,
+  DECREASE_LIQUIDITY: 0x01,
+  CLOSE_CURRENCY: 0x11,
 };
 
 async function main() {
@@ -96,9 +96,9 @@ async function main() {
   // DECREASE_LIQUIDITY with 0 liquidity delta = collect fees only
   console.log('\n💰 Collecting fees...');
 
-  const actions = '0x030e'; // DECREASE_LIQUIDITY + TAKE_PAIR
+  // DECREASE(0x01) + CLOSE_CURRENCY(0x11) × 2
+  const actions = '0x011111'; // DECREASE + CLOSE(token0) + CLOSE(token1)
 
-  // Pad to 32 bytes
   const pad32 = (hex) => hex.slice(2).padStart(64, '0');
 
   // DECREASE_LIQUIDITY params: tokenId, liquidityDelta, amount0Min, amount1Min, hookData
@@ -110,15 +110,13 @@ async function main() {
     (5 * 32).toString(16).padStart(64, '0') +       // hookData offset
     '0'.padStart(64, '0');                          // hookData length = 0
 
-  // TAKE_PAIR params: currency0, currency1, recipient
-  const takeParams = '0x' +
-    pad32(poolKey.currency0) +
-    pad32(poolKey.currency1) +
-    pad32(account.address);
+  // CLOSE_CURRENCY for each token
+  const closeParams0 = '0x' + pad32(poolKey.currency0);
+  const closeParams1 = '0x' + pad32(poolKey.currency1);
 
   const unlockData = encodeAbiParameters(
     parseAbiParameters('bytes, bytes[]'),
-    [actions, [decreaseParams, takeParams]]
+    [actions, [decreaseParams, closeParams0, closeParams1]]
   );
 
   const deadline = Math.floor(Date.now() / 1000) + 1800;

@@ -24,6 +24,7 @@ Manage concentrated liquidity positions on Uniswap V4 (Base chain).
 - Remove liquidity / collect fees
 - Monitor position health
 - Rebalance when out of range
+- **Auto-compound** fees back into liquidity (set-and-forget)
 
 ## Requirements
 
@@ -49,6 +50,22 @@ node monitor-position.mjs --token-id <ID>
 # Collect fees (without removing liquidity)
 node collect-fees.mjs --token-id <ID>
 
+# Auto-compound fees → liquidity
+# Two strategies: DOLLAR (default) or TIME
+
+# Dollar strategy: compound when fees exceed $5 (default)
+node auto-compound.mjs --token-id <ID>
+node auto-compound.mjs --token-id <ID> --min-usd 20       # custom threshold
+
+# Time strategy: compound on schedule (skip only if fees < gas)
+node auto-compound.mjs --token-id <ID> --strategy time
+
+# Loop mode: run continuously
+node auto-compound.mjs --token-id <ID> --strategy dollar --loop --interval 3600 --min-usd 50
+node auto-compound.mjs --token-id <ID> --strategy time --loop --interval 14400
+
+# Preview
+node auto-compound.mjs --token-id <ID> --dry-run
 # Remove liquidity (partial)
 node remove-liquidity.mjs --token-id <ID> --percent 50
 
@@ -100,7 +117,48 @@ const poolId = keccak256(abi.encode(currency0, currency1, fee, tickSpacing, hook
 
 If your hash doesn't match, check if the pool uses `0x800000` as fee.
 
-## Strategy Recommendations
+## Auto-Compound Strategies
+
+### Dollar Strategy (`--strategy dollar`, default)
+Accumulate fees in wallet, only compound when they hit a USD threshold.
+Best for: **low-volume pools**, **expensive chains**, or **patient LPs**.
+
+```bash
+# Compound when fees reach $50
+node auto-compound.mjs --token-id <ID> --strategy dollar --loop --interval 3600 --min-usd 50
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--min-usd` | 5 | Min USD fee value to trigger compound |
+| `--min-gas-multiple` | 3 | Fees must be ≥ Nx gas cost |
+| `--interval` | 3600 | Seconds between checks in loop mode |
+
+### Time Strategy (`--strategy time`)
+Compound on a fixed schedule. Skips only if fees < gas cost.
+Best for: **high-volume pools** where fees accumulate quickly.
+
+```bash
+# Compound every 4 hours
+node auto-compound.mjs --token-id <ID> --strategy time --loop --interval 14400
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--min-gas-multiple` | 3 | Fees must be ≥ Nx gas cost (safety floor) |
+| `--interval` | 3600 | Seconds between compounds in loop mode |
+
+### When to Use Which
+
+| Pool Volume | Strategy | Interval | Min USD |
+|-------------|----------|----------|---------|
+| >$1M/day | time | 4-6h | n/a |
+| $100K-$1M/day | dollar | 1h | $10-25 |
+| <$100K/day | dollar | 4h | $50+ |
+
+Both strategies always enforce a gas floor — you'll never burn money on gas.
+
+## Position Strategy Recommendations
 
 For ~$20-1000 positions:
 - **Range:** ±25% from current price
