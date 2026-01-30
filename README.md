@@ -43,6 +43,7 @@ https://github.com/BankrBot/moltbot-skills
 | [bankr](https://bankr.bot) | [bankr](bankr/) | AI-powered crypto trading agent via natural language. Trade, manage portfolios, automate DeFi operations. |
 | base                       | —               | Placeholder                                                                                               |
 | neynar                     | —               | Placeholder                                                                                               |
+| songbirdz                  | [songbirdz](songbirdz/) | Bird-watching collectible game on Base.                                                           |
 | yoink                      | [yoink](yoink/) | Onchain capture-the-flag game on Base.                                                                    |
 | zapper                     | —               | Placeholder                                                                                               |
 
