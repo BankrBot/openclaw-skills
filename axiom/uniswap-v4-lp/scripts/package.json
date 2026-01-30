@@ -1,0 +1,18 @@
+{
+  "name": "uniswap-v4-lp-scripts",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "add": "node add-liquidity.mjs",
+    "check": "node check-position.mjs",
+    "remove": "node remove-liquidity.mjs"
+  },
+  "dependencies": {
+    "@ethersproject/abi": "^5.8.0",
+    "@uniswap/sdk-core": "^7.10.1",
+    "@uniswap/v4-sdk": "^1.27.0",
+    "dotenv": "^16.4.5",
+    "viem": "^2.21.0",
+    "yargs": "^17.7.2"
+  }
+}
