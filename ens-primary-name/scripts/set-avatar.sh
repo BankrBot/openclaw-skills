@@ -1,7 +1,7 @@
 #!/bin/bash
 # ENS Avatar - Set avatar for your ENS name
 # Usage: ./set-avatar.sh <ens-name> <avatar-url>
-# Example: ./set-avatar.sh clawd.myk.eth https://example.com/avatar.png
+# Example: ./set-avatar.sh myname.eth https://example.com/avatar.png
 #
 # Avatar URL formats:
 # - HTTPS: https://example.com/image.png
@@ -10,8 +10,30 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENS_NAME="${1:?Usage: set-avatar.sh <ens-name> <avatar-url>}"
 AVATAR_URL="${2:?Usage: set-avatar.sh <ens-name> <avatar-url>}"
+
+# Find bankr.sh in common locations
+find_bankr() {
+  local locations=(
+    "$SCRIPT_DIR/../../bankr/scripts/bankr.sh"
+    "$SCRIPT_DIR/../../moltbot-skills/bankr/scripts/bankr.sh"
+    "$HOME/clawd/skills/bankr/scripts/bankr.sh"
+    "$HOME/clawd/skills/moltbot-skills/bankr/scripts/bankr.sh"
+    "$(command -v bankr.sh 2>/dev/null)"
+  )
+  for loc in "${locations[@]}"; do
+    if [ -x "$loc" ]; then
+      echo "$loc"
+      return 0
+    fi
+  done
+  echo "ERROR: bankr.sh not found. Install the bankr skill first." >&2
+  exit 1
+}
+
+BANKR_SH=$(find_bankr)
 
 # ENS Public Resolver on Ethereum mainnet
 # Note: Text records must be set on L1, they're read across all chains
@@ -24,43 +46,32 @@ echo "=== ENS Avatar Setup ===" >&2
 echo "Name: $ENS_NAME" >&2
 echo "Avatar: $AVATAR_URL" >&2
 
-# Ensure js-sha3 is available
-if ! node -e "require('js-sha3')" 2>/dev/null; then
-  echo "Installing js-sha3..." >&2
-  cd /tmp && npm install --silent js-sha3 2>/dev/null
-fi
-
 # Calculate namehash and encode calldata
 CALLDATA=$(node -e "
-const { keccak256 } = require('js-sha3');
+const { keccak256, toBytes, concat } = require('viem');
 
 // Namehash calculation
 function namehash(name) {
-  if (!name) return '0'.repeat(64);
+  if (!name) return new Uint8Array(32);
   const labels = name.split('.');
-  let node = '0'.repeat(64);
+  let node = new Uint8Array(32);
   for (let i = labels.length - 1; i >= 0; i--) {
-    const labelHash = keccak256(labels[i]);
-    node = keccak256(Buffer.from(node + labelHash, 'hex'));
+    const labelHash = keccak256(toBytes(labels[i]));
+    node = keccak256(concat([node, labelHash]));
   }
   return node;
 }
 
 const name = '$ENS_NAME';
 const avatar = '$AVATAR_URL';
-const node = namehash(name);
+const node = namehash(name).slice(2); // remove 0x
 const key = 'avatar';
 
 // setText(bytes32 node, string key, string value)
 // Selector: 0x10f13a8c
 const selector = '10f13a8c';
 
-// Encode: node (32 bytes) + offset to key + offset to value + key data + value data
-// node: 32 bytes
-// key offset: 0x60 (96 bytes from start of params - after node and two offsets)
-// value offset: dynamic (after key)
-
-const nodeHex = node;
+// Encode ABI for setText(bytes32, string, string)
 const keyOffset = '0000000000000000000000000000000000000000000000000000000000000060';
 const keyLen = key.length.toString(16).padStart(64, '0');
 const keyData = Buffer.from(key, 'utf8').toString('hex').padEnd(64, '0');
@@ -70,14 +81,15 @@ const valueData = Buffer.from(avatar, 'utf8').toString('hex').padEnd(Math.ceil(a
 // Value offset = 0x60 + 0x20 (key length slot) + 0x20 (key data, padded to 32) = 0xa0
 const valueOffset = (0x60 + 0x20 + Math.ceil(key.length / 32) * 32).toString(16).padStart(64, '0');
 
-console.log('0x' + selector + nodeHex + keyOffset + valueOffset + keyLen + keyData + valueLen + valueData);
+console.log('0x' + selector + node + keyOffset + valueOffset + keyLen + keyData + valueLen + valueData);
 ")
 
 echo "Namehash: calculated" >&2
 echo "Submitting to ENS Public Resolver on Ethereum..." >&2
+echo "⚠️  Note: This requires ETH on mainnet for gas" >&2
 
 # Submit transaction via Bankr
-RESULT=$(~/clawd/skills/bankr/scripts/bankr.sh "Submit this transaction: {\"to\": \"$PUBLIC_RESOLVER\", \"data\": \"$CALLDATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}" 2>/dev/null)
+RESULT=$("$BANKR_SH" "Submit this transaction: {\"to\": \"$PUBLIC_RESOLVER\", \"data\": \"$CALLDATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}" 2>/dev/null)
 
 if echo "$RESULT" | grep -q "$EXPLORER"; then
   TX_HASH=$(echo "$RESULT" | grep -oE "$EXPLORER/tx/0x[a-fA-F0-9]{64}" | grep -oE '0x[a-fA-F0-9]{64}')
