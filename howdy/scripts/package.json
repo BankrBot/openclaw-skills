@@ -1,0 +1,13 @@
+{
+  "name": "howdy-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Helper scripts for Howdy skill",
+  "scripts": {
+    "bridge": "node ws-bridge.mjs"
+  },
+  "dependencies": {
+    "phoenix": "^1.8.3",
+    "ws": "^8.18.0"
+  }
+}
