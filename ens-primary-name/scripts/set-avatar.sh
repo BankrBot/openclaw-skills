@@ -19,8 +19,6 @@ find_bankr() {
   local locations=(
     "$SCRIPT_DIR/../../bankr/scripts/bankr.sh"
     "$SCRIPT_DIR/../../moltbot-skills/bankr/scripts/bankr.sh"
-    "$HOME/clawd/skills/bankr/scripts/bankr.sh"
-    "$HOME/clawd/skills/moltbot-skills/bankr/scripts/bankr.sh"
     "$(command -v bankr.sh 2>/dev/null)"
   )
   for loc in "${locations[@]}"; do
@@ -35,10 +33,8 @@ find_bankr() {
 
 BANKR_SH=$(find_bankr)
 
-# ENS Public Resolver on Ethereum mainnet
-# Note: Text records must be set on L1, they're read across all chains
-PUBLIC_RESOLVER="0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63"
-RPC_URL="https://eth.llamarpc.com"
+# Avatars are text records stored on L1
+RPC_URL="https://1.rpc.thirdweb.com"
 CHAIN_ID=1
 EXPLORER="etherscan.io"
 
@@ -46,7 +42,22 @@ echo "=== ENS Avatar Setup ===" >&2
 echo "Name: $ENS_NAME" >&2
 echo "Avatar: $AVATAR_URL" >&2
 
-# Calculate namehash and encode calldata
+# Step 1: Look up the resolver for this ENS name
+echo "Looking up resolver..." >&2
+RESOLVER=$(curl -s -X POST "https://api.thegraph.com/subgraphs/name/ensdomains/ens" \
+  -H "Content-Type: application/json" \
+  -d "{\"query\":\"{ domains(where:{name:\\\"$ENS_NAME\\\"}) { resolver { address } } }\"}" | \
+  grep -oE '"address":"0x[a-fA-F0-9]{40}"' | grep -oE '0x[a-fA-F0-9]{40}')
+
+if [ -z "$RESOLVER" ]; then
+  echo "ERROR: Could not find resolver for $ENS_NAME" >&2
+  echo "Make sure the name exists and has a resolver set." >&2
+  exit 1
+fi
+
+echo "Resolver: $RESOLVER" >&2
+
+# Step 2: Calculate namehash and encode calldata
 CALLDATA=$(node -e "
 const { keccak256, toBytes, concat } = require('viem');
 
@@ -78,29 +89,29 @@ const keyData = Buffer.from(key, 'utf8').toString('hex').padEnd(64, '0');
 const valueLen = avatar.length.toString(16).padStart(64, '0');
 const valueData = Buffer.from(avatar, 'utf8').toString('hex').padEnd(Math.ceil(avatar.length / 32) * 64, '0');
 
-// Value offset = 0x60 + 0x20 (key length slot) + 0x20 (key data, padded to 32) = 0xa0
-const valueOffset = (0x60 + 0x20 + Math.ceil(key.length / 32) * 32).toString(16).padStart(64, '0');
+// Value offset = 0x60 + 0x20 + 0x20 = 0xa0
+const valueOffset = '00000000000000000000000000000000000000000000000000000000000000a0';
 
 console.log('0x' + selector + node + keyOffset + valueOffset + keyLen + keyData + valueLen + valueData);
 ")
 
-echo "Namehash: calculated" >&2
-echo "Submitting to ENS Public Resolver on Ethereum..." >&2
+echo "Submitting to resolver on Ethereum mainnet..." >&2
 echo "⚠️  Note: This requires ETH on mainnet for gas" >&2
 
 # Submit transaction via Bankr
-RESULT=$("$BANKR_SH" "Submit this transaction: {\"to\": \"$PUBLIC_RESOLVER\", \"data\": \"$CALLDATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}" 2>/dev/null)
+RESULT=$("$BANKR_SH" "Submit this transaction: {\"to\": \"$RESOLVER\", \"data\": \"$CALLDATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}" 2>/dev/null)
 
 if echo "$RESULT" | grep -q "$EXPLORER"; then
   TX_HASH=$(echo "$RESULT" | grep -oE "$EXPLORER/tx/0x[a-fA-F0-9]{64}" | grep -oE '0x[a-fA-F0-9]{64}')
   echo "=== SUCCESS ===" >&2
   echo "Avatar set for: $ENS_NAME" >&2
   echo "TX: https://$EXPLORER/tx/$TX_HASH" >&2
-  echo "{\"success\":true,\"name\":\"$ENS_NAME\",\"avatar\":\"$AVATAR_URL\",\"tx\":\"$TX_HASH\"}"
+  echo "{\"success\":true,\"name\":\"$ENS_NAME\",\"avatar\":\"$AVATAR_URL\",\"resolver\":\"$RESOLVER\",\"tx\":\"$TX_HASH\"}"
 elif echo "$RESULT" | grep -q "reverted"; then
   echo "Transaction reverted. Make sure:" >&2
   echo "1. You own or control the ENS name" >&2
-  echo "2. The name uses the public resolver" >&2
+  echo "2. The resolver supports setText" >&2
+  echo "3. You have permission to set records" >&2
   echo "Error: $RESULT" >&2
   exit 1
 else

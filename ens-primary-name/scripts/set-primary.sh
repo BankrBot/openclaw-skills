@@ -14,8 +14,6 @@ find_bankr() {
   local locations=(
     "$SCRIPT_DIR/../../bankr/scripts/bankr.sh"
     "$SCRIPT_DIR/../../moltbot-skills/bankr/scripts/bankr.sh"
-    "$HOME/clawd/skills/bankr/scripts/bankr.sh"
-    "$HOME/clawd/skills/moltbot-skills/bankr/scripts/bankr.sh"
     "$(command -v bankr.sh 2>/dev/null)"
   )
   for loc in "${locations[@]}"; do
