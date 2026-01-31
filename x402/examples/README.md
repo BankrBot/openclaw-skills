@@ -266,7 +266,7 @@ All examples use the following environment variables:
 
 ### Mainnet
 - **Base Mainnet**: `eip155:8453`
-- **Solana Mainnet**: `solana:5eykt4UsFvtsXMf8A6t856s14Ssw264`
+- **Solana Mainnet**: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 - **Facilitator**: `https://api.cdp.coinbase.com/v1/x402` (requires CDP API keys)
 
 ## Common Workflows

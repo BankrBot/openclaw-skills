@@ -54,7 +54,7 @@ CDP_API_SECRET=your_cdp_api_secret
 
 # Networks used:
 # - Base Mainnet (eip155:8453)
-# - Solana Mainnet (solana:5eykt4UsFv6dmrztQc4KaueyqLLXqQpVs14MQxkKHtKz)
+# - Solana Mainnet (solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp)
 ```
 
 ## How to Get Values

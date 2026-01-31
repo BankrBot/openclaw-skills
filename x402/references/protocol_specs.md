@@ -33,7 +33,7 @@ x402 uses CAIP-2 network identifiers for blockchain networks:
 * **Polygon:** `eip155:137`
 
 ### Solana Networks
-* **Solana Mainnet:** `solana:5eykt4UsFv6dmrztQc4KaueyqLLXqQpVs14MQxkKHtKz`
+* **Solana Mainnet:** `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 * **Solana Devnet:** `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1`
 
 ### Format

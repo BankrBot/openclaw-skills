@@ -112,7 +112,7 @@ async with x402HttpxClient(client) as http:
 
 **Mainnet (Production)**
 - Base Mainnet: `eip155:8453`
-- Solana Mainnet: `solana:5eykt4UsFvtsXMf8A6t856s14Ssw264`
+- Solana Mainnet: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`
 - Facilitator: `https://api.cdp.coinbase.com/v1/x402` (requires CDP API keys)
 
 ## Service Discovery (Bazaar)
