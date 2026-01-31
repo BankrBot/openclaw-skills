@@ -1,0 +1,11 @@
+{
+  "name": "clawcaster-register-step2",
+  "private": true,
+  "type": "commonjs",
+  "description": "Complete Clawcaster registration (step 1 + step 2) with a local custody wallet",
+  "dependencies": {
+    "@farcaster/hub-nodejs": "^0.15.0",
+    "bip39": "^3.1.0",
+    "viem": "^1.0.0"
+  }
+}
