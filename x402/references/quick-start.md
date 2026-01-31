@@ -191,16 +191,16 @@ Before going live:
 
 ## Additional Resources
 
-- [Full Examples](examples/README.md) - Comprehensive example documentation
-- [Protocol Specs](references/protocol_specs.md) - Technical reference
+- [Full Examples](../examples/README.md) - Comprehensive example documentation
+- [Protocol Specs](protocol_specs.md) - Technical reference
 - [x402 GitHub](https://github.com/coinbase/x402) - Official repository
 - [x402.org](https://x402.org) - Protocol website
 
 ## Support
 
 Need help?
-- Check the [examples](examples/) directory
-- Review [protocol_specs.md](references/protocol_specs.md)
+- Check the [examples](../examples/) directory
+- Review [protocol_specs.md](protocol_specs.md)
 - Visit [x402 GitHub](https://github.com/coinbase/x402)
 - Join [Base Discord](https://discord.gg/base)
 
