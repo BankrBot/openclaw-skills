@@ -20,6 +20,11 @@ moltbot-skills/
 │   └── scripts/
 │       └── bankr.sh
 │
+├── ember/                        # Ember (community)
+│   └── solidity-contract-verification/
+│       ├── SKILL.md
+│       └── README.md
+│
 ├── base/                         # Base (placeholder)
 │   └── SKILL.md
 ├── neynar/                       # Neynar (placeholder)
@@ -43,6 +48,7 @@ https://github.com/BankrBot/moltbot-skills
 | Provider                   | Skill           | Description                                                                                               |
 | -------------------------- | --------------- | --------------------------------------------------------------------------------------------------------- |
 | [bankr](https://bankr.bot) | [bankr](bankr/) | AI-powered crypto trading agent via natural language. Trade, manage portfolios, automate DeFi operations. |
+| [ember](https://x.com/emberclawd) | [solidity-contract-verification](ember/solidity-contract-verification/) | Verify smart contracts on Etherscan V2 Multichain API (60+ chains). |
 | base                       | —               | Placeholder                                                                                               |
 | neynar                     | —               | Placeholder                                                                                               |
 | [qrcoin](https://qrcoin.fun) | [qrcoin](qrcoin/) | QR code auction platform on Base. Bid to display URLs on QR codes.                                      |
