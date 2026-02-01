@@ -73,6 +73,11 @@ print(json.dumps(config['$network']))
 " 2>/dev/null
 }
 
+config_has_network() {
+    local network="$1"
+    python3 -c "import json,sys; data=json.loads('''$CONFIG_JSON'''); sys.exit(0 if '$network' in data else 1)" 2>/dev/null
+}
+
 # Get RPC URL
 get_rpc_url() {
     local network="$1"
@@ -115,19 +120,32 @@ check_tx_status() {
     local txhash="$1"
     local network="$2"
     local rpc_url=$(get_rpc_url "$network")
+    local explorer_url="https://basescan.org"
+    if [[ "$network" == "testnet" ]]; then
+        explorer_url="https://sepolia.basescan.org"
+    fi
     
-    local receipt=$(curl -s -X POST "$rpc_url" \
+    local receipt_json=$(curl -s -X POST "$rpc_url" \
         -H "Content-Type: application/json" \
         -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_getTransactionReceipt\",\"params\":[\"$txhash\"]}")
     
-    if [[ "$receipt" == *"null"* ]]; then
+    local receipt=$(echo "$receipt_json" | python3 -c "
+import json,sys
+data = json.load(sys.stdin)
+res = data.get('result')
+if res is None:
+    sys.exit(0)
+print(json.dumps(res))
+" 2>/dev/null || true)
+
+    if [[ -z "$receipt" ]]; then
         print_warning "Transaction not yet confirmed or not found"
         echo ""
-        echo "Explorer: https://sepolia.basescan.org/tx/$txhash"
+        echo "Explorer: ${explorer_url}/tx/$txhash"
         exit 0
     fi
     
-    local status=$(echo "$receipt" | python3 -c "import json,sys; print(json.load(sys.stdin).get('status','0x1'))")
+    local status=$(echo "$receipt" | python3 -c "import json,sys; print(json.load(sys.stdin).get('status','0x1'))" 2>/dev/null)
     
     if [[ "$status" == "0x1" ]]; then
         print_success "Transaction confirmed successfully!"
@@ -141,10 +159,16 @@ import json,sys
 data = json.load(sys.stdin)
 logs = data.get('logs', [])
 for log in logs:
-    if log.get('topics', []) and len(log['topics']) >= 4:
-        # Try to extract address from topics or data
-        addr = log.get('data', '')[-40:]
-        if addr:
+    topics = log.get('topics', [])
+    if len(topics) >= 2 and isinstance(topics[1], str) and topics[1].startswith('0x'):
+        addr = topics[1][-40:]
+        if addr and addr != '0' * 40:
+            print(f'0x{addr}')
+            break
+    data_hex = log.get('data', '')
+    if isinstance(data_hex, str) and data_hex.startswith('0x') and len(data_hex) >= 42:
+        addr = data_hex[-40:]
+        if addr and addr != '0' * 40:
             print(f'0x{addr}')
             break
 " 2>/dev/null)
@@ -155,7 +179,7 @@ for log in logs:
             echo "Run 'clanker.sh info $token_addr --network $network' for token details"
         fi
         
-        echo "Explorer: https://sepolia.basescan.org/tx/$txhash"
+        echo "Explorer: ${explorer_url}/tx/$txhash"
     else
         print_error "Transaction failed"
         echo ""
@@ -164,7 +188,7 @@ for log in logs:
         echo "Receipt:"
         echo "$receipt" | python3 -m json.tool 2>/dev/null || echo "$receipt"
         echo ""
-        echo "Explorer: https://sepolia.basescan.org/tx/$txhash"
+        echo "Explorer: ${explorer_url}/tx/$txhash"
         exit 1
     fi
 }
@@ -217,10 +241,17 @@ get_token_info() {
     
     # Get total supply
     local supply=$(rpc_call "eth_call" "[{\"to\":\"$token_addr\",\"data\":\"0x18160ddd\"},\"latest\"]" "$rpc_url")
-    local supply_eth="0"
-    if [[ "$supply" != "0x" && -n "$supply" ]]; then
-        supply_eth=$(echo "$supply" | python3 -c "import sys; d=sys.stdin.read().strip(); print(int(d, 16) / 1e18)" 2>/dev/null || echo "0")
-    fi
+    local supply_human="0"
+    supply_human=$(DECIMALS="$decimals" python3 -c "
+import os,sys
+d = sys.stdin.read().strip()
+dec = int(os.environ.get('DECIMALS', '18'))
+if not d or d == '0x':
+    print('0')
+else:
+    val = int(d, 16)
+    print(val / (10 ** dec))
+" 2>/dev/null <<< "$supply" || echo "0")
     
     local explorer_url="https://basescan.org"
     if [[ "$network" == "testnet" ]]; then
@@ -235,7 +266,7 @@ get_token_info() {
     echo "  Name:        $name"
     echo "  Symbol:      $symbol"
     echo "  Decimals:    $decimals"
-    echo "  Total Supply: $supply_eth ETH"
+    echo "  Total Supply: $supply_human"
     echo "  Address:     $token_addr"
     echo ""
     echo "  Explorer:    ${explorer_url}/token/$token_addr"
@@ -259,7 +290,8 @@ get_tokens_by_deployer() {
     echo ""
     
     # Get transaction count as a simple check
-    local tx_count=$(rpc_call "eth_getTransactionCount" "[\"$deployer_addr\",\"latest\"]" "$rpc_url")
+    local tx_count_hex=$(rpc_call "eth_getTransactionCount" "[\"$deployer_addr\",\"latest\"]" "$rpc_url")
+    local tx_count=$(python3 -c "import sys; d=sys.stdin.read().strip(); print(int(d, 16) if d and d != '0x' else 0)" 2>/dev/null <<< "$tx_count_hex" || echo "$tx_count_hex")
     
     local explorer_url="https://basescan.org"
     if [[ "$network" == "testnet" ]]; then
@@ -408,19 +440,20 @@ main() {
     parse_global_options "$@"
     set -- "${REMAINING_ARGS[@]}"
     
+    load_config
+    
     # Default network for commands that need it
     if [[ -z "$NETWORK" ]]; then
         case "$command" in
             status|info|get-token)
-                # Default to testnet for read-only operations if configured
-                if [[ -f "$CONFIG_FILE" ]]; then
+                if config_has_network "mainnet"; then
+                    NETWORK="mainnet"
+                elif config_has_network "testnet"; then
                     NETWORK="testnet"
                 fi
                 ;;
         esac
     fi
-    
-    load_config
     
     case "$command" in
         deploy)
