@@ -30,3 +30,7 @@ Thumbs.db
 *.tmp
 *.temp
 .cache/
+
+# Node.js
+node_modules/
+package-lock.json
