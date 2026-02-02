@@ -1,0 +1,7 @@
+🦈 <b>Sentiment Arbitrage v2.5 Complete</b>
+
+⏰ 2026-01-29 13:36
+📊 Tokens: 3
+🎯 BUY=0, SELL=0, HOLD=3
+⏱️ Duration: 305.4s
+📝 Prompts: 3 (batched)
