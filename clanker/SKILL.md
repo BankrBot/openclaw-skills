@@ -1,17 +1,88 @@
 ---
 name: clanker
-description: Deploy ERC20 tokens on Base, Ethereum, Arbitrum, and other EVM chains using the Clanker SDK. Use when the user wants to deploy a new token, create a memecoin, set up token vesting, configure airdrops, manage token rewards, claim LP fees, or update token metadata. Supports V4 deployment with vaults, airdrops, dev buys, custom market caps, vanity addresses, and multi-chain deployment.
+description: Deploy ERC20 tokens using the Clanker protocol on Base and other EVM chains. Supports the official TypeScript SDK for advanced features (airdrop, vesting, rewards, metadata updates) and includes a Base-focused CLI helper for quick deployments.
+metadata: {"clawdbot":{"emoji":"🪙","homepage":"https://clanker.world","requires":{"bins":["curl","jq","python3"]}}}
 ---
 
-# Clanker SDK
+# Clanker
 
-Deploy production-ready ERC20 tokens with built-in liquidity pools using the official Clanker TypeScript SDK.
+Deploy production-ready ERC20 tokens with built-in Uniswap V4 liquidity pools using the Clanker protocol. This skill supports two paths:
 
-## Overview
+1. CLI helper for Base mainnet / Base Sepolia (quick deploy + read-only)
+2. TypeScript SDK for multi-chain deployments and advanced features
 
-Clanker is a token deployment protocol that creates ERC20 tokens with Uniswap V4 liquidity pools in a single transaction. The SDK provides a TypeScript interface for deploying tokens with advanced features like vesting, airdrops, and customizable reward distribution.
+## Implementation Status
 
-## Quick Start
+- Implemented: Base CLI helper (`clanker/scripts/clanker.sh` + `clanker/scripts/deploy.py`) for deploy + read-only queries
+- Documented: SDK features (airdrop, vesting, rewards, pool config, metadata updates) via `references/*.md`
+
+## Option A: CLI Helper (Base Only)
+
+### Setup
+
+Create a config file at `~/.clawdbot/skills/clanker/config.json`:
+
+```json
+{
+  "mainnet": {
+    "rpc_url": "https://1rpc.io/base",
+    "private_key": "YOUR_PRIVATE_KEY"
+  },
+  "testnet": {
+    "rpc_url": "https://sepolia.base.org",
+    "private_key": "YOUR_TESTNET_PRIVATE_KEY"
+  }
+}
+```
+
+Security: Never commit private keys to version control. Use environment variables or a config file outside the repo.
+
+### Dependencies
+
+Read-only operations require `curl`, `jq`, and `python3`.
+
+For deployments, install web3:
+
+```bash
+pip install web3
+```
+
+### Get Testnet ETH (Base Sepolia)
+
+Use a faucet such as:
+- https://cloud.base.org/faucet
+- https://sepoliafaucet.com
+
+### Commands
+
+Run from the `clanker` skill directory:
+
+```bash
+./scripts/clanker.sh deploy "My Token" MYT 0.1
+./scripts/clanker.sh status <txhash>
+./scripts/clanker.sh info <token-address>
+./scripts/clanker.sh get-token <deployer-address>
+```
+
+Testnet examples:
+
+```bash
+./scripts/clanker.sh testnet-deploy "Test Token" TST
+./scripts/clanker.sh status <txhash> --network testnet
+./scripts/clanker.sh info <token-address> --network testnet
+```
+
+### Test Script
+
+Read-only smoke tests:
+
+```bash
+./scripts/test.sh
+```
+
+## Option B: TypeScript SDK (Multi-Chain)
+
+Use the SDK for advanced features like vesting, airdrops, rewards configuration, metadata updates, and multi-chain deployment.
 
 ### Installation
 
@@ -24,8 +95,6 @@ pnpm add clanker-sdk viem
 ```
 
 ### Environment Setup
-
-Create a `.env` file with your private key:
 
 ```bash
 PRIVATE_KEY=0x...your_private_key_here
@@ -75,23 +144,25 @@ const { address: tokenAddress } = await waitForTransaction();
 console.log('Token deployed at:', tokenAddress);
 ```
 
-## Core Capabilities
+## Core Capabilities (SDK)
 
-### 1. Token Deployment
+Each item below links to a reference file in `references/`.
 
-Deploy tokens with full customization including metadata, social links, and pool configuration.
+- Token deployment: `references/deployment.md`
+- SDK reference and protocol overview: `references/clanker-sdk.md`
+- Vault (token vesting): `references/vesting.md`
+- Airdrops: `references/airdrops.md`
+- Rewards configuration and fee splits: `references/rewards.md`
+- Pool configuration and custom market caps: `references/pool-config.md`
+- Troubleshooting: `references/troubleshooting.md`
 
-**Basic deployment:**
+Basic deployment includes:
 - Token name, symbol, and image (IPFS)
 - Description and social media links
 - Vanity address generation
 - Custom pool configurations
 
-**Reference:** [references/deployment.md](references/deployment.md)
-
-### 2. Vault (Token Vesting)
-
-Lock a percentage of tokens with lockup and vesting periods:
+### Example: Vault (Token Vesting)
 
 ```typescript
 vault: {
@@ -102,33 +173,28 @@ vault: {
 }
 ```
 
-**Reference:** [references/vesting.md](references/vesting.md)
-
-### 3. Airdrops
-
-Distribute tokens to multiple addresses using Merkle tree proofs:
+### Example: Airdrops
 
 ```typescript
-import { createAirdrop, registerAirdrop } from 'clanker-sdk/v4/extensions';
+import { createAirdrop } from 'clanker-sdk/v4/extensions';
 
 const { tree, airdrop } = createAirdrop([
   { account: '0x...', amount: 200_000_000 },
   { account: '0x...', amount: 50_000_000 },
 ]);
+```
 
-// Include in deployment
+Include in deployment:
+
+```typescript
 airdrop: {
   ...airdrop,
-  lockupDuration: 86_400,  // 1 day
-  vestingDuration: 86_400, // 1 day
+  lockupDuration: 86_400,  // 1 day lockup
+  vestingDuration: 86_400, // 1 day vesting
 }
 ```
 
-**Reference:** [references/airdrops.md](references/airdrops.md)
-
-### 4. Rewards Configuration
-
-Configure trading fee distribution:
+### Example: Rewards Configuration
 
 ```typescript
 rewards: {
@@ -149,7 +215,7 @@ rewards: {
 }
 ```
 
-#### Token Type Options
+### Token Type Options
 
 Choose which tokens each recipient receives from trading fees:
 
@@ -159,9 +225,9 @@ Choose which tokens each recipient receives from trading fees:
 | `'Paired'` | Receive only the paired token (e.g., WETH) |
 | `'Both'` | Receive both tokens |
 
-#### Default Bankr Interface Fee
+### Default Bankr Interface Fee
 
-When deploying via Bankr, use this default rewards configuration with 20% interface fee:
+When deploying via Bankr, use this standard configuration with 20% interface fee:
 
 ```typescript
 // Bankr interface fee recipient
@@ -170,24 +236,22 @@ const BANKR_INTERFACE_ADDRESS = '0xF60633D02690e2A15A54AB919925F3d038Df163e';
 rewards: {
   recipients: [
     {
-      recipient: account.address,           // Creator
+      recipient: account.address,           // Creator receives 80%
       admin: account.address,
-      bps: 8000,                            // 80% to creator
+      bps: 8000,
       token: 'Paired',                      // Receive paired token (WETH)
     },
     {
-      recipient: BANKR_INTERFACE_ADDRESS,   // Bankr interface
+      recipient: BANKR_INTERFACE_ADDRESS,   // Bankr receives 20%
       admin: BANKR_INTERFACE_ADDRESS,
-      bps: 2000,                            // 20% to Bankr
+      bps: 2000,
       token: 'Paired',                      // Receive paired token (WETH)
     },
   ],
 }
 ```
 
-**Reference:** [references/rewards.md](references/rewards.md)
-
-### 5. Dev Buy
+### Dev Buy
 
 Include an initial token purchase in the deployment:
 
@@ -198,7 +262,7 @@ devBuy: {
 }
 ```
 
-### 6. Custom Market Cap
+### Custom Market Cap
 
 Set initial token price/market cap:
 
@@ -219,9 +283,7 @@ pool: {
 }
 ```
 
-**Reference:** [references/pool-config.md](references/pool-config.md)
-
-### 7. Anti-Sniper Protection
+### Anti-Sniper Protection
 
 Configure fee decay to protect against snipers:
 
@@ -233,7 +295,9 @@ sniperFees: {
 }
 ```
 
-## Contract Limits & Constants
+## Contract Limits and Constants
+
+These values are enforced on-chain in the Clanker contracts and may change. Verify against current SDK docs if unsure.
 
 | Parameter | Value | Notes |
 |-----------|-------|-------|
@@ -250,13 +314,15 @@ sniperFees: {
 
 ## Supported Chains
 
+Clanker SDK supports multiple EVM chains. Verify support in the official docs.
+
 | Chain | Chain ID | Native Token | Status |
 |-------|----------|--------------|--------|
-| Base | 8453 | ETH | ✅ Full support |
-| Ethereum | 1 | ETH | ✅ Full support |
-| Arbitrum | 42161 | ETH | ✅ Full support |
-| Unichain | - | ETH | ✅ Full support |
-| Monad | - | MON | ✅ Static fees only |
+| Base | 8453 | ETH | Full support |
+| Ethereum | 1 | ETH | Full support |
+| Arbitrum | 42161 | ETH | Full support |
+| Unichain | - | ETH | Full support |
+| Monad | - | MON | Static fees only |
 
 ## Post-Deployment Operations
 
@@ -435,10 +501,10 @@ const tokenConfig = {
 
 ### Common Issues
 
-- **"Missing PRIVATE_KEY"** - Set environment variable
-- **"Insufficient balance"** - Fund wallet with native token
-- **"Transaction reverted"** - Check parameters, simulate first
-- **"Invalid image"** - Ensure IPFS hash is accessible
+- **\"Missing PRIVATE_KEY\"** - Set environment variable
+- **\"Insufficient balance\"** - Fund wallet with native token
+- **\"Transaction reverted\"** - Check parameters, simulate first
+- **\"Invalid image\"** - Ensure IPFS hash is accessible
 
 ### Debug Steps
 
@@ -450,14 +516,17 @@ const tokenConfig = {
 
 ## Resources
 
-- **GitHub**: [github.com/clanker-devco/clanker-sdk](https://github.com/clanker-devco/clanker-sdk)
-- **NPM**: [npmjs.com/package/clanker-sdk](https://www.npmjs.com/package/clanker-sdk)
-- **Examples**: [github.com/clanker-devco/clanker-sdk/tree/main/examples/v4](https://github.com/clanker-devco/clanker-sdk/tree/main/examples/v4)
+- https://clanker.world
+- https://docs.clanker.world
+- https://github.com/clanker-world
+- https://basescan.org
+- https://sepolia.basescan.org
+- https://github.com/clanker-devco/clanker-sdk
+- https://www.npmjs.com/package/clanker-sdk
+- https://github.com/clanker-devco/clanker-sdk/tree/main/examples/v4
 
----
+Pro Tip: Always use the `vanity: true` option for memorable contract addresses.
 
-**💡 Pro Tip**: Always use the `vanity: true` option for memorable contract addresses.
+Security: Never commit private keys. Use `.env` files and add them to `.gitignore`.
 
-**⚠️ Security**: Never commit private keys. Use `.env` files and add them to `.gitignore`.
-
-**🚀 Quick Win**: Start with the simple deployment example, then add features like vesting and rewards as needed.
+Quick Win: Start with the simple deployment example, then add features like vesting and rewards as needed.
