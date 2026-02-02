@@ -24,6 +24,8 @@ moltbot-skills/
 │   └── SKILL.md
 ├── neynar/                       # Neynar (placeholder)
 │   └── SKILL.md
+├── qrcoin/                       # QR Coin (community)
+│   └── SKILL.md
 └── zapper/                       # Zapper (placeholder)
     └── SKILL.md
 ```
@@ -41,8 +43,12 @@ https://github.com/BankrBot/moltbot-skills
 | Provider                   | Skill           | Description                                                                                               |
 | -------------------------- | --------------- | --------------------------------------------------------------------------------------------------------- |
 | [bankr](https://bankr.bot) | [bankr](bankr/) | AI-powered crypto trading agent via natural language. Trade, manage portfolios, automate DeFi operations. |
+| [8004.org](https://8004.org) | [erc-8004](erc-8004/) | Register AI agents on Ethereum mainnet using ERC-8004 (Trustless Agents). Get an agent NFT, build reputation. |
 | base                       | —               | Placeholder                                                                                               |
+| [8004.org](https://8004.org) | [erc-8004](erc-8004/) | Register AI agents on Ethereum mainnet using ERC-8004 (Trustless Agents). Get an agent NFT, build reputation. |
 | neynar                     | —               | Placeholder                                                                                               |
+| [qrcoin](https://qrcoin.fun) | [qrcoin](qrcoin/) | QR code auction platform on Base. Bid to display URLs on QR codes.                                      |
+| yoink                      | [yoink](yoink/) | Onchain capture-the-flag game on Base.                                                                    |
 | zapper                     | —               | Placeholder                                                                                               |
 
 ## Contributing
