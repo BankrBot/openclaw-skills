@@ -23,12 +23,29 @@ keccak_selector() {
   node -e "const{keccak256}=require('js-sha3');console.log('0x'+keccak256('$1').slice(0,8));"
 }
 
-# Helper: RPC call
+# Helper: RPC call with retry for rate limits
 rpc_call() {
   local to="$1" data="$2"
-  curl -s "$RPC_URL" -X POST -H "Content-Type: application/json" \
-    -d "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{\"to\":\"$to\",\"data\":\"$data\"},\"latest\"],\"id\":1}" \
-    | node -e "const r=require('fs').readFileSync(0,'utf8');const j=JSON.parse(r);console.log(j.result||'ERROR:'+JSON.stringify(j.error));"
+  local retries=3
+  local result
+  
+  for ((i=1; i<=retries; i++)); do
+    result=$(curl -s "$RPC_URL" -X POST -H "Content-Type: application/json" \
+      -d "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{\"to\":\"$to\",\"data\":\"$data\"},\"latest\"],\"id\":1}" \
+      | node -e "const r=require('fs').readFileSync(0,'utf8');const j=JSON.parse(r);
+        if(j.result) console.log(j.result);
+        else if(j.error?.message?.includes('rate limit')) console.log('RATELIMIT');
+        else if(j.error?.message?.includes('invalid token')) console.log('UNMINTED');
+        else console.log('ERROR:'+JSON.stringify(j.error));" 2>/dev/null)
+    
+    if [[ "$result" == "RATELIMIT" ]]; then
+      sleep 1
+      continue
+    fi
+    echo "$result"
+    return
+  done
+  echo "ERROR:rate_limit_exceeded"
 }
 
 echo "=== Super Bowl Squares - Contest $CONTEST_ID ===" >&2
@@ -59,17 +76,39 @@ echo "Entry amount: $ENTRY_AMOUNT (raw wei)" >&2
 BOX_START=$((CONTEST_ID * 100))
 BOX_END=$((BOX_START + 99))
 
+# Lowercase the squares contract for comparison
+SQUARES_CONTRACT_LOWER="${SQUARES_CONTRACT,,}"
+
+# Helper to check if box is available
+is_box_available() {
+  local owner="$1"
+  # Available if: unminted, owned by squares contract, or error indicating unminted
+  [[ "$owner" == "UNMINTED" ]] || \
+  [[ "${owner,,}" == *"${SQUARES_CONTRACT_LOWER:2}"* ]] || \
+  [[ "$owner" == ERROR*"invalid token"* ]]
+}
+
 if [[ -z "$BOX_NUMBER" ]]; then
   echo "Finding available box in range $BOX_START-$BOX_END..." >&2
   for i in $(seq $BOX_START $BOX_END); do
     BOX_HEX=$(printf '%064x' "$i")
     OWNER=$(rpc_call "$BOXES_NFT" "0x6352211e$BOX_HEX")
     
-    if [[ "$OWNER" == ERROR* ]] || [[ "${OWNER,,}" == *"${SQUARES_CONTRACT:2}"* ]]; then
+    # Skip on rate limit errors - don't treat as available
+    if [[ "$OWNER" == *"rate_limit"* ]] || [[ "$OWNER" == "RATELIMIT" ]]; then
+      echo "Rate limited, waiting..." >&2
+      sleep 2
+      OWNER=$(rpc_call "$BOXES_NFT" "0x6352211e$BOX_HEX")
+    fi
+    
+    if is_box_available "$OWNER"; then
       BOX_NUMBER=$i
       echo "Found available box: $BOX_NUMBER" >&2
       break
     fi
+    
+    # Small delay to avoid rate limits
+    sleep 0.1
   done
   
   if [[ -z "$BOX_NUMBER" ]]; then
@@ -81,7 +120,7 @@ else
   BOX_HEX=$(printf '%064x' "$BOX_NUMBER")
   OWNER=$(rpc_call "$BOXES_NFT" "0x6352211e$BOX_HEX")
   
-  if [[ "$OWNER" != ERROR* ]] && [[ "${OWNER,,}" != *"${SQUARES_CONTRACT:2}"* ]]; then
+  if ! is_box_available "$OWNER"; then
     OWNER_ADDR="0x$(echo "$OWNER" | cut -c27-66)"
     echo "Box $BOX_NUMBER already claimed by $OWNER_ADDR" >&2
     exit 1
