@@ -16,7 +16,8 @@ Lock payment → Service delivered → Funds released. Simple escrow with 0.5% p
 
 ```bash
 export PRIVATE_KEY=0x...
-export FEE_RECIPIENT=0x...  # Your wallet for fees
+export FEE_RECIPIENT=0x...    # Your wallet for fees
+export ARBITRATOR=0x...       # Address for dispute resolution
 
 ./scripts/deploy.sh
 ```
@@ -87,6 +88,30 @@ cast send <ESCROW_ADDRESS> \
   --rpc-url https://mainnet.base.org
 ```
 
+### Dispute
+
+```bash
+# Either party can raise a dispute
+cast send <ESCROW_ADDRESS> \
+  "dispute(uint256)" \
+  <ESCROW_ID> \
+  --private-key $PRIVATE_KEY \
+  --rpc-url https://mainnet.base.org
+```
+
+### Resolve Dispute (Arbitrator Only)
+
+```bash
+# refund = true: return funds to payer
+# refund = false: release funds to payee
+cast send <ESCROW_ADDRESS> \
+  "resolveDispute(uint256,bool)" \
+  <ESCROW_ID> \
+  true \
+  --private-key $ARBITRATOR_KEY \
+  --rpc-url https://mainnet.base.org
+```
+
 ## Flow
 
 1. **Payer creates escrow** → Funds locked
@@ -102,8 +127,9 @@ OR
 - ✅ ETH and ERC-20 support
 - ✅ Auto-release after deadline
 - ✅ Cancel before delivery
-- ✅ Dispute flag (for manual resolution)
-- ✅ 0.5% platform fee
+- ✅ **Full dispute resolution** with arbitrator
+- ✅ No fee on dispute resolutions (full amount to decided party)
+- ✅ 0.5% platform fee on normal completions
 - ✅ ReentrancyGuard protected
 
 ## Use Cases

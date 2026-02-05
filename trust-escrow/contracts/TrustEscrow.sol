@@ -36,6 +36,7 @@ contract TrustEscrow is ReentrancyGuard {
     // Platform fee (basis points, 50 = 0.5%)
     uint256 public platformFeeBps = 50;
     address public platformFeeRecipient;
+    address public arbitrator;
     uint256 public accumulatedFees;
     
     event EscrowCreated(uint256 indexed id, address indexed payer, address indexed payee, uint256 amount);
@@ -43,9 +44,12 @@ contract TrustEscrow is ReentrancyGuard {
     event EscrowCompleted(uint256 indexed id);
     event EscrowDisputed(uint256 indexed id, address disputer);
     event EscrowCancelled(uint256 indexed id);
+    event DisputeResolved(uint256 indexed id, address indexed resolver, bool refunded);
+    event ArbitratorChanged(address indexed oldArbitrator, address indexed newArbitrator);
     
-    constructor(address _feeRecipient) {
+    constructor(address _feeRecipient, address _arbitrator) {
         platformFeeRecipient = _feeRecipient;
+        arbitrator = _arbitrator;
     }
     
     /**
@@ -230,6 +234,47 @@ contract TrustEscrow is ReentrancyGuard {
         
         escrow.status = EscrowStatus.Disputed;
         emit EscrowDisputed(escrowId, msg.sender);
+    }
+    
+    /**
+     * @notice Resolve dispute (arbitrator only)
+     * @param escrowId ID of the escrow
+     * @param refund True = refund payer, False = pay payee
+     */
+    function resolveDispute(uint256 escrowId, bool refund) external nonReentrant {
+        require(msg.sender == arbitrator, "Only arbitrator can resolve");
+        Escrow storage escrow = escrows[escrowId];
+        require(escrow.status == EscrowStatus.Disputed, "Escrow not disputed");
+        
+        address recipient = refund ? escrow.payer : escrow.payee;
+        escrow.status = refund ? EscrowStatus.Cancelled : EscrowStatus.Completed;
+        
+        // No fee taken on dispute resolution - full amount goes to decided party
+        if (escrow.token == address(0)) {
+            (bool success, ) = recipient.call{value: escrow.amount}("");
+            require(success, "Transfer failed");
+        } else {
+            require(
+                IERC20(escrow.token).transfer(recipient, escrow.amount),
+                "Transfer failed"
+            );
+        }
+        
+        emit DisputeResolved(escrowId, msg.sender, refund);
+    }
+    
+    /**
+     * @notice Change arbitrator (current arbitrator only)
+     * @param newArbitrator Address of new arbitrator
+     */
+    function setArbitrator(address newArbitrator) external {
+        require(msg.sender == arbitrator, "Only arbitrator can change");
+        require(newArbitrator != address(0), "Invalid arbitrator");
+        
+        address oldArbitrator = arbitrator;
+        arbitrator = newArbitrator;
+        
+        emit ArbitratorChanged(oldArbitrator, newArbitrator);
     }
     
     /**
