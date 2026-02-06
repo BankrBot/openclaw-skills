@@ -29,6 +29,8 @@ contract TrustEscrowV2 is ReentrancyGuard {
     mapping(uint256 => Escrow) public escrows;
     uint256 public nextEscrowId;
     
+    // Note: amount not indexed due to 3-param limit (escrowId/sender/receiver prioritized for filtering)
+    // To filter by amount, use off-chain indexing or The Graph
     event EscrowCreated(uint256 indexed escrowId, address indexed sender, address indexed receiver, uint256 amount, uint256 deadline);
     event EscrowReleased(uint256 indexed escrowId, address indexed releaser, uint256 amount);
     event EscrowDisputed(uint256 indexed escrowId, address indexed disputer);
@@ -86,27 +88,33 @@ contract TrustEscrowV2 is ReentrancyGuard {
      * @param receivers Array of receiver addresses
      * @param amounts Array of USDC amounts
      * @param deadlines Array of deadlines
-     * @return escrowIds Array of created escrow IDs
+     * @return escrowIds Array of created escrow IDs (0 = failed)
+     * @return success Array of success flags for each escrow
+     * @notice Continues on individual failures, returns success status per escrow
      */
     function createEscrowBatch(
         address[] calldata receivers,
         uint96[] calldata amounts,
         uint40[] calldata deadlines
-    ) external nonReentrant returns (uint256[] memory escrowIds) {
+    ) external nonReentrant returns (uint256[] memory escrowIds, bool[] memory success) {
         uint256 length = receivers.length;
         if (length != amounts.length || length != deadlines.length) revert InvalidAmount();
         
         escrowIds = new uint256[](length);
+        success = new bool[](length);
         uint256 totalAmount;
         
         for (uint256 i = 0; i < length; i++) {
-            if (receivers[i] == address(0)) revert InvalidReceiver();
-            if (amounts[i] == 0) revert InvalidAmount();
-            if (deadlines[i] <= block.timestamp) revert InvalidDeadline();
+            // Validate before processing
+            if (receivers[i] == address(0) || amounts[i] == 0 || deadlines[i] <= block.timestamp) {
+                success[i] = false;
+                continue;
+            }
             
             totalAmount += amounts[i];
             uint256 escrowId = nextEscrowId++;
             escrowIds[i] = escrowId;
+            success[i] = true;
             
             escrows[escrowId] = Escrow({
                 sender: msg.sender,
@@ -120,7 +128,9 @@ contract TrustEscrowV2 is ReentrancyGuard {
             emit EscrowCreated(escrowId, msg.sender, receivers[i], amounts[i], deadlines[i]);
         }
         
-        if (!usdc.transferFrom(msg.sender, address(this), totalAmount)) revert TransferFailed();
+        if (totalAmount > 0) {
+            if (!usdc.transferFrom(msg.sender, address(this), totalAmount)) revert TransferFailed();
+        }
     }
     
     /**
@@ -157,16 +167,30 @@ contract TrustEscrowV2 is ReentrancyGuard {
     /**
      * @dev Batch release multiple escrows (gas efficient)
      * @param escrowIds Array of escrow IDs to release
+     * @return success Array of success flags for each release
+     * @notice Continues on individual failures, returns success status per escrow
      */
-    function releaseBatch(uint256[] calldata escrowIds) external nonReentrant {
+    function releaseBatch(uint256[] calldata escrowIds) external nonReentrant returns (bool[] memory success) {
+        success = new bool[](escrowIds.length);
+        
         for (uint256 i = 0; i < escrowIds.length; i++) {
             Escrow storage escrow = escrows[escrowIds[i]];
-            if (escrow.sender != msg.sender) revert Unauthorized();
-            if (escrow.state != EscrowState.Active) revert InvalidState();
+            
+            // Skip if unauthorized or invalid state
+            if (escrow.sender != msg.sender || escrow.state != EscrowState.Active) {
+                success[i] = false;
+                continue;
+            }
             
             escrow.state = EscrowState.Released;
-            if (!usdc.transfer(escrow.receiver, escrow.amount)) revert TransferFailed();
+            if (!usdc.transfer(escrow.receiver, escrow.amount)) {
+                // Revert state if transfer fails
+                escrow.state = EscrowState.Active;
+                success[i] = false;
+                continue;
+            }
             
+            success[i] = true;
             emit EscrowReleased(escrowIds[i], msg.sender, escrow.amount);
         }
     }
@@ -190,16 +214,30 @@ contract TrustEscrowV2 is ReentrancyGuard {
     /**
      * @dev Batch auto-release (gas efficient for keeper bots)
      * @param escrowIds Array of escrow IDs to auto-release
+     * @return success Array of success flags for each auto-release
+     * @notice Continues on individual failures, returns success status per escrow
      */
-    function autoReleaseBatch(uint256[] calldata escrowIds) external nonReentrant {
+    function autoReleaseBatch(uint256[] calldata escrowIds) external nonReentrant returns (bool[] memory success) {
+        success = new bool[](escrowIds.length);
+        
         for (uint256 i = 0; i < escrowIds.length; i++) {
             Escrow storage escrow = escrows[escrowIds[i]];
-            if (escrow.state != EscrowState.Active) revert InvalidState();
-            if (block.timestamp < escrow.deadline + INSPECTION_PERIOD) revert DeadlineNotReached();
+            
+            // Skip if invalid state or deadline not reached
+            if (escrow.state != EscrowState.Active || block.timestamp < escrow.deadline + INSPECTION_PERIOD) {
+                success[i] = false;
+                continue;
+            }
             
             escrow.state = EscrowState.Released;
-            if (!usdc.transfer(escrow.receiver, escrow.amount)) revert TransferFailed();
+            if (!usdc.transfer(escrow.receiver, escrow.amount)) {
+                // Revert state if transfer fails
+                escrow.state = EscrowState.Active;
+                success[i] = false;
+                continue;
+            }
             
+            success[i] = true;
             emit EscrowReleased(escrowIds[i], msg.sender, escrow.amount);
         }
     }
