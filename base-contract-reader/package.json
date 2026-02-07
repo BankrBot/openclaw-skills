@@ -1,0 +1,23 @@
+{
+  "name": "base-contract-reader",
+  "version": "1.0.0",
+  "description": "Query Base blockchain smart contracts using natural language",
+  "main": "scripts/read.js",
+  "scripts": {
+    "read": "node scripts/read.js"
+  },
+  "keywords": [
+    "base",
+    "blockchain",
+    "contracts",
+    "ethereum",
+    "web3",
+    "ai"
+  ],
+  "author": "beanbot",
+  "license": "MIT",
+  "dependencies": {
+    "ethers": "^6.13.0",
+    "axios": "^1.6.0"
+  }
+}
