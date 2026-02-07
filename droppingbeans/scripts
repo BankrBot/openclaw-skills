@@ -1,0 +1,124 @@
+#!/usr/bin/env node
+/**
+ * Twitter Search Scanner - Find tweets across all of CT
+ * Searches for keywords: Base, agent tokens, clawdbot, crypto trends
+ */
+
+const path = require('path');
+const os = require('os');
+const fs = require('fs');
+
+const playwrightPath = '/usr/lib/node_modules/agent-browser/node_modules/playwright-core';
+const { chromium } = require(playwrightPath);
+
+const CHROME_PATH = path.join(os.homedir(), '.cache/ms-playwright/chromium-1208/chrome-linux64/chrome');
+const SESSION_FILE = path.join(os.homedir(), 'clawd/secrets/.twitter-session.json');
+const BASE_DIR = path.join(os.homedir(), 'clawd');
+
+// Get query from command line or use defaults
+const QUERY = process.argv[2] || 'Base L2';
+const LIMIT = parseInt(process.argv[3]) || 5;
+
+async function searchTwitter(query, limit = 5) {
+  console.log(`\n🔍 Searching Twitter for: "${query}"`);
+  
+  const session = JSON.parse(fs.readFileSync(SESSION_FILE, 'utf8'));
+  
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: CHROME_PATH,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+  
+  const context = await browser.newContext();
+  await context.addCookies(session.cookies);
+  
+  const page = await context.newPage();
+  
+  try {
+    const searchUrl = `https://x.com/search?q=${encodeURIComponent(query)}&src=typed_query&f=live`;
+    await page.goto(searchUrl, { waitUntil: 'load', timeout: 60000 });
+    await page.waitForTimeout(5000);
+    
+    const tweets = await page.$$('[data-testid="tweet"]');
+    console.log(`Found ${tweets.length} tweets\n`);
+    
+    const results = [];
+    
+    for (let i = 0; i < Math.min(tweets.length, limit); i++) {
+      try {
+        const text = await tweets[i].$eval('[data-testid="tweetText"]', el => el.textContent).catch(() => null);
+        
+        if (text) {
+          // Get username
+          const userLink = await tweets[i].$('a[href^="/"][role="link"]').catch(() => null);
+          let username = null;
+          if (userLink) {
+            const href = await userLink.getAttribute('href').catch(() => null);
+            if (href) username = href.replace('/', '');
+          }
+          
+          // Get tweet ID
+          const linkElement = await tweets[i].$('a[href*="/status/"]').catch(() => null);
+          let tweetId = null;
+          if (linkElement) {
+            const href = await linkElement.getAttribute('href').catch(() => null);
+            if (href) {
+              const match = href.match(/\/status\/(\d+)/);
+              if (match) tweetId = match[1];
+            }
+          }
+          
+          console.log(`--- Result ${i + 1} ---`);
+          console.log(`User: @${username || 'unknown'}`);
+          console.log(`ID: ${tweetId || 'unknown'}`);
+          console.log(`Text: ${text.substring(0, 200)}`);
+          console.log('');
+          
+          results.push({
+            username,
+            tweetId,
+            text,
+            query,
+            timestamp: new Date().toISOString()
+          });
+        }
+      } catch (e) {
+        console.error(`Error on tweet ${i}:`, e.message);
+      }
+    }
+    
+    await browser.close();
+    return results;
+    
+  } catch (error) {
+    console.error(`❌ Error:`, error.message);
+    await browser.close();
+    return [];
+  }
+}
+
+async function main() {
+  console.log('🌐 === TWITTER CT SCAN ===\n');
+  console.log(`Query: "${QUERY}"`);
+  console.log(`Limit: ${LIMIT}\n`);
+  
+  const results = await searchTwitter(QUERY, LIMIT);
+  
+  // Save results
+  const outputFile = path.join(BASE_DIR, 'memory/twitter-ct-scan.json');
+  fs.writeFileSync(outputFile, JSON.stringify(results, null, 2));
+  
+  console.log(`\n✅ Found ${results.length} tweets`);
+  console.log(`💾 Saved to ${outputFile}\n`);
+  
+  // Also output to stdout for piping
+  console.log(JSON.stringify(results, null, 2));
+  
+  return results;
+}
+
+main().catch(err => {
+  console.error('Error:', err);
+  process.exit(1);
+});
