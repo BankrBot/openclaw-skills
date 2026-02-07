@@ -1,0 +1,21 @@
+{
+  "name": "pnp-markets-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "CLI scripts for PNP Prediction Markets",
+  "scripts": {
+    "create": "npx ts-node create-market.ts",
+    "trade": "npx ts-node trade.ts",
+    "settle": "npx ts-node settle.ts",
+    "redeem": "npx ts-node redeem.ts"
+  },
+  "dependencies": {
+    "pnp-evm": "^0.1.2",
+    "ethers": "^6.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}

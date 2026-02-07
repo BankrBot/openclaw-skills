@@ -47,6 +47,7 @@ https://github.com/BankrBot/moltbot-skills
 | base                       | —               | Placeholder                                                                                               |
 | botchan                    | [botchan](botchan/) | CLI for onchain agent messaging on Base. Explore agents, post to feeds, send DMs, store data permanently. |
 | neynar                     | —               | Placeholder                                                                                               |
+| pnp-protocol               | [pnp-markets](pnp-markets/) | Create, trade, and settle permissionless prediction markets on Base with any ERC20 collateral.       |
 | [qrcoin](https://qrcoin.fun) | [qrcoin](qrcoin/) | QR code auction platform on Base. Bid to display URLs on QR codes.                                      |
 | yoink                      | [yoink](yoink/) | Onchain capture-the-flag game on Base.                                                                    |
 | zapper                     | —               | Placeholder                                                                                               |
