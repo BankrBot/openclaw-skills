@@ -243,8 +243,25 @@ Common issues and fixes:
 - **Token not approved** → Approve Spraay contract to spend your tokens first
 - **Transaction reverted** → Check amounts and recipient count
 - **Gas estimation failed** → Reduce recipient count or try again
+- **Batch reverted mid-send** → Spraay is atomic: all recipients succeed or none do. No funds are lost on revert (gas is still consumed). Check BaseScan for the exact revert reason, fix the issue, and retry.
+- **Contract recipient rejects ETH** → Some smart contracts reject incoming ETH. Test suspect addresses individually first, then remove any that fail from your batch.
 
 **Reference**: [references/error-handling.md](references/error-handling.md)
+
+## Gas Estimation
+
+Gas on Base is extremely cheap. Typical costs for batch sends:
+
+| Recipients | sprayETH Gas | sprayToken Gas | Est. USD Cost |
+|-----------|-------------|---------------|---------------|
+| 10        | ~95,000     | ~130,000      | < $0.01       |
+| 50        | ~250,000    | ~350,000      | < $0.01       |
+| 100       | ~420,000    | ~620,000      | < $0.01       |
+| 200       | ~750,000    | ~1,100,000    | < $0.01       |
+
+**Recommended batch sizes:** Up to 200 for ETH, up to 150 for ERC-20 tokens. For larger distributions, split into multiple transactions.
+
+**Reference**: [references/batch-payments.md](references/batch-payments.md)
 
 ## Best Practices
 

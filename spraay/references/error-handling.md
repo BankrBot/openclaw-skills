@@ -83,6 +83,50 @@
 3. Reduce recipient count and retry
 4. Check contract is not paused
 
+## Partial Failure Handling
+
+### How Spraay Handles Failures Mid-Batch
+
+Spraay's contract is **atomic** — either the entire batch succeeds or the entire batch reverts. There are no partial sends. This is by design for safety: you won't end up in a state where 50 out of 100 recipients got paid and the other 50 didn't.
+
+**What causes a batch to revert:**
+- One recipient is a contract that rejects ETH (no `receive()` or `fallback()` function)
+- One recipient address is the zero address
+- Insufficient balance partway through (shouldn't happen since validation is upfront)
+- Gas limit exceeded for very large batches
+
+### Handling Contract Recipients
+
+If you're sending ETH to smart contract addresses (multisigs, DAOs, etc.), be aware that some contracts reject incoming ETH. This will revert the entire batch.
+
+**Prevention:**
+1. Test with a small amount to each contract address individually first
+2. Remove any contract addresses that reject ETH from your batch
+3. For known problematic recipients, send to them separately via a normal transfer
+
+**Example:**
+```
+# If a batch fails, isolate the problem
+"Spray 0.001 ETH to 0xSUSPECT_ADDRESS on Base"
+# If this single send fails, that address is the problem — remove it from your batch
+```
+
+### Handling Large Batches (100+ Recipients)
+
+For very large distributions, the transaction might hit the block gas limit. Base has generous limits, but it's still good practice to:
+
+1. **Split into chunks of 100-150** rather than maxing out at 200
+2. **Estimate gas first**: `"Estimate gas for spraying ETH to 150 recipients on Base"`
+3. **Use `sprayEqual`** when all recipients get the same amount — it's more gas-efficient than `sprayETH` with variable amounts
+
+### Recovery After a Failed Batch
+
+If your batch reverts:
+- **No funds are lost** — the entire transaction reverts, so your ETH/tokens stay in your wallet
+- **Gas is still consumed** — you'll pay gas for the failed attempt
+- **Check BaseScan** — look up the failed tx hash to see the exact revert reason
+- **Fix the issue** and retry
+
 ## Debugging Steps
 
 1. **Start simple**: Test with 2 recipients and small amounts

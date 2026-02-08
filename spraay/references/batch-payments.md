@@ -14,6 +14,58 @@ Spraay enables sending ETH or ERC-20 tokens to multiple recipients in a single b
 | 100       | ~2,100,000        | ~420,000   | ~80%    |
 | 200       | ~4,200,000        | ~750,000   | ~82%    |
 
+## Gas Estimation Guide
+
+### Estimated Costs on Base (at typical gas prices)
+
+Base L2 gas is extremely cheap. These estimates assume ~0.01 gwei gas price (typical for Base):
+
+| Recipients | Function | Est. Gas | Est. Cost (ETH) | Est. Cost (USD) |
+|-----------|----------|----------|-----------------|-----------------|
+| 5         | sprayETH | ~65,000  | ~0.00000065     | < $0.01         |
+| 10        | sprayETH | ~95,000  | ~0.00000095     | < $0.01         |
+| 25        | sprayETH | ~170,000 | ~0.0000017      | < $0.01         |
+| 50        | sprayETH | ~250,000 | ~0.0000025      | < $0.01         |
+| 100       | sprayETH | ~420,000 | ~0.0000042      | < $0.01         |
+| 200       | sprayETH | ~750,000 | ~0.0000075      | < $0.01         |
+| 5         | sprayToken | ~85,000  | ~0.00000085   | < $0.01         |
+| 50        | sprayToken | ~350,000 | ~0.0000035    | < $0.01         |
+| 100       | sprayToken | ~620,000 | ~0.0000062    | < $0.01         |
+| 200       | sprayToken | ~1,100,000 | ~0.000011   | < $0.01         |
+
+**Note:** ERC-20 sprays (`sprayToken`) use more gas than ETH sprays because each token transfer involves calling the token contract. Actual costs may vary with network congestion.
+
+### Planning Large Batches
+
+**Recommended batch sizes by function:**
+- `sprayETH`: Up to 200 recipients comfortably
+- `sprayToken`: Up to 150 recipients recommended (token transfers are heavier)
+- `sprayEqual`: Up to 200 recipients (more efficient since amount is stored once)
+
+**For 500+ recipients:**
+Split into multiple transactions of 100-150 each. Example:
+```
+"Spray USDC on Base from batch1.csv"   # rows 1-150
+"Spray USDC on Base from batch2.csv"   # rows 151-300
+"Spray USDC on Base from batch3.csv"   # rows 301-500
+```
+
+### Total Cost Formula
+
+For any spray, the total sender cost is:
+
+```
+Total Cost = Sum of all recipient amounts
+           + Protocol fee (0.3% of sum)
+           + Gas fee (negligible on Base, see table above)
+```
+
+Example: Spraying 1 ETH total to 10 recipients
+- Recipient amounts: 1.0 ETH
+- Protocol fee: 0.003 ETH
+- Gas: ~0.000001 ETH
+- **Total: ~1.003001 ETH**
+
 ## ETH Batch Payments
 
 ### Function: `sprayETH`
