@@ -16,7 +16,7 @@ The gateway uses your **LLM key** for authentication. The key resolution order:
 
 Most users only need a single key for both the agent API and the LLM gateway. Set a separate LLM key only if your keys have different permissions or rate limits.
 
-**Dashboard:** Manage usage, credits, and auto top-up at [bankr.bot/llm](https://bankr.bot/llm). Generate and configure API keys at [bankr.bot/api](https://bankr.bot/api).
+**Dashboard:** Manage usage, credits, and auto top-up at [bankr.bot/llm](https://bankr.bot/llm). Top up credits at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits). Generate and configure API keys at [bankr.bot/api](https://bankr.bot/api).
 
 ### Setting the LLM Key
 
@@ -63,7 +63,7 @@ bankr llm models
 
 ## Credits
 
-> **New wallets start with $0 LLM credits.** Top up at [bankr.bot/llm](https://bankr.bot/llm) before your first LLM call. Without credits, all gateway requests return HTTP 402.
+> **New wallets start with $0 LLM credits.** Top up at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) before your first LLM call. Without credits, all gateway requests return HTTP 402.
 
 Check your LLM gateway credit balance:
 
@@ -89,7 +89,7 @@ If the user already has a Bankr account, they just need to configure the gateway
    ```json
    { "agents": { "defaults": { "model": { "primary": "bankr/claude-sonnet-4.6" } } } }
    ```
-4. Verify credits: `bankr llm credits` (must show > $0 — top up at [bankr.bot/llm](https://bankr.bot/llm) if needed)
+4. Verify credits: `bankr llm credits` (must show > $0 — top up at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) if needed)
 5. Restart OpenClaw or run: `openclaw gateway restart`
 
 ### Need Bankr Account
@@ -97,7 +97,7 @@ If the user already has a Bankr account, they just need to configure the gateway
 1. Send OTP: `bankr login email user@example.com`
 2. Complete setup: `bankr login email user@example.com --code OTP --accept-terms --key-name "My Agent" --llm`
    - Can also create/configure keys at [bankr.bot/api](https://bankr.bot/api)
-3. **Top up credits at [bankr.bot/llm](https://bankr.bot/llm)** — new wallets start with $0
+3. **Top up credits at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits)** — new wallets start with $0
 4. Verify: `bankr llm credits` (must show > $0)
 5. Run: `bankr llm setup openclaw --install`
 6. Set default model in `~/.openclaw/openclaw.json` (see above)
@@ -319,7 +319,7 @@ message = client.messages.create(
 
 ### 402 Payment Required
 - Credits exhausted: `bankr llm credits` shows $0.00
-- Top up at [bankr.bot/llm](https://bankr.bot/llm) — this is the most common error for new users
+- Top up at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) — this is the most common error for new users
 - New wallets start with $0 — you must add credits before first use
 - LLM credits are separate from your trading wallet balance
 

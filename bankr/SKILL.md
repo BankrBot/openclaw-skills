@@ -337,7 +337,7 @@ The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unifie
 
 - Uses your `llmKey` if configured, otherwise falls back to your API key
 - **LLM credits** (USD) and **trading wallet** (crypto) are completely separate balances — having crypto does NOT give you LLM credits
-- **New accounts start with $0 LLM credits** — top up at [bankr.bot/llm](https://bankr.bot/llm) before making any LLM calls, or you will get a 402 error
+- **New accounts start with $0 LLM credits** — top up at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) before making any LLM calls, or you will get a 402 error
 - Check credits: `bankr llm credits` | Check trading wallet: `bankr balances`
 - In OpenClaw config, prefix model IDs with `bankr/` (e.g. `bankr/claude-sonnet-4.6`). In direct API calls, use bare IDs (e.g. `claude-sonnet-4.6`)
 
