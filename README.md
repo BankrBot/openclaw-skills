@@ -45,3 +45,4 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 5. Open a pull request with a description of what your skill does.
 
 **Guidelines:** Keep `SKILL.md` clear and well-documented. Include usage examples. Test before submitting.
+
