@@ -1,6 +1,6 @@
 ---
 name: trustlayer-sybil-scanner
-description: Feedback forensics for ERC-8004 agents. Detects Sybil rings, fake reviews, rating manipulation, and reputation laundering across 5 chains. 80K+ agents scored. No API key needed.
+description: Feedback forensics for ERC-8004 agents. Detects Sybil rings, fake reviews, rating manipulation, and reputation laundering across 6 chains. 92K+ agents scored. No API key needed.
 version: 2.0.0
 tags:
   - reputation
@@ -11,7 +11,9 @@ tags:
   - security
   - agents
 metadata:
-  openclaw:
+  clawdbot:
+    emoji: "🔍"
+    homepage: "https://thetrustlayer.xyz"
     requires:
       bins:
         - curl
@@ -19,18 +21,18 @@ metadata:
 
 # TrustLayer Sybil Scanner — ERC-8004 Feedback Forensics
 
-Detects fake reviews, Sybil rings, rating manipulation, and reputation laundering in ERC-8004 agent ratings. Covers 80,000+ agents across Base, Ethereum, BSC, Polygon, and Monad.
+Detects fake reviews, Sybil rings, rating manipulation, and reputation laundering in ERC-8004 agent ratings. Covers 92,000+ agents across Base, Ethereum, BSC, Polygon, Monad, and Solana.
 
 Most agent reputation systems show you the rating. This one tells you if the rating is real.
 
 **API Base:** `https://api.thetrustlayer.xyz`
-**No API key required** (beta). Free during beta, x402 micropayments coming.
+**No API key required** (beta). x402 micropayments on paid endpoints.
 
 ## What this catches that others don't
 
-- **Sybil rings**: Clusters of wallets that only review each other (299 flagged so far)
+- **Sybil rings**: Clusters of wallets that only review each other (402 flagged so far)
 - **Reviewer quality**: A 5-star review from a trusted agent vs a throwaway wallet are not the same. Scores are weighted by reviewer reputation.
-- **Cross-chain laundering**: Agent has great reviews on BSC but terrible ones on Base? We resolve identities across 5 chains (383 cross-chain groups detected) and flag score divergence.
+- **Cross-chain laundering**: Agent has great reviews on BSC but terrible ones on Base? We resolve identities across 6 chains (449 cross-chain groups detected) and flag score divergence.
 - **Temporal anomalies**: Sudden bursts of positive reviews after a period of bad ones. Review bombing. Rating manipulation patterns over time.
 - **Spam feedback**: 1,298+ spam feedbacks detected via tag analysis. Filtered before scoring.
 
@@ -48,7 +50,7 @@ Most agent reputation systems show you the rating. This one tells you if the rat
 curl -s "https://api.thetrustlayer.xyz/trust/<chain>:<agentId>"
 ```
 
-Replace `<chain>` with: base, ethereum, bsc, polygon, monad
+Replace `<chain>` with: base, ethereum, bsc, polygon, monad, solana-mainnet
 Replace `<agentId>` with the numeric agent ID.
 
 Example:
@@ -147,4 +149,4 @@ Six Sybil detection methods run on every sync:
 - Feedback timing anomaly detection
 - Tag-based spam filtering
 
-Scores update daily. Historical score snapshots retained for 90 days. 80,749 agents indexed across 5 chains as of February 2026.
+Scores update daily. Historical score snapshots retained for 90 days. 92,000+ agents indexed across 6 chains as of March 2026.
