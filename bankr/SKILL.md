@@ -256,6 +256,9 @@ Environment variables override config file values. Config file values override d
 | Command | Description |
 |---------|-------------|
 | `bankr llm models` | List available LLM models |
+| `bankr llm credits` | Check credit balance |
+| `bankr llm credits add <amount> [--token <addr>] [-y]` | Top up LLM credits from wallet |
+| `bankr llm credits auto [--enable/--disable] [--amount] [--threshold] [--tokens]` | View or configure auto top-up |
 | `bankr llm setup openclaw [--install]` | Generate or install OpenClaw config |
 | `bankr llm setup opencode [--install]` | Generate or install OpenCode config |
 | `bankr llm setup claude` | Show Claude Code environment setup |
@@ -337,8 +340,8 @@ The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unifie
 
 - Uses your `llmKey` if configured, otherwise falls back to your API key
 - **LLM credits** (USD) and **trading wallet** (crypto) are completely separate balances — having crypto does NOT give you LLM credits
-- **New accounts start with $0 LLM credits** — top up at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) before making any LLM calls, or you will get a 402 error
-- Check credits: `bankr llm credits` | Check trading wallet: `bankr balances`
+- **New accounts start with $0 LLM credits** — top up via `bankr llm credits add 25` or at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) before making any LLM calls, or you will get a 402 error
+- Check credits: `bankr llm credits` | Top up: `bankr llm credits add <amount>` | Auto top-up: `bankr llm credits auto --enable --amount 25 --tokens USDC`
 - In OpenClaw config, prefix model IDs with `bankr/` (e.g. `bankr/claude-sonnet-4.6`). In direct API calls, use bare IDs (e.g. `claude-sonnet-4.6`)
 
 ### Quick Commands
@@ -346,6 +349,8 @@ The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unifie
 ```bash
 bankr llm models                           # List available models
 bankr llm credits                          # Check credit balance
+bankr llm credits add 25                   # Top up $25 credits (USDC)
+bankr llm credits auto --enable --amount 25 --tokens USDC  # Auto top-up
 bankr llm setup openclaw --install         # Install Bankr provider into OpenClaw
 bankr llm setup claude                     # Print Claude Code env vars
 bankr llm claude                           # Launch Claude Code through gateway

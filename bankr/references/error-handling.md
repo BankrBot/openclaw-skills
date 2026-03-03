@@ -98,7 +98,7 @@ bankr prompt "What is my balance?"
 |------|---------|--------|
 | **400** | Bad request | Check prompt format, validate parameters |
 | **401** | Unauthorized | Fix API key (see Authentication section) |
-| **402** | Payment required | For LLM Gateway: top up credits at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) (`bankr llm credits` to check). For Agent API: ensure wallet has funds for fees |
+| **402** | Payment required | For LLM Gateway: top up via `bankr llm credits add 25` or at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) (`bankr llm credits` to check). For Agent API: ensure wallet has funds for fees |
 | **403** | Forbidden | Agent API access not enabled — enable at https://bankr.bot/api |
 | **429** | Rate limited | Wait and retry with exponential backoff |
 | **500** | Server error | Retry after delay |
