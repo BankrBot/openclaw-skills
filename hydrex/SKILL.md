@@ -112,7 +112,7 @@ Convert my oHYDX to veHYDX on Hydrex
 | ---------------------- | -------------------------------------------- |
 | HYDX Token             | `0x00000e7efa313F4E11Bfff432471eD9423AC6B30` |
 | veHYDX (Voting Escrow) | `0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1` |
-| Voter                  | `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5` |
+| Voter                  | `0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b` |
 | Vault Deposit Guard    | `0x9A0EBEc47c85fD30F1fdc90F57d2b178e84DC8d8` |
 | Vault Deployer         | `0x7d11De61c219b70428Bb3199F0DD88bA9E76bfEE` |
 | Incentive Distributor  | `0x8604d646df5A15074876fc2825CfeE306473dD45` |
@@ -366,7 +366,7 @@ When processing Hydrex voting requests:
    - "Optimally" / "maximize fees" → Calculate efficiency rankings
    - Percentages → Convert to basis points (60% = 6000)
 4. **Validate proportions** sum to 10000
-5. **Execute vote** via voter contract `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5`
+5. **Execute vote** via voter contract `0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b`
 
 **When displaying earnings projections, always use earning power (voting power × 1.3), not raw voting power.**
 
@@ -388,7 +388,7 @@ curl -s https://api.hydrex.fi/strategies | jq '[.[] |
 - **Hydrex Platform**: https://hydrex.fi
 - **Pool API**: https://api.hydrex.fi/strategies
 - **Documentation**: https://docs.hydrex.fi
-- **Voter Contract**: [BaseScan](https://basescan.org/address/0x16613524e02ad97eDfeF371bC883F2F5d6C480A5)
+- **Voter Contract**: [BaseScan](https://basescan.org/address/0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b)
 - **veHYDX Contract**: [BaseScan](https://basescan.org/address/0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1)
 
 ## Detailed References

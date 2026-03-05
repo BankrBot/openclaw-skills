@@ -2,7 +2,7 @@
 
 Vote to allocate your voting power across liquidity pools. Your vote determines how HYDX emissions are distributed.
 
-**Voter Contract:** `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5` on Base (chain ID 8453)
+**Voter Contract:** `0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b` on Base (chain ID 8453)
 
 ## Pool Information API
 
@@ -32,7 +32,7 @@ curl -s https://api.hydrex.fi/strategies | jq '.'
 Query your voting power (amount of veHYDX you can allocate for governance votes):
 
 **Function**: `votingPower(address)` — selector `0x90a40d0a`
-**Contract**: `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5` (Base)
+**Contract**: `0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b` (Base)
 
 ```bash
 bankr prompt "What's my Hydrex voting power?"
@@ -98,7 +98,7 @@ To read directly — encode voter address + pool address (both 32-byte padded) a
 Get current voting weight for any pool:
 
 **Function**: `weights(address pool)` — selector `0x776f3843`
-**Contract**: `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5` (Base)
+**Contract**: `0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b` (Base)
 
 ```bash
 bankr prompt "What's the current voting weight for the HYDX/USDC pool on Hydrex?"
@@ -110,7 +110,7 @@ To read directly — encode pool address as 32-byte padded hex and call `eth_cal
 ## Voting on Pools
 
 **Function**: `vote(address[] _poolVote, uint256[] _voteProportions)`
-**Contract**: `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5`
+**Contract**: `0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b`
 **Chain**: Base (8453)
 
 ### Vote Proportions
@@ -165,7 +165,7 @@ Vote on Hydrex pools weighted by their projected fee revenue
 **Manual pool addresses (if needed):**
 
 ```
-Send transaction to 0x16613524e02ad97eDfeF371bC883F2F5d6C480A5 on Base calling vote with pools [0x51f0b932855986b0e621c9d4db6eee1f4644d3d2, 0xAnotherPoolAddress] and proportions [6000, 4000]
+Send transaction to 0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b on Base calling vote with pools [0x51f0b932855986b0e621c9d4db6eee1f4644d3d2, 0xAnotherPoolAddress] and proportions [6000, 4000]
 ```
 
 ### Using Arbitrary Transaction Format
@@ -175,7 +175,7 @@ For precise control, use Bankr's arbitrary transaction feature:
 ```
 Submit this transaction on Base:
 {
-  "to": "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
+  "to": "0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b",
   "data": "ENCODED_CALLDATA",
   "value": "0",
   "chainId": 8453
@@ -206,11 +206,11 @@ To read directly — encode voter address as 32-byte padded hex and call `eth_ca
 Clear all current votes before reallocating:
 
 **Function**: `reset()`
-**Contract**: `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5`
+**Contract**: `0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b`
 
 ```json
 {
-  "to": "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
+  "to": "0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b",
   "data": "0xd826f88f",
   "value": "0",
   "chainId": 8453
