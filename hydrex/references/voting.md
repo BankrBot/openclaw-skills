@@ -13,6 +13,7 @@ curl -s https://api.hydrex.fi/strategies | jq '.'
 ```
 
 **Key fields per pool:**
+
 - `address` — Pool address (used as the voting target)
 - `gauge.address` — Gauge contract address
 - `gauge.bribe` — External bribe contract
@@ -30,49 +31,31 @@ curl -s https://api.hydrex.fi/strategies | jq '.'
 
 Query your voting power (amount of veHYDX you can allocate for governance votes):
 
-```bash
-# Replace ADDRESS with the voter's address
-ADDRESS="0xYourAddressHere"
-ADDRESS_PADDED=$(echo $ADDRESS | sed 's/0x/000000000000000000000000/')
+**Function**: `votingPower(address)` — selector `0x90a40d0a`
+**Contract**: `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5` (Base)
 
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
-      "data":"0x90a40d0a'"$ADDRESS_PADDED"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d\n"
+```bash
+bankr prompt "What's my Hydrex voting power?"
 ```
 
-This returns your total **voting power** as a uint256 (wei units).
+To read directly — encode the voter address as a 32-byte padded hex value (strip `0x`, left-pad with 24 zeros) and call `eth_call` on the Voter contract. Returns a `uint256` voting power in wei units.
 
 ## Checking Earning Power
 
 **Earning power** determines your share of fee distributions and is 1.3x your voting power:
 
-```bash
-# Get voting power and calculate earning power
-VOTING_POWER=$(curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
-      "data":"0x90a40d0a'"$ADDRESS_PADDED"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d\n")
+**Function**: Same `votingPower(address)` read — selector `0x90a40d0a` — then multiply result by 1.3.
 
-# Calculate earning power (1.3x voting power)
-echo "scale=0; $VOTING_POWER * 1.3 / 1" | bc
+```bash
+bankr prompt "What's my Hydrex earning power?"
+```
+
+```
+earningPower = votingPower × 1.3
 ```
 
 **When to display:**
+
 - **Voting power**: For governance vote allocation
 - **Earning power**: For fee earning projections and APR calculations
 
@@ -81,82 +64,48 @@ echo "scale=0; $VOTING_POWER * 1.3 / 1" | bc
 Check how an address has allocated votes across pools:
 
 ### Get Pool Vote Length
-```bash
-# Returns number of pools the address has voted for
-ADDRESS_PADDED=$(echo $ADDRESS | sed 's/0x/000000000000000000000000/')
 
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
-      "data":"0x29199aa4'"$ADDRESS_PADDED"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d\n"
+**Function**: `poolVoteLength(address)` — selector `0x29199aa4`
+
+```bash
+bankr prompt "How many pools am I currently voting on in Hydrex?"
 ```
+
+To read directly — encode voter address as 32-byte padded hex and call `eth_call`. Returns `uint256` count of pools voted for.
 
 ### Get Pool Vote at Index
-```bash
-# Returns pool address at given index
-ADDRESS_PADDED=$(echo $ADDRESS | sed 's/0x/000000000000000000000000/')
-INDEX_HEX=$(printf '%064x' 0)  # Index 0, 1, 2, etc.
 
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
-      "data":"0xd73d1f9b'"$ADDRESS_PADDED$INDEX_HEX"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result'
+**Function**: `poolVote(address, uint256)` — selector `0xd73d1f9b`
+
+```bash
+bankr prompt "Show which pools I'm voting on in Hydrex"
 ```
+
+To read directly — encode voter address + index (both 32-byte padded) and call `eth_call`. Returns the pool address at that index. Iterate from 0 to `poolVoteLength - 1`.
 
 ### Get Votes for Specific Pool
-```bash
-# Returns amount of votes allocated to a pool by an address
-ADDRESS_PADDED=$(echo $ADDRESS | sed 's/0x/000000000000000000000000/')
-POOL_PADDED=$(echo $POOL | sed 's/0x/000000000000000000000000/')
 
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
-      "data":"0xd23254b4'"$ADDRESS_PADDED$POOL_PADDED"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d\n"
+**Function**: `votes(address voter, address pool)` — selector `0xd23254b4`
+
+```bash
+bankr prompt "How many votes do I have on the HYDX/USDC pool in Hydrex?"
 ```
+
+To read directly — encode voter address + pool address (both 32-byte padded) and call `eth_call`. Returns `uint256` vote weight allocated to that pool.
 
 ## Checking Pool Weights
 
 Get current voting weight for any pool:
 
-```bash
-# Replace POOL with the pool address from API
-POOL="0x51f0b932855986b0e621c9d4db6eee1f4644d3d2"
-POOL_PADDED=$(echo $POOL | sed 's/0x/000000000000000000000000/')
+**Function**: `weights(address pool)` — selector `0x776f3843`
+**Contract**: `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5` (Base)
 
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
-      "data":"0x776f3843'"$POOL_PADDED"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d\n"
+```bash
+bankr prompt "What's the current voting weight for the HYDX/USDC pool on Hydrex?"
+bankr prompt "Show voting weights for all Hydrex pools"
 ```
+
+To read directly — encode pool address as 32-byte padded hex and call `eth_call`. Returns `uint256` total votes allocated to that pool. Use pool addresses from `https://api.hydrex.fi/strategies` (`address` field).
 
 ## Voting on Pools
 
@@ -178,11 +127,13 @@ Vote proportions are percentage weights (basis points) that sum to 10000 (100%):
 Use Bankr's natural language interface to vote. Bankr will automatically fetch pool addresses from the API based on pool names:
 
 **Single pool (100% allocation):**
+
 ```
 Vote all my Hydrex voting power on HYDX/USDC
 ```
 
 **Multi-pool allocation by name:**
+
 ```
 Vote 50/50 on HYDX/USDC and cbBTC/WETH on Hydrex
 ```
@@ -192,11 +143,13 @@ Vote 60% on HYDX/USDC and 40% on USDC/USDbC on Hydrex
 ```
 
 **Three-way split:**
+
 ```
 Vote 33/33/34 on HYDX/USDC, cbBTC/WETH, and USDC/USDbC on Hydrex
 ```
 
 **Optimized voting (automatic fee maximization):**
+
 ```
 Vote optimally on Hydrex to maximize my fee earnings
 ```
@@ -210,6 +163,7 @@ Vote on Hydrex pools weighted by their projected fee revenue
 ```
 
 **Manual pool addresses (if needed):**
+
 ```
 Send transaction to 0x16613524e02ad97eDfeF371bC883F2F5d6C480A5 on Base calling vote with pools [0x51f0b932855986b0e621c9d4db6eee1f4644d3d2, 0xAnotherPoolAddress] and proportions [6000, 4000]
 ```
@@ -237,37 +191,15 @@ Be aware of voting constraints:
 3. **Epoch**: Votes are per epoch; cannot change mid-epoch
 4. **Proportions**: Must sum to exactly 10000 (100%)
 
-### Check Vote Delay
-```bash
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
-      "data":"0x3a09e5a7"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d seconds\n"
-```
-
 ### Check Last Voted Timestamp
-```bash
-ADDRESS_PADDED=$(echo $ADDRESS | sed 's/0x/000000000000000000000000/')
 
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
-      "data":"0x77b887b9'"$ADDRESS_PADDED"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d\n"
+**Function**: `lastVoted(address)` — selector `0x77b887b9`
+
+```bash
+bankr prompt "When did I last vote on Hydrex?"
 ```
+
+To read directly — encode voter address as 32-byte padded hex and call `eth_call`. Returns `uint256` Unix timestamp of last vote. Compare against current time + `VOTE_DELAY` to determine if a new vote is allowed.
 
 ## Resetting Votes
 
@@ -304,19 +236,23 @@ When choosing pools to vote for, consider:
 When the user requests optimized voting, follow this process:
 
 1. **Fetch all pools** from `https://api.hydrex.fi/strategies`
-2. **Get user's earning power**: Query voting power from voter contract, multiply by 1.3
+2. **Get user's earning power**: Use `bankr prompt "What's my Hydrex earning power?"`, or query voting power via Bankr and multiply by 1.3
 3. **Calculate fee efficiency** for each pool:
+
    ```
    efficiency = projectedFeeInUsd / liveVotingWeight
    ```
+
    This shows how much fee revenue each unit of voting power earns.
 
 4. **Rank pools** by efficiency (highest first)
 
 5. **Project user earnings** per pool:
+
    ```
    userEarnings = (userEarningPower / (poolWeight + userVotingPower)) × projectedFeeInUsd
    ```
+
    Use earning power (1.3x voting power) for accurate fee projections.
 
 6. **Select top pools** (3-5 pools recommended for diversification)
@@ -326,6 +262,7 @@ When the user requests optimized voting, follow this process:
 8. **Execute vote transaction**
 
 **Example calculation:**
+
 ```javascript
 // Pool A: $10,000 fees / 500,000 weight = $0.02 per vote
 // Pool B: $5,000 fees / 100,000 weight = $0.05 per vote
@@ -348,16 +285,19 @@ When users request Hydrex voting, process their request as follows:
 ### Pattern Recognition
 
 **By pool name:**
+
 - "Vote on HYDX/USDC" → Fetch pool address from API where `title == "HYDX/USDC"`
 - "Vote 50/50 on HYDX/USDC and cbBTC/WETH" → Fetch both pools, use proportions `[5000, 5000]`
 - "Vote 60/40 on [Pool A] and [Pool B]" → Use proportions `[6000, 4000]`
 
 **Optimized voting:**
+
 - "Vote optimally" / "maximize fees" / "best returns" → Calculate efficiency, vote on top pools
 - "Vote on top 3 pools" → Sort by efficiency, split equally across top 3
 - "Vote weighted by fees" → Allocate proportional to `projectedFeeInUsd`
 
 **Reset and revote:**
+
 - "Change my vote to X" → Call `reset()` first, then vote
 - "Reallocate votes" → Reset then vote
 
@@ -375,29 +315,28 @@ curl -s https://api.hydrex.fi/strategies | jq '[.[] | select(.gauge.projectedFee
 
 Vote proportions are in basis points (10000 = 100%):
 
-| User Says | Proportions |
-|-----------|-------------|
-| "Vote 100% on X" | `[10000]` |
-| "Vote 50/50 on X and Y" | `[5000, 5000]` |
-| "Vote 60/40 on X and Y" | `[6000, 4000]` |
-| "Vote 33/33/34 on X, Y, Z" | `[3333, 3333, 3334]` |
+| User Says                  | Proportions                |
+| -------------------------- | -------------------------- |
+| "Vote 100% on X"           | `[10000]`                  |
+| "Vote 50/50 on X and Y"    | `[5000, 5000]`             |
+| "Vote 60/40 on X and Y"    | `[6000, 4000]`             |
+| "Vote 33/33/34 on X, Y, Z" | `[3333, 3333, 3334]`       |
 | "Vote 25% each on 4 pools" | `[2500, 2500, 2500, 2500]` |
 
 **Always ensure proportions sum to exactly 10000.**
 
 ## Function Selectors
 
-| Function | Selector | Parameters | Returns |
-|----------|----------|------------|---------|
-| `vote(address[],uint256[])` | `0xc9d27afe` | pools, proportions | — |
-| `reset()` | `0xd826f88f` | — | — |
-| `weights(address)` | `0x776f3843` | pool | uint256 |
-| `votes(address,address)` | `0xd23254b4` | voter, pool | uint256 |
-| `poolVoteLength(address)` | `0x29199aa4` | voter | uint256 |
-| `poolVote(address,uint256)` | `0xd73d1f9b` | voter, index | address |
-| `totalWeight()` | `0x96c82e57` | — | uint256 |
-| `lastVoted(address)` | `0x77b887b9` | address | uint256 |
-| `VOTE_DELAY()` | `0x3a09e5a7` | — | uint256 |
+| Function                    | Selector     | Parameters         | Returns |
+| --------------------------- | ------------ | ------------------ | ------- |
+| `vote(address[],uint256[])` | `0xc9d27afe` | pools, proportions | —       |
+| `reset()`                   | `0xd826f88f` | —                  | —       |
+| `weights(address)`          | `0x776f3843` | pool               | uint256 |
+| `votes(address,address)`    | `0xd23254b4` | voter, pool        | uint256 |
+| `poolVoteLength(address)`   | `0x29199aa4` | voter              | uint256 |
+| `poolVote(address,uint256)` | `0xd73d1f9b` | voter, index       | address |
+| `totalWeight()`             | `0x96c82e57` | —                  | uint256 |
+| `lastVoted(address)`        | `0x77b887b9` | address            | uint256 |
 
 ## Example Workflows
 
@@ -419,30 +358,22 @@ Vote proportions are in basis points (10000 = 100%):
 ```bash
 # 1. Get available pools with fee data
 curl -s https://api.hydrex.fi/strategies | jq '.[] | {
-  address, 
-  title, 
+  address,
+  title,
   projectedFees: .gauge.projectedFeeInUsd,
-  votingWeight: .gauge.liveVotingWeight, 
+  votingWeight: .gauge.liveVotingWeight,
   votingApr: .gauge.votingAprProjection,
   efficiency: (.gauge.projectedFeeInUsd / .gauge.liveVotingWeight)
 } | select(.projectedFees != null)' | jq -s 'sort_by(-.efficiency)'
 
 # 2. Check your voting power
-ADDRESS="0xYourAddress"
-ADDRESS_PADDED=$(echo $ADDRESS | sed 's/0x/000000000000000000000000/')
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x16613524e02ad97eDfeF371bC883F2F5d6C480A5","data":"0x90a40d0a'"$ADDRESS_PADDED"'"},"latest"],"id":1}' \
-  | jq -r '.result' | xargs printf "%d\n"
+bankr prompt "What's my Hydrex voting power?"
 
 # 3. Vote via Bankr natural language
-"Vote 60% on HYDX/USDC and 40% on cbBTC/WETH on Hydrex"
+bankr prompt "Vote 60% on HYDX/USDC and 40% on cbBTC/WETH on Hydrex"
 
 # 4. Verify vote
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x16613524e02ad97eDfeF371bC883F2F5d6C480A5","data":"0x29199aa4'"$ADDRESS_PADDED"'"},"latest"],"id":1}' \
-  | jq -r '.result' | xargs printf "Voted for %d pools\n"
+bankr prompt "Show which pools I'm voting on in Hydrex"
 ```
 
 ### Optimization Example for Bankr

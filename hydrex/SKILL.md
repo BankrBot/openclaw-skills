@@ -1,7 +1,15 @@
 ---
 name: hydrex
 description: Interact with Hydrex liquidity pools on Base. Use when the user wants to lock HYDX for voting power, check voting power for gauge voting, vote on liquidity pool strategies, view pool information, check voting weights, or participate in Hydrex governance. Uses Bankr for transaction execution.
-metadata: {"clawdbot":{"emoji":"💧","homepage":"https://hydrex.fi","requires":{"bins":["curl","jq"]}}}
+metadata:
+  {
+    "clawdbot":
+      {
+        "emoji": "💧",
+        "homepage": "https://hydrex.fi",
+        "requires": { "bins": ["bankr"] },
+      },
+  }
 ---
 
 # Hydrex
@@ -11,16 +19,19 @@ Participate in Hydrex governance on Base. Lock HYDX to receive voting power, the
 ## Quick Start
 
 ### Check Voting Power
+
 ```
 What's my Hydrex voting power?
 ```
 
 ### Lock HYDX for Voting Power
+
 ```
 Lock 1000 HYDX on Hydrex with rolling lock
 ```
 
 ### Vote on Pools
+
 ```
 Vote optimally on Hydrex to maximize fees
 ```
@@ -32,6 +43,7 @@ Vote 50/50 on HYDX/USDC and cbBTC/WETH on Hydrex
 ## Core Capabilities
 
 ### Locking HYDX
+
 - Lock HYDX to receive veHYDX (vote-escrowed HYDX)
 - Receive an NFT representing your locked position
 - Gain voting power starting next epoch
@@ -42,6 +54,7 @@ Vote 50/50 on HYDX/USDC and cbBTC/WETH on Hydrex
 **Reference**: [references/locking.md](references/locking.md)
 
 ### Voting on Pools
+
 - Vote to allocate voting power across liquidity pools
 - Direct HYDX emissions based on your votes
 - Earn fees from supported pools
@@ -52,21 +65,23 @@ Vote 50/50 on HYDX/USDC and cbBTC/WETH on Hydrex
 
 ## Contracts (Base Mainnet)
 
-| Contract | Address |
-|----------|---------|
-| HYDX Token | `0x00000e7efa313F4E11Bfff432471eD9423AC6B30` |
+| Contract               | Address                                      |
+| ---------------------- | -------------------------------------------- |
+| HYDX Token             | `0x00000e7efa313F4E11Bfff432471eD9423AC6B30` |
 | veHYDX (Voting Escrow) | `0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1` |
-| Voter | `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5` |
+| Voter                  | `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5` |
 
 ## Pool Information API
 
 Get current liquidity pool data:
 
 ```bash
-curl -s https://api.hydrex.fi/strategies | jq '.'
+bankr prompt "What are the top Hydrex pools by projected fees?"
+bankr prompt "Show me all Hydrex liquidity pools with their voting weights"
 ```
 
 **Key fields for voting optimization:**
+
 - `address` — Pool address (voting target)
 - `title` — Pool name (e.g., "HYDX/USDC")
 - `gauge.projectedFeeInUsd` — **Primary optimization metric**
@@ -86,6 +101,7 @@ curl -s https://api.hydrex.fi/strategies | jq '.'
 5. **Vote** — Allocate voting power to pools
 
 **Example:**
+
 ```
 # Step 1: Check HYDX balance
 "What's my HYDX balance on Base?"
@@ -108,6 +124,7 @@ Vote optimally on Hydrex to maximize my fee earnings
 ```
 
 Bankr will:
+
 1. Fetch all pools from API
 2. Calculate efficiency (fees per vote) for each pool
 3. Rank pools by efficiency
@@ -143,25 +160,31 @@ This will reset current votes and apply new allocation.
 ## Optimization Strategies
 
 ### Simple Strategy
+
 Vote 100% on the pool with highest `projectedFeeInUsd / liveVotingWeight` ratio.
 
 **Example:**
+
 ```
 Vote on the single best Hydrex pool by fees
 ```
 
 ### Balanced Strategy
+
 Split votes equally across top 3-5 efficient pools for diversification.
 
 **Example:**
+
 ```
 Vote equally on top 3 Hydrex pools by projected fees
 ```
 
 ### Weighted Strategy
+
 Allocate votes proportional to efficiency scores.
 
 **Example:**
+
 ```
 Vote on Hydrex pools weighted by their fee efficiency
 ```
@@ -180,27 +203,17 @@ Vote on Hydrex pools weighted by their fee efficiency
 ### Checking Your Power
 
 ```bash
-# Via Bankr (displays earning power)
-"What's my Hydrex earning power?"
+# Check voting power
+bankr prompt "What's my Hydrex voting power?"
 
-# Manual query - voting power (voter contract)
-ADDRESS="0xYourAddress"
-ADDRESS_PADDED=$(echo $ADDRESS | sed 's/0x/000000000000000000000000/')
+# Check earning power (1.3x voting power)
+bankr prompt "What's my Hydrex earning power?"
 
-VOTING_POWER=$(curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
-      "data":"0x90a40d0a'"$ADDRESS_PADDED"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d\n")
+# Check veHYDX NFT balance
+bankr prompt "Show my veHYDX NFT balance"
 
-# Calculate earning power (1.3x voting power)
-echo "scale=0; $VOTING_POWER * 1.3 / 1" | bc
+# Check a specific NFT's earning power
+bankr prompt "How much earning power does my veHYDX NFT #5 have?"
 ```
 
 **Display to users**: Show earning power (voting power × 1.3) when discussing fee earnings, as this is what determines your share of distributions.
@@ -209,12 +222,12 @@ echo "scale=0; $VOTING_POWER * 1.3 / 1" | bc
 
 Vote weights are in basis points (10000 = 100%):
 
-| User Says | Proportions |
-|-----------|-------------|
-| "100% on X" | `[10000]` |
-| "50/50 on X and Y" | `[5000, 5000]` |
-| "60/40 on X and Y" | `[6000, 4000]` |
-| "33/33/34 on X, Y, Z" | `[3333, 3333, 3334]` |
+| User Says             | Proportions                |
+| --------------------- | -------------------------- |
+| "100% on X"           | `[10000]`                  |
+| "50/50 on X and Y"    | `[5000, 5000]`             |
+| "60/40 on X and Y"    | `[6000, 4000]`             |
+| "33/33/34 on X, Y, Z" | `[3333, 3333, 3334]`       |
 | "25% each on 4 pools" | `[2500, 2500, 2500, 2500]` |
 
 **Proportions must sum to exactly 10000.**
@@ -222,6 +235,7 @@ Vote weights are in basis points (10000 = 100%):
 ## Epoch System
 
 Hydrex operates on epochs:
+
 - **Duration**: Typically 1 week
 - **Voting power activation**: Next epoch after locking
 - **Vote changes**: Respect vote delay between changes
@@ -230,17 +244,20 @@ Hydrex operates on epochs:
 ## Example Prompts
 
 ### Locking
+
 - "Lock 1000 HYDX on Hydrex with rolling lock"
 - "Create veHYDX rolling lock with 500 HYDX on Base"
 - "Add 250 HYDX to my veHYDX NFT #1"
 
 ### Voting
+
 - "Vote optimally on Hydrex"
 - "Vote 50/50 on HYDX/USDC and cbBTC/WETH on Hydrex"
 - "Allocate my votes to top 3 Hydrex pools by fees"
 - "Change my Hydrex vote to 100% on HYDX/USDC"
 
 ### Queries
+
 - "What's my Hydrex earning power?"
 - "Show me the best Hydrex pools to vote for"
 - "How much earning power does my veHYDX NFT #5 have?"
@@ -248,6 +265,7 @@ Hydrex operates on epochs:
 ## Tips
 
 ### For New Users
+
 - **Start small**: Lock a small amount first to learn the flow
 - **Rolling locks**: Use Type 1 for maximum voting power with auto-extension
 - **Wait for epoch**: Voting power activates at next epoch boundary
@@ -255,6 +273,7 @@ Hydrex operates on epochs:
 - **Earning power**: Remember your fee earnings are based on 1.3x your voting power
 
 ### For Active Voters
+
 - **Track efficiency**: Monitor `projectedFeeInUsd / liveVotingWeight`
 - **Diversify votes**: Split across 3-5 pools to reduce risk
 - **Watch bribes**: Check API for additional incentive opportunities
@@ -262,6 +281,7 @@ Hydrex operates on epochs:
 - **Use pool names**: Easier than remembering addresses
 
 ### For Maximizers
+
 - **Efficiency > absolute fees**: $5k fees with 100k weight beats $10k fees with 500k weight
 - **Use earning power**: Calculate earnings with 1.3x voting power for accurate projections
 - **Rebalance periodically**: Pool efficiency changes over time
@@ -285,12 +305,13 @@ When processing Hydrex voting requests:
 **When displaying earnings projections, always use earning power (voting power × 1.3), not raw voting power.**
 
 **Example optimization logic:**
+
 ```bash
-curl -s https://api.hydrex.fi/strategies | jq '[.[] | 
-  select(.gauge.projectedFeeInUsd != null and .gauge.liveVotingWeight > 0) | 
+curl -s https://api.hydrex.fi/strategies | jq '[.[] |
+  select(.gauge.projectedFeeInUsd != null and .gauge.liveVotingWeight > 0) |
   {
-    address, 
-    title, 
+    address,
+    title,
     efficiency: (.gauge.projectedFeeInUsd / .gauge.liveVotingWeight)
   }
 ] | sort_by(-.efficiency) | .[0:3]'

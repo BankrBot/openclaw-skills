@@ -8,6 +8,7 @@ Lock HYDX tokens to receive veHYDX (vote-escrowed HYDX), which grants governance
 ## Overview
 
 When you lock HYDX:
+
 1. Your HYDX is locked in the veHYDX contract
 2. You receive an NFT representing your locked position
 3. This NFT grants voting power (available after next epoch flip)
@@ -32,6 +33,7 @@ Type 1 rolling locks automatically extend to maintain a 2-year lock duration, ma
 First, approve the veHYDX contract to spend your HYDX:
 
 **Using Bankr:**
+
 ```
 Approve 1000 HYDX to 0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1 on Base
 ```
@@ -43,11 +45,13 @@ Replace `1000` with the amount you want to lock.
 **Function**: `createLock(uint256 _value, uint256 _lockDuration, uint8 _lockType)`
 
 **Parameters:**
+
 - `_value`: Amount of HYDX to lock (in wei, 18 decimals)
 - `_lockDuration`: Lock duration in seconds (use `0` for Type 1 rolling locks)
 - `_lockType`: Lock type (use `1` for rolling lock - recommended)
 
 **Using Bankr (Natural Language):**
+
 ```
 Lock 1000 HYDX on Hydrex with rolling lock
 ```
@@ -61,6 +65,7 @@ Send transaction to 0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1 on Base calling c
 ```
 
 **Using Arbitrary Transaction Format:**
+
 ```json
 {
   "to": "0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1",
@@ -73,6 +78,7 @@ Send transaction to 0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1 on Base calling c
 ### Step 3: Receive NFT
 
 The transaction will mint a veHYDX NFT to your address. This NFT:
+
 - Represents your locked position
 - Grants voting power starting next epoch
 - Can be viewed in your wallet as an NFT
@@ -82,27 +88,18 @@ The transaction will mint a veHYDX NFT to your address. This NFT:
 
 Query information about a locked position:
 
-**Function**: `lockDetails(uint256 _tokenId)`
+**Function**: `lockDetails(uint256 _tokenId)` — selector `0x2c79db11`
+**Contract**: `0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1` (Base)
 
 ```bash
-# Replace TOKEN_ID with your veHYDX NFT ID
-TOKEN_ID=1
-TOKEN_ID_HEX=$(printf '%064x' $TOKEN_ID)
-
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1",
-      "data":"0x2c79db11'"$TOKEN_ID_HEX"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result'
+bankr prompt "Show my veHYDX lock details for NFT #1"
+bankr prompt "What are the lock details for veHYDX NFT #5?"
 ```
 
+To read directly — encode `tokenId` as a 32-byte hex value and call `eth_call` on the veHYDX contract. Example for token ID 1: data = `0x2c79db11` + `0000000000000000000000000000000000000000000000000000000000000001`
+
 **Returns:**
+
 - `amount`: Amount of HYDX locked
 - `startTime`: When the lock was created
 - `endTime`: When the lock expires (rolling locks maintain 2-year duration)
@@ -112,42 +109,20 @@ curl -s -X POST https://mainnet.base.org \
 
 Get the voting power of a specific veHYDX NFT:
 
-**Function**: `balanceOfNFT(uint256 _tokenId)`
+**Function**: `balanceOfNFT(uint256 _tokenId)` — selector `0x4f0e0ef3`
+**Contract**: `0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1` (Base)
 
 ```bash
-TOKEN_ID=1
-TOKEN_ID_HEX=$(printf '%064x' $TOKEN_ID)
-
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1",
-      "data":"0x4f0e0ef3'"$TOKEN_ID_HEX"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d\n"
+bankr prompt "What's the voting power for my veHYDX NFT #1?"
+bankr prompt "What's the earning power for my veHYDX NFT #1?"
 ```
+
+To read directly — encode `tokenId` as a 32-byte hex value and call `eth_call` on the veHYDX contract. Returns a `uint256` in wei units.
 
 **Important**: This returns **voting power**. To get **earning power** (used for fee distribution), multiply by 1.3:
 
-```bash
-# Get earning power
-VOTING_POWER=$(curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1",
-      "data":"0x4f0e0ef3'"$TOKEN_ID_HEX"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d\n")
-
-echo "scale=2; $VOTING_POWER * 1.3" | bc
+```
+earningPower = votingPower × 1.3
 ```
 
 ## Managing Your Lock
@@ -166,47 +141,31 @@ Add 500 HYDX to my veHYDX NFT #1 on Base
 
 Get the owner of a veHYDX NFT:
 
-```bash
-TOKEN_ID=1
-TOKEN_ID_HEX=$(printf '%064x' $TOKEN_ID)
+**Function**: `ownerOf(uint256 _tokenId)` — selector `0x6352211e`
 
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1",
-      "data":"0x6352211e'"$TOKEN_ID_HEX"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result'
+```bash
+bankr prompt "Who owns veHYDX NFT #1?"
 ```
+
+To read directly — encode `tokenId` as a 32-byte hex value and call `eth_call`. Returns the owner address.
 
 ### Check Balance
 
 Get number of veHYDX NFTs owned by an address:
 
-```bash
-ADDRESS="0xYourAddress"
-ADDRESS_PADDED=$(echo $ADDRESS | sed 's/0x/000000000000000000000000/')
+**Function**: `balanceOf(address _owner)` — selector `0x70a08231`
 
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1",
-      "data":"0x70a08231'"$ADDRESS_PADDED"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d\n"
+```bash
+bankr prompt "Show my veHYDX NFT balance"
+bankr prompt "How many veHYDX NFTs do I own?"
 ```
+
+To read directly — encode the owner address as a 32-byte padded hex value (strip `0x`, left-pad with 24 zeros) and call `eth_call`. Returns a `uint256` count.
 
 ## Epoch System
 
 veHYDX operates on an epoch system:
+
 - Voting power from new locks becomes active at the next epoch flip
 - Epochs typically last 1 week
 - Votes and rewards are calculated per epoch
@@ -216,15 +175,15 @@ After creating a lock, your voting power will be available for voting starting a
 
 ## Function Selectors
 
-| Function | Selector | Parameters | Returns |
-|----------|----------|------------|---------|
-| `createLock(uint256,uint256,uint8)` | `0x2fb1cb6c` | value, duration, type | tokenId |
-| `increaseAmount(uint256,uint256)` | `0xf4f6ad89` | tokenId, value | — |
-| `lockDetails(uint256)` | `0x2c79db11` | tokenId | LockDetails |
-| `balanceOfNFT(uint256)` | `0x4f0e0ef3` | tokenId | uint256 |
-| `ownerOf(uint256)` | `0x6352211e` | tokenId | address |
-| `balanceOf(address)` | `0x70a08231` | owner | uint256 |
-| `totalSupply()` | `0x18160ddd` | — | uint256 |
+| Function                            | Selector     | Parameters            | Returns     |
+| ----------------------------------- | ------------ | --------------------- | ----------- |
+| `createLock(uint256,uint256,uint8)` | `0x2fb1cb6c` | value, duration, type | tokenId     |
+| `increaseAmount(uint256,uint256)`   | `0xf4f6ad89` | tokenId, value        | —           |
+| `lockDetails(uint256)`              | `0x2c79db11` | tokenId               | LockDetails |
+| `balanceOfNFT(uint256)`             | `0x4f0e0ef3` | tokenId               | uint256     |
+| `ownerOf(uint256)`                  | `0x6352211e` | tokenId               | address     |
+| `balanceOf(address)`                | `0x70a08231` | owner                 | uint256     |
+| `totalSupply()`                     | `0x18160ddd` | —                     | uint256     |
 
 ## Complete Workflow Example
 
@@ -247,45 +206,23 @@ After creating a lock, your voting power will be available for voting starting a
 ### Manual Flow
 
 ```bash
-# 1. Get HYDX balance
-ADDRESS="0xYourAddress"
-ADDRESS_PADDED=$(echo $ADDRESS | sed 's/0x/000000000000000000000000/')
+# 1. Check HYDX balance
+bankr prompt "What's my HYDX balance on Base?"
 
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x00000e7efa313F4E11Bfff432471eD9423AC6B30",
-      "data":"0x70a08231'"$ADDRESS_PADDED"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "%d\n"
+# 2. Approve HYDX
+bankr prompt "Approve 1000 HYDX to 0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1 on Base"
 
-# 2. Approve HYDX (via Bankr)
-"Approve 1000 HYDX to 0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1 on Base"
-
-# 3. Create rolling lock (via Bankr)
-"Lock 1000 HYDX on Hydrex with rolling lock"
+# 3. Create rolling lock
+bankr prompt "Lock 1000 HYDX on Hydrex with rolling lock"
 
 # 4. Check veHYDX NFT balance
-curl -s -X POST https://mainnet.base.org \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"eth_call",
-    "params":[{
-      "to":"0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1",
-      "data":"0x70a08231'"$ADDRESS_PADDED"'"
-    },"latest"],
-    "id":1
-  }' | jq -r '.result' | xargs printf "You have %d veHYDX NFTs\n"
+bankr prompt "Show my veHYDX NFT balance"
 ```
 
 ## Lock Type Details
 
 ### Type 0: Time-Vested Lock
+
 - Voting power decays over time
 - Must set `_lockDuration` (in seconds)
 - Unlocks after duration expires
@@ -293,6 +230,7 @@ curl -s -X POST https://mainnet.base.org \
 - Power gradually decreases as lock approaches expiration
 
 ### Type 1: Rolling Lock (Recommended)
+
 - **Automatically extends to maintain 2-year lock**
 - Maximum voting power at all times
 - Set `_lockDuration` to `0`
@@ -301,6 +239,7 @@ curl -s -X POST https://mainnet.base.org \
 - Lock continuously extends to maintain optimal duration
 
 ### Type 2: Permanent Lock
+
 - Immutable permanent lock
 - Cannot be unlocked or modified
 - Set `_lockDuration` for permanent commitment
@@ -312,10 +251,12 @@ curl -s -X POST https://mainnet.base.org \
 **Earning Power**: Used for calculating fee distribution (1.3x voting power)
 
 When displaying power to users:
+
 - **For voting allocation**: Use voting power from voter contract
 - **For fee earnings**: Show earning power (voting power × 1.3)
 
 Example:
+
 - You lock 1000 HYDX with Type 1 rolling lock
 - Voting power: ~2000 (depends on lock duration calculation)
 - Earning power: ~2600 (voting power × 1.3)
