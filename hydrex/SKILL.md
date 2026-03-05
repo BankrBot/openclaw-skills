@@ -1,6 +1,6 @@
 ---
 name: hydrex
-description: Interact with Hydrex liquidity pools on Base. Use when the user wants to lock HYDX for voting power, check voting power for gauge voting, vote on liquidity pool strategies, view pool information, check voting weights, or participate in Hydrex governance. Uses Bankr for transaction execution.
+description: Interact with Hydrex liquidity pools on Base. Use when the user wants to lock HYDX for voting power, check voting power for gauge voting, vote on liquidity pool strategies, view pool information, check voting weights, participate in Hydrex governance, deposit single-sided liquidity into auto-managed vaults to earn Hydrex yields, claim oHYDX rewards from incentive campaigns, or exercise oHYDX into veHYDX. Uses Bankr for transaction execution.
 metadata:
   {
     "clawdbot":
@@ -14,7 +14,7 @@ metadata:
 
 # Hydrex
 
-Participate in Hydrex governance on Base. Lock HYDX to receive voting power, then vote on liquidity pool strategies to direct emissions and rewards.
+Participate in Hydrex governance on Base. Lock HYDX to receive voting power, vote on liquidity pool strategies to direct emissions and rewards, deposit single-sided into auto-managed vaults to earn oHYDX yields, and claim oHYDX rewards from incentive campaigns.
 
 ## Quick Start
 
@@ -40,6 +40,30 @@ Vote optimally on Hydrex to maximize fees
 Vote 50/50 on HYDX/USDC and cbBTC/WETH on Hydrex
 ```
 
+### Single-Sided Liquidity
+
+```
+What single-sided liquidity vaults can I deposit BNKR into on Hydrex?
+```
+
+```
+Deposit 500 BNKR into the BNKR/WETH single-sided vault on Hydrex
+```
+
+### Rewards
+
+```
+Check my Hydrex rewards
+```
+
+```
+Claim my Hydrex oHYDX rewards
+```
+
+```
+Convert my oHYDX to veHYDX on Hydrex
+```
+
 ## Core Capabilities
 
 ### Locking HYDX
@@ -63,6 +87,25 @@ Vote 50/50 on HYDX/USDC and cbBTC/WETH on Hydrex
 
 **Reference**: [references/voting.md](references/voting.md)
 
+### Single-Sided Liquidity (ICHI Vaults)
+
+- Deposit a single token into an auto-managed vault
+- Earn oHYDX yields on your deposited value
+- Vault manages both sides of the liquidity position
+- Withdraw with up to 70/30 split (deposit token / counter token)
+- No need to source both sides of a pair
+
+**Reference**: [references/single-sided-liquidity.md](references/single-sided-liquidity.md)
+
+### Claiming and Managing Rewards
+
+- Check unclaimed oHYDX across all incentive campaigns
+- Claim all eligible rewards in a single transaction
+- Convert oHYDX into a veHYDX lock position via `exerciseVe`
+- Exercising oHYDX requires a discounted ETH payment and produces a rolling veHYDX lock
+
+**Reference**: [references/rewards.md](references/rewards.md)
+
 ## Contracts (Base Mainnet)
 
 | Contract               | Address                                      |
@@ -70,6 +113,10 @@ Vote 50/50 on HYDX/USDC and cbBTC/WETH on Hydrex
 | HYDX Token             | `0x00000e7efa313F4E11Bfff432471eD9423AC6B30` |
 | veHYDX (Voting Escrow) | `0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1` |
 | Voter                  | `0x16613524e02ad97eDfeF371bC883F2F5d6C480A5` |
+| Vault Deposit Guard    | `0x9A0EBEc47c85fD30F1fdc90F57d2b178e84DC8d8` |
+| Vault Deployer         | `0x7d11De61c219b70428Bb3199F0DD88bA9E76bfEE` |
+| Incentive Distributor  | `0x8604d646df5A15074876fc2825CfeE306473dD45` |
+| oHYDX Token            | `0xA1136031150E50B015b41f1ca6B2e99e49D8cB78` |
 
 ## Pool Information API
 
@@ -262,6 +309,25 @@ Hydrex operates on epochs:
 - "Show me the best Hydrex pools to vote for"
 - "How much earning power does my veHYDX NFT #5 have?"
 
+### Single-Sided Liquidity
+
+- "What single-sided liquidity vaults are available on Hydrex?"
+- "What single-sided vaults can I deposit BNKR into on Hydrex?"
+- "Deposit 500 BNKR into the BNKR/WETH single-sided vault on Hydrex"
+- "Show my Hydrex single-sided liquidity positions"
+- "Withdraw my BNKR/WETH single-sided position on Hydrex"
+- "How much is my Hydrex BNKR vault position worth?"
+
+### Rewards
+
+- "Check my Hydrex rewards"
+- "How much oHYDX have I earned on Hydrex?"
+- "Claim my Hydrex oHYDX rewards"
+- "Claim all my unclaimed Hydrex incentives"
+- "What's my oHYDX balance on Base?"
+- "Convert my oHYDX to veHYDX on Hydrex"
+- "Exercise my oHYDX rewards into veHYDX"
+
 ## Tips
 
 ### For New Users
@@ -329,6 +395,8 @@ curl -s https://api.hydrex.fi/strategies | jq '[.[] |
 
 - **[Locking HYDX](references/locking.md)** — Complete guide to creating veHYDX positions
 - **[Voting on Pools](references/voting.md)** — Comprehensive voting mechanics and optimization
+- **[Single-Sided Liquidity](references/single-sided-liquidity.md)** — ICHI vault deposits, withdrawals, and position management
+- **[Rewards](references/rewards.md)** — Claiming oHYDX incentives and exercising into veHYDX
 
 ---
 
