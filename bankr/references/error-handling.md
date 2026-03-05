@@ -11,24 +11,25 @@ Resolve Bankr API errors and common issues.
 
 ### Resolution Steps
 
-**1. Get API Key**
-Visit https://bankr.bot/api to create a new API key
-
-**2. Create Configuration**
+**1. Install the Bankr CLI**
 ```bash
-mkdir -p ~/.clawdbot/skills/bankr
-cat > ~/.clawdbot/skills/bankr/config.json << 'EOF'
-{
-  "apiKey": "bk_your_actual_key_here",
-  "apiUrl": "https://api.bankr.bot"
-}
-EOF
+bun install -g @bankr/cli
+```
+
+**2. Authenticate**
+```bash
+bankr login
+```
+
+Or if you already have an API key from https://bankr.bot/api:
+```bash
+bankr config set apiKey bk_your_actual_key_here
 ```
 
 **3. Verify Setup**
-Test with a simple command:
 ```bash
-~/.clawdbot/skills/bankr/scripts/bankr.sh "What is my balance?"
+bankr whoami
+bankr prompt "What is my balance?"
 ```
 
 ### Common API Key Issues
@@ -97,7 +98,7 @@ Test with a simple command:
 |------|---------|--------|
 | **400** | Bad request | Check prompt format, validate parameters |
 | **401** | Unauthorized | Fix API key (see Authentication section) |
-| **402** | Payment required | Ensure wallet has BNKR on Base for fees |
+| **402** | Payment required | For LLM Gateway: top up via `bankr llm credits add 25` or at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) (`bankr llm credits` to check). For Agent API: ensure wallet has funds for fees |
 | **403** | Forbidden | Agent API access not enabled — enable at https://bankr.bot/api |
 | **429** | Rate limited | Wait and retry with exponential backoff |
 | **500** | Server error | Retry after delay |
@@ -162,39 +163,41 @@ curl -sf https://api.bankr.bot || echo "Connection failed"
 
 ## Configuration Issues
 
-### Config File Not Found
+### CLI Not Installed
 ```bash
-# Create config directory
-mkdir -p ~/.clawdbot/skills/bankr
+# Install the Bankr CLI
+bun install -g @bankr/cli
 
-# Create config file
-cat > ~/.clawdbot/skills/bankr/config.json << 'EOF'
-{
-  "apiKey": "bk_your_key_here",
-  "apiUrl": "https://api.bankr.bot"
-}
-EOF
+# Or with npm
+npm install -g @bankr/cli
+
+# Verify installation
+which bankr
 ```
 
-### Invalid JSON
+### Not Authenticated
 ```bash
-# Validate JSON
-jq . ~/.clawdbot/skills/bankr/config.json
+# Authenticate (opens browser for email/OTP flow)
+bankr login
 
-# If error, fix formatting
+# Or set API key directly
+bankr config set apiKey bk_your_key_here
+
+# Set separate LLM key (optional, falls back to API key)
+bankr config set llmKey your_llm_key_here
+
+# Verify
+bankr whoami
 ```
 
-### Missing jq Command
+Config is stored at `~/.bankr/config.json`. View current values with `bankr config get`.
+
+### REST API Authentication
+If using the API directly without the CLI, test your key with:
 ```bash
-# macOS
-brew install jq
-
-# Linux (Debian/Ubuntu)
-sudo apt install jq
-
-# Linux (RHEL/CentOS)
-sudo yum install jq
+curl -s "https://api.bankr.bot/_health" -H "X-API-Key: $BANKR_API_KEY"
 ```
+Set `BANKR_API_KEY` (and optionally `BANKR_LLM_KEY` for the LLM gateway) as environment variables.
 
 ## User-Friendly Error Messages
 
@@ -260,11 +263,11 @@ Before reporting an issue, check:
 
 ### Check Status
 ```bash
-# Test API connectivity
-~/.clawdbot/skills/bankr/scripts/bankr.sh "ping"
+# Verify authentication
+bankr whoami
 
-# Check your balance (validates auth)
-~/.clawdbot/skills/bankr/scripts/bankr.sh "What is my balance?"
+# Test with a simple query
+bankr prompt "What is my balance?"
 ```
 
 ### Gather Information

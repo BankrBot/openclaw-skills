@@ -4,9 +4,23 @@ Understanding the asynchronous job pattern for Bankr API operations.
 
 **Source**: [Agent API Reference](https://www.notion.so/Agent-API-2e18e0f9661f80cb83ccfc046f8872e3)
 
-## Core Pattern: Submit-Poll-Complete
+## Using the Bankr CLI
 
-All Bankr operations follow this pattern:
+The CLI handles submit-poll-complete automatically. For installation and login, see the main [SKILL.md](../SKILL.md).
+
+```bash
+bankr prompt "What is my ETH balance?"   # submit + poll + display
+bankr status <jobId>                      # check a specific job
+bankr cancel <jobId>                      # cancel a running job
+```
+
+## Using the REST API Directly
+
+Call the endpoints below with `curl`, `fetch`, or any HTTP client. All requests require an `X-API-Key` header.
+
+### Core Pattern: Submit-Poll-Complete
+
+All operations follow this pattern:
 
 ```
 1. SUBMIT  → Send prompt, get job ID
@@ -19,6 +33,8 @@ All Bankr operations follow this pattern:
 ### POST /agent/prompt
 Submit a natural language prompt to start a job.
 
+**CLI equivalent:** `bankr prompt "What is my ETH balance?"`
+
 **Request:**
 ```bash
 curl -X POST "https://api.bankr.bot/agent/prompt" \
@@ -27,14 +43,24 @@ curl -X POST "https://api.bankr.bot/agent/prompt" \
   -d '{"prompt": "What is my ETH balance?"}'
 ```
 
+**Continue a conversation:**
+```bash
+curl -X POST "https://api.bankr.bot/agent/prompt" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "And what about SOL?", "threadId": "thr_ABC123"}'
+```
+
 **Request Body:**
 - **prompt** (string, required): The prompt to send to the AI agent (max 10,000 characters)
+- **threadId** (string, optional): Continue an existing conversation thread. If omitted, a new thread is created.
 
 **Response (202 Accepted):**
 ```json
 {
   "success": true,
   "jobId": "job_abc123",
+  "threadId": "thr_XYZ789",
   "status": "pending",
   "message": "Job submitted successfully"
 }
@@ -51,6 +77,8 @@ curl -X POST "https://api.bankr.bot/agent/prompt" \
 ### GET /agent/job/{jobId}
 Check job status and results.
 
+**CLI equivalent:** `bankr status job_abc123`
+
 **Request:**
 ```bash
 curl -X GET "https://api.bankr.bot/agent/job/job_abc123" \
@@ -62,6 +90,7 @@ curl -X GET "https://api.bankr.bot/agent/job/job_abc123" \
 {
   "success": true,
   "jobId": "job_abc123",
+  "threadId": "thr_XYZ789",
   "status": "completed",
   "prompt": "What is my ETH balance?",
   "response": "You have 0.5 ETH worth approximately $1,825.",
@@ -86,6 +115,8 @@ curl -X GET "https://api.bankr.bot/agent/job/job_abc123" \
 
 ### POST /agent/job/{jobId}/cancel
 Cancel a pending or processing job. Cancel requests are idempotent — cancelling an already-cancelled job returns success.
+
+**CLI equivalent:** `bankr cancel job_abc123`
 
 **Request:**
 ```bash
@@ -129,6 +160,7 @@ curl -X POST "https://api.bankr.bot/agent/job/job_abc123/cancel" \
 ### Standard Fields
 - **success**: Boolean, true if request succeeded
 - **jobId**: Unique job identifier
+- **threadId**: Conversation thread ID (reuse to continue the conversation)
 - **status**: Current job status (`pending`, `processing`, `completed`, `failed`, `cancelled`)
 - **prompt**: Original user prompt
 - **createdAt**: ISO 8601 timestamp
