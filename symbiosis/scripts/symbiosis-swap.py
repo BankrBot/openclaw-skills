@@ -14,7 +14,7 @@ import urllib.request
 
 SYMBIOSIS_API = "https://api-v2.symbiosis.finance/crosschain/v1/swap"
 BANKR_API = "https://api.bankr.bot"
-PARTNER_ID = "mcp"
+PARTNER_ID = "bankr"
 ZERO_ADDR = "0x0000000000000000000000000000000000000000"
 MAX_UINT256 = "f" * 64
 

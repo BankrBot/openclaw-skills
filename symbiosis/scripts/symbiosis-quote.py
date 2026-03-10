@@ -11,7 +11,7 @@ import sys
 import urllib.request
 
 SYMBIOSIS_API = "https://api-v2.symbiosis.finance/crosschain/v1/swap"
-PARTNER_ID = "mcp"
+PARTNER_ID = "bankr"
 FAKE_ADDR = "0x1111111111111111111111111111111111111111"
 
 

@@ -24,14 +24,14 @@ Get a cross-chain swap quote with executable calldata.
   "from": "0xUserAddress",
   "to": "0xUserAddress",
   "slippage": 200,
-  "partnerId": "mcp"
+  "partnerId": "bankr"
 }
 ```
 
 **Fields:**
 - `tokenAmountIn.amount` — amount in smallest units (e.g., "2000000" for 2 USDC with 6 decimals)
 - `slippage` — in basis points (200 = 2%, recommended default)
-- `partnerId` — always use "mcp"
+- `partnerId` — always use "bankr"
 - `from` / `to` — user's wallet addresses (can be different for cross-chain)
 
 ### Response
