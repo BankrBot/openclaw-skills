@@ -63,7 +63,7 @@ Requirements: Python 3.9+, `requests` library. The miner auto-installs `websocke
 You need two things to mine:
 
 1. A Bankr wallet — create at https://bankr.bot, get an API key at https://bankr.bot/api, fund with some ETH on Base for gas.
-2. An AI provider API key (optional but recommended for relay mining). Any OpenAI-compatible provider works: Venice (venice.ai), OpenAI, Groq (free tier), Together AI, or local Ollama.
+2. An AI provider API key (optional but recommended for relay mining). Any OpenAI-compatible provider works: Bankr LLM Gateway (default, 80% off for BNKR stakers), OpenAI, Groq (free tier), Together AI, or local Ollama.
 
 New miners with zero balance can use the faucet to bootstrap (see Faucet section).
 
@@ -124,7 +124,7 @@ If the comprehension pool has zero solves for 4 consecutive hours, 25% of its re
 
 When you provide an AI API key, your miner automatically becomes a relay provider on the compute marketplace. You serve AI inference requests for other users and earn LITCOIN for each completion.
 
-- Relay starts automatically in SDK v4.3.0+ when `ai_key` is set
+- Relay starts automatically in SDK v4.4.0+ when `ai_key` is set
 - Uses the same API key you already have — no extra cost
 - Relay reward: 2x weight per solve from the comprehension pool
 - Quality scoring: starts at 1.0, degrades on failures, higher quality = more requests routed to you
@@ -355,7 +355,7 @@ All DeFi contracts use UUPS upgradeable proxies. All verified on BaseScan.
 
 ---
 
-## SDK Reference (v4.3.0)
+## SDK Reference (v4.4.0)
 
 ```bash
 pip install litcoin
@@ -474,6 +474,10 @@ agent = Agent(
 ### Stats
 
 - `agent.network_stats()` — Active miners, emission, treasury.
+- `agent.miner_status()` — Full miner status: relay, earnings breakdown, health, guild.
+- `agent.guild_yield()` — Network guild yield data.
+- `agent.my_guild_yield()` — Per-member yield history.
+- `agent.protocol_stats()` — Cached protocol stats (treasury, staked, prices).
 - `agent.leaderboard(limit=20)` — Top miners by earnings.
 - `agent.health()` — Coordinator health check.
 - `agent.boost()` — Staking boost via coordinator.
