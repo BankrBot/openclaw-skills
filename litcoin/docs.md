@@ -1,7 +1,7 @@
 # LITCOIN Protocol Documentation
 
 > AI-readable reference for the LITCOIN proof-of-comprehension + proof-of-research protocol on Base.
-> Last updated: March 12, 2026
+> Last updated: March 14, 2026
 
 ## Overview
 
@@ -44,7 +44,7 @@ agent.research_loop(task_id="tokenizer-001", rounds=20)
 agent.claim()
 ```
 
-SDK version: 4.0.1 (latest). PyPI: https://pypi.org/project/litcoin/
+SDK version: 4.3.0 (latest). PyPI: https://pypi.org/project/litcoin/
 
 ---
 
@@ -71,7 +71,7 @@ Requirements: Python 3.9+, `requests` library. The miner auto-installs `websocke
 You need two things to mine:
 
 1. A Bankr wallet — create at https://bankr.bot, get an API key at https://bankr.bot/api, fund with some ETH on Base for gas.
-2. An AI provider API key (optional but recommended for relay mining). Any OpenAI-compatible provider works: OpenAI, Groq (free tier), Together AI, Venice (venice.ai), or local Ollama.
+2. An AI provider API key (optional but recommended for relay mining). Any OpenAI-compatible provider works: Bankr LLM Gateway (80% off for BNKR stakers), OpenAI, Groq (free tier), Together AI, Venice (venice.ai), or local Ollama.
 
 New miners with zero balance can use the faucet to bootstrap (see Faucet section).
 
@@ -92,7 +92,7 @@ Mining does NOT require an AI API key. The SDK's deterministic solver parses doc
 
 ## Reward System
 
-- Daily emission: 1% of treasury
+- Daily emission: 1.5% of treasury
 - 4-way split: 65% research, 10% comprehension, 25% staking, 0% reserve
 - Each pool is independent — one category can never drain another
 - Continuous drip: pools unlock linearly from midnight to 23:59:59 UTC — prevents front-running at pool reset
@@ -151,7 +151,7 @@ agent.claim()
 
 When you provide an AI API key, your miner automatically becomes a relay provider on the compute marketplace. You serve AI inference requests for other users and earn LITCOIN for each completion.
 
-- Relay starts automatically in SDK v4.0.1 when `ai_key` is set
+- Relay starts automatically in SDK v4.3.0 when `ai_key` is set
 - Uses the same API key you already have — no extra cost
 - Relay reward: 2× mining weight per fulfilled request
 - Quality scoring: starts at 1.0, degrades on failures, higher quality = more requests routed to you
@@ -208,11 +208,33 @@ Staking UI: https://litcoiin.xyz/stake
 
 ## Mining Guilds
 
-Miners can pool tokens in a guild to reach higher staking tiers collectively. All guild members share the tier benefits (collateral ratio reduction and mining boost).
+Miners can pool tokens in a guild to reach higher staking tiers collectively. All guild members share the tier benefits (collateral ratio reduction and mining boost). The coordinator applies `max(personalBoost, guildBoost)` — whichever is higher.
 
 Guild contract: `0xC377cbD6739678E0fae16e52970755f50AF55bD1`
 
 Guild UI: https://litcoiin.xyz/guilds
+
+### How It Works
+
+1. **Create or join** — Any wallet can create a guild or join an existing one. Max 50 members per guild, 1 guild per address.
+2. **Deposit** — Members deposit LITCOIN into the guild pool. Deposits go into a liquid **buffer** — withdrawable anytime.
+3. **Leader stakes** — When the pool reaches a tier threshold, the guild leader stakes the full pool. All tokens move from buffer to **staked** (locked, earning yield). Lock periods match individual staking.
+4. **Yield distribution** — The coordinator detects guild staking positions and splits staking yield proportionally to members based on their deposit share. Yield is distributed every 30 minutes.
+5. **Buffer vs Staked** — New deposits after staking go to buffer (flexible, not earning yield). The leader can call **Sync to Staking** to push buffer deposits into the staking contract. Members can withdraw from buffer anytime, even while the guild is staked.
+
+### Keyed Staking (V3)
+
+Each guild stakes via a **keyed position** in the staking contract — identified by `(guildContract, guildId)`. This allows multiple guilds to stake independently from the same contract address. Individual staking is unaffected.
+
+### SDK Functions
+
+- `agent.create_guild(name)` — Create a guild (you become leader).
+- `agent.join_guild(guild_id, amount)` — Join guild with LITCOIN deposit.
+- `agent.add_guild_deposit(amount)` — Add more to your guild deposit.
+- `agent.leave_guild()` — Leave guild (returns deposit from buffer).
+- `agent.stake_guild(tier)` — Stake guild at a tier (leader only, stakes full pool).
+- `agent.upgrade_guild_tier(tier)` — Upgrade to higher tier (leader only).
+- `agent.unstake_guild()` — Unstake after lock expires (leader only).
 
 ---
 
@@ -413,7 +435,9 @@ python litcoin_miner.py --research --task=tokenizer-001    # specific task by ID
 POST   /v1/research/task          — Fetch a random task (body: { miner, type? })
 GET    /v1/research/task/:id      — Full task details + leaderboard
 GET    /v1/research/tasks         — List all active tasks
-POST   /v1/research/submit        — Submit result (body: { taskId, miner, code, model?, modelProvider? })
+POST   /v1/research/submit        — Submit result (returns 202, body: { taskId, miner, code, model?, modelProvider? })
+GET    /v1/research/submission-status/:id — Check submission status (pending/verified/rewarded/failed)
+GET    /v1/research/block          — Current block info (block number, phase, time remaining)
 GET    /v1/research/results       — Public verified discoveries
 GET    /v1/research/leaderboard   — Top researchers by reward
 GET    /v1/research/stats         — Global research statistics (includes daily budget, archive stats, model leaderboard)
@@ -430,16 +454,20 @@ GET    /v1/research/bounty/:id    — Bounty details + submissions
 POST   /v1/research/bounties/create — Post a new bounty (body: { poster, title, description, rewardAmount, token, deadlineDays, testCode, entryFunction, ... })
 GET    /v1/claims/status           — Check unclaimed rewards (query: wallet)
 POST   /v1/claims/sign            — Claim rewards on-chain (body: { wallet })
+GET    /v1/guilds/yield            — Guild yield history and member data
+GET    /v1/guilds/yield/:wallet    — Individual member yield history
+GET    /v1/protocol/stats          — Cached protocol stats (totalStaked, litcreditSupply, prices)
 ```
 
-### Verification
+### Block-Based Verification
 
-Every submission is verified by the coordinator:
-1. Code is sanitized (blocks os, sys, subprocess, socket, etc.)
-2. Code runs in an isolated subprocess with a time limit
-3. Test harness checks correctness (assertions)
-4. Metric is extracted from stdout (`METRIC:name:value`)
-5. Only verified improvements earn rewards
+Research uses a **block-based verification** system. Submissions are collected in 5-minute blocks, then verified together.
+
+1. **Block N collects** — miners submit code during the 5-min collection window. Submit returns HTTP 202 (accepted, not yet verified).
+2. **Block N verifies** — when the block closes, all submissions are verified in parallel (3 concurrent sandboxes). Each submission is: sanitized (blocks os, sys, subprocess, socket), run in isolation with time limits, checked for correctness via test harness, scored by metric.
+3. **Block N+1 collects** — while N verifies, N+1 is already accepting submissions (pipelined).
+4. **Rewards distributed** — only baseline-beating submissions earn rewards. No participation rewards. Last submission per miner per task wins within a block.
+5. **Poll for results** — after submitting, poll `GET /v1/research/submission-status/:id` until status is `verified` or `rewarded`. SDK polls with 600s timeout.
 
 ### How Research Rewards Work
 
@@ -548,6 +576,35 @@ Deploy autonomous agents that run the full protocol on autopilot. Four strategie
 
 Agents auto-upgrade tiers as balance grows and compound earnings into vault collateral.
 
+### Agent Behavior Controls
+
+Every agent has toggleable behaviors that can be changed at any time — even while running. Go to the Launch page, expand your agent, and flip switches:
+
+- **Mine** — comprehension mining
+- **Research** — solve optimization tasks
+- **Auto-Claim** — claim rewards when threshold reached
+- **Auto-Stake** — lock tokens into staking tiers
+- **Open Vaults** — create vaults automatically (rate-limited: 1 per 24h, 3 max lifetime)
+- **Mint LITCREDIT** — create debt against vault collateral
+- **Compound** — reinvest balance into vault collateral
+
+**Vault safety:** If you manually close a vault, the agent detects this and permanently disables auto-vault. This prevents the recreation loop where agents would keep reopening vaults you closed.
+
+### Agent Management API
+
+```
+POST /v1/agent/deploy       — Deploy new agent (bankrKey, strategy, config)
+POST /v1/agent/stop         — Stop running agent (agentId + bankrKey or wallet)
+POST /v1/agent/config       — Update behavior toggles on running agent (agentId + auth + config)
+POST /v1/agent/vault/close  — Close agent vaults + disable auto-vault (bankrKey)
+GET  /v1/agent/:id          — Agent status + snapshot
+GET  /v1/agents             — All agents (includes config)
+GET  /v1/agent/activity     — Global activity feed
+GET  /v1/agent/vaults       — List vaults for a Bankr wallet
+```
+
+Auth methods (any one works): Bankr API key, connected wallet (`x-wallet` header), stop token (from deploy), or admin key.
+
 Launchpad UI: https://litcoiin.xyz/launch
 
 ---
@@ -590,6 +647,26 @@ Base URL: `https://api.litcoiin.xyz`
 - POST /v1/faucet/challenge — Get bootstrap challenge
 - POST /v1/faucet/submit — Submit solution to receive 5M LITCOIN
 
+### Agent Management
+- POST /v1/agent/deploy — Deploy autonomous agent
+- POST /v1/agent/stop — Stop running agent
+- POST /v1/agent/config — Update behavior toggles on running agent
+- POST /v1/agent/vault/close — Close vaults + disable auto-vault
+- GET /v1/agent/:id — Agent status
+- GET /v1/agents — List all agents (includes config)
+- GET /v1/agent/activity — Activity feed
+- GET /v1/agent/vaults — Vault info for Bankr wallet
+
+### Miner Status
+- GET /v1/miner/status?wallet=X — Full miner status (relay, earnings, health)
+
+### Guild Yield
+- GET /v1/guilds/yield — Network guild yield data
+- GET /v1/guilds/yield/:wallet — Per-member yield history
+
+### Protocol
+- GET /v1/protocol/stats — Cached stats (totalStaked, prices, 120s TTL)
+
 ### Benchmark
 - GET /v1/benchmark/challenge — Get benchmark challenge
 - POST /v1/benchmark/submit — Submit benchmark result
@@ -617,7 +694,7 @@ All DeFi contracts use UUPS upgradeable proxies. All verified on BaseScan.
 
 ---
 
-## SDK Reference (v4.0.1)
+## SDK Reference (v4.3.0)
 
 ```bash
 pip install litcoin
@@ -795,7 +872,7 @@ Runs multiple agents simultaneously with a live terminal dashboard.
 - Total supply: 100,000,000,000 (100B) LITCOIN
 - Decimals: 18
 - Initial distribution: Treasury holds tokens for mining rewards
-- Emission: 1% of treasury per day, 4-way split (65% research, 10% comprehension, 25% staking, 0% reserve). Asymptotic decay — never drains to zero
+- Emission: 1.5% of treasury per day, 4-way split (65% research, 10% comprehension, 25% staking, 0% reserve). Asymptotic decay — never drains to zero
 - Burns: LITCREDIT burned on compute usage, minting fees
 - No team allocation, no VC allocation — 100% to mining treasury
 
