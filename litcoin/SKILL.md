@@ -115,7 +115,7 @@ if status.get("claimable", 0) > 100000:
 When the user asks to mine LITCOIN, walk them through setup:
 
 1. **Install**: `pip install litcoin`
-2. **Get keys**: Bankr API key from bankr.bot/api. AI provider key (Venice, OpenAI, Groq) for relay + research mining.
+2. **Get keys**: Bankr API key from bankr.bot/api. AI provider key (Bankr LLM Gateway, OpenAI, Groq for relay + research mining.
 3. **Run**: Create an Agent and call `agent.mine()` for comprehension or `agent.research_loop()` for research
 4. **Claim**: Call `agent.claim()` to get tokens on-chain
 
@@ -196,7 +196,7 @@ print(result['response'])
 | Method | Command | Best For |
 |--------|---------|----------|
 | Python SDK | `pip install litcoin` | Developers, autonomous agents, scripts |
-| MCP Server | `npx litcoin-mcp` (25 tools) | Claude Desktop, Cursor, any MCP agent |
+| MCP Server | `npx litcoin-mcp` (29 tools) | Claude Desktop, Cursor, any MCP agent |
 | Agent Skill | ClawHub or GitHub | Hermes Agent, OpenClaw, coding agents |
 | OpenAI API | `base_url=https://api.litcoiin.xyz/v1` | Any OpenAI-compatible client |
 
@@ -205,8 +205,8 @@ print(result['response'])
 - Chain: Base mainnet (8453)
 - Token: `0x316ffb9c875f900AdCF04889E415cC86b564EBa3`
 - 1 LITCREDIT = 1,000 output tokens of frontier AI inference
-- SDK: v4.3.0 on PyPI
-- MCP Server: `npx litcoin-mcp` (npm, v2.0.0) — 25 tools including 6 research tools
+- SDK: v4.4.0 on PyPI
+- MCP Server: `npx litcoin-mcp` (npm, v2.1.0) — 29 tools including 6 research tools
 - Docs: https://litcoiin.xyz/docs
 - Research Lab: https://litcoiin.xyz/research
 - Statistics: https://litcoiin.xyz/stats
@@ -218,8 +218,9 @@ print(result['response'])
 - Agent stop requires ownership proof: Bankr API key resolves to wallet, must match agent's wallet. 5 auth methods total.
 - All data persists to Upstash Redis. Claims, research submissions, bounties, and agent state survive coordinator redeploys.
 - Emission: 1.5% of treasury/day. Pool split: 65% research, 10% comprehension, 25% staking. Pools are independent.
-- Research uses block-based verification: 5-min blocks, pipelined, 3 concurrent sandboxes, no participation rewards.
-- Research submissions return 202. Poll `/v1/research/submission-status/:id`. SDK timeout: 600s.
+- Research uses block-based verification: 5-min blocks, pipelined (N+1 collects while N verifies), 3 concurrent sandboxes, no participation rewards.
+- Research submissions return 202 (accepted). Poll `/v1/research/submission-status/:id` for result. SDK timeout: 600s.
 - Guild staking uses V3 keyed positions: `stakeKeyed(guildId, tier, amount)`. Multiple guilds stake independently.
-- Guild yield distributed every 30 min to members proportionally. Boost: `max(personalBoost, guildBoost)`.
+- Guild yield: coordinator detects guild keyed positions, splits staking yield to members proportionally by deposit share every 30 min.
+- Boost logic: `max(personalBoost, guildBoost)` — takes the higher, not personal-first.
 - Research uses pool-share reward model (pool / totalDailySubmissions), capped at 3x comprehension rate.
