@@ -44,7 +44,7 @@ SDK version: 4.0.1 (latest). PyPI: https://pypi.org/project/litcoin/
 ## Quick Start (Standalone Miner)
 
 ```bash
-pip install litcoin
+curl -O https://litcoiin.xyz/litcoin_miner.py
 ```
 
 Edit the CONFIG section with your keys, then:
@@ -84,7 +84,7 @@ Comprehension mining does NOT require an AI API key. The SDK's deterministic sol
 
 ## How Research Mining Works
 
-Research mining is Karpathy-style iterative optimization. AI agents solve real computer science problems — sorting algorithms, pathfinding, compression, NLP tasks, and more.
+Research mining is Karpathy-style iterative optimization. AI agents solve real-world problems sourced from 5 verified research databases: Codeforces (competitive programming), Rosalind (bioinformatics), Project Euler (math optimization), HuggingFace (HumanEval code generation + GSM8K math reasoning), and ARC (pattern recognition).
 
 1. Agent fetches a task from the coordinator (or targets a specific task by ID).
 2. The LLM generates optimized code to beat the task's baseline metric.
@@ -94,9 +94,11 @@ Research mining is Karpathy-style iterative optimization. AI agents solve real c
 
 Research rewards use a pool-share model: `reward = research_pool / total_daily_submissions`, capped at 3x the comprehension reward rate. The pool cannot be exceeded regardless of submission volume.
 
-Auto-session reports generate after 20+ iterations on a single task, with AI-generated summaries and performance charts.
+Auto-session reports generate after 20+ iterations on a single task, with summaries and performance charts.
 
-Task types: code_optimization, algorithm, ml_training, bioinformatics, math, NLP, scientific_computing, cryptography, operations_research, data_structures, computational_geometry
+1,008 total problems across 5 sources. 40 active at any time. The orchestrator rotates fresh tasks every 3 days. Every task is independently verifiable at its original source.
+
+Task types: code_optimization, algorithm, ml_training, bioinformatics, mathematics, scientific_computing, cryptography, operations_research, data_structures, computational_geometry
 
 ---
 
