@@ -44,7 +44,7 @@ SDK version: 4.0.1 (latest). PyPI: https://pypi.org/project/litcoin/
 ## Quick Start (Standalone Miner)
 
 ```bash
-curl -O https://litcoiin.xyz/litcoin_miner.py
+pip install litcoin
 ```
 
 Edit the CONFIG section with your keys, then:
