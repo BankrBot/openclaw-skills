@@ -72,5 +72,5 @@ Portfolio responses typically include:
 
 - Balance queries are read-only (no transactions)
 - Shows balance of connected wallet address
-- Very small balances (dust) may be excluded
+- Tokens valued under $1 are hidden by default; use `bankr balances --low-value` to include them
 - Includes native tokens (ETH, MATIC, SOL) and ERC20/SPL tokens

@@ -223,7 +223,8 @@ For full API details (request/response schemas, job states, rich data, polling s
 | `bankr prompt --thread <id> <text>` | Continue a specific conversation thread |
 | `bankr status <jobId>` | Check the status of a running job |
 | `bankr cancel <jobId>` | Cancel a running job |
-| `bankr balances` | Show wallet token balances across all chains |
+| `bankr balances` | Show wallet token balances across all chains (hides tokens under $1 by default) |
+| `bankr balances --low-value` | Include tokens valued under $1 in the output |
 | `bankr balances --chain <chains>` | Filter by chain(s): base, polygon, mainnet, unichain, solana (comma-separated) |
 | `bankr balances --json` | Output raw JSON balances |
 | `bankr skills` | Show all Bankr AI agent skills with examples |
@@ -517,6 +518,7 @@ bankr prompt "Buy $20 of PEPE on Base"
 ```bash
 # Direct balance check (no AI agent, instant response)
 bankr balances
+bankr balances --low-value          # Include tokens under $1
 bankr balances --chain base
 bankr balances --chain base,solana
 bankr balances --json
@@ -659,7 +661,8 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 
 ### Portfolio
 
-- `bankr balances` (direct, no AI processing)
+- `bankr balances` (direct, no AI processing — hides low-value tokens by default)
+- `bankr balances --low-value` (include tokens under $1)
 - `bankr balances --chain base` (single chain)
 - "Show my portfolio"
 - "What's my ETH balance?"
