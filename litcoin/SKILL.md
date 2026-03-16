@@ -205,7 +205,7 @@ print(result['response'])
 - Chain: Base mainnet (8453)
 - Token: `0x316ffb9c875f900AdCF04889E415cC86b564EBa3`
 - 1 LITCREDIT = 1,000 output tokens of frontier AI inference
-- SDK: v4.4.0 on PyPI
+- SDK: v4.6.0 on PyPI
 - MCP Server: `npx litcoin-mcp` (npm, v2.1.0) — 29 tools including 6 research tools
 - Docs: https://litcoiin.xyz/docs
 - Research Lab: https://litcoiin.xyz/research
