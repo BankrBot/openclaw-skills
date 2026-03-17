@@ -24,6 +24,7 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 | [Veil Cash](https://veil.cash) | [veil](veil/) | Privacy-preserving transactions. Deposit into shielded pools, perform ZK withdrawals, manage private transfers. |
 | yoink | [yoink](yoink/) | Social on-chain game. "Yoink" a token from the current holder. Uses Bankr for transaction execution. |
 | [Neynar](https://neynar.com) | [neynar](neynar/) | Full Farcaster API integration. Post casts, like, recast, follow users, search content, and manage Farcaster identities. |
+| [Quicknode](https://www.quicknode.com) | [quicknode](quicknode/) | Blockchain RPC and data access for all supported chains. Native/token balances, gas estimation, transaction status, and onchain queries for Base, Ethereum, Polygon, Solana, and Unichain. Supports API key and x402 pay-per-request access. |
 | [Hydrex](https://hydrex.fi) | [hydrex](hydrex/) | Liquidity pools on Base. Lock HYDX for voting power, vote on pool strategies, deposit single-sided liquidity into auto-managed vaults, and claim oHYDX rewards. |
 
 ## Adding a Skill
