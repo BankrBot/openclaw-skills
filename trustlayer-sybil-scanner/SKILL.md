@@ -1,7 +1,7 @@
 ---
 name: trustlayer-sybil-scanner
-description: Feedback forensics for ERC-8004 agents. Detects Sybil rings, fake reviews, rating manipulation, and reputation laundering across 6 chains. 92K+ agents scored. No API key needed.
-version: 2.0.0
+description: Feedback forensics for ERC-8004 agents. Detects Sybil rings, fake reviews, rating manipulation, and reputation laundering across 6 chains. No API key needed.
+version: 3.0.0
 tags:
   - reputation
   - trust
@@ -21,20 +21,20 @@ metadata:
 
 # TrustLayer Sybil Scanner — ERC-8004 Feedback Forensics
 
-Detects fake reviews, Sybil rings, rating manipulation, and reputation laundering in ERC-8004 agent ratings. Covers 92,000+ agents across Base, Ethereum, BSC, Polygon, Monad, and Solana.
+Detects fake reviews, Sybil rings, rating manipulation, and reputation laundering in ERC-8004 agent ratings across Base, Ethereum, BSC, Polygon, Monad, and Solana.
 
 Most agent reputation systems show you the rating. This one tells you if the rating is real.
 
 **API Base:** `https://api.thetrustlayer.xyz`
-**No API key required** (beta). x402 micropayments on paid endpoints.
+**No API key required** (beta). x402 micropayments on paid endpoints ($0.001 USDC per query).
 
 ## What this catches that others don't
 
-- **Sybil rings**: Clusters of wallets that only review each other (402 flagged so far)
+- **Sybil rings**: Clusters of wallets that only review each other
 - **Reviewer quality**: A 5-star review from a trusted agent vs a throwaway wallet are not the same. Scores are weighted by reviewer reputation.
-- **Cross-chain laundering**: Agent has great reviews on BSC but terrible ones on Base? We resolve identities across 6 chains (449 cross-chain groups detected) and flag score divergence.
+- **Cross-chain laundering**: Agent has great reviews on BSC but terrible ones on Base? Identities are resolved across chains and score divergence is flagged.
 - **Temporal anomalies**: Sudden bursts of positive reviews after a period of bad ones. Review bombing. Rating manipulation patterns over time.
-- **Spam feedback**: 1,298+ spam feedbacks detected via tag analysis. Filtered before scoring.
+- **Spam feedback**: Known spam patterns detected via tag analysis and filtered before scoring.
 
 ## When to use this skill
 
@@ -121,10 +121,12 @@ Leaderboard (most trusted agents, Sybil-filtered):
 curl -s "https://api.thetrustlayer.xyz/leaderboard?chain=base&limit=10"
 ```
 
-Network stats (total agents, feedbacks, Sybil flags per chain):
+Network stats (live counts of total agents, Sybil flags, chains covered, and more):
 ```bash
 curl -s "https://api.thetrustlayer.xyz/stats"
 ```
+
+Call `/stats` for current network coverage — agent counts, Sybil flags, cross-chain groups, and chain breakdown are all returned live.
 
 ## Visual reports
 
@@ -149,4 +151,4 @@ Six Sybil detection methods run on every sync:
 - Feedback timing anomaly detection
 - Tag-based spam filtering
 
-Scores update daily. Historical score snapshots retained for 90 days. 92,000+ agents indexed across 6 chains as of March 2026.
+Scores update daily. Historical score snapshots retained for 90 days.
