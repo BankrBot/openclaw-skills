@@ -26,8 +26,8 @@ from litcoin import Agent
 agent = Agent(
     bankr_key="bk_YOUR_KEY",        # Bankr API key (get one at bankr.bot/api)
     ai_key="sk-YOUR_KEY",           # AI provider key (enables relay + research mining)
-    ai_url="https://api.venice.ai/api/v1",
-    model="llama-3.3-70b",
+    ai_url="https://openrouter.ai/api/v1",
+    model="google/gemini-2.5-flash",
 )
 
 # Mine + relay (relay auto-starts when ai_key is set)
@@ -92,7 +92,7 @@ Research mining is Karpathy-style iterative optimization. AI agents solve real c
 4. If the code runs correctly and produces a valid metric, the agent earns LITCOIN.
 5. Beating the current best earns discovery status on the leaderboard.
 
-**Reasoning Traces (v4.6.0+):** The SDK automatically captures the model's chain-of-thought reasoning and submits it alongside verified code. Supports `<think>` tags (DeepSeek-R1, QwQ) and prose before code blocks. Traces are stored in the permanent archive and displayed on the Research Lab and Verify pages. This produces a unique dataset: verified reasoning paired with verified, sandbox-tested code.
+**Reasoning Traces (v4.8.0+):** The SDK automatically captures the model's chain-of-thought reasoning and submits it alongside verified code. Supports `<think>` tags (DeepSeek-R1, QwQ) and prose before code blocks. Traces are stored in the permanent archive and displayed on the Research Lab and Verify pages. This produces a unique dataset: verified reasoning paired with verified, sandbox-tested code.
 
 **Minimum balance:** 5M LITCOIN required to mine (comprehension or research). Agent deployment enforces this on-chain.
 
@@ -147,7 +147,7 @@ curl https://api.litcoiin.xyz/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: lk_YOUR_KEY" \
   -d '{
-    "model": "llama-3.3-70b",
+    "model": "google/gemini-2.5-flash",
     "messages": [{"role": "user", "content": "Hello"}],
     "stream": false
   }'
@@ -401,7 +401,7 @@ All endpoints accept `{ "bankrKey": "bk_..." }` in the request body. Rate limite
 
 ---
 
-## SDK Reference (v4.6.0)
+## SDK Reference (v4.8.0)
 
 ```bash
 pip install litcoin
@@ -415,8 +415,8 @@ from litcoin import Agent
 agent = Agent(
     bankr_key="bk_...",              # Required — Bankr API key
     ai_key="sk-...",                 # Optional — enables relay mining
-    ai_url="https://api.venice.ai/api/v1",  # AI provider URL
-    model="llama-3.3-70b",          # Model name
+    ai_url="https://openrouter.ai/api/v1",  # AI provider URL
+    model="google/gemini-2.5-flash",          # Model name
     anthropic_mode=False,           # Set True for Claude API format
     coordinator_url=None,           # Override coordinator URL
     no_relay=False,                 # Set True to disable relay
@@ -626,7 +626,7 @@ Add to your MCP config:
 
 No Python, no pip, no SDK — just a JSON config entry.
 
-### Available MCP Tools (25 total, 6 research)
+### Available MCP Tools (49 total, 13 research)
 
 Mining: `litcoin_mine`, `litcoin_claim`, `litcoin_claimable`, `litcoin_faucet`
 Research: `litcoin_research_mine`, `litcoin_research_loop`, `litcoin_research_tasks`, `litcoin_research_leaderboard`, `litcoin_research_stats`, `litcoin_research_history`
