@@ -73,18 +73,17 @@ When the user asks to log in with an email, walk them through this flow:
 bankr login email <user-email>
 ```
 
-**Step 2 — Ask the user for the OTP code** they received via email.
+**Step 2 — Ask the user for the OTP code and all preferences in a single message.** This avoids unnecessary back-and-forth. Ask for:
 
-**Step 3 — Before completing login, ask the user about their preferences:**
-
-1. **Accept Terms of Service** — Present the [Terms of Service](https://bankr.bot/terms) link and confirm the user agrees. Required for new users — do not pass `--accept-terms` unless the user has explicitly confirmed.
-2. **Read-only or read-write API key?**
+1. **OTP code** — the code they received via email
+2. **Accept Terms of Service (REQUIRED)** — Present the [Terms of Service](https://bankr.bot/terms) link and confirm the user agrees. **The login command will fail for new users without `--accept-terms`.** You MUST ask for ToS acceptance and do not pass `--accept-terms` unless the user has explicitly confirmed.
+3. **Read-only or read-write API key?**
    - **Read-only** (default) — portfolio, balances, prices, research only
    - **Read-write** (`--read-write`) — enables swaps, transfers, orders, token launches, leverage, Polymarket bets
-3. **Enable LLM gateway access?** (`--llm`) — multi-model API at `llm.bankr.bot` (currently limited to beta testers). Skip if user doesn't need it.
-4. **Key name?** (`--key-name`) — a display name for the API key (e.g. "My Agent", "Trading Bot")
+4. **Enable LLM gateway access?** (`--llm`) — multi-model API at `llm.bankr.bot` (currently limited to beta testers). Skip if user doesn't need it.
+5. **Key name?** (`--key-name`) — a display name for the API key (e.g. "My Agent", "Trading Bot")
 
-**Step 4 — Construct and run the step 2 command** with the user's choices:
+**Step 3 — Construct and run the step 2 command** with the user's choices. **Do NOT execute if the user has not explicitly accepted the Terms of Service** — ask again if needed:
 
 ```bash
 # Example with all options
