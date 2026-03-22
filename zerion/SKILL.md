@@ -17,7 +17,7 @@ Unlike raw RPC data, Zerion returns:
 Two ways to access:
 
 - **x402 (no account needed)**: Pay $0.01 USDC per request on Base. No API key, no signup.
-- **API key**: Get a key from developers.zerion.io for higher rate limits.
+- **API key**: Get a free key instantly at [dashboard.zerion.io](https://dashboard.zerion.io) for higher rate limits.
 
 ## Research → Execute Pattern
 
@@ -162,7 +162,12 @@ zerion-cli wallet portfolio 0x... --x402
 
 ## API Key Access
 
-Get a key from https://developers.zerion.io
+Get a free API key instantly — no credit card required:
+
+1. Go to [dashboard.zerion.io](https://dashboard.zerion.io)
+2. Sign up with email or connect wallet
+3. Click "Create API Key" — key starts with `zk_...`
+4. Copy and use immediately
 
 ```bash
 export ZERION_API_KEY="zk_your_api_key"
@@ -170,6 +175,17 @@ export ZERION_API_KEY="zk_your_api_key"
 curl "https://api.zerion.io/v1/wallets/0x.../portfolio" \
   -H "Authorization: Basic $(echo -n $ZERION_API_KEY: | base64)"
 ```
+
+### Rate Limits
+
+| Plan | Requests/Second | Requests/Day | Price |
+|------|-----------------|--------------|-------|
+| Free | 10 | 10,000 | $0 |
+| Growth | 50 | 100,000 | $99/mo |
+| Scale | 200 | 1,000,000 | $499/mo |
+| Enterprise | Custom | Custom | Contact |
+
+x402 has no rate limits — pay per request ($0.01 USDC each).
 
 ## Webhooks
 
@@ -280,8 +296,9 @@ Connect Claude, Cursor, or any MCP client:
 
 ## Resources
 
-- API Documentation: https://developers.zerion.io
-- CLI Repository: https://github.com/zeriontech/zerion-cli
-- MCP Server: https://github.com/zeriontech/zerion-mcp-server
-- x402 Protocol: https://developers.zerion.io/reference/x402
-- Zerion for Agents: https://zerion.io/agents
+- **Get API Key**: https://dashboard.zerion.io (free, instant, no credit card)
+- **API Documentation**: https://developers.zerion.io
+- **CLI Repository**: https://github.com/zeriontech/zerion-cli
+- **MCP Server**: https://github.com/zeriontech/zerion-mcp-server
+- **x402 Protocol**: https://developers.zerion.io/reference/x402
+- **Zerion for Agents**: https://zerion.io/agents
