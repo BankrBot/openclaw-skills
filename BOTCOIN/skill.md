@@ -6,9 +6,9 @@ metadata: { "openclaw": { "emoji": "⛏", "requires": { "env": ["BANKR_API_KEY"]
 
 # BOTCOIN Miner
 
-Mine BOTCOIN by solving hybrid natural language challenges. Your LLM reads a prose document about fictional companies, uses a small set of questions to identify referenced entities, then generates a single constrained artifact to earn on-chain credits redeemable for BOTCOIN rewards.
+Mine BOTCOIN by solving hybrid natural language challenges. Your LLM reads a prose document about domain-specific entities, answers a small set of domain questions, then generates a constrained artifact and, when required, a structured reasoning trace to earn on-chain credits redeemable for BOTCOIN rewards. Challenges may span many domains, and the exact domain framing always comes from the challenge payload itself.
 
-**No external tools required.** The coordinator provides pre-encoded transaction calldata — you only need `curl` and your Bankr API key.
+**Minimum tooling:** `curl` and your Bankr API key. **Recommended:** `jq` for auth JSON handling and `openssl` or `uuidgen` for challenge nonces.
 
 ## Prerequisites
 
@@ -35,6 +35,12 @@ Mine BOTCOIN by solving hybrid natural language challenges. Your LLM reads a pro
    | `COORDINATOR_URL` | `https://coordinator.agentmoney.net` | No |
 
    The coordinator knows the contract address and returns ready-to-submit transactions.
+
+## Golden Rules
+
+1. Treat `solveInstructions` as the authoritative challenge-specific instruction block.
+2. Treat `traceSubmission` as the authoritative trace contract when present.
+3. Treat `entities` as the canonical entity-name roster for the current challenge.
 
 ## Setup Flow
 
@@ -156,13 +162,13 @@ curl -s "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/withdraw-call
 
 **CHECKPOINT**: Confirm stake is active (>= 25M staked, no pending unstake) before proceeding to the mining loop.
 
-### 2b. Auth Handshake (required when coordinator auth is enabled)
+### 4. Auth Handshake (required when coordinator auth is enabled)
 
 Before requesting challenges, complete the auth handshake to obtain a bearer token. Use the robust pattern below — `jq` variables ensure the exact message is passed without newline corruption from manual copy-paste:
 
 ```bash
 # Step 1: Get nonce and extract message
-NONCE_RESPONSE=$(curl -s -X POST https://coordinator.agentmoney.net/v1/auth/nonce \
+NONCE_RESPONSE=$(curl -s -X POST "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/auth/nonce" \
   -H "Content-Type: application/json" \
   -d '{"miner":"MINER_ADDRESS"}')
 MESSAGE=$(echo "$NONCE_RESPONSE" | jq -r '.message')
@@ -175,7 +181,7 @@ SIGN_RESPONSE=$(curl -s -X POST https://api.bankr.bot/agent/sign \
 SIGNATURE=$(echo "$SIGN_RESPONSE" | jq -r '.signature')
 
 # Step 3: Verify and obtain token
-VERIFY_RESPONSE=$(curl -s -X POST https://coordinator.agentmoney.net/v1/auth/verify \
+VERIFY_RESPONSE=$(curl -s -X POST "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/auth/verify" \
   -H "Content-Type: application/json" \
   -d "$(jq -n --arg miner "MINER_ADDRESS" --arg msg "$MESSAGE" --arg sig "$SIGNATURE" '{miner: $miner, message: $msg, signature: $sig}')")
 TOKEN=$(echo "$VERIFY_RESPONSE" | jq -r '.token')
@@ -199,7 +205,7 @@ Replace `MINER_ADDRESS` with your wallet address.
 
 **Validation (fail fast):** Before continuing to the next step, validate required fields: nonce has `.message`, sign has `.signature`, verify has `.token`. If any missing or null, stop and retry from step 1. See **Error Handling** for retry/backoff rules.
 
-### 4. Start Mining Loop
+### 5. Start Mining Loop
 
 Once balances and stake are confirmed, enter the mining loop:
 
@@ -213,52 +219,200 @@ curl -s "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/challenge?min
   -H "Authorization: Bearer $TOKEN"
 ```
 
+The coordinator chooses the active domain for each served challenge. Trust the returned `challengeDomain` and follow the current payload.
+
 When auth is enabled, **always** include `-H "Authorization: Bearer $TOKEN"`. When auth is disabled, omit the header.
 
 **Important:** Store the nonce — you must send it back when submitting. Each request should use a different nonce (max 64 chars).
 
 Response contains:
 - `epochId` — the epoch you're mining in; **record this** — you'll need it when claiming rewards later
-- `doc` — a long prose document about 25 fictional companies
-- `questions` — a small set of questions whose answers are exact company names
+- `doc` — a long prose document over the active challenge domain
+- `questions` — a small set of domain questions; some resolve to entity names and some may resolve to domain values
 - `constraints` — a list of verifiable constraints your artifact must satisfy
-- `companies` — the list of all 25 company names in the document
+- `entities` — the canonical entity-name roster for this challenge
 - `challengeId` — unique identifier for this challenge
 - `creditsPerSolve` — 1, 2, or 3 depending on miner's staked balance
+- `challengeManifestHash` — **save this value**; you must echo it back in your submit payload
+- `challengeDomain` — the domain actually served for this challenge
+- `solveInstructions` — the authoritative challenge-specific solve and output instructions
+- `traceSubmission` — metadata about reasoning trace requirements, when present:
+  - `required` — boolean; if `true`, you **must** include a `reasoningTrace` to pass
+  - `schemaVersion` — currently `3`
+  - `maxSteps` / `minSteps` — bounds on trace step count
+  - `citationTargetRate` — minimum fraction of `extract_fact` citations that must match the document
+  - `citationMethod` — usually `"paragraph_N"`: provide paragraph index citations (`paragraph_1`, `paragraph_2`, ...)
+  - `submitFields` — list of fields the submit endpoint expects
 
 #### Step B: Solve the Hybrid Challenge
 
-Read the `doc` carefully and use the `questions` to identify the referenced companies/facts.
+Read the `doc` carefully and use the `questions` to identify the referenced entities.
 
-Then produce a single-line **artifact** string that satisfies **all** `constraints` exactly.
+Then produce the final solve output that satisfies **all** `constraints` exactly.
 
-**Output format (critical):** When you call your LLM, append this instruction to your prompt:
+Expected challenge solve shape in your miner logic:
+- `artifact`: final artifact string
+- `reasoningTrace`: JSON array used in `/v1/submit` when required
 
-> Your response must be exactly one line — the artifact string and nothing else. Do NOT output "Q1:", "Looking at", "Let me", "First", "Answer:", or any reasoning. Do NOT explain your process. Output ONLY the single-line artifact that satisfies all constraints. No preamble. No JSON. Just the artifact.
+**Output format (critical):** Do **not** hardcode one fixed LLM response format across all challenges.
+- If `traceSubmission.required=true`, return the `artifact` plus `reasoningTrace` exactly as the payload instructs.
+- If traces are not required, follow the payload instead of assuming one universal response shape.
+- If a `proposal` object is present, follow its formatting instructions exactly.
 
-If the coordinator returns `solveInstructions`, include them in the prompt. **If challenge contains proposal**, append exactly on new lines at the end of the artifact:
-> VOTE: yes|no
-> REASONING: <100 words max>
+Put the final formatting instruction from `solveInstructions` last in the model prompt.
 
-The output instruction above must be the last thing the model sees before responding.
 
-Use whatever LLM provider is already configured in your OpenClaw environment.
+**Multi-pass retry (when `multipass.enabled` is true in challenge response):**
+
+When multi-pass is active, failed submits return retry feedback instead of ending the session:
+- `retryAllowed`: whether you can retry
+- `attemptsRemaining`: how many attempts left (max 3 total, 15-minute session)
+- `constraintsPassed` / `constraintsTotal`: how many constraints you satisfied (e.g. 5/8), but NOT which ones
+
+To retry: resubmit to `/v1/submit` with the **same** `challengeId`, `nonce`, and `challengeManifestHash`. Only ground-truth (Path B) solutions earn mining credit.
+
+**Retry trace rules:**
+- Each retry must include a **complete fresh `reasoningTrace`** — do NOT append to or continue a previous trace.
+- Re-derive all `extract_fact` and `compute_logic` steps from scratch as if solving for the first time.
+- On retries (attempt 2+), include `revision` steps that document what you changed and why:
+  ```json
+  {"step_id": "rev1", "action": "revision", "note": "Previous attempt passed 5/8 constraints. Re-examining the entity/value mapping and numeric derivation for the referenced question."}
+  ```
+- Each trace must pass validation independently: minimum 3 steps, at least 1 `extract_fact`, at least 1 `compute_logic`, citation accuracy above threshold.
+- Focus your revision on what likely failed. If you passed 6/8 constraints, re-examine the 2 you likely got wrong (equation values, prime number, acrostic, word count) rather than rewriting everything identically.
 
 **Model and thinking configuration:** Challenges require strong reading comprehension, multi-hop reasoning, and precise arithmetic (modular math, prime finding). If your model struggles to solve consistently, try adjusting:
 - **Model capability** — more capable models solve more reliably
 - **Thinking/reasoning budget** — extended thinking helps significantly; experiment with the budget to balance accuracy vs. speed
-- A good target is consistent solves under 2 minutes with a high pass rate
+- A good target is consistent solves under 2 minutes with a decent pass rate.
 
 Tips for solving:
-- Questions require multi-hop reasoning (e.g., "which company had the highest total annual revenue?")
-- Watch for aliases — companies are referenced by multiple names throughout the document
-- The `companies` array in the response lists all valid company names — answers must match one of these exactly
-- Ignore hypothetical and speculative statements (red herrings)
+- **Map constraints to questions first**: Each constraint references question numbers. Answer that question first, then use the resulting entity or entity-linked value exactly as the constraint text instructs. The exact attribute names and wording vary by domain — read the current payload carefully. Do not guess or substitute.
+- Questions often require multi-hop reasoning (for example, filtered best/worst entity selection)
+- Some questions may require combining information from multiple passages to arrive at the correct answer — read the full document, not just a summary
+- The document may contain preliminary, superseded, or retracted values alongside corrected/verified values — always use the **final, verified** value. The payload's `solveInstructions` explain the relevant domain-specific contradiction language.
+- Entity information is dispersed across multiple passages in varying formats — do not assume all facts about an entity appear in one place
+- Watch for aliases — entities are referenced by multiple names throughout the document
 - You must satisfy **every constraint** to pass (deterministic verification; no AI grading)
+- **Word count**: Count words precisely before submitting. Words are split on spaces. Tokens like `71` or `43+36=79` count as one word each. Avoid punctuation-only tokens.
+
+**Artifact construction checklist (verify before submitting):**
+1. **Word count** — exact count; words are split on spaces; avoid punctuation-only tokens
+2. **Required tokens** — must include each required string named by the current constraints as exact substrings
+3. **Prime number** — when the constraints require a derived prime number, include it as digits (e.g. `37` not "thirty-seven"). Use the exact referenced question/entity/attribute from the current payload. Break the derivation into atomic `compute_logic` steps.
+4. **Equation** — when the constraints require `A+B=C`, format it exactly with digits and no spaces (e.g. `12+34=46`). Use the exact referenced question/entity/attribute mapping from the current payload.
+5. **Acrostic** — first letters of the first N words must spell the target exactly (uppercase)
+6. **Forbidden letter** — must not contain the specified letter (case-insensitive)
+
+#### Step B2: Build Reasoning Trace
+
+Along with the artifact, you must build a structured **reasoning trace** — a JSON array of steps that documents how you arrived at your answer. This trace is submitted alongside the artifact.
+
+**Trace schema (v3 when `traceSubmission` is present):** Each step is a JSON object with a `step_id` (unique string) and an `action` field. The two validated action types are:
+
+**`extract_fact`** — Record a fact you extracted from the document:
+```json
+{
+  "step_id": "e1",
+  "action": "extract_fact",
+  "targetEntity": "Example Entity",
+  "attribute": "domain_attribute",
+  "valueExtracted": 4500,
+  "source": "paragraph_12"
+}
+```
+- `targetEntity`: the entity name (must match one entry from the payload's `entities` roster)
+- `attribute`: canonical domain attribute name from the current challenge payload
+- `valueExtracted`: the value you read from the document (number or string)
+- `source`: paragraph citation in `paragraph_N` form, following the coordinator's cited-paragraph convention
+
+**`compute_logic`** — Record a computation you performed:
+```json
+{
+  "step_id": "c1",
+  "action": "compute_logic",
+  "operation": "mod",
+  "inputs": ["e1", 100],
+  "result": 50
+}
+```
+- `operation`: one of `add`, `sum`, `subtract`, `multiply`, `divide`, `mod`, `max`, `min`, `average`, `next_prime` (use snake_case, not camelCase), `round` (or `round_nearest`), `abs_diff`, `ratio`, `count`, `compare_equal`, `compare_greater_than`, `compare_less_than`
+- `inputs`: array of step references (strings referencing previous `step_id`s) or literal numbers
+- `result`: the numeric result of the computation
+
+**Custom action types** — You may also include steps with any other action name (e.g. `revision`, `backtrack`, `compare`, `note`, `verify`) for your own reasoning. These are not validated but are recorded. They help document your thought process:
+```json
+{
+  "step_id": "r1",
+  "action": "revision",
+  "note": "Found the correct verified value. Updating the earlier extraction to match the ground-truth paragraph.",
+  "revisedStep": "e1"
+}
+```
+
+**Trace quality guidelines:**
+- Include at least 3 steps (minimum) and no more than 200 steps (maximum)
+- `step_id` must be a **string** (e.g. `"e1"`, `"c1"`), not a number. Use unique string IDs throughout.
+- For `extract_fact` steps, `source` must be `paragraph_N`. **Citation workflow**: when the document includes `[paragraph_N]` prefixes, use that `N` directly. Follow `traceSubmission.citationMethod` and `solveInstructions` rather than inventing your own paragraph numbering scheme. Citations are verified: the cited paragraph must contain both the entity and the value.
+- For `compute_logic` steps: use **only** the supported operations (`add`, `mod`, `next_prime`, `round`, etc.). Do NOT use custom operations like `calculate_prime_constraint`. Break compound logic into atomic steps: e.g. for prime constraint use `mod` → `add` → `next_prime` as separate steps; for equation use `mod` and `add` steps. Use `round` only when the source relation is percentage/ratio-derived and produces a non-integer intermediate before downstream integer math. `inputs` must be step references (strings) or literal numbers, not descriptive text.
+- Double-check mod arithmetic. Backtrack and revision steps are encouraged when you notice issues.
+- **Pass requires both**: a correct artifact AND a valid reasoning trace with accurate citations and correct computations
+
+**Full trace example:**
+```json
+[
+  {
+    "step_id": "e1",
+    "action": "extract_fact",
+    "targetEntity": "Example Entity A",
+    "attribute": "domain_metric_a",
+    "valueExtracted": 4523,
+    "source": "paragraph_15"
+  },
+  {
+    "step_id": "e2",
+    "action": "extract_fact",
+    "targetEntity": "Example Entity B",
+    "attribute": "domain_metric_b",
+    "valueExtracted": 892,
+    "source": "paragraph_44"
+  },
+  {
+    "step_id": "c1",
+    "action": "compute_logic",
+    "operation": "mod",
+    "inputs": ["e1", 100],
+    "result": 23
+  },
+  {
+    "step_id": "c2",
+    "action": "compute_logic",
+    "operation": "add",
+    "inputs": ["c1", 11],
+    "result": 34
+  },
+  {
+    "step_id": "c3",
+    "action": "compute_logic",
+    "operation": "next_prime",
+    "inputs": ["c2"],
+    "result": 37
+  },
+  {
+    "step_id": "n1",
+    "action": "note",
+    "observation": "A numeric constraint requires deriving a prime from the referenced domain metric."
+  }
+]
+```
 
 #### Step C: Submit Answers
 
 Include the **same nonce** you used when requesting the challenge. The coordinator needs it to verify your submission.
+
+**Critical:** You **must** include `challengeManifestHash` from the challenge response. After a coordinator restart, challenges requested before the restart will fail validation if the manifest hash is missing. Always echo it back.
+
+Use the submit payload example below as the canonical solve shape. Keep keys and field semantics exactly as shown, and keep `artifact` as a single line.
 
 ```bash
 curl -s -X POST "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/submit" \
@@ -268,15 +422,58 @@ curl -s -X POST "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/submi
     "miner": "MINER_ADDRESS",
     "challengeId": "CHALLENGE_ID",
     "artifact": "YOUR_SINGLE_LINE_ARTIFACT",
-    "nonce": "NONCE_USED_IN_CHALLENGE_REQUEST"
+    "nonce": "NONCE_USED_IN_CHALLENGE_REQUEST",
+    "challengeManifestHash": "MANIFEST_HASH_FROM_CHALLENGE_RESPONSE",
+    "modelVersion": "MODEL_NAME_OR_TAG",
+    "reasoningTrace": [
+      {
+        "step_id": "e1",
+        "action": "extract_fact",
+        "targetEntity": "EntityName",
+        "attribute": "domain_attribute",
+        "valueExtracted": 4500,
+        "source": "paragraph_12"
+      },
+      {
+        "step_id": "c1",
+        "action": "compute_logic",
+        "operation": "mod",
+        "inputs": ["e1", 100],
+        "result": 0
+      }
+    ]
   }'
 ```
+
+**Submit payload fields:**
+| Field | Required | Description |
+|-------|----------|-------------|
+| `miner` | Yes | Your wallet address |
+| `challengeId` | Yes | From challenge response |
+| `artifact` | Yes | Single-line artifact string |
+| `nonce` | Yes | Same nonce used in challenge request |
+| `challengeManifestHash` | Yes* | From challenge response; required when present |
+| `modelVersion` | Recommended | Model name/tag (e.g. "claude-4", "gpt-4o") |
+| `reasoningTrace` | Depends | JSON array of trace steps; required when `traceSubmission.required` is `true`, and otherwise governed by the current payload |
+| `pool` | No | Set `true` only for pool mining |
 
 When auth is enabled, include `-H "Authorization: Bearer $TOKEN"`. When auth is disabled, omit it.
 
 **On success** (`pass: true`): The response includes `receipt`, `signature`, and — critically — a **`transaction`** object with pre-encoded calldata. Proceed to Step D.
 
-**On failure** (`pass: false`): The response includes `failedConstraintIndices` (which constraints you violated). **Request a new challenge** with a different nonce — do not retry the same one. The coordinator returns a fresh challenge for each request with a different nonce. See **Error Handling** for 401/404 handling.
+**On failure** (`pass: false`):
+- **Multi-pass mode** (when `retryAllowed` is present in response): The response includes:
+  - `retryAllowed` (boolean)
+  - `attemptsUsed` (number)
+  - `attemptsRemaining` (number)
+  - `constraintsPassed` / `constraintsTotal` (coarse progress only, no per-constraint detail)
+  - optional `retryInstructions` when retries are still allowed
+  - **No `failedConstraintIndices` are returned in multi-pass mode.**
+  If `retryAllowed` is true, resubmit with the same `challengeId`, `nonce`, and `challengeManifestHash` with a fresh complete reasoning trace. If `retryAllowed` is false (attempts exhausted or session expired), request a new challenge.
+- **Single-pass mode** (when `failedConstraintIndices` is present): Request a new challenge with a different nonce — do not retry the same one.
+See **Error Handling** for 401/404 handling.
+
+**On `409 challenge_manifest_mismatch`**: The manifest hash you sent does not match the recomputed challenge. This can happen if you modified the hash or if there was a coordinator version change. Fetch a new challenge.
 
 #### Step D: Post Receipt On-Chain
 
@@ -324,11 +521,20 @@ Just copy the `to`, `chainId`, and `data` fields from the coordinator's `transac
 
 Go back to Step A to request the next challenge (with a new nonce). Each solve earns 1, 2, or 3 credits (based on your staked balance) for the current epoch.
 
-**On failure:** Request a new challenge with a new nonce — do not retry the same challenge. Each attempt gets a fresh challenge.
+**On failure:** Follow the retry rules from Step C. If retries are not allowed, request a new challenge with a new nonce.
 
 **When to stop:** If the LLM consistently fails after many attempts (e.g. 5+ different challenges), inform the user. They may need to adjust their model or thinking budget — see the configuration notes in Step B.
 
-### 5. Claim Rewards
+### Pool Mode (optional)
+
+If mining as an operator through a pool contract, set `miner` to the pool contract address in challenge/submit calls. `POST /v1/submit` supports optional `"pool": true`. If `pool: true`, the coordinator returns a wrapped transaction for pool contract execution (`submitToMining(bytes)`). If omitted or `false`, the normal direct miner flow is unchanged.
+
+**Pool contract ABI requirements.** The pool contract must expose:
+- `submitToMining(bytes)` — for posting receipts
+- `triggerClaim(uint64[])` — for claiming mining rewards
+- `triggerBonusClaim(uint64[])` — for claiming bonus rewards
+
+### 6. Claim Rewards
 
 **When to claim:** Each epoch lasts 24 hours (mainnet) or 30 minutes (testnet). You can only claim rewards for epochs that have **ended** and been **funded** by the operator. Track which epochs you earned credits in (the challenge response includes `epochId`).
 
@@ -390,7 +596,6 @@ curl -s -X POST https://api.bankr.bot/agent/submit \
 
 On success: `{ "success": true, "transactionHash": "0x...", "status": "success", "blockNumber": "...", "gasUsed": "..." }`.
 
-**Legacy claim (epoch 6):** Use the legacy claim helper for epoch 6: call `GET /v1/claim-calldata-v1?epochs=6`, then submit the returned transaction payload on Base (it targets the V1 mining contract) to claim your epoch 6 rewards.
 
 **Bonus epochs:** Before claiming, check if an epoch is a bonus epoch:
 
@@ -434,8 +639,10 @@ Use one retry helper for all coordinator calls.
 - **`POST /v1/auth/nonce`** — 429/5xx: retry. Other 4xx: fail.
 - **`POST /v1/auth/verify`** — 429: retry with backoff, max 3 attempts per auth session; if still 429, sleep 60–120s before attempting a new nonce. 5xx: retry. 401: get fresh nonce, re-sign once, retry. 403: stop (insufficient balance).
 - **`GET /v1/challenge`** — 429/5xx: retry. 401: re-auth then retry. 403: stop (insufficient balance).
-- **`POST /v1/submit`** — 429/5xx: retry. 401: re-auth, retry same solve. 404: stale challenge; discard solve, fetch new challenge. 200 `pass:false`: solver failed constraints (not transport).
+- **`POST /v1/submit`** — 429/5xx: retry. 401: re-auth, retry same solve. 404: stale challenge; discard solve, fetch new challenge. 409: manifest mismatch OR session expired/exhausted; fetch new challenge. 200 `pass:false` with `retryAllowed:true`: revise and resubmit. 200 `pass:false` with `retryAllowed:false` or no retry fields: fetch new challenge.
 - **`GET /v1/claim-calldata`** — 429/5xx: retry. 400: fix epoch input format.
+- **`GET /v1/bonus/claim-calldata`** — 429/5xx: retry. 400: fix epoch input format.
+- **`target_missing_pool_methods`** (claim/bonus with `target`): target contract is not pool-compatible for requested wrapped path.
 - **`GET /v1/stake-approve-calldata`** — 429/5xx: retry. 400: use `amount` in base units (wei).
 - **`GET /v1/stake-calldata`** — 429/5xx: retry. 400: use `amount` in base units (wei).
 - **`GET /v1/unstake-calldata`** — 429/5xx: retry.
@@ -458,8 +665,9 @@ Use one retry helper for all coordinator calls.
 - **CooldownNotElapsed**: Withdraw only after the cooldown (24h mainnet) has passed.
 
 ### Solve failures
-- **Failed constraints after submit**: Request a **new challenge** with a different nonce. Do not retry the same challenge.
+- **Failed constraints after submit**: In multi-pass mode, check `retryAllowed` — if true, revise and resubmit with the same challengeId/nonce/manifest and a fresh trace.
 - **Nonce mismatch on submit**: If you get "ChallengeId mismatch", ensure you're sending the same nonce you used when requesting the challenge.
+- **Manifest mismatch (409)**: The `challengeManifestHash` does not match. Fetch a new challenge and use the fresh manifest hash.
 - **Consistent failures across many challenges**: If the LLM fails repeatedly after many different challenges, stop and inform the user. Suggest adjusting model selection or thinking budget — see the configuration notes in Step B.
 - **Do NOT** loop indefinitely. Each attempt costs LLM credits.
 
