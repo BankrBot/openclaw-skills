@@ -1,10 +1,8 @@
 # Quotient API Reference (Skill-Focused)
 
-Runtime API base: `https://q-api.quotient.social/api/v1`
+Runtime + discovery base: `https://q-api.quotient.social`
 
-Documentation/schema base: `https://dev.quotient.social`
-
-For canonical schema details, use `https://dev.quotient.social/api/v1/openapi.json`.
+For canonical schema details, use `https://q-api.quotient.social/openapi.json`.
 
 ## Access and Authorization
 
@@ -53,8 +51,6 @@ Full intelligence briefing for one market:
 - `key_drivers` with citations
 - `signals`
 - `sentiment`
-- `affected_equities`
-
 ### GET /api/v1/markets/{slug}/signals
 
 Paginated signals for one market.
@@ -70,18 +66,6 @@ Batch lookup by identifier.
 Use exactly one:
 - `slugs` (comma-separated, max 10), or
 - `condition_ids` (comma-separated, max 10)
-
-### GET /api/v1/equities
-
-Equities ranked by exposure to Quotient-forecasted markets.
-
-Common params:
-- `cursor`
-- `limit` (`1-50`, default `20`)
-
-### GET /api/v1/equities/{slug}
-
-Full equity detail with linked markets and impact data.
 
 ## Common Error Codes
 

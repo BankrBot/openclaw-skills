@@ -7,12 +7,10 @@ description: Accesses Quotient market intelligence through either x402 micropaym
 
 Use this skill when an agent needs Quotient market intelligence and must execute x402 payment flows correctly.
 
-## Base URLs and Responsibilities
+## Base URL
 
-- `QUOTIENT_API_BASE_URL`: `https://dev.quotient.social`
-  - Use for docs/schema/pricing lookup only.
-- `QUOTIENT_GATEWAY_BASE_URL`: `https://q-api.quotient.social`
-  - Execute runtime API requests here.
+- `QUOTIENT_BASE_URL`: `https://q-api.quotient.social`
+- Use this single origin for runtime requests and discovery docs (`/openapi.json`, `/api/public/pricing`, `/llms.txt`, `/skill/*`).
 
 ## Access Model
 
@@ -48,38 +46,28 @@ Use this skill when an agent needs Quotient market intelligence and must execute
 
 ## Required Preflight (Deterministic)
 
-Before the first API call in a session, fetch these discovery endpoints from `QUOTIENT_API_BASE_URL`:
+Before the first API call in a session, fetch these discovery endpoints:
 
-- `/api/v1/openapi.json`
+- `/openapi.json`
 - `/api/public/pricing`
-- Treat OpenAPI as the schema/parameter source of truth.
-- Treat pricing endpoint response as the gateway-backed runtime cost source of truth.
-- Before each monetized request, refresh pricing if your cached pricing data is older than 5 minutes.
+- Treat OpenAPI as canonical route and invocation metadata.
+- Treat pricing endpoint as supplemental billing/network metadata (assets, chains, credit mapping), and treat runtime `402` challenge data as authoritative.
+- Cache pricing metadata and refresh periodically (for example, every 15-60 minutes) or immediately when runtime `402` details differ from cache.
 
 ## Canonical Endpoints and Discovery
 
-Discovery endpoints below are served from `QUOTIENT_API_BASE_URL`:
-
-- API docs UI: `/docs`
-- OpenAPI: `/api/v1/openapi.json`
+- OpenAPI: `/openapi.json`
 - Pricing discovery endpoint: `GET /api/public/pricing`
 - AI index: `/llms.txt`
 
 ## Core Endpoints
-
-All endpoint paths below are relative to `QUOTIENT_GATEWAY_BASE_URL`.
 
 - `GET /api/v1/markets` - covered markets with forecast status
 - `GET /api/v1/markets/mispriced` - markets where Q diverges from market odds
 - `GET /api/v1/markets/lookup` - batch lookup by slugs or condition IDs
 - `GET /api/v1/markets/{slug}/intelligence` - full intelligence on a single market
 - `GET /api/v1/markets/{slug}/signals` - paginated analyst signals for a market
-- `GET /api/v1/equities` - equities affected by Q-forecasted markets
-- `GET /api/v1/equities/{slug}` - full detail on an equity entity
-
 ## References
-
-Reference docs below are served from `QUOTIENT_API_BASE_URL`:
 
 - API reference: `/skill/references/api-reference.md`
 - Bankr-preferred x402 flow: `/skill/references/bankr-preferred-flow.md`

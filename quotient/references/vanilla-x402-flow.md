@@ -8,12 +8,11 @@ This is an x402-specific path. If you are using `x-quotient-api-key` auth, you c
 
 - Agent has access to a wallet capable of the required x402 signing scheme.
 - Agent can parse response headers and retry requests with modified headers.
-- Agent reads pricing metadata from `GET https://dev.quotient.social/api/public/pricing`.
+- Agent reads pricing metadata from `GET https://q-api.quotient.social/api/public/pricing`.
 
 ## Domain Rule
 
-- Execute all paid API requests against the gateway domain (`https://q-api.quotient.social`).
-- Use `https://dev.quotient.social` for OpenAPI/schema discovery only.
+- Use the gateway domain (`https://q-api.quotient.social`) for both execution and discovery.
 
 ## Protocol Flow
 
@@ -67,7 +66,7 @@ import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { x402HTTPClient } from "@x402/core/client";
 import { privateKeyToAccount } from "viem/accounts";
 
-const baseUrl = process.env.QUOTIENT_API_GATEWAY_BASE_URL!;
+const baseUrl = process.env.QUOTIENT_BASE_URL!;
 const evmPrivateKey = process.env.EVM_PRIVATE_KEY as `0x${string}`;
 
 const signer = privateKeyToAccount(evmPrivateKey);
@@ -149,7 +148,7 @@ client.register("eip155:*", new ExactEvmScheme(bankrSigner as never));
 
 const fetchWithPayment = wrapFetchWithPayment(fetch, client);
 const res = await fetchWithPayment(
-  `${process.env.QUOTIENT_API_GATEWAY_BASE_URL}/api/v1/markets`,
+  `${process.env.QUOTIENT_BASE_URL}/api/v1/markets`,
   { method: "GET" }
 );
 ```
