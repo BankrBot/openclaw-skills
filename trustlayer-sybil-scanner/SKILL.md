@@ -1,7 +1,7 @@
 ---
 name: trustlayer-sybil-scanner
 description: Feedback forensics for ERC-8004 agents. Detects Sybil rings, fake reviews, rating manipulation, and reputation laundering across 6 chains. No API key needed.
-version: 3.0.0
+version: 4.0.0
 tags:
   - reputation
   - trust
@@ -111,12 +111,12 @@ If sybil_risk is high: "This agent's reviews show signs of Sybil manipulation. R
 
 ## Other endpoints
 
-Agent lookup (basic info, no scoring):
+Agent lookup (paid $0.001 USDC — returns full agent profile, metadata, and on-chain registration details):
 ```bash
 curl -s "https://api.thetrustlayer.xyz/agent/<chain>:<agentId>"
 ```
 
-Leaderboard (most trusted agents, Sybil-filtered):
+Leaderboard (most trusted agents, Sybil-filtered — rate-limited: 5 free per IP per hour, then 402):
 ```bash
 curl -s "https://api.thetrustlayer.xyz/leaderboard?chain=base&limit=10"
 ```
@@ -125,6 +125,24 @@ Network stats (live counts of total agents, Sybil flags, chains covered, and mor
 ```bash
 curl -s "https://api.thetrustlayer.xyz/stats"
 ```
+
+Reviewer lookup (paid $0.001 USDC — returns reviewer quality score, total reviews, unique agents reviewed, quality tier, and recent review history):
+```bash
+curl -s "https://api.thetrustlayer.xyz/reviewer/<wallet_address>"
+```
+Only 9 out of 11,247 reviewers score 80+. Use this to verify if a reviewer is trustworthy.
+
+Owner portfolio (paid $0.001 USDC — returns all agents owned by one wallet across chains, with cross-chain group info, average trust score, and risk assessment):
+```bash
+curl -s "https://api.thetrustlayer.xyz/owner/<wallet_address>"
+```
+Use for due diligence on an agent operator.
+
+Score history (paid $0.001 USDC — returns full daily score time-series, 7d/30d trajectory, and volatility):
+```bash
+curl -s "https://api.thetrustlayer.xyz/history/<chain>:<agentId>"
+```
+2.15M snapshots across 89K agents. Use to check if an agent's reputation is stable or volatile.
 
 Call `/stats` for current network coverage — agent counts, Sybil flags, cross-chain groups, and chain breakdown are all returned live.
 
