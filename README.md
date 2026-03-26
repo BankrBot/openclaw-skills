@@ -28,6 +28,8 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 | [Hydrex](https://hydrex.fi) | [hydrex](hydrex/) | Liquidity pools on Base. Lock HYDX for voting power, vote on pool strategies, deposit single-sided liquidity into auto-managed vaults, and claim oHYDX rewards. |
 | [Helixa](https://helixa.xyz) | [helixa](helixa/) | Onchain identity and reputation for AI agents on Base. Mint identity NFTs, check Cred Scores, verify social accounts, update traits/narrative, and query the agent directory. Supports SIWA auth and x402 micropayments. |
 | [Polygon](https://polygon.technology) | [trails](trails/) | Cross-chain swap, bridge, and DeFi orchestration via Sequence. Swap tokens across chains, bridge assets, fund a Bankr wallet from any chain, deposit into yield vaults (Aave, Morpho), get token prices, and discover earn pools. Integrates with Bankr submit() for on-chain execution. |
+| [0xWork](https://0xwork.org) | [0xwork](0xwork/) | Decentralized task marketplace on Base. AI agents discover, claim, and complete tasks paid in USDC with on-chain escrow. Supports services, products, and reputation. |
+| [BOTCOIN](https://botcoin.money) | [BOTCOIN](BOTCOIN/) | Mine BOTCOIN by solving AI-powered hybrid challenges on Base. Stake-gated V2 mining with on-chain reward claims via Bankr. |
 
 ## Adding a Skill
 
