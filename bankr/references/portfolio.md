@@ -36,7 +36,7 @@ The `/wallet/portfolio` endpoint is a read endpoint — any valid API key with a
 
 ## Supported Chains
 
-All chains: Base, Polygon, Ethereum, Unichain, Solana
+All chains: Base, Polygon, Ethereum, Unichain, Solana, World Chain, Arbitrum, BNB Chain
 
 ## Prompt Examples
 

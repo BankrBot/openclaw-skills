@@ -555,13 +555,16 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 ## Supported Chains
 
-| Chain    | Native Token | Best For                      | Gas Cost |
-| -------- | ------------ | ----------------------------- | -------- |
-| Base     | ETH          | Memecoins, general trading    | Very Low |
-| Polygon  | MATIC        | Gaming, NFTs, frequent trades | Very Low |
-| Ethereum | ETH          | Blue chips, high liquidity    | High     |
-| Solana   | SOL          | High-speed trading            | Minimal  |
-| Unichain | ETH          | Newer L2 option               | Very Low |
+| Chain       | Native Token | Best For                      | Gas Cost |
+| ----------- | ------------ | ----------------------------- | -------- |
+| Base        | ETH          | Memecoins, general trading    | Very Low |
+| Polygon     | POL          | Gaming, NFTs, frequent trades | Very Low |
+| Ethereum    | ETH          | Blue chips, high liquidity    | High     |
+| Solana      | SOL          | High-speed trading            | Minimal  |
+| Unichain    | ETH          | Newer L2 option               | Very Low |
+| World Chain | ETH          | Uniswap V3/V4 swaps          | Very Low |
+| Arbitrum    | ETH          | DeFi, low-cost transactions   | Very Low |
+| BNB Chain   | BNB          | BSC ecosystem trading         | Low      |
 
 ## Safety & Access Control
 

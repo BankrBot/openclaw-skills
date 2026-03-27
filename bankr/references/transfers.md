@@ -31,8 +31,8 @@ The `/wallet/transfer` endpoint is a write endpoint — requires `walletApiEnabl
 
 ## Supported Transfers
 
-- **EVM Chains**: Base, Polygon, Ethereum (mainnet), Unichain
-  - Native tokens: ETH, MATIC
+- **EVM Chains**: Base, Polygon, Ethereum (mainnet), Unichain, World Chain, Arbitrum, BNB Chain
+  - Native tokens: ETH, POL, BNB
   - ERC20 tokens: USDC, USDT, WETH, etc.
 - **Solana**: SOL and SPL tokens
 
