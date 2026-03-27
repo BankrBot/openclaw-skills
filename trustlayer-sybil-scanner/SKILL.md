@@ -1,6 +1,6 @@
 ---
 name: trustlayer-sybil-scanner
-description: Feedback forensics for ERC-8004 agents. Detects Sybil rings, fake reviews, rating manipulation, and reputation laundering across 6 chains. No API key needed.
+description: Feedback forensics for ERC-8004 agents. Detects Sybil rings, fake reviews, rating manipulation, and reputation laundering across 20 chains. No API key needed.
 version: 4.0.0
 tags:
   - reputation
@@ -21,7 +21,7 @@ metadata:
 
 # TrustLayer Sybil Scanner — ERC-8004 Feedback Forensics
 
-Detects fake reviews, Sybil rings, rating manipulation, and reputation laundering in ERC-8004 agent ratings across Base, Ethereum, BSC, Polygon, Monad, and Solana.
+Detects fake reviews, Sybil rings, rating manipulation, and reputation laundering in ERC-8004 agent ratings across 20 chains including Base, Ethereum, BSC, Celo, Gnosis, Optimism, Arbitrum, Avalanche, Polygon, Monad, and Solana.
 
 Most agent reputation systems show you the rating. This one tells you if the rating is real.
 
@@ -50,7 +50,7 @@ Most agent reputation systems show you the rating. This one tells you if the rat
 curl -s "https://api.thetrustlayer.xyz/trust/<chain>:<agentId>"
 ```
 
-Replace `<chain>` with: base, ethereum, bsc, polygon, monad, solana-mainnet
+Replace `<chain>` with: base, ethereum, bsc, celo, gnosis, optimism, arbitrum, avalanche, polygon, monad, mantle, scroll, linea, metis, taiko, solana-mainnet (and more)
 Replace `<agentId>` with the numeric agent ID.
 
 Example:
