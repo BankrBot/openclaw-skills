@@ -12,10 +12,11 @@ Each API key has independent toggles managed at [bankr.bot/api](https://bankr.bo
 
 | Flag | Controls Access To | Default |
 |------|-------------------|---------|
-| `agentApiEnabled` | `/agent/*` endpoints (prompt, sign, submit, job status) | false |
+| `walletApiEnabled` | `/wallet/*` write endpoints (transfer, sign, submit) | true |
+| `agentApiEnabled` | `/agent/*` AI endpoints (prompt, job status, profile) | false |
+| `tokenLaunchApiEnabled` | Token deployment (`/token-launches/deploy`) and agent deploy tool | true |
 | `llmGatewayEnabled` | LLM Gateway at `llm.bankr.bot` (chat completions, model access) | false |
-| `externalOrdersEnabled` | External order submission endpoints | false |
-| `readOnly` | When true, restricts agent sessions to read-only tools | false |
+| `readOnly` | When true, restricts Wallet/Agent API to read-only tools | true |
 
 A single key can have multiple capabilities enabled (e.g., both Agent API and LLM Gateway).
 
@@ -119,7 +120,9 @@ Manage API key settings at [bankr.bot/api](https://bankr.bot/api):
 |-------|------|-------------|
 | `readOnly` | boolean | When true, only read tools are available |
 | `allowedIps` | string[] | IP whitelist (empty = all allowed) |
-| `agentApiEnabled` | boolean | Whether `/agent/*` endpoints are accessible |
+| `walletApiEnabled` | boolean | Whether `/wallet/*` write endpoints are accessible |
+| `agentApiEnabled` | boolean | Whether `/agent/*` AI endpoints are accessible |
+| `tokenLaunchApiEnabled` | boolean | Whether token deployment is accessible |
 | `llmGatewayEnabled` | boolean | Whether LLM Gateway endpoints are accessible |
 
 ## CLI Security
