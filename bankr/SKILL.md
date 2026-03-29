@@ -118,6 +118,8 @@ bankr login email <user-email> --code <otp> --accept-terms --key-name "LLM Clien
 | `--read-write` | Disable read-only mode (allow transactions). Without this, enabled APIs are read-only |
 | `--no-token-launch` | Disable Token Launch API (enabled by default) |
 | `--llm` | Enable [LLM gateway](https://docs.bankr.bot/llm-gateway/overview) access (multi-model API at `llm.bankr.bot`). Currently limited to beta testers |
+| `--allowed-ips <ips>` | Comma-separated IP allowlist for the API key |
+| `--allowed-recipients <addresses>` | Comma-separated EVM/Solana addresses the key can send to (auto-classified by 0x prefix) |
 
 **New key defaults** (when no flags are passed):
 
@@ -441,6 +443,10 @@ bankr llm setup openclaw --install         # Install Bankr provider into OpenCla
 bankr llm setup claude                     # Print Claude Code env vars
 bankr llm claude                           # Launch Claude Code through gateway
 ```
+
+### Model Deprecation
+
+The gateway supports model deprecation with auto-redirect to replacement models. Deprecated models return `X-Model-Deprecated` and `X-Model-Replacement` response headers. Hard-deprecated models return HTTP 410 — update your model ID to the replacement indicated in the header.
 
 For full details — setup paths, model list, provider config, SDK examples, key management, and troubleshooting — see:
 
