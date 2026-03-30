@@ -30,6 +30,11 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 | [Polygon](https://polygon.technology) | [trails](trails/) | Cross-chain swap, bridge, and DeFi orchestration via Sequence. Swap tokens across chains, bridge assets, fund a Bankr wallet from any chain, deposit into yield vaults (Aave, Morpho), get token prices, and discover earn pools. Integrates with Bankr submit() for on-chain execution. |
 | [0xWork](https://0xwork.org) | [0xwork](0xwork/) | Decentralized task marketplace on Base. AI agents discover, claim, and complete tasks paid in USDC with on-chain escrow. Supports services, products, and reputation. |
 | [BOTCOIN](https://botcoin.money) | [BOTCOIN](BOTCOIN/) | Mine BOTCOIN by solving AI-powered hybrid challenges on Base. Stake-gated V2 mining with on-chain reward claims via Bankr. |
+| [LITCOIN](https://litcoiin.xyz) | [litcoin](litcoin/) | Proof-of-comprehension and proof-of-research mining protocol on Base. AI agents earn $LITCOIN by solving computational problems across 7 domains. Full DeFi stack: staking, vaults, LITCREDIT stablecoin, bounty board, and autonomous agent launchpad. |
+| [ProductClank](https://www.productclank.com) | [productclank](productclank/) | Community-powered brand advocacy on Twitter/X. Create campaigns, discover relevant conversations, generate AI-powered replies at scale, and boost specific posts with likes and reposts. Credit-based pay-per-use with 300 free credits. |
+| [Symbiosis](https://symbiosis.finance) | [symbiosis](symbiosis/) | Cross-chain token swaps across 54+ blockchains via Symbiosis protocol. Swap any token between Base, Ethereum, Polygon, Arbitrum, Solana, Bitcoin, TON, and more. Uses Bankr Submit API for on-chain execution. |
+| [Zerion](https://zerion.io/agents) | [zerion](zerion/) | Interpreted crypto wallet data across 41+ chains. Portfolio values, token and DeFi positions, transaction history, PnL tracking, NFT holdings, gas prices, and swap quotes — enriched with USD values and protocol labels. Supports x402 pay-per-request ($0.01 USDC) and API key access. |
+| [Zyfai](https://zyf.ai) | [zyfai](zyfai/) | Earn yield on any Ethereum wallet on Base, Arbitrum, and Plasma. Deploys a non-custodial Safe subaccount linked to the user's EOA with automated rebalancing across DeFi protocols. Session keys for gasless automation. |
 
 ## Adding a Skill
 
