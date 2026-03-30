@@ -70,7 +70,7 @@ result = agent.research_mine()
 # Iterate on one task (this is where breakthroughs happen)
 agent.research_loop(task_id="sort-benchmark-001", rounds=50, delay=30)
 
-# List available tasks (20 tasks across algorithm, mathematics, bioinformatics)
+# List available tasks (20 tasks across code_optimization, algorithm, pattern_recognition, software_engineering, bioinformatics, mathematics)
 tasks = agent.research_tasks()
 ```
 
@@ -108,11 +108,16 @@ agent.early_unstake(confirm=True)   # Execute with penalty
 
 ## Vaults and LITCREDIT
 
-Open vaults with LITCOIN collateral, mint LITCREDIT (compute-pegged stablecoin: 1 LITCREDIT = 1,000 output tokens of frontier AI).
+Open vaults with LITCOIN or USDC collateral, mint LITCREDIT (compute-pegged stablecoin: 1 LITCREDIT = 1,000 output tokens of frontier AI).
+LITCOIN vaults: tier-based ratios (150-250%), 0.5% minting fee.
+USDC vaults: fixed 105% ratio, 0.25% minting fee, 500K LITCREDIT ceiling. No staking needed.
 
 ```python
-agent.open_vault(10_000_000)             # Deposit 10M LITCOIN
+agent.open_vault(10_000_000)             # LITCOIN vault (V1)
+agent.open_vault_v2("usdc", 1000)        # USDC vault — $1,000 at 105%
+agent.open_vault_v2("litcoin", 10_000_000)  # LITCOIN vault (V2)
 vaults = agent.vault_ids()
+token = agent.get_vault_token(vaults[0]) # Returns token address
 agent.mint_litcredit(vaults[0], 500)     # Mint 500 LITCREDIT
 agent.repay_debt(vaults[0], 500)         # Repay debt
 agent.add_collateral(vaults[0], 5_000_000)  # Strengthen vault
@@ -153,7 +158,8 @@ agent.mine(rounds=20)                    # Comprehension mine
 agent.research_loop(rounds=10)           # Research mine
 agent.claim()                            # Claim on-chain
 agent.stake(2)                           # Circuit tier (1.25x boost)
-agent.open_vault(10_000_000)             # Vault with 10M collateral
+agent.open_vault(10_000_000)             # LITCOIN vault with 10M collateral
+agent.open_vault_v2("usdc", 1000)        # Or USDC vault with $1,000
 vaults = agent.vault_ids()
 agent.mint_litcredit(vaults[0], 500)     # Mint 500 LITCREDIT
 agent.deposit_escrow(100)                # Fund compute
@@ -187,10 +193,12 @@ print(result['response'])
 - `time_until_unlock()` — Seconds until lock expires
 
 ### Vaults
-- `open_vault(collateral)` — Open vault with LITCOIN
-- `mint_litcredit(vault_id, amount)` — Mint LITCREDIT (0.5% fee)
+- `open_vault(collateral)` — Open vault with LITCOIN (V1)
+- `open_vault_v2(token, amount)` — Open vault with LITCOIN or USDC (V2)
+- `get_vault_token(vault_id)` — Get collateral type for a vault
+- `mint_litcredit(vault_id, amount)` — Mint LITCREDIT (0.5% LITCOIN / 0.25% USDC fee)
 - `repay_debt(vault_id, amount)` — Repay debt
-- `add_collateral(vault_id, amount)` — Add collateral
+- `add_collateral(vault_id, amount)` — Add collateral (auto-detects token type)
 - `close_vault(vault_id)` — Close vault
 - `vault_ids()` — List your vaults
 - `vault_health(vault_id)` — Collateral ratio
