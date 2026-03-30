@@ -35,6 +35,7 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 | [Symbiosis](https://symbiosis.finance) | [symbiosis](symbiosis/) | Cross-chain token swaps across 54+ blockchains via Symbiosis protocol. Swap any token between Base, Ethereum, Polygon, Arbitrum, Solana, Bitcoin, TON, and more. Uses Bankr Submit API for on-chain execution. |
 | [Zerion](https://zerion.io/agents) | [zerion](zerion/) | Interpreted crypto wallet data across 41+ chains. Portfolio values, token and DeFi positions, transaction history, PnL tracking, NFT holdings, gas prices, and swap quotes — enriched with USD values and protocol labels. Supports x402 pay-per-request ($0.01 USDC) and API key access. |
 | [Zyfai](https://zyf.ai) | [zyfai](zyfai/) | Earn yield on any Ethereum wallet on Base, Arbitrum, and Plasma. Deploys a non-custodial Safe subaccount linked to the user's EOA with automated rebalancing across DeFi protocols. Session keys for gasless automation. |
+| [Quotient](https://quotient.social) | [quotient](quotient/) | Market intelligence API with x402 micropayment and API key auth. Access onchain/social analytics, OpenAPI discovery, and pricing data via `q-api.quotient.social`. |
 
 ## Adding a Skill
 
