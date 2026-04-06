@@ -1,17 +1,19 @@
 # Bankr API Workflow Reference
 
-Understanding the asynchronous job pattern for Bankr API operations.
+Understanding the asynchronous job pattern for Bankr Agent API operations.
 
-**Source**: [Agent API Reference](https://www.notion.so/Agent-API-2e18e0f9661f80cb83ccfc046f8872e3)
+**Source**: [Agent API Reference](https://www.notion.so/Agent-API-2e18e0f9661f80cb83ccfc046f8872e3) | [Wallet API Docs](https://docs.bankr.bot/wallet-api/overview)
+
+> **Note**: This reference covers the **Agent API** async prompt workflow (`/agent/prompt`). For direct synchronous wallet operations (portfolio, transfer, sign, submit), see the **Wallet API** endpoints at `/wallet/*` documented in [sign-submit-api.md](sign-submit-api.md), [portfolio.md](portfolio.md), and [transfers.md](transfers.md).
 
 ## Using the Bankr CLI
 
 The CLI handles submit-poll-complete automatically. For installation and login, see the main [SKILL.md](../SKILL.md).
 
 ```bash
-bankr prompt "What is my ETH balance?"   # submit + poll + display
-bankr status <jobId>                      # check a specific job
-bankr cancel <jobId>                      # cancel a running job
+bankr agent prompt "What is my ETH balance?"   # submit + poll + display
+bankr agent status <jobId>                      # check a specific job
+bankr agent cancel <jobId>                      # cancel a running job
 ```
 
 ## Using the REST API Directly
@@ -33,7 +35,7 @@ All operations follow this pattern:
 ### POST /agent/prompt
 Submit a natural language prompt to start a job.
 
-**CLI equivalent:** `bankr prompt "What is my ETH balance?"`
+**CLI equivalent:** `bankr agent prompt "What is my ETH balance?"`
 
 **Request:**
 ```bash
@@ -77,7 +79,7 @@ curl -X POST "https://api.bankr.bot/agent/prompt" \
 ### GET /agent/job/{jobId}
 Check job status and results.
 
-**CLI equivalent:** `bankr status job_abc123`
+**CLI equivalent:** `bankr agent status job_abc123`
 
 **Request:**
 ```bash
@@ -116,7 +118,7 @@ curl -X GET "https://api.bankr.bot/agent/job/job_abc123" \
 ### POST /agent/job/{jobId}/cancel
 Cancel a pending or processing job. Cancel requests are idempotent — cancelling an already-cancelled job returns success.
 
-**CLI equivalent:** `bankr cancel job_abc123`
+**CLI equivalent:** `bankr agent cancel job_abc123`
 
 **Request:**
 ```bash
@@ -287,7 +289,7 @@ done
 }
 ```
 
-**Resolution**: Check API key, ensure "Agent API" access is enabled at https://bankr.bot/api
+**Resolution**: Check API key, ensure "Wallet & Agent API" access is enabled at https://bankr.bot/api
 
 ### Forbidden (403)
 ```json
@@ -297,7 +299,7 @@ done
 }
 ```
 
-**Resolution**: Visit https://bankr.bot/api and enable Agent API access on your key
+**Resolution**: Visit https://bankr.bot/api and enable Wallet & Agent API access on your key
 
 ### Rate Limiting (429)
 ```json

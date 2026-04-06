@@ -1,6 +1,6 @@
 ---
 name: bankr
-description: AI-powered crypto trading agent and LLM gateway via natural language. Use when the user wants to trade crypto, check portfolio balances, view token prices, transfer crypto, manage NFTs, use leverage, bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet. Supports Base, Ethereum, Polygon, Solana, and Unichain.
+description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, check portfolio balances (with PnL and NFTs), view token prices, search tokens, transfer crypto, manage NFTs, use leverage, bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet. Supports Base, Ethereum, Polygon, Solana, and Unichain.
 metadata:
   {
     "clawdbot":
@@ -19,7 +19,9 @@ Execute crypto trading and DeFi operations using natural language. Two integrati
 1. **Bankr CLI** (recommended) — Install `@bankr/cli` for a batteries-included terminal experience
 2. **REST API** — Call `https://api.bankr.bot` directly from any language or tool
 
-Both use the same API key and the same async job workflow under the hood.
+Both use the same API key. The API has two layers:
+- **Wallet API** (`/wallet/*`) — Direct, synchronous endpoints for portfolio, transfers, signing, and transaction submission
+- **Agent API** (`/agent/*`) — AI-powered async prompt endpoint for natural language operations
 
 ## Getting an API Key
 
@@ -37,13 +39,13 @@ bankr login email user@example.com
 bankr login email user@example.com --code 123456 --accept-terms --key-name "My Agent" --read-write
 ```
 
-This creates a wallet, accepts terms, and generates an API key — no browser needed. Before running step 2, ask the user whether they need read-only or read-write access, LLM gateway, and their preferred key name.
+This creates a wallet, accepts terms, and generates an API key — no browser needed. Before running step 2, ask the user which APIs they need (wallet, agent, both via `--read-write`, LLM gateway) and their preferred key name.
 
 **Option B: Bankr Terminal**
 
 1. Visit [bankr.bot/api](https://bankr.bot/api)
 2. **Sign up / Sign in** — Enter your email and the one-time passcode (OTP) sent to it
-3. **Generate an API key** — Create a key with **Agent API** access enabled (the key starts with `bk_...`)
+3. **Generate an API key** — Create a key with **Wallet & Agent API** access enabled (the key starts with `bk_...`)
 
 Both options automatically provision **EVM wallets** (Base, Ethereum, Polygon, Unichain) and a **Solana wallet** — no manual wallet setup needed.
 
@@ -77,20 +79,31 @@ bankr login email <user-email>
 
 1. **OTP code** — the code they received via email
 2. **Accept Terms of Service (REQUIRED)** — Present the [Terms of Service](https://bankr.bot/terms) link and confirm the user agrees. **The login command will fail for new users without `--accept-terms`.** You MUST ask for ToS acceptance and do not pass `--accept-terms` unless the user has explicitly confirmed.
-3. **Read-only or read-write API key?**
-   - **Read-only** (default) — portfolio, balances, prices, research only
-   - **Read-write** (`--read-write`) — enables swaps, transfers, orders, token launches, leverage, Polymarket bets
+3. **Which APIs do they need?**
+   - **Wallet API** — enabled by default, use `--no-wallet-api` to disable
+   - **Agent API** (`--agent-api`) — AI-powered prompts and natural language operations
+   - **Token Launch** — enabled by default, use `--no-token-launch` to disable
+   - Add `--read-write` to allow transactions (without it, enabled APIs are read-only)
 4. **Enable LLM gateway access?** (`--llm`) — multi-model API at `llm.bankr.bot` (currently limited to beta testers). Skip if user doesn't need it.
 5. **Key name?** (`--key-name`) — a display name for the API key (e.g. "My Agent", "Trading Bot")
 
 **Step 3 — Construct and run the step 2 command** with the user's choices. **Do NOT execute if the user has not explicitly accepted the Terms of Service** — ask again if needed:
 
 ```bash
-# Example with all options
-bankr login email <user-email> --code <otp> --accept-terms --key-name "My Agent" --read-write --llm
+# Full access: wallet + agent with write + LLM
+bankr login email <user-email> --code <otp> --accept-terms --key-name "My Agent" --agent-api --read-write --llm
 
-# Example read-only, no LLM
-bankr login email <user-email> --code <otp> --accept-terms --key-name "Research Bot"
+# Agent with write access (AI can execute transactions)
+bankr login email <user-email> --code <otp> --accept-terms --key-name "Trading Agent" --agent-api --read-write
+
+# Default key (wallet + token launch, read-only)
+bankr login email <user-email> --code <otp> --accept-terms --key-name "My Key"
+
+# Agent read-only (research, prices, balances — no transactions)
+bankr login email <user-email> --code <otp> --accept-terms --key-name "Research Agent" --agent-api
+
+# LLM-only (no wallet, no token launch)
+bankr login email <user-email> --code <otp> --accept-terms --key-name "LLM Client" --no-wallet-api --no-token-launch --llm
 ```
 
 #### Login options reference
@@ -100,8 +113,23 @@ bankr login email <user-email> --code <otp> --accept-terms --key-name "Research 
 | `--code <otp>` | OTP code received via email (step 2) |
 | `--accept-terms` | Accept [Terms of Service](https://bankr.bot/terms) without prompting (required for new users) |
 | `--key-name <name>` | Display name for the API key (e.g. "My Agent"). Prompted if omitted |
-| `--read-write` | Enable write operations: swaps, transfers, orders, token launches, leverage, Polymarket bets. **Without this flag, the key is read-only** (portfolio, balances, prices, research only) |
+| `--no-wallet-api` | Disable Wallet API (enabled by default) |
+| `--agent-api` | Enable Agent API (AI prompts, natural language operations) |
+| `--read-write` | Disable read-only mode (allow transactions). Without this, enabled APIs are read-only |
+| `--no-token-launch` | Disable Token Launch API (enabled by default) |
 | `--llm` | Enable [LLM gateway](https://docs.bankr.bot/llm-gateway/overview) access (multi-model API at `llm.bankr.bot`). Currently limited to beta testers |
+| `--allowed-ips <ips>` | Comma-separated IP allowlist for the API key |
+| `--allowed-recipients <addresses>` | Comma-separated EVM/Solana addresses the key can send to (auto-classified by 0x prefix) |
+
+**New key defaults** (when no flags are passed):
+
+| Flag | Default | To change |
+|------|---------|-----------|
+| `walletApiEnabled` | Enabled | `--no-wallet-api` |
+| `agentApiEnabled` | Disabled | `--agent-api` |
+| `tokenLaunchApiEnabled` | Enabled | `--no-token-launch` |
+| `llmGatewayEnabled` | Disabled | `--llm` |
+| `readOnly` | Enabled (read-only) | `--read-write` |
 
 Any option not provided on the command line will be prompted interactively by the CLI, so you can mix headless and interactive as needed.
 
@@ -126,7 +154,8 @@ If your LLM gateway key differs from your API key, pass `--llm-key` during login
 
 ```bash
 bankr whoami
-bankr prompt "What is my balance?"
+bankr wallet portfolio
+bankr agent prompt "What is my balance?"
 ```
 
 ## Option 2: REST API (Direct)
@@ -186,26 +215,87 @@ curl -X POST "https://api.bankr.bot/agent/prompt" \
   -d '{"prompt": "And what about SOL?", "threadId": "thr_XYZ"}'
 ```
 
-Omit `threadId` to start a new conversation. CLI equivalent: `bankr prompt --continue` (reuses last thread) or `bankr prompt --thread <id>`.
+Omit `threadId` to start a new conversation. CLI equivalent: `bankr agent prompt --continue` (reuses last thread) or `bankr agent prompt --thread <id>`.
 
 ### API Endpoints Summary
+
+#### Wallet API (`/wallet/*`) — Direct endpoints (synchronous)
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/wallet/me` | GET | Read | Wallet info (address, chains) |
+| `/wallet/portfolio` | GET | Read | Portfolio balances, supports `?include=pnl,nfts` for progressive loading |
+| `/wallet/transfer` | POST | Write | Transfer tokens (multi-chain, supports `allowedRecipients` enforcement) |
+| `/wallet/sign` | POST | Write | Sign messages, typed data, or transactions |
+| `/wallet/submit` | POST | Write | Submit raw transactions to chain |
+
+- **Read endpoints** (`/wallet/me`, `/wallet/portfolio`) — any valid API key with a wallet
+- **Write endpoints** (`/wallet/transfer`, `/wallet/sign`, `/wallet/submit`) — require `walletApiEnabled`, `readOnly` check, and `allowedRecipients` enforcement
+- IP allowlist enforced on all endpoints
+
+#### Agent API (`/agent/*`) — AI-powered endpoints (async)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/agent/prompt` | POST | Submit a prompt (async, returns job ID) |
 | `/agent/job/{jobId}` | GET | Check job status and results |
 | `/agent/job/{jobId}/cancel` | POST | Cancel a running job |
-| `/agent/balances` | GET | Wallet balances across chains (sync, optional `?chains=` filter) |
-| `/agent/sign` | POST | Sign messages/transactions (sync) |
-| `/agent/submit` | POST | Submit raw transactions (sync) |
+
+#### Deprecated endpoints
+
+The following `/agent/*` endpoints still work but are deprecated in favor of `/wallet/*`:
+
+| Deprecated | Use Instead |
+|-----------|-------------|
+| `GET /agent/me` | `GET /wallet/me` |
+| `GET /agent/balances` | `GET /wallet/portfolio` |
+| `POST /agent/sign` | `POST /wallet/sign` |
+| `POST /agent/submit` | `POST /wallet/submit` |
 
 For full API details (request/response schemas, job states, rich data, polling strategy), see:
 
 **Reference**: [references/api-workflow.md](references/api-workflow.md) | [references/sign-submit-api.md](references/sign-submit-api.md)
 
-## CLI Command Reference
+## CLI Command Reference (v0.2.0)
 
-### Core Commands
+CLI 0.2.0 organizes commands into three namespaces: `wallet`, `agent`, and `tokens`. Old flat commands (`balances`, `prompt`, `status`, etc.) still work as deprecated aliases.
+
+### `bankr wallet` — Wallet Operations
+
+| Command | Description |
+|---------|-------------|
+| `bankr wallet` | Show wallet info (default: whoami) |
+| `bankr wallet portfolio` | Portfolio balances across all chains (hides tokens under $1 by default) |
+| `bankr wallet portfolio --pnl` | Include profit/loss data |
+| `bankr wallet portfolio --nfts` | Include NFT holdings |
+| `bankr wallet portfolio --all` | Include both PnL and NFTs |
+| `bankr wallet portfolio --chain <chains>` | Filter by chain(s): base, polygon, mainnet, unichain, solana (comma-separated) |
+| `bankr wallet portfolio --json` | Output raw JSON |
+| `bankr wallet transfer --to <recipient> --token <symbol> --amount <amount>` | Transfer tokens with symbol resolution |
+| `bankr wallet transfer --to <recipient> --token USDC --amount 50 --chain base` | Transfer with explicit chain |
+| `bankr wallet sign` | Sign messages/typed data/transactions |
+| `bankr wallet submit` | Submit raw transactions |
+
+### `bankr agent` — AI Agent Operations
+
+| Command | Description |
+|---------|-------------|
+| `bankr agent prompt <text>` | Send a prompt to the Bankr AI agent |
+| `bankr agent prompt --continue <text>` | Continue the most recent conversation thread |
+| `bankr agent prompt --thread <id> <text>` | Continue a specific conversation thread |
+| `bankr agent status <jobId>` | Check the status of a running job |
+| `bankr agent cancel <jobId>` | Cancel a running job |
+| `bankr agent profile` | View/manage agent profile |
+| `bankr agent skills` | Show all Bankr AI agent skills with examples |
+
+### `bankr tokens` — Token Discovery
+
+| Command | Description |
+|---------|-------------|
+| `bankr tokens search <query>` | Search for tokens by name or symbol |
+| `bankr tokens info <symbol-or-address>` | Get detailed token information |
+
+### Auth & Config Commands
 
 | Command | Description |
 |---------|-------------|
@@ -217,21 +307,6 @@ For full API details (request/response schemas, job states, rich data, polling s
 | `bankr login --url` | Print Bankr Terminal URL for API key generation |
 | `bankr logout` | Clear stored credentials |
 | `bankr whoami` | Show current authentication info |
-| `bankr prompt <text>` | Send a prompt to the Bankr AI agent |
-| `bankr prompt --continue <text>` | Continue the most recent conversation thread |
-| `bankr prompt --thread <id> <text>` | Continue a specific conversation thread |
-| `bankr status <jobId>` | Check the status of a running job |
-| `bankr cancel <jobId>` | Cancel a running job |
-| `bankr balances` | Show wallet token balances across all chains (hides tokens under $1 by default) |
-| `bankr balances --low-value` | Include tokens valued under $1 in the output |
-| `bankr balances --chain <chains>` | Filter by chain(s): base, polygon, mainnet, unichain, solana (comma-separated) |
-| `bankr balances --json` | Output raw JSON balances |
-| `bankr skills` | Show all Bankr AI agent skills with examples |
-
-### Configuration Commands
-
-| Command | Description |
-|---------|-------------|
 | `bankr config get [key]` | Get config value(s) |
 | `bankr config set <key> <value>` | Set a config value |
 | `bankr --config <path> <command>` | Use a custom config file path |
@@ -239,6 +314,19 @@ For full API details (request/response schemas, job states, rich data, polling s
 Valid config keys: `apiKey`, `apiUrl`, `llmKey`, `llmUrl`
 
 Default config location: `~/.bankr/config.json`. Override with `--config` or `BANKR_CONFIG` env var.
+
+### Deprecated Aliases
+
+Old flat commands still work but prefer the namespaced versions:
+
+| Deprecated | Use Instead |
+|-----------|-------------|
+| `bankr prompt` | `bankr agent prompt` |
+| `bankr status` | `bankr agent status` |
+| `bankr cancel` | `bankr agent cancel` |
+| `bankr balances` | `bankr wallet portfolio` |
+| `bankr profile` | `bankr agent profile` |
+| `bankr skills` | `bankr agent skills` |
 
 ### Environment Variables
 
@@ -272,8 +360,8 @@ Environment variables override config file values. Config file values override d
 For straightforward requests that complete quickly:
 
 ```bash
-bankr prompt "What is my ETH balance?"
-bankr prompt "What's the price of Bitcoin?"
+bankr agent prompt "What is my ETH balance?"
+bankr agent prompt "What's the price of Bitcoin?"
 ```
 
 The CLI handles the full submit-poll-complete workflow automatically. You can also use the shorthand — any unrecognized command is treated as a prompt:
@@ -288,11 +376,11 @@ For prompts containing `$` or special characters that the shell would expand:
 
 ```bash
 # Interactive mode — no shell expansion issues
-bankr prompt
+bankr agent prompt
 # Then type: Buy $50 of ETH on Base
 
 # Or pipe input
-echo 'Buy $50 of ETH on Base' | bankr prompt
+echo 'Buy $50 of ETH on Base' | bankr agent prompt
 ```
 
 ### Conversation Threads
@@ -301,15 +389,15 @@ Continue a multi-turn conversation with the agent:
 
 ```bash
 # First prompt — starts a new thread automatically
-bankr prompt "What is the price of ETH?"
+bankr agent prompt "What is the price of ETH?"
 # → Thread: thr_ABC123
 
 # Continue the conversation (agent remembers the ETH context)
-bankr prompt --continue "And what about BTC?"
-bankr prompt -c "Compare them"
+bankr agent prompt --continue "And what about BTC?"
+bankr agent prompt -c "Compare them"
 
 # Resume any thread by ID
-bankr prompt --thread thr_ABC123 "Show me ETH chart"
+bankr agent prompt --thread thr_ABC123 "Show me ETH chart"
 ```
 
 Thread IDs are automatically saved to config after each prompt. The `--continue` / `-c` flag reuses the last thread.
@@ -320,14 +408,14 @@ For advanced use or long-running operations:
 
 ```bash
 # Submit and get job ID
-bankr prompt "Buy $100 of ETH"
+bankr agent prompt "Buy $100 of ETH"
 # → Job submitted: job_abc123
 
 # Check status of a specific job
-bankr status job_abc123
+bankr agent status job_abc123
 
 # Cancel if needed
-bankr cancel job_abc123
+bankr agent cancel job_abc123
 ```
 
 ## LLM Gateway
@@ -356,6 +444,10 @@ bankr llm setup claude                     # Print Claude Code env vars
 bankr llm claude                           # Launch Claude Code through gateway
 ```
 
+### Model Deprecation
+
+The gateway supports model deprecation with auto-redirect to replacement models. Deprecated models return `X-Model-Deprecated` and `X-Model-Replacement` response headers. Hard-deprecated models return HTTP 410 — update your model ID to the replacement indicated in the header.
+
 For full details — setup paths, model list, provider config, SDK examples, key management, and troubleshooting — see:
 
 **Reference**: [references/llm-gateway.md](references/llm-gateway.md)
@@ -375,12 +467,13 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 ### Portfolio Management
 
-- Check balances across all chains (`bankr balances` or `GET /agent/balances`)
-- View USD valuations
+- Check balances across all chains (`bankr wallet portfolio` or `GET /wallet/portfolio`)
+- View USD valuations with optional PnL tracking (`--pnl` or `?include=pnl`)
+- View NFT holdings (`--nfts` or `?include=nfts`)
 - Track holdings by token or chain
 - Real-time price updates
 - Multi-chain aggregation
-- Filter by chain: `bankr balances --chain base,solana` or `GET /agent/balances?chains=base,solana`
+- Filter by chain: `bankr wallet portfolio --chain base,solana` or `GET /wallet/portfolio?chains=base,solana`
 
 **Reference**: [references/portfolio.md](references/portfolio.md)
 
@@ -468,21 +561,24 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 ## Supported Chains
 
-| Chain    | Native Token | Best For                      | Gas Cost |
-| -------- | ------------ | ----------------------------- | -------- |
-| Base     | ETH          | Memecoins, general trading    | Very Low |
-| Polygon  | MATIC        | Gaming, NFTs, frequent trades | Very Low |
-| Ethereum | ETH          | Blue chips, high liquidity    | High     |
-| Solana   | SOL          | High-speed trading            | Minimal  |
-| Unichain | ETH          | Newer L2 option               | Very Low |
+| Chain       | Native Token | Best For                      | Gas Cost |
+| ----------- | ------------ | ----------------------------- | -------- |
+| Base        | ETH          | Memecoins, general trading    | Very Low |
+| Polygon     | POL          | Gaming, NFTs, frequent trades | Very Low |
+| Ethereum    | ETH          | Blue chips, high liquidity    | High     |
+| Solana      | SOL          | High-speed trading            | Minimal  |
+| Unichain    | ETH          | Newer L2 option               | Very Low |
+| World Chain | ETH          | Uniswap V3/V4 swaps          | Very Low |
+| Arbitrum    | ETH          | DeFi, low-cost transactions   | Very Low |
+| BNB Chain   | BNB          | BSC ecosystem trading         | Low      |
 
 ## Safety & Access Control
 
 **Dedicated Agent Wallet**: When building autonomous agents, create a separate Bankr account rather than using your personal wallet. This isolates agent funds — if a key is compromised, only the agent wallet is exposed. Fund it with limited amounts and replenish as needed.
 
-**API Key Types**: Bankr uses a single key format (`bk_...`) with capability flags (`agentApiEnabled`, `llmGatewayEnabled`). You can optionally configure a separate LLM Gateway key via `bankr config set llmKey` or `BANKR_LLM_KEY` — useful when you want independent revocation or different permissions for agent vs LLM access.
+**API Key Types**: Bankr uses a single key format (`bk_...`) with capability flags (`walletApiEnabled`, `agentApiEnabled`, `tokenLaunchApiEnabled`, `llmGatewayEnabled`). You can optionally configure a separate LLM Gateway key via `bankr config set llmKey` or `BANKR_LLM_KEY` — useful when you want independent revocation or different permissions for agent vs LLM access.
 
-**Read-Only API Keys**: Keys with `readOnly: true` filter all write tools (swaps, transfers, staking, token launches, etc.) from agent sessions. The `/agent/sign` and `/agent/submit` endpoints return 403. Ideal for monitoring bots and research agents.
+**Read-Only API Keys**: New keys default to `readOnly: true`. This filters all write tools (swaps, transfers, staking, token launches, etc.) from agent sessions. The `/wallet/sign`, `/wallet/submit`, and `/wallet/transfer` write endpoints return 403. Use `--read-write` during login or toggle in the web settings to disable. Ideal for monitoring bots and research agents.
 
 **IP Whitelisting**: Set `allowedIps` on your API key to restrict usage to specific IPs. Requests from non-whitelisted IPs are rejected with 403 at the auth layer.
 
@@ -492,7 +588,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - Store keys in environment variables (`BANKR_API_KEY`, `BANKR_LLM_KEY`), never in source code
 - Add `~/.bankr/` and `.env` to `.gitignore` — the CLI stores credentials in `~/.bankr/config.json`
 - Test with small amounts on low-cost chains (Base, Polygon) before production use
-- Use `waitForConfirmation: true` with `/agent/submit` — transactions execute immediately with no confirmation prompt
+- Use `waitForConfirmation: true` with `/wallet/submit` — transactions execute immediately with no confirmation prompt
 - Rotate keys periodically and revoke immediately if compromised at [bankr.bot/api](https://bankr.bot/api)
 
 **Reference**: [references/safety.md](references/safety.md)
@@ -503,59 +599,65 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 ```bash
 # Check balance
-bankr prompt "What is my ETH balance on Base?"
+bankr wallet portfolio --chain base
 
 # Check price
-bankr prompt "What's the current price of PEPE?"
+bankr agent prompt "What's the current price of PEPE?"
 
 # Then trade
-bankr prompt "Buy $20 of PEPE on Base"
+bankr agent prompt "Buy $20 of PEPE on Base"
 ```
 
 ### Portfolio Review
 
 ```bash
-# Direct balance check (no AI agent, instant response)
-bankr balances
-bankr balances --low-value          # Include tokens under $1
-bankr balances --chain base
-bankr balances --chain base,solana
-bankr balances --json
+# Direct portfolio check (no AI agent, instant response)
+bankr wallet portfolio
+bankr wallet portfolio --pnl        # Include profit/loss data
+bankr wallet portfolio --nfts       # Include NFT holdings
+bankr wallet portfolio --all        # PnL + NFTs
+bankr wallet portfolio --chain base
+bankr wallet portfolio --chain base,solana
+bankr wallet portfolio --json
 
 # Via AI agent (natural language, richer context)
-bankr prompt "Show my complete portfolio"
+bankr agent prompt "Show my complete portfolio"
 
 # Chain-specific
-bankr prompt "What tokens do I have on Base?"
+bankr agent prompt "What tokens do I have on Base?"
 
 # Token-specific
-bankr prompt "Show my ETH across all chains"
+bankr agent prompt "Show my ETH across all chains"
 ```
 
 ### Set Up Automation
 
 ```bash
 # DCA strategy
-bankr prompt "DCA $100 into ETH every week"
+bankr agent prompt "DCA $100 into ETH every week"
 
 # Stop loss protection
-bankr prompt "Set stop loss for my ETH at $2,500"
+bankr agent prompt "Set stop loss for my ETH at $2,500"
 
 # Limit order
-bankr prompt "Buy ETH if price drops to $3,000"
+bankr agent prompt "Buy ETH if price drops to $3,000"
 ```
 
 ### Market Research
 
 ```bash
+# Token discovery
+bankr tokens search PEPE
+bankr tokens info USDC
+
 # Price and analysis
-bankr prompt "Do technical analysis on ETH"
+bankr agent prompt "Do technical analysis on ETH"
 
 # Trending tokens
-bankr prompt "What tokens are trending on Base?"
+bankr agent prompt "What tokens are trending on Base?"
 
 # Compare tokens
-bankr prompt "Compare ETH vs SOL"
+bankr agent prompt "Compare ETH vs SOL"
 ```
 
 ## API Workflow
@@ -567,23 +669,25 @@ Bankr uses an asynchronous job-based API:
 3. **Complete** — Process results when done
 4. **Continue** — Reuse `threadId` for multi-turn conversations
 
-The `bankr prompt` command handles this automatically. When using the REST API directly, implement the poll loop yourself (see Option 2 above or the reference below). For manual job control via CLI, use `bankr status <jobId>` and `bankr cancel <jobId>`.
+The `bankr agent prompt` command handles this automatically. When using the REST API directly, implement the poll loop yourself (see Option 2 above or the reference below). For manual job control via CLI, use `bankr agent status <jobId>` and `bankr agent cancel <jobId>`.
 
 For details on the API structure, job states, polling strategy, and error handling, see:
 
 **Reference**: [references/api-workflow.md](references/api-workflow.md)
 
-### Synchronous Endpoints
+### Synchronous Endpoints (Wallet API)
 
-For direct signing and transaction submission, Bankr also provides synchronous endpoints:
+For direct signing and transaction submission, use the Wallet API synchronous endpoints:
 
-- **POST /agent/sign** - Sign messages, typed data, or transactions without broadcasting
-- **POST /agent/submit** - Submit raw transactions directly to the blockchain
+- **POST /wallet/sign** - Sign messages, typed data, or transactions without broadcasting
+- **POST /wallet/submit** - Submit raw transactions directly to the blockchain
+- **POST /wallet/transfer** - Transfer tokens with symbol resolution and multi-chain support
 
 These endpoints return immediately (no polling required) and are ideal for:
 - Authentication flows (sign messages)
 - Gasless approvals (sign EIP-712 permits)
 - Pre-built transactions (submit raw calldata)
+- Programmatic token transfers
 
 **Reference**: [references/sign-submit-api.md](references/sign-submit-api.md)
 
@@ -660,9 +764,11 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 
 ### Portfolio
 
-- `bankr balances` (direct, no AI processing — hides low-value tokens by default)
-- `bankr balances --low-value` (include tokens under $1)
-- `bankr balances --chain base` (single chain)
+- `bankr wallet portfolio` (direct, no AI processing — hides low-value tokens by default)
+- `bankr wallet portfolio --pnl` (include profit/loss)
+- `bankr wallet portfolio --nfts` (include NFT holdings)
+- `bankr wallet portfolio --all` (PnL + NFTs)
+- `bankr wallet portfolio --chain base` (single chain)
 - "Show my portfolio"
 - "What's my ETH balance?"
 - "Total portfolio value"
@@ -730,25 +836,41 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Execute this calldata on Base: {...}"
 - "Send raw transaction with this JSON: {...}"
 
+### Transfers (Direct)
+
+Transfer tokens via CLI or Wallet API without AI processing:
+
+```bash
+# CLI — token symbol resolution built in
+bankr wallet transfer --to vitalik.eth --token USDC --amount 50 --chain base
+bankr wallet transfer --to 0x1234... --token ETH --amount 0.1
+
+# REST API
+curl -X POST "https://api.bankr.bot/wallet/transfer" \
+  -H "X-API-Key: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "vitalik.eth", "token": "USDC", "amount": "50", "chain": "base"}'
+```
+
 ### Sign API (Synchronous)
 
 Direct message signing without AI processing:
 
 ```bash
 # Sign a plain text message
-curl -X POST "https://api.bankr.bot/agent/sign" \
+curl -X POST "https://api.bankr.bot/wallet/sign" \
   -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"signatureType": "personal_sign", "message": "Hello, Bankr!"}'
 
 # Sign EIP-712 typed data (permits, orders)
-curl -X POST "https://api.bankr.bot/agent/sign" \
+curl -X POST "https://api.bankr.bot/wallet/sign" \
   -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"signatureType": "eth_signTypedData_v4", "typedData": {...}}'
 
 # Sign a transaction without broadcasting
-curl -X POST "https://api.bankr.bot/agent/sign" \
+curl -X POST "https://api.bankr.bot/wallet/sign" \
   -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"signatureType": "eth_signTransaction", "transaction": {"to": "0x...", "chainId": 8453}}'
@@ -760,7 +882,7 @@ Direct transaction submission without AI processing:
 
 ```bash
 # Submit a raw transaction
-curl -X POST "https://api.bankr.bot/agent/submit" \
+curl -X POST "https://api.bankr.bot/wallet/submit" \
   -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -821,7 +943,7 @@ See [references/error-handling.md](references/error-handling.md) for comprehensi
 1. Check error message in CLI output or API response
 2. Run `bankr whoami` to verify auth (CLI) or test with a curl to `/_health` (REST API)
 3. Consult relevant reference document
-4. Test with simple queries first (`bankr prompt "What is my balance?"` or `POST /agent/prompt`)
+4. Test with simple queries first (`bankr agent prompt "What is my balance?"` or `POST /agent/prompt`)
 
 ---
 
@@ -829,7 +951,7 @@ See [references/error-handling.md](references/error-handling.md) for comprehensi
 
 **Security**: Keep your API key private. Never commit your config file to version control. Only trade amounts you can afford to lose.
 
-**Quick Win**: Start by checking your portfolio (`bankr prompt "Show my portfolio"`) to see what's possible, then try a small $5-10 trade on Base to get familiar with the flow.
+**Quick Win**: Start by checking your portfolio (`bankr wallet portfolio`) to see what's possible, then try a small $5-10 trade on Base to get familiar with the flow.
 
 ---
 
@@ -850,13 +972,13 @@ Agents can create and manage public profile pages at [bankr.bot/agents](https://
 ### CLI Commands
 
 ```bash
-bankr profile                     # View own profile
-bankr profile create              # Interactive creation wizard
-bankr profile create --name "My Agent" --token 0x... --twitter myagent
-bankr profile update --description "Updated description"
-bankr profile delete              # Delete own profile (with confirmation)
-bankr profile add-update          # Add a project update
-bankr profile add-update --title "v2 Launch" --content "Shipped new features"
+bankr agent profile                     # View own profile
+bankr agent profile create              # Interactive creation wizard
+bankr agent profile create --name "My Agent" --token 0x... --twitter myagent
+bankr agent profile update --description "Updated description"
+bankr agent profile delete              # Delete own profile (with confirmation)
+bankr agent profile add-update          # Add a project update
+bankr agent profile add-update --title "v2 Launch" --content "Shipped new features"
 ```
 
 All commands support `--json` for structured output (enables programmatic use).

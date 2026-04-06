@@ -12,7 +12,7 @@ Create and manage public profile pages at [bankr.bot/agents](https://bankr.bot/a
 | **description** | No | Project description | Max 2000 chars |
 | **profileImageUrl** | No | Logo/avatar URL (auto-populated from Twitter if linked) | Valid URL |
 | **tokenAddress** | Yes | Token contract address — must be a token deployed through Bankr (Doppler or Clanker) | - |
-| **tokenChainId** | No | Chain: base, ethereum, polygon, solana (default: base) | - |
+| **tokenChainId** | No | Chain: base, ethereum, polygon, solana, worldchain, arbitrum, bnb (default: base) | - |
 | **tokenSymbol** | No | Token ticker symbol | Max 20 chars |
 | **tokenName** | No | Full token name | Max 100 chars |
 | **twitterUsername** | No | Twitter handle (auto-populated from linked account) | Max 50 chars |
