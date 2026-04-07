@@ -59,6 +59,24 @@ Use this when the agent wants to **top up** an existing reward or **extend** the
 - More reward or longer duration (or new window after end) → `modifyRewardToken(token, amount, settings)`.
 - Ensure the vault has been created via the factory and the agent (or its controlled address) is the vault owner to call these.
 
+## Executing Transactions via Bankr
+
+To submit any Stakr call (vault creation, `addRewardToken`, `modifyRewardToken`), first encode calldata, then submit the transaction via the Bankr wallet API.
+
+Use a natural-language Bankr agent prompt:
+
+```bash
+bankr agent prompt "Call addRewardToken on vault 0x... with token 0x... amount 1000 USDC starting tomorrow for 7 days"
+```
+
+Or submit raw encoded calldata directly:
+
+```bash
+bankr wallet submit --to <vault-address> --data <encoded-calldata> --chain base
+```
+
+For calldata encoding help, see the [vault API reference](references/vault-api.md).
+
 ### 3. Streaming rewards (continuous incentives)
 
 Agents can **stream** rewards over time instead of funding one large window up front:

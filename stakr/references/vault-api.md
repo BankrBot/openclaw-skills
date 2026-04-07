@@ -59,6 +59,16 @@ Agents can **stream** rewards by using `modifyRewardToken` repeatedly instead of
 
 This pattern lets agents fund incentives in chunks and extend the program over time without locking a large lump sum upfront.
 
+### Execution via Bankr wallet
+
+Use this file to build and validate function calldata (`createStakrVault`, `addRewardToken`, `modifyRewardToken`, etc.), then submit the transaction with Bankr wallet:
+
+```bash
+bankr wallet submit --to <vault-address-or-factory> --data <encoded-calldata> --chain base
+```
+
+For a natural-language execution flow, see the skill guide section in [../SKILL.md](../SKILL.md).
+
 ### Other reward-related
 
 | Function           | Signature                                     | Notes                                                                  |
