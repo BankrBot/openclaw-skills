@@ -51,8 +51,9 @@ bankr config get llmKey
 | `gemini-2.5-flash` | Google | Speed, high throughput |
 | `gpt-5.2` | OpenAI | Advanced reasoning |
 | `gpt-5.2-codex` | OpenAI | Code generation |
-| `gpt-5-mini` | OpenAI | Fast, economical |
-| `gpt-5-nano` | OpenAI | Ultra-fast, lowest cost |
+| `gpt-5.4-mini` | OpenAI | Fast, economical (400K context, image input) |
+| `gpt-5.4-nano` | OpenAI | Ultra-fast, lowest cost (400K context, image input) |
+| `minimax-m2.7` | MiniMax | Balanced performance (204.8K context) |
 | `kimi-k2.5` | Moonshot AI | Long-context reasoning |
 | `qwen3-coder` | Alibaba | Code generation, debugging |
 
@@ -325,6 +326,15 @@ message = client.messages.create(
     messages=[{"role": "user", "content": "Hello"}],
 )
 ```
+
+## Model Deprecation
+
+The gateway supports model deprecation with automatic redirect to replacement models:
+
+- **Soft-deprecated models** still work but return `X-Model-Deprecated: true` and `X-Model-Replacement: <new-model-id>` response headers. Migrate to the replacement model at your earliest convenience.
+- **Hard-deprecated models** return HTTP 410 (Gone) with the replacement model in the `X-Model-Replacement` header. Update your model ID to continue.
+
+Check `bankr llm models` for current model status and replacement mappings.
 
 ## Troubleshooting
 

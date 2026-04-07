@@ -1,6 +1,6 @@
 # Sign and Submit API Reference
 
-Synchronous endpoints for signing messages and submitting transactions directly.
+Synchronous Wallet API endpoints for signing messages and submitting transactions directly.
 
 ## Overview
 
@@ -8,10 +8,14 @@ Unlike the async prompt endpoint, these endpoints are **synchronous** and return
 
 | Endpoint | Purpose | Returns |
 |----------|---------|---------|
-| `POST /agent/sign` | Sign messages, typed data, or transactions | Signature |
-| `POST /agent/submit` | Submit raw transactions to chain | Transaction hash |
+| `POST /wallet/sign` | Sign messages, typed data, or transactions | Signature |
+| `POST /wallet/submit` | Submit raw transactions to chain | Transaction hash |
 
-## POST /agent/sign
+> **Deprecation notice**: The old `/agent/sign` and `/agent/submit` endpoints still work but are deprecated. Use `/wallet/sign` and `/wallet/submit` instead.
+
+Both write endpoints require an API key with `walletApiEnabled` and will be rejected if the key is `readOnly`. IP allowlist is enforced.
+
+## POST /wallet/sign
 
 Sign data without broadcasting to the network.
 
@@ -28,7 +32,7 @@ Sign data without broadcasting to the network.
 #### personal_sign
 
 ```bash
-curl -X POST "https://api.bankr.bot/agent/sign" \
+curl -X POST "https://api.bankr.bot/wallet/sign" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -40,7 +44,7 @@ curl -X POST "https://api.bankr.bot/agent/sign" \
 #### eth_signTypedData_v4
 
 ```bash
-curl -X POST "https://api.bankr.bot/agent/sign" \
+curl -X POST "https://api.bankr.bot/wallet/sign" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -76,7 +80,7 @@ curl -X POST "https://api.bankr.bot/agent/sign" \
 #### eth_signTransaction
 
 ```bash
-curl -X POST "https://api.bankr.bot/agent/sign" \
+curl -X POST "https://api.bankr.bot/wallet/sign" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -112,7 +116,7 @@ curl -X POST "https://api.bankr.bot/agent/sign" \
 | 401 | `Authentication required` | Missing or invalid API key |
 | 403 | `Agent API access not enabled` | API key lacks agent access |
 
-## POST /agent/submit
+## POST /wallet/submit
 
 Submit raw transactions directly to the blockchain.
 
@@ -157,7 +161,7 @@ Submit raw transactions directly to the blockchain.
 #### Simple ETH Transfer
 
 ```bash
-curl -X POST "https://api.bankr.bot/agent/submit" \
+curl -X POST "https://api.bankr.bot/wallet/submit" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -173,7 +177,7 @@ curl -X POST "https://api.bankr.bot/agent/submit" \
 #### ERC20 Transfer
 
 ```bash
-curl -X POST "https://api.bankr.bot/agent/submit" \
+curl -X POST "https://api.bankr.bot/wallet/submit" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -190,7 +194,7 @@ curl -X POST "https://api.bankr.bot/agent/submit" \
 #### Fire-and-Forget
 
 ```bash
-curl -X POST "https://api.bankr.bot/agent/submit" \
+curl -X POST "https://api.bankr.bot/wallet/submit" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -299,20 +303,22 @@ await submit({ transaction: swapTx });
 
 ## Comparison
 
-| Feature | /agent/prompt | /agent/sign | /agent/submit |
+| Feature | /agent/prompt | /wallet/sign | /wallet/submit |
 |---------|---------------|-------------|---------------|
 | Input | Natural language | Structured data | Transaction object |
 | Response | Async (job ID) | Sync (signature) | Sync (tx hash) |
 | Executes on-chain | Via AI agent | No | Yes |
+| Auth | Any API key | Write access required | Write access required |
 | Best for | General queries | Auth, permits | Raw transactions |
 
 ## Security Notes
 
-- API keys with agent access can submit transactions — keep them secure
+- API keys with write access (`walletApiEnabled`, not `readOnly`) can submit transactions — keep them secure
 - The `submit` endpoint has no confirmation prompts — it executes immediately
+- `allowedRecipients` enforcement applies to `/wallet/transfer` — restricts which addresses can receive funds
 - Validate all transaction parameters before submission
 - Consider using `waitForConfirmation: true` for important transactions
 
 ---
 
-**Full documentation**: [docs.bankr.bot/agent-api](https://docs.bankr.bot/agent-api/overview)
+**Full documentation**: [docs.bankr.bot/wallet-api](https://docs.bankr.bot/wallet-api/overview) | [docs.bankr.bot/agent-api](https://docs.bankr.bot/agent-api/overview)

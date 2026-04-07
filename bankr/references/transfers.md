@@ -2,10 +2,37 @@
 
 Transfer tokens to addresses, ENS names, or social handles.
 
+## CLI Command
+
+```bash
+# Transfer with token symbol resolution
+bankr wallet transfer --to <recipient> --token <symbol> --amount <amount>
+bankr wallet transfer --to <recipient> --token <symbol> --amount <amount> --chain <chain>
+
+# Examples
+bankr wallet transfer --to vitalik.eth --token USDC --amount 50 --chain base
+bankr wallet transfer --to 0x1234... --token ETH --amount 0.1
+bankr wallet transfer --to @friend --token USDC --amount 20
+```
+
+The `--token` flag resolves token symbols (e.g. `USDC`) to contract addresses via the search API.
+
+## REST API
+
+```bash
+# Direct transfer via Wallet API
+curl -X POST "https://api.bankr.bot/wallet/transfer" \
+  -H "X-API-Key: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "vitalik.eth", "token": "USDC", "amount": "50", "chain": "base"}'
+```
+
+The `/wallet/transfer` endpoint is a write endpoint — requires `walletApiEnabled`, `readOnly: false`, and is subject to `allowedRecipients` enforcement and IP allowlist.
+
 ## Supported Transfers
 
-- **EVM Chains**: Base, Polygon, Ethereum, Unichain
-  - Native tokens: ETH, MATIC
+- **EVM Chains**: Base, Polygon, Ethereum (mainnet), Unichain, World Chain, Arbitrum, BNB Chain
+  - Native tokens: ETH, POL, BNB
   - ERC20 tokens: USDC, USDT, WETH, etc.
 - **Solana**: SOL and SPL tokens
 
