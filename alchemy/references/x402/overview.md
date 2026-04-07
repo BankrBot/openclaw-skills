@@ -69,3 +69,7 @@ npm install @alchemy/x402 @x402/fetch   # or @x402/axios
 |---------|---------|
 | `@x402/fetch` | `wrapFetchWithPayment` — auto-handles 402 → sign → retry with `fetch` |
 | `@x402/axios` | `wrapAxiosWithPayment` — auto-handles 402 → sign → retry with `axios` |
+
+## Building Your Own x402 Endpoints                                                                                                                                                     
+                                                                                                                                                                                          
+If you want to deploy your own paid API endpoints using the same x402 protocol, [Bankr x402 Cloud](https://x402.bankr.bot) lets you write a handler, set a price in USDC, and deploy with one command — callers pay per request using the same @x402/fetch pattern you used above.
