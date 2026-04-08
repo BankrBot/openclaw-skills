@@ -28,6 +28,7 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 | [Hydrex](https://hydrex.fi) | [hydrex](hydrex/) | Liquidity pools on Base. Lock HYDX for voting power, vote on pool strategies, deposit single-sided liquidity into auto-managed vaults, and claim oHYDX rewards. |
 | [Helixa](https://helixa.xyz) | [helixa](helixa/) | Onchain identity and reputation for AI agents on Base. Mint identity NFTs, check Cred Scores, verify social accounts, update traits/narrative, and query the agent directory. Supports SIWA auth and x402 micropayments. |
 | [Polygon](https://polygon.technology) | [trails](trails/) | Cross-chain swap, bridge, and DeFi orchestration via Sequence. Swap tokens across chains, bridge assets, fund a Bankr wallet from any chain, deposit into yield vaults (Aave, Morpho), get token prices, and discover earn pools. Integrates with Bankr submit() for on-chain execution. |
+| [Alchemy](https://www.alchemy.com) | [alchemy](alchemy/) | Blockchain API access for all supported chains. EVM JSON-RPC, token balances, NFT ownership and metadata, transfer history, token prices, portfolio data, transaction simulation, webhooks, and Solana RPC. Supports API key, x402 pay-per-request (SIWE/SIWS + USDC), and MPP (Tempo/Stripe) access. |
 | [0xWork](https://0xwork.org) | [0xwork](0xwork/) | Decentralized task marketplace on Base. AI agents discover, claim, and complete tasks paid in USDC with on-chain escrow. Supports services, products, and reputation. |
 | [BOTCOIN](https://botcoin.money) | [BOTCOIN](BOTCOIN/) | Mine BOTCOIN by solving AI-powered hybrid challenges on Base. Stake-gated V2 mining with on-chain reward claims via Bankr. |
 | [LITCOIN](https://litcoiin.xyz) | [litcoin](litcoin/) | Proof-of-comprehension and proof-of-research mining protocol on Base. AI agents earn $LITCOIN by solving computational problems across 7 domains. Full DeFi stack: staking, vaults, LITCREDIT stablecoin, bounty board, and autonomous agent launchpad. |
@@ -38,6 +39,7 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 | [Quotient](https://quotient.social) | [quotient](quotient/) | Market intelligence API with x402 micropayment and API key auth. Access onchain/social analytics, OpenAPI discovery, and pricing data via `q-api.quotient.social`. |
 | [gitlawb](https://gitlawb.com) | [gitlawb](gitlawb/) | Decentralized git for AI agents and humans. Create repos, push code, open PRs, manage issues, create/claim bounties with on-chain escrow, delegate agent tasks, and register names on Base L2. Cryptographic DID identities, Ed25519-signed pushes, UCAN delegation, 31+ MCP tools. |
 | [MoltyCash](https://molty.cash) | [moltycash](moltycash/) | USDC payments from AI agents to humans. Tip, hire for tasks, and create pay-per-task gigs — settled on-chain via x402 on Base. |
+| [Stakr](https://stakrbot.xyz) | [stakr](stakr/) | ERC-4626 tokenized vaults with multi-reward staking for any ERC-20 token. Build integrations, scripts, or tooling to create vaults, add rewards, modify reward schedules, or let an agent operate its own staking vault. |
 
 ## Adding a Skill
 
