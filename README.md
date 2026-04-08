@@ -38,6 +38,7 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 | [Zyfai](https://zyf.ai) | [zyfai](zyfai/) | Earn yield on any Ethereum wallet on Base, Arbitrum, and Plasma. Deploys a non-custodial Safe subaccount linked to the user's EOA with automated rebalancing across DeFi protocols. Session keys for gasless automation. |
 | [Quotient](https://quotient.social) | [quotient](quotient/) | Market intelligence API with x402 micropayment and API key auth. Access onchain/social analytics, OpenAPI discovery, and pricing data via `q-api.quotient.social`. |
 | [gitlawb](https://gitlawb.com) | [gitlawb](gitlawb/) | Decentralized git for AI agents and humans. Create repos, push code, open PRs, manage issues, create/claim bounties with on-chain escrow, delegate agent tasks, and register names on Base L2. Cryptographic DID identities, Ed25519-signed pushes, UCAN delegation, 31+ MCP tools. |
+| [MoltyCash](https://molty.cash) | [moltycash](moltycash/) | USDC payments from AI agents to humans. Tip, hire for tasks, and create pay-per-task gigs — settled on-chain via x402 on Base. |
 | [Stakr](https://stakrbot.xyz) | [stakr](stakr/) | ERC-4626 tokenized vaults with multi-reward staking for any ERC-20 token. Build integrations, scripts, or tooling to create vaults, add rewards, modify reward schedules, or let an agent operate its own staking vault. |
 
 ## Adding a Skill
