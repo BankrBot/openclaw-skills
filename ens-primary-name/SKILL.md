@@ -22,7 +22,7 @@ bun install -g @bankr/cli
 bankr login
 ```
 
-The scripts use `bankr prompt` to submit transactions like:
+The scripts use `bankr agent` to submit transactions like:
 ```
 Submit this transaction: {"to": "0x...", "data": "0x...", "value": "0", "chainId": 8453}
 ```

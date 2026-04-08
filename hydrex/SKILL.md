@@ -123,8 +123,8 @@ Convert my oHYDX to veHYDX on Hydrex
 Get current liquidity pool data:
 
 ```bash
-bankr prompt "What are the top Hydrex pools by projected fees?"
-bankr prompt "Show me all Hydrex liquidity pools with their voting weights"
+bankr agent "What are the top Hydrex pools by projected fees?"
+bankr agent "Show me all Hydrex liquidity pools with their voting weights"
 ```
 
 **Key fields for voting optimization:**
@@ -251,16 +251,16 @@ Vote on Hydrex pools weighted by their fee efficiency
 
 ```bash
 # Check voting power
-bankr prompt "What's my Hydrex voting power?"
+bankr agent "What's my Hydrex voting power?"
 
 # Check earning power (1.3x voting power)
-bankr prompt "What's my Hydrex earning power?"
+bankr agent "What's my Hydrex earning power?"
 
 # Check veHYDX NFT balance
-bankr prompt "Show my veHYDX NFT balance"
+bankr agent "Show my veHYDX NFT balance"
 
 # Check a specific NFT's earning power
-bankr prompt "How much earning power does my veHYDX NFT #5 have?"
+bankr agent "How much earning power does my veHYDX NFT #5 have?"
 ```
 
 **Display to users**: Show earning power (voting power × 1.3) when discussing fee earnings, as this is what determines your share of distributions.

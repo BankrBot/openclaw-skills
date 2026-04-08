@@ -124,7 +124,7 @@ console.log(selector + offset + len + data);
 echo "Calldata: $CALLDATA" >&2
 echo "Submitting transaction..." >&2
 
-RESULT=$(bankr prompt "Submit this transaction: {\"to\": \"$REVERSE_REGISTRAR\", \"data\": \"$CALLDATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}" 2>/dev/null)
+RESULT=$(bankr agent "Submit this transaction: {\"to\": \"$REVERSE_REGISTRAR\", \"data\": \"$CALLDATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}" 2>/dev/null)
 
 if echo "$RESULT" | grep -q "$EXPLORER"; then
   TX_HASH=$(echo "$RESULT" | grep -oE "$EXPLORER/tx/0x[a-fA-F0-9]{64}" | grep -oE '0x[a-fA-F0-9]{64}')

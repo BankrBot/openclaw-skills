@@ -92,8 +92,8 @@ Query information about a locked position:
 **Contract**: `0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1` (Base)
 
 ```bash
-bankr prompt "Show my veHYDX lock details for NFT #1"
-bankr prompt "What are the lock details for veHYDX NFT #5?"
+bankr agent "Show my veHYDX lock details for NFT #1"
+bankr agent "What are the lock details for veHYDX NFT #5?"
 ```
 
 To read directly — encode `tokenId` as a 32-byte hex value and call `eth_call` on the veHYDX contract. Example for token ID 1: data = `0x2c79db11` + `0000000000000000000000000000000000000000000000000000000000000001`
@@ -113,8 +113,8 @@ Get the voting power of a specific veHYDX NFT:
 **Contract**: `0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1` (Base)
 
 ```bash
-bankr prompt "What's the voting power for my veHYDX NFT #1?"
-bankr prompt "What's the earning power for my veHYDX NFT #1?"
+bankr agent "What's the voting power for my veHYDX NFT #1?"
+bankr agent "What's the earning power for my veHYDX NFT #1?"
 ```
 
 To read directly — encode `tokenId` as a 32-byte hex value and call `eth_call` on the veHYDX contract. Returns a `uint256` in wei units.
@@ -144,7 +144,7 @@ Get the owner of a veHYDX NFT:
 **Function**: `ownerOf(uint256 _tokenId)` — selector `0x6352211e`
 
 ```bash
-bankr prompt "Who owns veHYDX NFT #1?"
+bankr agent "Who owns veHYDX NFT #1?"
 ```
 
 To read directly — encode `tokenId` as a 32-byte hex value and call `eth_call`. Returns the owner address.
@@ -156,8 +156,8 @@ Get number of veHYDX NFTs owned by an address:
 **Function**: `balanceOf(address _owner)` — selector `0x70a08231`
 
 ```bash
-bankr prompt "Show my veHYDX NFT balance"
-bankr prompt "How many veHYDX NFTs do I own?"
+bankr agent "Show my veHYDX NFT balance"
+bankr agent "How many veHYDX NFTs do I own?"
 ```
 
 To read directly — encode the owner address as a 32-byte padded hex value (strip `0x`, left-pad with 24 zeros) and call `eth_call`. Returns a `uint256` count.
@@ -207,16 +207,16 @@ After creating a lock, your voting power will be available for voting starting a
 
 ```bash
 # 1. Check HYDX balance
-bankr prompt "What's my HYDX balance on Base?"
+bankr agent "What's my HYDX balance on Base?"
 
 # 2. Approve HYDX
-bankr prompt "Approve 1000 HYDX to 0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1 on Base"
+bankr agent "Approve 1000 HYDX to 0x25B2ED7149fb8A05f6eF9407d9c8F878f59cd1e1 on Base"
 
 # 3. Create rolling lock
-bankr prompt "Lock 1000 HYDX on Hydrex with rolling lock"
+bankr agent "Lock 1000 HYDX on Hydrex with rolling lock"
 
 # 4. Check veHYDX NFT balance
-bankr prompt "Show my veHYDX NFT balance"
+bankr agent "Show my veHYDX NFT balance"
 ```
 
 ## Lock Type Details

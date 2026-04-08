@@ -19,7 +19,7 @@ echo "From: Base" >&2
 echo "To: Ethereum Mainnet" >&2
 
 # Use Bankr to bridge
-RESULT=$(bankr prompt "Bridge $AMOUNT ETH from Base to Ethereum mainnet" 2>/dev/null)
+RESULT=$(bankr agent "Bridge $AMOUNT ETH from Base to Ethereum mainnet" 2>/dev/null)
 
 if echo "$RESULT" | grep -qi "success\|bridge\|complete\|transaction"; then
   echo "=== SUCCESS ===" >&2

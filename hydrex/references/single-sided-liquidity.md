@@ -32,7 +32,7 @@ https://api.hydrex.fi/strategies?strategist=ichi&depositTokens=TOKEN_ADDRESS,TOK
 **Example — find BNKR deposit opportunities:**
 
 ```bash
-bankr prompt "What single-sided liquidity vaults can I deposit BNKR into on Hydrex?"
+bankr agent "What single-sided liquidity vaults can I deposit BNKR into on Hydrex?"
 ```
 
 The API fetches from: `https://api.hydrex.fi/strategies?strategist=ichi&depositTokens=0x22af33fe49fd1fa80c7149773dde5890d3c76f3b`
@@ -57,9 +57,9 @@ The API fetches from: `https://api.hydrex.fi/strategies?strategist=ichi&depositT
 Always specify the strategy by title (e.g., `"BNKR/WETH"`) or vault address so Bankr can unambiguously resolve which vault to use.
 
 ```bash
-bankr prompt "Deposit 100 BNKR into the BNKR/WETH strategy on Hydrex"
-bankr prompt "Deposit 500 USDC into the USDC/HYDX strategy on Hydrex"
-bankr prompt "Deposit 1000 HYDX into vault 0xABC...123 on Hydrex"
+bankr agent "Deposit 100 BNKR into the BNKR/WETH strategy on Hydrex"
+bankr agent "Deposit 500 USDC into the USDC/HYDX strategy on Hydrex"
+bankr agent "Deposit 1000 HYDX into vault 0xABC...123 on Hydrex"
 ```
 
 ### Steps Bankr Executes
@@ -95,9 +95,9 @@ Send transaction to 0x9A0EBEc47c85fD30F1fdc90F57d2b178e84DC8d8 on Base calling f
 ### Natural Language
 
 ```bash
-bankr prompt "Withdraw my BNKR/WETH single-sided position on Hydrex"
-bankr prompt "Remove 50% of my BNKR single-sided liquidity on Hydrex"
-bankr prompt "Exit my Hydrex BNKR vault position"
+bankr agent "Withdraw my BNKR/WETH single-sided position on Hydrex"
+bankr agent "Remove 50% of my BNKR single-sided liquidity on Hydrex"
+bankr agent "Exit my Hydrex BNKR vault position"
 ```
 
 ### Steps Bankr Executes
@@ -133,9 +133,9 @@ Send transaction to 0x9A0EBEc47c85fD30F1fdc90F57d2b178e84DC8d8 on Base calling f
 ### Natural Language
 
 ```bash
-bankr prompt "Show my Hydrex single-sided liquidity positions"
-bankr prompt "What's my BNKR/WETH vault balance on Hydrex?"
-bankr prompt "How much is my Hydrex BNKR single-sided position worth?"
+bankr agent "Show my Hydrex single-sided liquidity positions"
+bankr agent "What's my BNKR/WETH vault balance on Hydrex?"
+bankr agent "How much is my Hydrex BNKR single-sided position worth?"
 ```
 
 ### Calculating Underlying Tokens
@@ -188,29 +188,29 @@ Vault addresses are per-pair — always retrieve from `https://api.hydrex.fi/str
 
 ```bash
 # 1. Find available BNKR vaults
-bankr prompt "What single-sided liquidity vaults can I deposit BNKR into on Hydrex?"
+bankr agent "What single-sided liquidity vaults can I deposit BNKR into on Hydrex?"
 
 # 2. Check BNKR balance
-bankr prompt "What's my BNKR balance on Base?"
+bankr agent "What's my BNKR balance on Base?"
 
 # 3. Deposit
-bankr prompt "Deposit 500 BNKR into the BNKR/WETH single-sided vault on Hydrex"
+bankr agent "Deposit 500 BNKR into the BNKR/WETH single-sided vault on Hydrex"
 
 # 4. Confirm position
-bankr prompt "Show my Hydrex single-sided liquidity positions"
+bankr agent "Show my Hydrex single-sided liquidity positions"
 ```
 
 ### Withdraw from BNKR/WETH Vault
 
 ```bash
 # 1. Check current position
-bankr prompt "What's my BNKR/WETH vault balance on Hydrex?"
+bankr agent "What's my BNKR/WETH vault balance on Hydrex?"
 
 # 2. Full withdrawal
-bankr prompt "Withdraw my full BNKR/WETH single-sided position on Hydrex"
+bankr agent "Withdraw my full BNKR/WETH single-sided position on Hydrex"
 
 # 3. Partial withdrawal
-bankr prompt "Withdraw 25% of my BNKR single-sided position on Hydrex"
+bankr agent "Withdraw 25% of my BNKR single-sided position on Hydrex"
 ```
 
 ## Implementation Guide for Bankr

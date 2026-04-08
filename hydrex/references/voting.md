@@ -35,7 +35,7 @@ Query your voting power (amount of veHYDX you can allocate for governance votes)
 **Contract**: `0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b` (Base)
 
 ```bash
-bankr prompt "What's my Hydrex voting power?"
+bankr agent "What's my Hydrex voting power?"
 ```
 
 To read directly — encode the voter address as a 32-byte padded hex value (strip `0x`, left-pad with 24 zeros) and call `eth_call` on the Voter contract. Returns a `uint256` voting power in wei units.
@@ -47,7 +47,7 @@ To read directly — encode the voter address as a 32-byte padded hex value (str
 **Function**: Same `votingPower(address)` read — selector `0x90a40d0a` — then multiply result by 1.3.
 
 ```bash
-bankr prompt "What's my Hydrex earning power?"
+bankr agent "What's my Hydrex earning power?"
 ```
 
 ```
@@ -68,7 +68,7 @@ Check how an address has allocated votes across pools:
 **Function**: `poolVoteLength(address)` — selector `0x29199aa4`
 
 ```bash
-bankr prompt "How many pools am I currently voting on in Hydrex?"
+bankr agent "How many pools am I currently voting on in Hydrex?"
 ```
 
 To read directly — encode voter address as 32-byte padded hex and call `eth_call`. Returns `uint256` count of pools voted for.
@@ -78,7 +78,7 @@ To read directly — encode voter address as 32-byte padded hex and call `eth_ca
 **Function**: `poolVote(address, uint256)` — selector `0xd73d1f9b`
 
 ```bash
-bankr prompt "Show which pools I'm voting on in Hydrex"
+bankr agent "Show which pools I'm voting on in Hydrex"
 ```
 
 To read directly — encode voter address + index (both 32-byte padded) and call `eth_call`. Returns the pool address at that index. Iterate from 0 to `poolVoteLength - 1`.
@@ -88,7 +88,7 @@ To read directly — encode voter address + index (both 32-byte padded) and call
 **Function**: `votes(address voter, address pool)` — selector `0xd23254b4`
 
 ```bash
-bankr prompt "How many votes do I have on the HYDX/USDC pool in Hydrex?"
+bankr agent "How many votes do I have on the HYDX/USDC pool in Hydrex?"
 ```
 
 To read directly — encode voter address + pool address (both 32-byte padded) and call `eth_call`. Returns `uint256` vote weight allocated to that pool.
@@ -101,8 +101,8 @@ Get current voting weight for any pool:
 **Contract**: `0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b` (Base)
 
 ```bash
-bankr prompt "What's the current voting weight for the HYDX/USDC pool on Hydrex?"
-bankr prompt "Show voting weights for all Hydrex pools"
+bankr agent "What's the current voting weight for the HYDX/USDC pool on Hydrex?"
+bankr agent "Show voting weights for all Hydrex pools"
 ```
 
 To read directly — encode pool address as 32-byte padded hex and call `eth_call`. Returns `uint256` total votes allocated to that pool. Use pool addresses from `https://api.hydrex.fi/strategies` (`address` field).
@@ -196,7 +196,7 @@ Be aware of voting constraints:
 **Function**: `lastVoted(address)` — selector `0x77b887b9`
 
 ```bash
-bankr prompt "When did I last vote on Hydrex?"
+bankr agent "When did I last vote on Hydrex?"
 ```
 
 To read directly — encode voter address as 32-byte padded hex and call `eth_call`. Returns `uint256` Unix timestamp of last vote. Compare against current time + `VOTE_DELAY` to determine if a new vote is allowed.
@@ -236,7 +236,7 @@ When choosing pools to vote for, consider:
 When the user requests optimized voting, follow this process:
 
 1. **Fetch all pools** from `https://api.hydrex.fi/strategies`
-2. **Get user's earning power**: Use `bankr prompt "What's my Hydrex earning power?"`, or query voting power via Bankr and multiply by 1.3
+2. **Get user's earning power**: Use `bankr agent "What's my Hydrex earning power?"`, or query voting power via Bankr and multiply by 1.3
 3. **Calculate fee efficiency** for each pool:
 
    ```
@@ -367,13 +367,13 @@ curl -s https://api.hydrex.fi/strategies | jq '.[] | {
 } | select(.projectedFees != null)' | jq -s 'sort_by(-.efficiency)'
 
 # 2. Check your voting power
-bankr prompt "What's my Hydrex voting power?"
+bankr agent "What's my Hydrex voting power?"
 
 # 3. Vote via Bankr natural language
-bankr prompt "Vote 60% on HYDX/USDC and 40% on cbBTC/WETH on Hydrex"
+bankr agent "Vote 60% on HYDX/USDC and 40% on cbBTC/WETH on Hydrex"
 
 # 4. Verify vote
-bankr prompt "Show which pools I'm voting on in Hydrex"
+bankr agent "Show which pools I'm voting on in Hydrex"
 ```
 
 ### Optimization Example for Bankr

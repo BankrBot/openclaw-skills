@@ -28,7 +28,7 @@ For most users, **one key works for both** the Agent API and LLM Gateway. Howeve
 |--------|--------------|-----------------|
 | Environment variable | `BANKR_API_KEY` | `BANKR_LLM_KEY` (falls back to `BANKR_API_KEY`) |
 | CLI config key | `apiKey` | `llmKey` (falls back to `apiKey`) |
-| Used by | `bankr prompt`, `/agent/*` endpoints | `bankr llm claude`, `llm.bankr.bot` |
+| Used by | `bankr agent`, `/agent/*` endpoints | `bankr llm claude`, `llm.bankr.bot` |
 
 **When to use separate keys:**
 - Your agent API key is read-only but your LLM key needs no such restriction (LLM calls are inherently read-only)
@@ -169,7 +169,7 @@ Access controls (read-only, IP whitelist) apply identically whether you use the 
 
 ```bash
 # These two are equivalent — same access controls apply
-bankr prompt "What is my balance?"
+bankr agent "What is my balance?"
 curl -X POST "https://api.bankr.bot/agent/prompt" \
   -H "X-API-Key: bk_YOUR_KEY" \
   -d '{"prompt": "What is my balance?"}'
