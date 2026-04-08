@@ -16,7 +16,7 @@ fi
 
 # CLI path (preferred) — need_bankr already verified one of these is available
 if command -v bankr >/dev/null 2>&1; then
-  exec bankr prompt "$PROMPT"
+  exec bankr agent "$PROMPT"
 fi
 
 # Curl fallback — config file was validated by need_bankr

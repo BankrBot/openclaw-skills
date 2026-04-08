@@ -29,7 +29,7 @@ bankr config set apiKey bk_your_actual_key_here
 **3. Verify Setup**
 ```bash
 bankr whoami
-bankr prompt "What is my balance?"
+bankr agent "What is my balance?"
 ```
 
 ### Common API Key Issues
@@ -267,7 +267,7 @@ Before reporting an issue, check:
 bankr whoami
 
 # Test with a simple query
-bankr prompt "What is my balance?"
+bankr agent "What is my balance?"
 ```
 
 ### Gather Information

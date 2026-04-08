@@ -321,11 +321,13 @@ Old flat commands still work but prefer the namespaced versions:
 
 | Deprecated | Use Instead |
 |-----------|-------------|
-| `bankr prompt` | `bankr agent prompt` |
+| `bankr prompt` | `bankr agent` |
 | `bankr status` | `bankr agent status` |
 | `bankr cancel` | `bankr agent cancel` |
 | `bankr balances` | `bankr wallet portfolio` |
 | `bankr profile` | `bankr agent profile` |
+| `bankr sign` | `bankr wallet sign` |
+| `bankr submit` | `bankr wallet submit` |
 | `bankr skills` | `bankr agent skills` |
 
 ### Environment Variables

@@ -81,7 +81,7 @@ if [[ "$CODE" != "0x" ]] && [[ -n "$CODE" ]]; then
   echo "📝 Step 1: Approving USDC..."
   APPROVE_TX="{\"to\": \"$USDC\", \"data\": \"$APPROVE_DATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}"
   
-  APPROVE_RESULT=$(bankr prompt "Submit this transaction: $APPROVE_TX" 2>&1)
+  APPROVE_RESULT=$(bankr agent "Submit this transaction: $APPROVE_TX" 2>&1)
   if echo "$APPROVE_RESULT" | grep -q "basescan.org/tx"; then
     APPROVE_HASH=$(echo "$APPROVE_RESULT" | grep -o 'https://basescan.org/tx/[^ "]*' | head -1)
     echo "   ✅ Approved: $APPROVE_HASH"
@@ -95,7 +95,7 @@ if [[ "$CODE" != "0x" ]] && [[ -n "$CODE" ]]; then
   echo "📝 Step 2: Donating..."
   DONATE_TX="{\"to\": \"$ENTITY_ADDRESS\", \"data\": \"$DONATE_DATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}"
   
-  DONATE_RESULT=$(bankr prompt "Submit this transaction: $DONATE_TX" 2>&1)
+  DONATE_RESULT=$(bankr agent "Submit this transaction: $DONATE_TX" 2>&1)
   if echo "$DONATE_RESULT" | grep -q "basescan.org/tx"; then
     DONATE_HASH=$(echo "$DONATE_RESULT" | grep -o 'https://basescan.org/tx/[^ "]*' | head -1)
     echo "   ✅ Donated: $DONATE_HASH"
@@ -112,7 +112,7 @@ else
   echo "📝 Step 1: Approving USDC to factory..."
   APPROVE_TX="{\"to\": \"$USDC\", \"data\": \"$APPROVE_DATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}"
   
-  APPROVE_RESULT=$(bankr prompt "Submit this transaction: $APPROVE_TX" 2>&1)
+  APPROVE_RESULT=$(bankr agent "Submit this transaction: $APPROVE_TX" 2>&1)
   if echo "$APPROVE_RESULT" | grep -q "basescan.org/tx"; then
     APPROVE_HASH=$(echo "$APPROVE_RESULT" | grep -o 'https://basescan.org/tx/[^ "]*' | head -1)
     echo "   ✅ Approved: $APPROVE_HASH"
@@ -126,7 +126,7 @@ else
   echo "📝 Step 2: Deploying & donating..."
   DEPLOY_TX="{\"to\": \"$FACTORY\", \"data\": \"$DEPLOY_DATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}"
   
-  DEPLOY_RESULT=$(bankr prompt "Submit this transaction: $DEPLOY_TX" 2>&1)
+  DEPLOY_RESULT=$(bankr agent "Submit this transaction: $DEPLOY_TX" 2>&1)
   if echo "$DEPLOY_RESULT" | grep -q "basescan.org/tx"; then
     DEPLOY_HASH=$(echo "$DEPLOY_RESULT" | grep -o 'https://basescan.org/tx/[^ "]*' | head -1)
     echo "   ✅ Deployed & Donated: $DEPLOY_HASH"
