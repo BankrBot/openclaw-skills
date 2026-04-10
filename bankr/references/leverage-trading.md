@@ -1,10 +1,15 @@
 # Leverage Trading Reference
 
-Trade with leverage using Avantis perpetuals on Base.
+Trade with leverage on Hyperliquid (primary) or Avantis on Base (secondary).
 
 ## Overview
 
-Avantis offers long/short positions on crypto, forex, and commodities via perpetuals on Base.
+Two leverage platforms are available:
+
+- **Hyperliquid** (primary) — High-performance L1 DEX with on-chain order book. Supports perpetual futures for crypto, stocks (via HIP-3), and spot trading. See [hyperliquid.md](hyperliquid.md) for the full Hyperliquid reference.
+- **Avantis** (secondary) — Perpetuals on Base for crypto, forex, and commodities.
+
+### Avantis Details
 
 **Chain**: Base
 **Protocol**: [Avantis](https://docs.avantisfi.com/)

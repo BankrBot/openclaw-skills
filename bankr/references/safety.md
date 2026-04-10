@@ -99,10 +99,11 @@ The agent receives a system directive and will explain the restriction if a user
 
 ### IP Whitelisting
 
-API keys support an `allowedIps` whitelist. When configured, requests from non-whitelisted IPs are rejected at the authentication layer before reaching any endpoint.
+API keys support an `allowedIps` whitelist with both individual IPs and CIDR ranges. When configured, requests from non-whitelisted IPs are rejected at the authentication layer before reaching any endpoint.
 
 - **Empty array** (`[]`) = all IPs allowed (default)
-- **Non-empty array** = only listed IPs can use the key
+- **Non-empty array** = only listed IPs/ranges can use the key
+- **CIDR notation** supported (e.g., `10.0.0.0/24`, `192.168.1.0/16`)
 
 **403 error response:**
 ```json
@@ -119,7 +120,7 @@ Manage API key settings at [bankr.bot/api](https://bankr.bot/api):
 | Field | Type | Description |
 |-------|------|-------------|
 | `readOnly` | boolean | When true, only read tools are available |
-| `allowedIps` | string[] | IP whitelist (empty = all allowed) |
+| `allowedIps` | string[] | IP/CIDR whitelist (e.g., `["1.2.3.4", "10.0.0.0/24"]`, empty = all allowed) |
 | `walletApiEnabled` | boolean | Whether `/wallet/*` write endpoints are accessible |
 | `agentApiEnabled` | boolean | Whether `/agent/*` AI endpoints are accessible |
 | `tokenLaunchApiEnabled` | boolean | Whether token deployment is accessible |
@@ -273,7 +274,7 @@ Blockchain transactions are **irreversible** once confirmed. Key safety rules:
 
 ### Rotation & Revocation
 
-- **Rotate periodically** — Generate new keys and deactivate old ones at [bankr.bot/api](https://bankr.bot/api). After rotating, update both env vars and CLI config (`bankr login --api-key NEW_KEY`)
+- **Rotate periodically** — Rotate keys via the dashboard at [bankr.bot/api](https://bankr.bot/api) or programmatically via the API key rotation endpoint. Rotation atomically generates a new key and deactivates the old one. After rotating, update both env vars and CLI config (`bankr login --api-key NEW_KEY`)
 - **Revoke immediately** — If any key (API or LLM) is leaked, deactivate it immediately at the dashboard
 - **One key per purpose** — Use separate keys for different agents, environments, and services (Agent API vs LLM Gateway) so you can revoke individually without disrupting unrelated systems
 

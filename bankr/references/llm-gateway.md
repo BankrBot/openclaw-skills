@@ -56,6 +56,8 @@ bankr config get llmKey
 | `minimax-m2.7` | MiniMax | Balanced performance (204.8K context) |
 | `kimi-k2.5` | Moonshot AI | Long-context reasoning |
 | `qwen3-coder` | Alibaba | Code generation, debugging |
+| `glm-5` | Z.ai | General purpose reasoning |
+| `glm-5-turbo` | Z.ai | Fast, cost-effective |
 
 ```bash
 # Fetch live model list from the gateway

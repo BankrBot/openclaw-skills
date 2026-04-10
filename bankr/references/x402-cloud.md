@@ -148,7 +148,24 @@ Service config lives in `bankr.x402.json` at the project root:
 
 ## Calling x402 Endpoints
 
-### With x402-fetch (recommended)
+### Via Bankr Agent (recommended for agent users)
+
+The Bankr agent has built-in tools to discover and call x402 endpoints with automatic payment handling:
+
+```bash
+# Discover endpoints in the Bankr registry
+bankr agent prompt "Find x402 endpoints for sentiment analysis"
+
+# Call an endpoint — agent handles payment signing automatically
+bankr agent prompt "Call the sentiment analysis endpoint on x402 with text 'Bitcoin is pumping'"
+
+# Inspect an endpoint's pricing and schema before calling
+bankr agent prompt "What does the x402 weather endpoint cost?"
+```
+
+The agent uses USDC on Base for all x402 payments. Maximum payment per request is $10. The agent will always confirm payment amount before calling.
+
+### With x402-fetch (for developers)
 
 ```typescript
 import { createWalletClient, http } from "viem";

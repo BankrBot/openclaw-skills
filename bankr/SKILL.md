@@ -1,6 +1,6 @@
 ---
 name: bankr
-description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, check portfolio balances (with PnL and NFTs), view token prices, search tokens, transfer crypto, manage NFTs, use leverage, bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet. Supports Base, Ethereum, Polygon, Solana, and Unichain.
+description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, check portfolio balances (with PnL and NFTs), view token prices, search tokens, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, call x402 paid API endpoints, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet. Supports Base, Ethereum, Polygon, Solana, and Unichain.
 metadata:
   {
     "clawdbot":
@@ -118,7 +118,7 @@ bankr login email <user-email> --code <otp> --accept-terms --key-name "LLM Clien
 | `--read-write` | Disable read-only mode (allow transactions). Without this, enabled APIs are read-only |
 | `--no-token-launch` | Disable Token Launch API (enabled by default) |
 | `--llm` | Enable [LLM gateway](https://docs.bankr.bot/llm-gateway/overview) access (multi-model API at `llm.bankr.bot`). Currently limited to beta testers |
-| `--allowed-ips <ips>` | Comma-separated IP allowlist for the API key |
+| `--allowed-ips <ips>` | Comma-separated IP/CIDR allowlist for the API key (e.g., `1.2.3.4,10.0.0.0/24`) |
 | `--allowed-recipients <addresses>` | Comma-separated EVM/Solana addresses the key can send to (auto-classified by 0x prefix) |
 
 **New key defaults** (when no flags are passed):
@@ -522,12 +522,11 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 ### Leverage Trading
 
-- Long/short positions (up to 50x crypto, 100x forex/commodities)
-- Crypto, forex, and commodities
-- Stop loss and take profit
-- Position management via Avantis on Base
+- **Hyperliquid** (primary) — Perpetual futures on Hyperliquid L1 with on-chain order book. Crypto, stocks (TSLA, AAPL, NVDA via HIP-3), spot trading. Up to 50x leverage.
+- **Avantis** (secondary) — Perpetuals on Base for crypto (up to 50x), forex and commodities (up to 100x)
+- Stop loss, take profit, and position management on both platforms
 
-**Reference**: [references/leverage-trading.md](references/leverage-trading.md)
+**Reference**: [references/leverage-trading.md](references/leverage-trading.md) | [references/hyperliquid.md](references/hyperliquid.md)
 
 ### Token Deployment
 
@@ -551,6 +550,17 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - Scheduled commands
 
 **Reference**: [references/automation.md](references/automation.md)
+
+### x402 Paid API Calls
+
+The agent can discover and call x402-protected API endpoints, automatically handling USDC payments on Base:
+
+- **Discover** endpoints in the Bankr registry or via web search
+- **Inspect** endpoint pricing, methods, and input/output schemas
+- **Call** endpoints with automatic payment signing (max $10/request)
+- Works with any x402-compatible endpoint (Bankr-hosted or external)
+
+**Reference**: [references/x402-cloud.md](references/x402-cloud.md)
 
 ### Arbitrary Transactions
 
@@ -582,7 +592,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 **Read-Only API Keys**: New keys default to `readOnly: true`. This filters all write tools (swaps, transfers, staking, token launches, etc.) from agent sessions. The `/wallet/sign`, `/wallet/submit`, and `/wallet/transfer` write endpoints return 403. Use `--read-write` during login or toggle in the web settings to disable. Ideal for monitoring bots and research agents.
 
-**IP Whitelisting**: Set `allowedIps` on your API key to restrict usage to specific IPs. Requests from non-whitelisted IPs are rejected with 403 at the auth layer.
+**IP Whitelisting**: Set `allowedIps` on your API key to restrict usage to specific IPs or CIDR ranges (e.g., `10.0.0.0/24`). Requests from non-whitelisted IPs are rejected with 403 at the auth layer.
 
 **Rate Limits**: 100 messages/day (standard), 1,000/day (Bankr Club), or custom per key. Resets 24h from first message (rolling window). LLM Gateway uses a credit-based system.
 
@@ -591,7 +601,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - Add `~/.bankr/` and `.env` to `.gitignore` — the CLI stores credentials in `~/.bankr/config.json`
 - Test with small amounts on low-cost chains (Base, Polygon) before production use
 - Use `waitForConfirmation: true` with `/wallet/submit` — transactions execute immediately with no confirmation prompt
-- Rotate keys periodically and revoke immediately if compromised at [bankr.bot/api](https://bankr.bot/api)
+- Rotate keys periodically via the dashboard or API key rotation endpoint, and revoke immediately if compromised at [bankr.bot/api](https://bankr.bot/api)
 
 **Reference**: [references/safety.md](references/safety.md)
 
@@ -803,8 +813,11 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 
 ### Leverage
 
+- "Long $100 of BTC on hyperliquid with 10x"
+- "Short ETH with 5x on hyperliquid"
 - "Open 5x long on ETH with $100"
 - "Short BTC 10x with stop loss at $45k"
+- "Show my hyperliquid positions"
 - "Show my Avantis positions"
 
 ### Automation
@@ -831,6 +844,12 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 
 - "Deploy a token called BankrFan with symbol BFAN on Base"
 - "Claim fees for my token MTK"
+
+### x402 Paid API Calls
+
+- "Find x402 endpoints for sentiment analysis"
+- "Call the weather endpoint on x402"
+- "What x402 endpoints are available for price data?"
 
 ### Arbitrary Transactions
 
