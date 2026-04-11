@@ -33,6 +33,13 @@ Polymarket is a decentralized prediction market where users can search markets, 
 - "What bets do I have active?"
 - "My Polymarket portfolio"
 
+You can also pull your current Polymarket positions directly over REST without going through the agent:
+
+```bash
+curl "https://api.bankr.bot/polymarket/positions" \
+  -H "X-API-Key: $BANKR_API_KEY"
+```
+
 **Redeem winnings:**
 - "Redeem my Polymarket positions"
 - "Cash out my resolved bets"
