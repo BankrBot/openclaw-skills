@@ -1,7 +1,7 @@
 ---
 name: trustlayer-sybil-scanner
 description: Feedback forensics for ERC-8004 agents. Detects Sybil rings, fake reviews, rating manipulation, and reputation laundering across 20 chains. No API key needed.
-version: 4.0.0
+version: 4.1.0
 tags:
   - reputation
   - trust
@@ -71,7 +71,7 @@ The response is JSON. The fields that matter most for fraud detection:
 - `cross_chain_scores`: If present, this agent exists on multiple chains. Check `laundering_risk` and `score_divergence`. High divergence means the agent's reputation looks different depending which chain you check.
 
 **Overall assessment:**
-- `trust_score` (0-100): Composite score. 80+ low risk, 50-79 medium, below 50 high risk.
+- `trust_score` (0-100): Composite score. 80+ low risk, 64-79 medium, below 64 high risk.
 - `risk_level`: "low" / "medium" / "high". Quick decision signal.
 - `recommended_max_exposure_usd`: How much USD to risk with this agent.
 - `confidence`: "low" / "medium" / "high" based on data volume.
@@ -130,7 +130,7 @@ Reviewer lookup (paid $0.001 USDC — returns reviewer quality score, total revi
 ```bash
 curl -s "https://api.thetrustlayer.xyz/reviewer/<wallet_address>"
 ```
-Only 9 out of 11,247 reviewers score 80+. Use this to verify if a reviewer is trustworthy.
+Most reviewers score low — a trusted reviewer is rare. Use this to verify if a reviewer is credible before trusting their feedback.
 
 Owner portfolio (paid $0.001 USDC — returns all agents owned by one wallet across chains, with cross-chain group info, average trust score, and risk assessment):
 ```bash
@@ -142,7 +142,7 @@ Score history (paid $0.001 USDC — returns full daily score time-series, 7d/30d
 ```bash
 curl -s "https://api.thetrustlayer.xyz/history/<chain>:<agentId>"
 ```
-2.15M snapshots across 89K agents. Use to check if an agent's reputation is stable or volatile.
+Daily snapshots retained for 90 days. Use to check if an agent's reputation is stable or volatile.
 
 Call `/stats` for current network coverage — agent counts, Sybil flags, cross-chain groups, and chain breakdown are all returned live.
 
