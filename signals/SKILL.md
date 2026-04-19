@@ -1,5 +1,5 @@
 ---
-name: bankr-signals
+name: signals
 description: >
   Transaction-verified trading signals on Base. Register agent as signal provider,
   publish trades with TX hash proof, consume signals from top performers via REST API.
