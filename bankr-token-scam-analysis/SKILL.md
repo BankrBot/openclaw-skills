@@ -57,12 +57,29 @@ Priority reads by platform:
    - `balanceOf(address) view returns (uint256)` — for any wallet you want to check (admin, top holders, pool manager).
    For OFTs: `owner()`, `peers(uint32)` for each known eid (Ethereum=30101, BSC=30102, Arbitrum=30110, Base=30184, Polygon=30109, Optimism=30111), `endpoint()`, `msgInspector()`, `preCrime()`.
 5. **`get_clanker_reward_ownership`** (tokenAddress, chain) — returns every reward recipient/admin slot for the token. **This is the single best signal for "did the team actually allocate ecosystem/marketing/CEX rewards like they claim"** — if it shows only one `{admin, recipient}` both equal to the deployer, the team did NOT configure multi-recipient tokenomics.
-6. **Direct viem reads via `execute_cli`** when you need to batch-check balances, detect contract vs EOA (top holders with 48-byte bytecode are AA smart-wallet sniper proxies, not whales), or compute concentration. Install `viem@2.21.55`, read `BASE_RPC_URL` via `get_env_vars`, and run a small `analyze.mjs`. Always use this to:
+6. **Direct viem reads via `execute_cli`** when you need to batch-check balances, detect contract vs EOA (top holders with 48-byte bytecode are AA smart-wallet sniper proxies, not whales), or compute concentration. Install `viem@2.21.55` and run a small `analyze.mjs`.
+
+   **RPC configuration (custom env var is OPTIONAL):**
+   - First, call `get_env_vars` to check if the user has set a custom RPC var for the chain you're analyzing (`BASE_RPC_URL`, `MAINNET_RPC_URL`, `ARBITRUM_RPC_URL`, etc.). If present, use it — it's almost always higher-rate-limit.
+   - If no custom var is set, **fall back to viem's built-in public RPC** by creating the client with just the chain (no custom `transport` URL). Example:
+     ```js
+     import { createPublicClient, http } from 'viem';
+     import { base } from 'viem/chains';
+     const rpcUrl = process.env.BASE_RPC_URL; // may be undefined
+     const client = createPublicClient({
+       chain: base,
+       transport: rpcUrl ? http(rpcUrl) : http(), // http() with no arg uses chain.rpcUrls.default
+     });
+     ```
+     This works for `base`, `mainnet`, `arbitrum`, `optimism`, `polygon`, `bnb`, `unichain`, etc. out of the box.
+   - The public RPCs are rate-limited and can be flaky under load. If you see `429` / timeouts when batching many reads, either (a) add small delays between calls, (b) chunk the reads, or (c) tell the user at the end of the report that a custom RPC env var would make re-runs faster and more reliable — don't block the analysis on it.
+
+   Always use this viem step to:
    - Cross-check `totalSupply`, `admin`, `originalAdmin`, `isVerified`, `allData` from the RPC directly (don't trust only indexer outputs).
    - `getBalance` + `getTransactionCount` for each deployer and the claimed Twitter wallet.
    - `getBytecode` on each top non-pool holder — 48 bytes = EIP-7702 / minimal-proxy smart wallet (sniper pattern); >100 bytes = real contract (could be Clanker vault/airdrop extension, or a Gnosis Safe); no code = regular EOA.
    - For Safe multisigs: Safe contracts have a known bytecode prefix and a `VERSION()` / `getOwners()` function — you can detect them specifically.
-   - For cross-chain tokens: do balance reads on the OTHER chains too (e.g., if it's on Base but deployed as an OFT, read the Ethereum and BSC mirrors via their RPCs). Concentration on the mint chain often dwarfs the Base float.
+   - For cross-chain tokens: do balance reads on the OTHER chains too (e.g., if it's on Base but deployed as an OFT, read the Ethereum and BSC mirrors via their RPCs — again, custom env var if set, else viem public default).
    - Concentration math: sum top-20, subtract pool, compute non-pool concentration.
 7. **`market_intelligence` with `query_type="holders"`** (chain, token_id=contract address, limit up to 20) — top holder distribution. The #1 holder is almost always the Uniswap v4 PoolManager (`0x498581ff718922c3f8e6a244956af099b2652b2b` on Base). Always identify pool addresses first and exclude them from concentration math.
 8. **`get_chain_activity_for_wallet`** on each interesting wallet:
@@ -184,6 +201,7 @@ These analyses pull a lot of data. After you have extracted the facts you need, 
 - **Do not confuse admin balance = 0 with "team has no tokens".** On Clanker/Doppler the whole supply is sold into the pool at launch unless the team explicitly configured a Vault or Airdrop extension. Empty admin wallet is expected; presence of a Clanker Vault/Airdrop contract as a top holder is what would indicate real allocations.
 - **Do not trust the Twitter handle without resolving it to a wallet.** A project can claim any handle. What matters is whether that handle's wallet is the admin.
 - **Do not read `browse_url` on gitbook docs root URLs** — they often return empty via firecrawl. Go to specific article URLs (e.g., `.../general/token-deployments`, not `.../`). Use `search_tool` to find the article URL first.
+- **Do not hard-block on a missing custom RPC env var.** Viem's `http()` transport with no argument falls back to the chain's default public RPC (rate-limited but functional). Only require a custom `*_RPC_URL` if the user explicitly wants high-volume reads or you hit rate limits mid-analysis — then suggest setting one for next time.
 - **If the user is not in Bankr Club, `perform_technical_analysis` will error.** Don't retry — use `browse_url`, `market_intelligence`, and contract reads instead.
 - **Do not issue a verdict based only on on-chain data.** Always run the Step Final-1 off-chain intel pass first. A contract can be clean and the token still be an active manipulation case. RAVE (April 2026) is the canonical example: clean LayerZero OFT, clean deployer, multisig owner, and simultaneously ZachXBT-flagged + Bitget-investigated as a coordinated pump-and-dump.
 - **For multichain OFTs, always check the mint chain's treasury, not just the chain the user asked about.** A "healthy" Base holder distribution can be irrelevant if 75% of global supply sits in one Safe on Ethereum.
