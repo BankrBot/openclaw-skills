@@ -12,6 +12,21 @@ This skill provides a framework for creating, managing, and automating a Twitter
 
 ## Prerequisites
 
+### X Account Setup (REQUIRED — Do This First)
+
+Before anything else, the agent's X account MUST be marked as an **automated account**. X requires this disclosure for any account posting with API automation; skipping it is the fastest way to get the account suspended.
+
+**Exact path (do this once, while logged in as the agent account):**
+1. Log in to x.com as the agent account.
+2. Go to **Settings and privacy** → **Your account** → **Account information**.
+3. Scroll to **Automation** and tap it.
+4. Re-enter the password when prompted.
+5. Set **Managing account** to the human/handle responsible for the bot and save.
+
+Direct link: https://x.com/settings/account/automation
+
+This adds the "Automated by @…" label to the profile and replies. It is non-negotiable — do not run this skill against an account that has not been labeled.
+
 ### Environment Variables
 
 Set these 4 variables in your Bankr settings (gear icon -> Env Vars). Generate them from the [X Developer Portal](https://developer.x.com/en/portal/dashboard) with **Read and Write** permissions enabled:
@@ -63,6 +78,21 @@ Before composing or posting any tweet, the agent MUST:
 
 These apply to every tweet the agent drafts, whether running manually or on a schedule. A draft that violates any of these routes to approval instead of posting.
 
+### Never Reply Unprompted (Hard Rule)
+
+The agent MUST NEVER reply to a post it was not invited into. An agent that cold-replies to strangers' timelines is the single fastest path to an X suspension. There are exactly three legal post types:
+
+1. **Top-level posts** composed by the agent itself.
+2. **Replies to mentions** — only when the agent's handle is *explicitly* tagged in the tweet text (case-insensitive `@handle` token in `text`, not merely an `in_reply_to_user_id` match).
+3. **Replies to comments on the agent's own posts** — i.e. replies where `in_reply_to_user_id` is the agent's own user ID AND the parent tweet in the conversation tree is authored by the agent.
+
+Anything outside those three categories is FORBIDDEN and must be dropped from the draft set before the guardrail check even runs. Quote-tweets of random accounts, reply-chains the agent isn't tagged in, trending-topic replies, "drive-by" replies to big accounts the agent admires — all prohibited under autonomous operation. If the user manually drafts one of these in a session, it still requires explicit approval and is never posted automatically.
+
+Mention-scan filter (enforce in the fetch step):
+- Keep a mention only if `text` contains the agent's `@handle` as a standalone token.
+- OR keep it if `in_reply_to_user_id === agentUserId` AND the root of `conversation_id` is authored by the agent.
+- Discard everything else before ranking.
+
 ### Hard Blocks (Always Route to Approval)
 
 1. **Never autonomously tag `@bankrbot`.** Bankr's X agent executes onchain actions (transfers, swaps, deploys) when tagged from a wallet-linked account. Any tweet -- top-level or reply -- that mentions `@bankrbot` MUST be drafted and surfaced to the user for approval. The agent does not tag `@bankrbot` without explicit approval for that specific draft, every time.
@@ -105,6 +135,7 @@ Use `execute_cli` with `twitter-api-v2@1.17.2` to fetch recent mentions. The sca
 - Include author follower counts for prioritization
 - Flag which mentions reply to which of our tweets
 - Mark tweets we've already replied to (cross-reference with storyline file)
+- **Apply the "Never Reply Unprompted" filter**: keep only tweets where the agent is explicitly tagged in `text`, OR replies on the agent's own conversation tree. Drop everything else before ranking.
 
 ### Step 2: Read Storyline File
 Load `twitter-storyline.md` BEFORE drafting any replies. Check:
@@ -124,7 +155,7 @@ Filter and rank unreplied mentions using this hierarchy:
 - Draft 4-6 replies per batch (the sweet spot for engagement without spamming)
 - Optionally draft 1 new top-level tweet per session to keep the timeline active
 - Cross-reference EVERY draft against the storyline file to ensure no overlap
-- Run Guardrail Check on every draft
+- Run Guardrail Check on every draft (including the "Never Reply Unprompted" rule)
 - Present all drafts to the user for approval before posting (manual mode)
 - Route guarded drafts to Telegram via automation output for approval (automation mode)
 
@@ -140,6 +171,7 @@ Filter and rank unreplied mentions using this hierarchy:
 - **Storyline-first drafting**: Every reply should advance or reference the ongoing narrative. Don't write generic replies
 - **Acknowledge big accounts**: Prioritize replies to high-follower accounts for reach, but keep the same voice regardless of audience size
 - **Don't engage with FUD**: Skip rug accusations, negative trolls, and inappropriate comments entirely
+- **Never cold-reply**: Only respond when tagged or when someone is commenting on the agent's own post. Uninvited replies are a suspension risk.
 
 ## File Management
 
@@ -195,7 +227,7 @@ All Bankr crons run in UTC. Convert your local target time to UTC.
 
 **Prompt:**
 
-> Run the twitter-agent skill for a mentions reply sweep. Steps: (1) Load the twitter-agent skill. (2) Read twitter-personality.md and twitter-storyline.md. (3) Fetch the last 50 mentions via the X API. (4) Filter to UNREPLIED mentions by cross-referencing tweet IDs against the storyline's replied-to list. (5) Apply the Skip List: no FUD, no politics, no financial-advice requests, no spam/tag-farm threads, no shills of unrelated tokens. (6) Rank remaining mentions by setup quality and follower count. Select the top 2-4. (7) For each, draft a reply (target 60-200 chars) in the personality voice, cross-referencing the storyline for tone and callbacks. (8) Run Guardrail Check per draft. Any draft that mentions @bankrbot, contains an EVM/Solana address, reads like an onchain action, matches an approval-gated milestone, targets an approval-gated account, OR targets an account with >50k followers -- DO NOT POST. Instead, include the draft + flag reason + target tweet ID + author handle + follower count in the final output message so it reaches Telegram for approval, and log it in the Pending Approval Queue. (9) Post the safe drafts via execute_cli with 1.5s spacing. (10) Append an Entry to twitter-storyline.md logging every posted reply AND every draft routed to Telegram. (11) Return a final summary message listing what was posted and what was escalated (this is the Telegram delivery).
+> Run the twitter-agent skill for a mentions reply sweep. Steps: (1) Load the twitter-agent skill. (2) Read twitter-personality.md and twitter-storyline.md. (3) Fetch the last 50 mentions via the X API. (4) Apply the "Never Reply Unprompted" filter from the skill: keep only tweets where the agent's @handle appears as a standalone token in `text`, OR replies whose `in_reply_to_user_id` matches the agent's user ID AND whose conversation root is authored by the agent. Discard all other candidates before any ranking. (5) From the survivors, filter to UNREPLIED mentions by cross-referencing tweet IDs against the storyline's replied-to list. (6) Apply the Skip List: no FUD, no politics, no financial-advice requests, no spam/tag-farm threads, no shills of unrelated tokens. (7) Rank remaining mentions by setup quality and follower count. Select the top 2-4. (8) For each, draft a reply (target 60-200 chars) in the personality voice, cross-referencing the storyline for tone and callbacks. (9) Run Guardrail Check per draft. Any draft that mentions @bankrbot, contains an EVM/Solana address, reads like an onchain action, matches an approval-gated milestone, targets an approval-gated account, OR targets an account with >50k followers -- DO NOT POST. Instead, include the draft + flag reason + target tweet ID + author handle + follower count in the final output message so it reaches Telegram for approval, and log it in the Pending Approval Queue. (10) Post the safe drafts via execute_cli with 1.5s spacing. (11) Append an Entry to twitter-storyline.md logging every posted reply AND every draft routed to Telegram. (12) Return a final summary message listing what was posted and what was escalated (this is the Telegram delivery).
 
 ### Recipe 3: Reply Sweep -- Evening (hybrid)
 
@@ -229,6 +261,7 @@ All Bankr crons run in UTC. Convert your local target time to UTC.
 - Interactions with other flagged accounts (founder, sister projects, other wallet-linked agents) -- flag as approval-gated accounts.
 - Photo replies, quote tweets, threads -- creative judgment is higher stakes, keep manual.
 - Any tweet that would trigger an onchain action when posted from a wallet-linked X account.
+- Replies to posts the agent is not tagged in and that aren't on the agent's own conversation tree — ever.
 
 ## User Prompts (Example Commands)
 
@@ -285,6 +318,17 @@ const mentions = await client.v2.userMentionTimeline(me.data.id, {
   'tweet.fields': ['created_at', 'conversation_id', 'in_reply_to_user_id', 'referenced_tweets', 'text', 'public_metrics'],
   'user.fields': ['username', 'name', 'public_metrics']
 });
+
+// REQUIRED: enforce the "Never Reply Unprompted" filter before drafting
+const myHandle = me.data.username.toLowerCase();
+const myId = me.data.id;
+const tagRegex = new RegExp(`(^|[^a-zA-Z0-9_])@${myHandle}([^a-zA-Z0-9_]|$)`, 'i');
+
+const eligible = (mentions.data.data || []).filter(t => {
+  const explicitlyTagged = tagRegex.test(t.text || '');
+  const isReplyOnOurTree = t.in_reply_to_user_id === myId; // also verify conversation root is ours via conversation_id lookup
+  return explicitlyTagged || isReplyOnOurTree;
+});
 ```
 
 ### execute_cli Configuration
@@ -303,9 +347,12 @@ const mentions = await client.v2.userMentionTimeline(me.data.id, {
 - **Duplicate storyline files**: If multiple `twitter-storyline.md` files exist, merge them into one and delete the extras. Always use `edit_file` to prevent this.
 - **`node: command not found`**: Sandbox uses bun. Use `bun script.js` instead of `node script.js`.
 - **Telegram delivery not arriving**: Confirm your Telegram is linked to your Bankr account and Telegram is selected as the output destination in the automation settings.
+- **Account flagged / suspended warning**: Verify the automated-account label is still set at https://x.com/settings/account/automation and that no recent posts were unprompted replies.
 
 ## Best Practices
 
+- **Label the account as automated first**: https://x.com/settings/account/automation — without this, X can suspend the account at any time.
+- **Never reply unprompted**: Only reply when explicitly tagged or when someone is commenting on the agent's own post. Three legal post types, nothing else.
 - **Manual first, automate later**: Run the skill manually 5-10 times before enabling any automation. Voice and storyline need calibration you can only build by hand.
 - **Narrative Continuity**: Treat the agent's life as a persistent world. Reference previous events naturally.
 - **Character Integrity**: Never break character. Stay in voice even for announcements.
