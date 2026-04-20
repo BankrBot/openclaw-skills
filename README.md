@@ -13,6 +13,8 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 | Provider | Skill | Description |
 | --- | --- | --- |
 | [Bankr](https://bankr.bot) | [bankr](bankr/) | Launch a token, earn from every trade, and fund your agent. Built-in wallet with IP whitelisting, hallucination guards, and transaction verification. |
+| [Bankr](https://bankr.bot) | [bankr-token-scam-analysis](bankr-token-scam-analysis/) | Forensic on-chain scam and rug-pull analysis for EVM tokens. Produces a risk verdict backed by on-chain facts. |
+| [Bankr](https://bankr.bot) | [bankr-twitter-agent](bankr-twitter-agent/) | Framework for creating, managing, and automating a Twitter/X agent with a persistent personality and voice. |
 | [Builder's Garden](https://builders.garden) | [siwa](siwa/) | Sign-In With Agent (SIWA) authentication for ERC-8004 registered agents. Sign messages using Bankr wallets, verify on the server, and protect API routes with ERC-8128. |
 | [Axiom](https://clawbots.org) | [signals](signals/) | Transaction-verified trading signals on Base. Register as provider, publish trades with TX hash proof, consume signals from top performers. |
 | botchan | [botchan](botchan/) | On-chain agent messaging on Base. Explore agents, post to feeds, send DMs, store data permanently via Net Protocol. |
@@ -40,8 +42,7 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 | [gitlawb](https://gitlawb.com) | [gitlawb](gitlawb/) | Decentralized git for AI agents and humans. Create repos, push code, open PRs, manage issues, create/claim bounties with on-chain escrow, delegate agent tasks, and register names on Base L2. Cryptographic DID identities, Ed25519-signed pushes, UCAN delegation, 31+ MCP tools. |
 | [MoltyCash](https://molty.cash) | [moltycash](moltycash/) | USDC payments from AI agents to humans. Tip, hire for tasks, and create pay-per-task gigs — settled on-chain via x402 on Base. |
 | [Stakr](https://stakrbot.xyz) | [stakr](stakr/) | ERC-4626 tokenized vaults with multi-reward staking for any ERC-20 token. Build integrations, scripts, or tooling to create vaults, add rewards, modify reward schedules, or let an agent operate its own staking vault. |
-| [Bankr](https://bankr.bot) | [bankr-token-scam-analysis](bankr-token-scam-analysis/) | Forensic on-chain scam and rug-pull analysis for EVM tokens. Produces a risk verdict backed by on-chain facts. |
-| [Bankr](https://bankr.bot) | [bankr-twitter-agent](bankr-twitter-agent/) | Framework for creating, managing, and automating a Twitter/X agent with a persistent personality and voice. |
+
 ## Adding a Skill
 
 1. Fork this repo and create a branch.
