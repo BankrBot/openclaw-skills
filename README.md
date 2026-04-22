@@ -44,6 +44,7 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 | [MoltyCash](https://molty.cash) | [moltycash](moltycash/) | USDC payments from AI agents to humans. Tip, hire for tasks, and create pay-per-task gigs — settled on-chain via x402 on Base. |
 | [Stakr](https://stakrbot.xyz) | [stakr](stakr/) | ERC-4626 tokenized vaults with multi-reward staking for any ERC-20 token. Build integrations, scripts, or tooling to create vaults, add rewards, modify reward schedules, or let an agent operate its own staking vault. |
 | [AgenticBets](https://agenticbets.dev) | [agenticbets](agenticbets/) | Binary prediction market on Base. Bet UP or DOWN on token prices with USDC (5-min rounds), live markets for AGBETS, CLAWD, MOLT, WCHAN, and more Bankr-ecosystem tokens. Place bets, check odds, list open markets, claim winnings — all via natural language through Bankr Submit API. |
+| [TrustLayer](https://thetrustlayer.xyz) | [trustlayer-sybil-scanner](trustlayer-sybil-scanner/) | ERC-8004 feedback forensics. Detects Sybil rings, fake reviews, rating manipulation, and reputation laundering across 20 chains. Scores reviewer quality, resolves cross-chain identities, and filters spam. No API key needed (beta), x402 micropayments on paid endpoints. |
 
 ## Adding a Skill
 
