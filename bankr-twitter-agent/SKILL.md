@@ -192,6 +192,27 @@ The storyline file should maintain:
 
 Bankr automations run an agent prompt on a cron schedule. Each recipe below is a self-contained automation -- when creating it in Bankr, paste the prompt, set the cron schedule, and **select Telegram as the output destination** so approval-gated drafts reach you directly.
 
+### How to Paste Automation Prompts (IMPORTANT)
+
+The prompt in each recipe is the **exact instruction the agent executes the moment the automation fires**. Paste it into the automation's command field **verbatim** — do NOT prefix it with the automation name, do NOT wrap it in quotes, and do NOT add extra context like "run this:" or "here is the prompt:". The automation runs the command immediately when triggered; the text you paste IS the command, and it must read as an imperative that executes RIGHT NOW (not as a description of what the automation will eventually do).
+
+**Why this matters:** Bankr automations feed the command text directly to the agent as the user's message for that run. If the text reads like a label or description ("Weekday Morning Post: …", "This automation will post…"), the agent treats it as context and may not execute. If it reads like a direct imperative ("Run the twitter-agent skill and post now…"), the agent executes immediately. Every recipe below is already written in the imperative — paste it verbatim and it will fire correctly.
+
+**Wrong (prefixed with automation name — reads as a label, not a command):**
+```
+Weekday Morning Post: Run the twitter-agent skill for a weekday morning top-level post...
+```
+
+**Wrong (framed as a future/conditional action — reads as a description):**
+```
+When this runs, the agent should run the twitter-agent skill and post a morning tweet...
+```
+
+**Right (direct imperative — executes RIGHT NOW when the automation fires):**
+```
+Run the twitter-agent skill for a weekday morning top-level post...
+```
+
 ### Onboarding Order (CRITICAL)
 
 **Run the skill manually first.** Post 5-10 times by hand, get comfortable with the voice, confirm the storyline is updating cleanly. Only then enable automations, ONE AT A TIME, starting with the lowest-frequency autonomous one. Watch it for 3-5 days before adding the next.
