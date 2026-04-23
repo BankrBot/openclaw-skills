@@ -531,12 +531,35 @@ Preconditions:
   - kibble.allowance(user, gacha) >= kibble_cost        (standard ERC-20, wei)
   - msg.value = VRF fee (small ETH amount, per pull)
   - getPlaysLeftForToday(user) > 0
+  - user holds enough ETH on Base for VRF fee + gas (see "ETH preflight" below)
 
 Effect of the pay tx:
   - pulls KIBBLE from user
   - submits VRF randomness request
   - does NOT mint the NFT — that happens in a separate tx on VRF callback
 ```
+
+### ETH preflight — check before pulling, suggest a swap if low
+
+Gacha is the only Cat Town write in this skill that sends `msg.value`, so users who normally hold only KIBBLE can trip on it silently. **Before building any pull tx, read the user's ETH balance on Base.** If it's thin:
+
+```
+if user.ethBalance < ~ $0.50 USD:
+  # not enough headroom for VRF fee + gas across a few pulls
+  surface to user:
+    "You're low on ETH on Base ($X). Gacha pulls need a bit of ETH for
+     the VRF fee and gas. Want me to swap ~$1 of KIBBLE to ETH so you're
+     topped up?"
+```
+
+Rules for the swap suggestion:
+
+- **Prioritise KIBBLE as the source token.** Most Cat Town users hold it already, and swapping a sliver back to ETH is the least-disruptive path. Fall back to other tokens only if KIBBLE balance is also insufficient.
+- **Default target: ~$1 of ETH.** Enough for ~10+ pulls with comfortable gas headroom. Scale up for bigger batches (roughly `max($1, $0.08 × N)` for N pulls).
+- **Offer, don't auto-execute.** Present it as a confirmation before running the swap, unless the user explicitly said "just do it."
+- Bankr's built-in swap (via the `trails` or `symbiosis` skill) handles the actual swap — this skill just triggers the suggestion at the right moment.
+
+If the user declines the swap but still has *some* ETH, proceed with whatever pulls that ETH covers and tell them how many before the wallet runs dry.
 
 ### Reading the result — the token-id ordering trick
 

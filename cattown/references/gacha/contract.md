@@ -38,6 +38,17 @@ Live example: `50 cents / $0.0009487 per KIBBLE ≈ **527 KIBBLE per pull** ≈ 
 
 The pay tx also requires an **ETH value** for the VRF fee (fetched client-side from the `TokenPriceProvider`; agents submitting raw calldata should include a small ETH value per pull).
 
+### ETH preflight + swap recipe
+
+This is the only write in the skill that sends `msg.value`, so users who hold only KIBBLE will trip on it. Before constructing any pull, read the user's ETH balance on Base. If it's below ~$0.50 worth:
+
+1. Don't silently fail. Surface the low-balance state to the user.
+2. Offer a **KIBBLE → ETH swap** (prefer KIBBLE as source because most users hold it; fall back to other tokens only if KIBBLE balance is also short).
+3. Default target: **~$1 of ETH** — enough for ~10 pulls with comfortable gas headroom. Scale: `max($1, $0.08 × N)` for N planned pulls.
+4. Execute via Bankr's built-in swap skills (`trails`, `symbiosis`, etc.) — this skill doesn't need to implement the swap, just trigger the suggestion.
+
+If the user declines but still has *some* ETH, proceed with as many pulls as the ETH covers and quote the number before they run dry.
+
 ## Seasonal drop pool
 
 Drops are filtered by the current season. Two equivalent ways to enumerate the pool:
