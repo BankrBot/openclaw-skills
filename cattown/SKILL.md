@@ -102,22 +102,38 @@ Single pool, single reward token — KIBBLE in, KIBBLE out. No reward-token sele
 - `revenueShare.claimAndRestake()` — claims and auto-adds to the user's stake in one tx. Emits `ClaimedAndRestaked(user, restakedAmount, totalStakedNow)`.
 
 **3. Exit (unlock → wait → unstake)**
-1. `revenueShare.unlock()` — emits `UnlockInitiated(user, unlockEndTime)`. Sets `isUnlocking[user] = true`.
-2. Wait until `block.timestamp >= unlockEndTime(user)`. The wait length is `LOCK_PERIOD()` — **always read this from chain; do not hardcode** (the contract is UUPS-upgradeable).
+1. `revenueShare.unlock()` — emits `UnlockInitiated(user, unlockEndTime)`. Sets `isUnlocking[user] = true`. **Always tell the user two things when they unlock:** (a) the wait is **14 days** (`LOCK_PERIOD` = 1,209,600 seconds, snapshotted so later changes don't affect them), and (b) their pool share just dropped from whatever-it-was to **0%** — they won't earn fishing or gacha deposits during the wait. Read the pre-unlock share first via `getPoolShareFraction(user) / 1e18 * 100`.
+2. Wait until `block.timestamp >= unlockEndTime(user)`. The 14-day value is safe to quote at the point of unlock. Read `LOCK_PERIOD()` live only if you want defensive protection against future upgrades (the contract is UUPS-upgradeable).
 3. `revenueShare.unstake(uint256 N)` — **`N` is the integer KIBBLE count, same convention as stake.** Reverts before the wait ends. Emits `Unstaked(user, amount)`.
 - `revenueShare.relock()` — at any time during the wait, cancels the unlock and puts the user back into the earning pool. Emits `Relocked(user, amount)`.
 
+#### Checking remaining unlock time
+
+When a user asks "how long until I can withdraw?", compute from `unlockEndTime(user)`:
+
+```
+remaining_seconds = max(0, unlockEndTime(user) - current_unix_time)
+```
+
+- `isUnlocking(user) == false` → not unlocking, nothing to wait on.
+- `remaining_seconds > 0` → still waiting. Convert to days/hours for the reply.
+- `remaining_seconds == 0` → `unstake(N)` is callable now.
+
+No dedicated contract method for "time left" — just subtract. Use the latest block's timestamp if you want to avoid clock-skew with the user's device.
+
 #### Mapping "unstake" / "withdraw" / "exit" to the right call
 
-Users say "unstake" colloquially to mean the whole exit, not literally the on-chain `unstake()` function. Resolve by reading state first, then routing:
+Users say "unstake" colloquially to mean the whole exit, not literally the on-chain `unstake()` function. Before acting, read three values: `isUnlocking(user)`, `unlockEndTime(user)`, and the user's current pool share (`getPoolShareFraction(user) / 1e18 * 100` as a percentage). Then route:
 
 | State                                                    | What to call | What to tell the user                                                                 |
 |----------------------------------------------------------|--------------|---------------------------------------------------------------------------------------|
-| `isUnlocking(user) == false`                             | `unlock()`   | "Started your unlock. You'll be able to withdraw in `LOCK_PERIOD` (~X hours/days)."   |
-| `isUnlocking == true` **and** `now < unlockEndTime`      | *(no tx)*    | "Already unlocking. Ready to withdraw at `unlockEndTime`. `relock()` cancels and returns you to earning." |
-| `isUnlocking == true` **and** `now >= unlockEndTime`     | `unstake(N)` | "Withdrew N KIBBLE. You're fully exited." (Or remaining balance if partial.)          |
+| `isUnlocking(user) == false`                             | `unlock()`   | "Started your unlock. Wait is **14 days** — ready at `<unlockEndTime>`. Your pool share just dropped from **Y%** to **0%**; you won't earn revenue deposits during the wait. Call `relock()` any time to cancel and restore your share." |
+| `isUnlocking == true` **and** `now < unlockEndTime`      | *(no tx)*    | "Already unlocking. ~X days Y hours left until you can withdraw. Your pool share is **0%** until you either `unstake()` after the wait or `relock()` now."                                                  |
+| `isUnlocking == true` **and** `now >= unlockEndTime`     | `unstake(N)` | "Withdrew N KIBBLE." (Or remaining balance if partial.)                                |
 
 Same routing for "withdraw," "exit," "pull my KIBBLE out," "get my stake back." **Never call the on-chain `unstake()` as the first step** — it reverts unless the user has already completed an unlock wait.
+
+Why the share drop matters: while `isUnlocking == true`, the user's stake is **removed from `totalActiveStaked`**, so they do not earn any fishing or gacha revenue deposits that land during the 14-day wait. Surfacing the pre-unlock share (Y%) makes the opportunity cost explicit.
 
 ### Unlock state machine — the gotcha to warn users about
 
@@ -191,7 +207,7 @@ Remember: submit the ERC-20 `approve` on the KIBBLE token (`0x64cc19A52f4D631eF5
 - **Forgetting the approval.** `stake` reverts cleanly but wastes a user's tx. Read `allowance(user, revenueShare)` first; only approve if low.
 - **Unstaking while unlocking.** Reverts. Check `isUnlocking(user)` and `unlockEndTime(user)` before constructing an `unstake` tx.
 - **Assuming continuous rewards.** `pendingRewards` is a step function — it only goes up when the backend calls `depositRevenue`. Between deposits, polling will show no change, and that is correct. Use the calendar above to set expectations.
-- **Hardcoding `LOCK_PERIOD`.** Read it from chain every time — the contract is UUPS-upgradeable.
+- **Stale `LOCK_PERIOD` assumptions.** Currently **14 days** (1,209,600 seconds); safe to quote at the point of unlock because `unlockEndTime` is snapshotted per-user. Read `LOCK_PERIOD()` live only if you want defensive protection against UUPS upgrades.
 - **Using the legacy contract.** An older staking contract (`0xc3398Ae89bAE27620Ad4A9216165c80EE654eE96`) exists but is deprecated. Do not send new stakes there.
 
 ---
