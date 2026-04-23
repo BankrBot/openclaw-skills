@@ -165,9 +165,35 @@ Same Epic/Rare backbone across seasons: Diamond, Jade Figurine, Message in a Bot
 
 After listing the special drops, end with the common-drop count and an invitation to continue. Example copy (use the real count):
 
-> "You can also catch **~26 other common drops** today, including **{seasonal-Legendary}**, Diamond, and Catfish. Want me to list the rest by rarity?"
+> "You can also catch **~26 other common drops** today, led by **{seasonal-Legendary}**, **Diamond** ($100 treasure), and Catfish. Want me to list the rest by rarity?"
 
-If the user accepts, sort by rarity DESC → name ASC (same order as the fishing filter) and list the top 10 by default — the full list runs into hundreds if events are active.
+If the user accepts, sort by the big-ticket order (see below) and list the top 10 by default — the full list runs into hundreds if events are active.
+
+### Big-ticket sort — always surface the high-value items first
+
+Within any list of drops, open with the most interesting items. Sort order:
+
+1. **Rarity DESC** — Legendary → Epic → Rare → Uncommon → Common. Primary signal, especially for fish (weight data isn't in this API).
+2. **`sellValue` DESC** — `sellValue` is in **cents USD** (not KIBBLE). Tiebreaker within a rarity. Concrete values from a live sweep:
+    - 25,000¢ ($250): Solar Ring, Dawnbreak Ring, Moonlight Ring, Twilight Ring (Legendary, time-of-day exclusive)
+    - 11,000¢ ($110): Evil Book (Legendary, Halloween + Autumn + Evening/Night)
+    - 10,000¢ ($100): Frozen Tusk (Epic, Snow), Diamond (Epic, no conditions)
+    - 5,500¢: Gilded Sundial (Epic, Heatwave)
+    - 5,000¢: Lost Compass (Epic, Wind)
+    - 4,000¢: Jade Figurine (Epic, no conditions)
+    - Lower tiers: Snow Globe (3,000¢), Fancy Duck (3,000¢), Gold Band (2,500¢), etc.
+3. **Name ASC** as final tiebreaker.
+
+Note: fish typically have low or zero `sellValue` in the API — rarity carries the signal for them. Treasure sellValue is the more informative tiebreaker because treasures have real prices.
+
+### Fish weight data — not in this API
+
+Per-species weight ranges (e.g. "Bluegill: 0.5kg – 1.2kg") are **not** returned by `/v2/items/master`. If a user asks about weights or the heaviest fish by species, point them at Cat Town's public docs (unauthenticated):
+
+- https://docs.cat.town/items/fishing/fish — per-fish weight ranges + conditions
+- https://docs.cat.town/items/fishing/treasures — per-treasure detail pages
+
+For agent-generated answers without a human follow-up, lean on rarity + `sellValue`. For "what's the biggest {species}" or similar weight-specific asks, route the user to those pages.
 
 ### Why two tiers
 
