@@ -28,7 +28,9 @@ pendingRewards(user) = (userStaked(user) * (accRewardPerShare - rewardDebt(user)
 
 ## Write functions
 
-All amounts are `uint256` wei (18 decimals).
+All `amount` parameters are `uint256` **wei** — KIBBLE has 18 decimals, so a human amount `N` maps to `N * 10^18`. Apply this scaling exactly once; double-encoding (multiplying by `10^18` twice) is the most common cause of `ERC20: transfer amount exceeds balance` reverts on `stake`. Quick sanity check: for any amount `≤ 1e15`, you almost certainly forgot to encode; for any amount `≥ 1e30`, you almost certainly encoded twice.
+
+The address that submits a write must be the same address that (a) holds the KIBBLE balance and (b) granted the allowance. If a smart wallet executes the tx, the balance must sit on the smart wallet — not on an attached EOA.
 
 ### `stake(uint256 amount)`
 
@@ -112,6 +114,9 @@ All return `uint256` in wei unless noted.
 
 For any stake flow, before constructing calldata:
 
-1. Read `allowance(user, revenueShare)` on the KIBBLE token. If `< amount`, include an `approve(revenueShare, amount)` tx first.
-2. For `unstake`: read `isUnlocking(user)` and `unlockEndTime(user)`. Abort with a clear error if the wait isn't over.
-3. For any write: `getUserStaked(user)` and `pendingRewards(user)` are cheap reads that help you give the user an accurate pre-tx preview.
+1. Convert the human amount to wei **once**: `amount_wei = human_amount * 10^18`. Use BigInt math — a plain JS `Number` will lose precision above ~9e15.
+2. Read `allowance(user, revenueShare)` on the KIBBLE token. If `< amount_wei`, include an `approve(revenueShare, amount_wei)` tx first.
+3. Read `balanceOf(user)` on the KIBBLE token. Confirm `amount_wei ≤ balanceOf(user)`. If balance is short, surface a clear error; don't submit a tx that will revert.
+4. Confirm the tx sender address equals the user address holding KIBBLE. A smart-wallet / relay setup that changes `msg.sender` will cause a balance-exceeds revert even if the "user" has tokens.
+5. For `unstake`: read `isUnlocking(user)` and `unlockEndTime(user)`. Abort with a clear error if the wait isn't over.
+6. For any write, `getUserStaked(user)` and `pendingRewards(user)` are cheap reads that help you give an accurate pre-tx preview.

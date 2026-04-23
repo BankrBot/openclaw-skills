@@ -57,6 +57,15 @@ Deposits are triggered by the Cat Town backend calling `depositRevenue(amount, s
 
 Base Sepolia addresses and the full ABI surface are in [references/staking-contract.md](references/staking-contract.md).
 
+### Amount units — read this before building any write tx
+
+All `amount` parameters on RevenueShare and the KIBBLE `approve` call are in **base units (wei)**, not human KIBBLE. KIBBLE has **18 decimals**, so:
+
+- Stake 100 KIBBLE → pass `amount = 100 * 10^18 = 100000000000000000000`
+- Approve 100 KIBBLE → pass `amount = 100 * 10^18 = 100000000000000000000`
+- Apply `* 10^18` **exactly once**. Double-encoding (multiplying by `10^18` twice) produces a value larger than any plausible balance and causes `ERC20: transfer amount exceeds balance` — see Troubleshooting.
+- **Signer = holder.** The address that signs `stake` must be the same address that holds the KIBBLE and signed `approve`. If a smart wallet executes the tx, the balance must sit on that smart wallet — not on an attached EOA.
+
 ### Core flows
 
 Single pool, single reward token — KIBBLE in, KIBBLE out. No reward-token selection, no per-user lock duration, no multipliers. One global `accRewardPerShare` accumulator updated on each `depositRevenue`.
@@ -149,3 +158,29 @@ Remember: submit the ERC-20 `approve` on the KIBBLE token (`0x64cc19A52f4D631eF5
 - **Assuming continuous rewards.** `pendingRewards` is a step function — it only goes up when the backend calls `depositRevenue`. Between deposits, polling will show no change, and that is correct. Use the calendar above to set expectations.
 - **Hardcoding `LOCK_PERIOD`.** Read it from chain every time — the contract is UUPS-upgradeable.
 - **Using the legacy contract.** An older staking contract (`0xc3398Ae89bAE27620Ad4A9216165c80EE654eE96`) exists but is deprecated. Do not send new stakes there.
+
+---
+
+## Troubleshooting
+
+### `ERC20: transfer amount exceeds balance` on `stake`
+
+The approval succeeded, but `stake(amount)` reverts with this message. The OpenZeppelin `transferFrom` checks allowance first, then balance — so this specific error means allowance is fine but **the amount exceeds the signer's KIBBLE balance**. Two likely causes:
+
+1. **Double-encoded amount.** If you're asked to stake 100 KIBBLE and you encode to wei twice, you get `100 * 10^36` instead of `100 * 10^18`. That's larger than any plausible balance. Fix: apply `* 10^18` exactly once. Diagnostic test: call `stake(1)` (literal uint256 `1` = 1 wei). If that succeeds, encoding was the problem.
+2. **Signer ≠ holder.** The address executing the stake is not the address holding KIBBLE. Common when a smart wallet executes but the balance sits on an attached EOA, or when a session/relay wallet submits on behalf of a user. Confirm `msg.sender` of the stake tx matches the address that holds KIBBLE and signed the approval.
+
+### `ERC20: insufficient allowance` on `stake`
+
+`allowance(signer, revenueShare) < stakeAmount`. Submit `approve(revenueShare, stakeAmount_in_wei)` from the same signer first. Remember the approval is on the KIBBLE token, not on RevenueShare.
+
+### `unstake` reverts with no obvious reason
+
+Check `isUnlocking(signer)`. If `true`, `unstake` reverts until `block.timestamp >= unlockEndTime(signer)`. Either wait out the window or call `relock()` to cancel the unlock and return to the earning pool.
+
+### Diagnostic no-arg write tests
+
+If you want to verify the signer + contract are wired up without worrying about amount encoding, try either:
+
+- `unlock()` — no args. Succeeds even with 0 staked (sets `isUnlocking = true`). Follow with `relock()` immediately to avoid side effects.
+- `claim()` — no args. No-ops cleanly when `pendingRewards(signer) == 0`.
