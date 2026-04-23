@@ -2,6 +2,8 @@
 
 Single-pool, single-reward staking for KIBBLE on Base. Deployed as a UUPS proxy (upgradeable) — always read values like `LOCK_PERIOD()` from chain rather than hardcoding.
 
+Player-facing overview: https://docs.cat.town/economy/staking.
+
 ## Addresses
 
 | Chain             | Chain ID | RevenueShare                                   | KIBBLE (ERC-20, 18 decimals)                   |

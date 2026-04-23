@@ -2,6 +2,8 @@
 
 Cat Town's vendor flow: players sell treasures and collectibles to the SellItems contract for KIBBLE at a fixed catalog price minus a 5% merchant fee. This skill only supports selling items minted by the **V2 minter** — legacy V1-minted items are out of scope.
 
+Player-facing overview: https://docs.cat.town/shops/sell-items.
+
 ## Addresses (Base, chain 8453)
 
 | Contract            | Address                                       | Role                             |

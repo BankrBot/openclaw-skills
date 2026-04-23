@@ -2,6 +2,8 @@
 
 Cat Town's weekly raffle. Free ticket for every player every week, plus paid tickets (burn 20 kg of caught fish per ticket). Draw is Friday 20:00 UTC — 5 winners selected via Chainlink VRF, pool split equally.
 
+Player-facing overview: https://docs.cat.town/fishing/fish-raffle.
+
 Two contracts are involved:
 
 | Contract        | Address                                       | Role                             |

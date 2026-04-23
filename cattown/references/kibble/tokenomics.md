@@ -2,6 +2,8 @@
 
 Cat Town's in-game NPC **Jasper** (Wealth & Whiskers Bank) surfaces the tokenomics users routinely ask about: % staked, % burned, and the current staking APY. This doc mirrors Jasper's exact math so Bankr answers with the same numbers the game shows.
 
+Player-facing overview: https://docs.cat.town/economy/tokens/kibble, https://docs.cat.town/get-started/kibble-economy.
+
 Source (in the Cat Town frontend): `hooks/interactions/Jasper/useJasperBankInteractions.tsx` and `hooks/game/staking/useStakingEstimatedAPY.tsx`.
 
 ## Fixed inputs

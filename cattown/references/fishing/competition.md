@@ -2,6 +2,8 @@
 
 Isabella's weekend fishing competition runs **Saturday 00:00 UTC → Monday 00:00 UTC** (a 48-hour window, loosely "Sat morning → Sun night"). This doc covers live state detection, prize-pool math mirroring the frontend's exact numbers, and leaderboard reads.
 
+Player-facing overview: https://docs.cat.town/fishing/weekly-competition.
+
 ## Addresses
 
 | Contract | Address |

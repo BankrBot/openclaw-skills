@@ -1,6 +1,6 @@
 ---
 name: cattown
-description: Interact with Cat Town — a Farcaster-native game world on Base. Covers KIBBLE staking (stake/claim/unlock/unstake via the RevenueShare contract), the weekly calendar (Monday fishing-revenue and Wednesday gacha-revenue deposits, Paulie's Friday 20:00 UTC fish raffle, Isabella's Sat–Mon fishing competition), live world state (season, weather, time of day, weekend flag via GameData), world-state-conditioned fishing drops (weather/season/time axes), the fishing-competition leaderboard with prize-pool math, Paulie's fish raffle (free-ticket claim, tier-based prize pool, chance-to-win, leaderboard + last winners), the daily 3-item boutique with KIBBLE→USD conversion via the Kibble Price Oracle, and KIBBLE tokenomics mirroring Jasper's NPC math (% burned, % staked, live staking APY). Use when the user mentions Cat Town, KIBBLE, Wealth & Whiskers, Jasper, Isabella, Paulie, Skipper, Theodore, Cassie, RevenueShare, fishing, gacha, the boutique, raffle tickets, prize pools, drop tables, or any read/write against the Cat Town contracts on Base.
+description: Interact with Cat Town — a Farcaster-native game world on Base. Covers KIBBLE staking (stake, claim, unlock, unstake, leaderboard, deposit history); live world state (season, weather, time of day, weekend flag); fishing drops filtered by world state; Isabella's weekend fishing competition with live prize-pool math; Paulie's weekly fish raffle (free-ticket claim, tier-based prize pool, odds, last winners); the daily 3-item boutique with KIBBLE→USD conversion; gacha spins (async VRF pay-then-receive, 100/day cap, seasonal pools); item valuation plus batch selling via the V2 vendor (5% tax); and KIBBLE tokenomics (% burned, % staked, live APY). Use when the user mentions Cat Town, KIBBLE, Wealth & Whiskers, Jasper, Isabella, Paulie, Skipper, Theodore, Cassie, RevenueShare, fishing, gacha, raffle, boutique, vendor, prize pools, drop tables, or any read/write on the Cat Town contracts.
 ---
 
 # Cat Town — Agent Overview
@@ -91,7 +91,7 @@ The second form reverts with `ERC20: transfer amount exceeds balance` because th
 - **RevenueShare**: `0x9e1Ced3b5130EBfff428eE0Ff471e4Df5383C0a1`
 - **KIBBLE token (ERC-20, 18 decimals)**: `0x64cc19A52f4D631eF5BE07947CABA14aE00c52Eb`
 
-Base Sepolia addresses and the full ABI surface are in [references/staking/contract.md](references/staking/contract.md).
+Base Sepolia addresses and the full ABI surface are in [references/staking/contract.md](references/staking/contract.md). User-facing overview: https://docs.cat.town/economy/staking.
 
 ### Core flows
 
@@ -294,7 +294,7 @@ Per-species fish weight ranges are **not** returned by `/v2/items/master`. If a 
 
 For quick programmatic answers, lean on rarity + `sellValue`. For "what's the biggest {species}", point the user at those docs pages.
 
-Full recipe, complete weather→drops table, and live-sweep counts: [references/fishing/drops.md](references/fishing/drops.md).
+Full recipe, complete weather→drops table, and live-sweep counts: [references/fishing/drops.md](references/fishing/drops.md). Player-facing context: https://docs.cat.town/fishing/start-fishing, https://docs.cat.town/fishing/hot-streaks, https://docs.cat.town/fishing/upgrades.
 
 ---
 
@@ -357,7 +357,7 @@ Pull the API response once, then pick 3–5 of these to feature (keep it convers
 >
 > Want the full top 10?
 
-Full ABI surface, per-rank payout worked example at current oracle rate, and the complete leaderboard response shape: [references/fishing/competition.md](references/fishing/competition.md).
+Full ABI surface, per-rank payout worked example at current oracle rate, and the complete leaderboard response shape: [references/fishing/competition.md](references/fishing/competition.md). Player-facing overview: https://docs.cat.town/fishing/weekly-competition.
 
 ---
 
@@ -505,7 +505,7 @@ Example reply (live state):
 >
 > You haven't claimed your free ticket this week — want me to grab it?
 
-Full ABI surface, write paths, tier math, live-worked chance calcs: [references/fish-raffle/contract.md](references/fish-raffle/contract.md). API response shapes: [references/fish-raffle/api.md](references/fish-raffle/api.md).
+Full ABI surface, write paths, tier math, live-worked chance calcs: [references/fish-raffle/contract.md](references/fish-raffle/contract.md). API response shapes: [references/fish-raffle/api.md](references/fish-raffle/api.md). Player-facing overview: https://docs.cat.town/fishing/fish-raffle.
 
 **Paid tickets (buying with caught fish) are out of scope for this revision** — free claim + reads only.
 
@@ -615,7 +615,7 @@ Format: `"<Rarity> <Name>" (<Type>, <Collection>) worth ~<X> KIBBLE (~$<Y>)`. Ex
 | `GET /v2/items/capsule/<user>`                         | Result polling target               |
 | `GET /v2/items/master?limit=1000`                      | Full catalog; filter `source=Gacha` |
 
-Full contract signatures, VRF event names, oracle math, and the capsule API quirks (500 for cold wallets, etc.): [references/gacha/contract.md](references/gacha/contract.md), [references/gacha/api.md](references/gacha/api.md).
+Full contract signatures, VRF event names, oracle math, and the capsule API quirks (500 for cold wallets, etc.): [references/gacha/contract.md](references/gacha/contract.md), [references/gacha/api.md](references/gacha/api.md). Player-facing overview + pool archive: https://docs.cat.town/shops/gacha, https://docs.cat.town/items/gacha/archive.
 
 ---
 
@@ -690,7 +690,7 @@ Or, for a batch:
 
 > You've got 12 V2-minter items worth selling, totaling ~3,420 KIBBLE after the 5% fee. (Skipping 2 legacy items.) Want me to sell all 12, or cherry-pick?
 
-Full ABI surface, approval detail, inventory-API query params, revert catalogue, and the batch recipe: [references/sell-items/contract.md](references/sell-items/contract.md).
+Full ABI surface, approval detail, inventory-API query params, revert catalogue, and the batch recipe: [references/sell-items/contract.md](references/sell-items/contract.md). Player-facing overview: https://docs.cat.town/shops/sell-items.
 
 ---
 
@@ -732,7 +732,7 @@ Derived dynamically from **baronbot** (`0x8Ff7AcCCf73c515c1f62Fc7b64A63F17Ce9965
 
 > **KIBBLE tokenomics (live):** ~66% of supply has been burned, ~24% of circulating is staked in Wealth & Whiskers, and staking currently pays ~30% APY. Want me to walk you through staking? The lock period is 14 days.
 
-Full formulas, APY caps, and the live worked example: [references/kibble/tokenomics.md](references/kibble/tokenomics.md).
+Full formulas, APY caps, and the live worked example: [references/kibble/tokenomics.md](references/kibble/tokenomics.md). Player-facing KIBBLE economy overview: https://docs.cat.town/economy/tokens/kibble, https://docs.cat.town/get-started/kibble-economy.
 
 ---
 

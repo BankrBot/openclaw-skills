@@ -2,6 +2,8 @@
 
 Cat Town's gacha machine pays out seasonal items. Every pull is independent, uniformly weighted against the season's item table, and **asynchronously fulfilled via Chainlink/Supra VRF** — the pay tx submits a randomness request, and the NFT mints in a separate tx on VRF callback. Agents must account for the latency between submit and mint when answering the user.
 
+Player-facing overview: https://docs.cat.town/shops/gacha. Pool archive (all items ever available): https://docs.cat.town/items/gacha/archive.
+
 ## Address
 
 **Base mainnet (chain 8453):** `0xAD0ee945B4Eba7FB8eB7540370672E97eB951F1a`
