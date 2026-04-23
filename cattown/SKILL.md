@@ -294,6 +294,69 @@ Full recipe, complete weather→drops table, and live-sweep counts: [references/
 
 ---
 
+## Fishing competition (weekly, Isabella hosts)
+
+The **FishingCompetition** contract at `0x62a8F851AEB7d333e07445E59457eD150CEE2B7a` (Base) runs a weekly competition **Saturday 00:00 UTC → Monday 00:00 UTC**. When a user asks about it, **lead with live data, not with generic rules.** The skeleton differs based on whether one is currently running.
+
+### Is one running?
+
+- Onchain: `isCompetitionActive()` → `(bool active, bytes32 eventId)`
+- API (public, no auth): `competition.isActive` in `GET https://api.cat.town/v1/fishing/competition/leaderboard`
+
+### Prize-pool math (mirror the frontend exactly)
+
+The API's `prizePool` is **total volume** (all KIBBLE spent identifying fish during the competition). The frontend splits it three ways:
+
+```
+prizePool                             // total volume
+leaderboardShare = prizePool * 0.10   // top-10 prize pool ("Prize Pool" in UI)
+treasureShare    = prizePool * 0.80   // treasures returned to fishers
+stakersRevenue   = prizePool * 0.10   // flows to KIBBLE stakers via RevenueShare
+```
+
+Top-10 distribution of `leaderboardShare` (from `fishingLeaderboardShareForRank`): **30%, 20%, 10%, 8%, 8%, 7%, 5%, 4%, 4%, 4%**. `Math.floor` to whole KIBBLE.
+
+### If active — response pattern
+
+Pull the API response once, then pick 3–5 of these to feature (keep it conversational, don't dump everything):
+
+- **Running time** — `now - startTime` ("14 hours in, 34 hours to go")
+- **Weather** — from `GameData.getGameState()` (drives which special fish appear)
+- **Participants** — `totalPlayers`
+- **Leaderboard prize pool** — `prizePool * 0.10` in KIBBLE **+ USD conversion** via the oracle
+- **Treasures returned to players** — `prizePool * 0.80`
+- **Stakers revenue generated** — `prizePool * 0.10`
+- **Top 10** — rank, basename (or short addr), fishName (+ shiny flag), weight in kg, expected payout
+
+### If NOT active — response pattern
+
+1. Say it clearly: "No fishing competition is running right now."
+2. Compute next start = **next Saturday 00:00 UTC**; express as "starts in X days Y hours."
+3. **Offer a reminder**: "Want me to ping you when it kicks off?"
+4. **Ask the follow-up**: "Do you want to hear about last week's competition?"
+5. If the user says yes, the same API response (even when inactive) carries the most recent completed competition — narrate winner, top-3 prizes, total volume, total participants.
+
+### Example reply — inactive with offer
+
+> There's no fishing competition running right now. The next one starts **Saturday 00:00 UTC — about 2 days 14 hours away**.
+>
+> Want me to ping you when it kicks off? I can also tell you about **last weekend's competition** — 100 fishers, **3.06M KIBBLE total volume**, and **bitcoinbov.base.eth won** with a 46.36 kg Elusive Marlin (~91,700 KIBBLE, ~$87).
+
+### Example reply — active, leading with live data
+
+> Fishing competition is live — **12 hours in, 36 hours to go**. Weather's **Storm** 🌧️ (Elusive Marlin's biting).
+>
+> - **27 fishers** competing
+> - **Leaderboard prize pool**: ~41,200 KIBBLE (~$39) — 1st takes 30% (~12,360 KIBBLE)
+> - Currently leading: **alice.base.eth** with a 42.8 kg Alligator Gar
+> - Also generating **~33k KIBBLE for KIBBLE stakers** and **~264k returned to fishers as treasures** this weekend
+>
+> Want the full top 10?
+
+Full ABI surface, per-rank payout worked example at current oracle rate, and the complete leaderboard response shape: [references/fishing/competition.md](references/fishing/competition.md).
+
+---
+
 ## Boutique — daily 3-item shop
 
 The boutique is a fully onchain daily shop. Every day at **00:00 UTC** the Boutique contract surfaces **3 items** deterministically selected from the current season's pool. No off-chain API — all state is readable directly on Base.
@@ -345,6 +408,48 @@ Include all four season links in every response — a user interested in the cur
 Full ABI surface, trait schema (real keys: `Item Name`, `Rarity`, `Item Type`, `Source`, `Slot`, `Sprite`, `imageUrl`, `Collection`, etc.), preview future rotations, and the complete oracle math: [references/boutique/contract.md](references/boutique/contract.md).
 
 **Purchase flow is out of scope for this revision** — this skill currently reads the boutique only.
+
+---
+
+## KIBBLE tokenomics (Jasper's answers)
+
+When a user asks about KIBBLE — "how much is staked?", "how much burned?", "what's the APY?" — mirror the numbers the NPC **Jasper** quotes at the Wealth & Whiskers Bank. Three headline stats, each from live reads:
+
+### % Burned (of TOTAL supply)
+
+```
+burnedPercent = balanceOf(0xdEaD on KIBBLE) / 1,000,000,000 × 100
+```
+
+Denominator is total supply (1B), not circulating — that's how Jasper phrases it. **Live at time of writing: ~66.3% of supply already burned.**
+
+### % Staked (of CIRCULATING supply)
+
+```
+circulating   = totalSupply − balanceOf(0xdEaD)
+stakedPercent = RevenueShare.getTotalStaked() / circulating × 100
+```
+
+Denominator is **circulating** (total minus burned), so users get a realistic number after the deflationary burn. **Live at time of writing: ~24.0% of circulating KIBBLE is staked.**
+
+### Staking APY at Wealth & Whiskers
+
+Derived dynamically from **baronbot** (`0x8Ff7AcCCf73c515c1f62Fc7b64A63F17Ce99659e`, rank-1 continuous staker) because the return per KIBBLE is the same for every active staker. Formula:
+
+```
+1. GET /v2/revenue/deposits/<baronbot> — keep last 30 days of deposits
+2. monthly_revenue = period_revenue * (30 / days_since_first_deposit)
+3. monthly_rate    = monthly_revenue / baronbot.stakedAmount
+4. apy             = min(((1 + min(monthly_rate, 0.50))^12 − 1) * 100, 1000)
+```
+
+**Live at time of writing: ~30% APY** — not a fixed rate; drifts with weekly fishing + gacha revenue.
+
+### Example reply
+
+> **KIBBLE tokenomics (live):** ~66% of supply has been burned, ~24% of circulating is staked in Wealth & Whiskers, and staking currently pays ~30% APY. Want me to walk you through staking? The lock period is 14 days.
+
+Full formulas, APY caps, and the live worked example: [references/kibble/tokenomics.md](references/kibble/tokenomics.md).
 
 ---
 

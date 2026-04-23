@@ -62,21 +62,25 @@ Onchain surface for the fish raffle is **not yet documented in this skill** — 
 
 Isabella hosts the weekend fishing competition. Only catches made during her window feed the KIBBLE stakers pool; Skipper's weekday catches do not.
 
-- Automatic entry for every fish caught during the window.
-- Top 10 by biggest fish:
+- Automatic entry for every fish caught during the window (biggest single catch wins).
+- Top 10 by biggest fish — per-rank prize split (verified in frontend code):
 
-  | Rank  | Prize share |
-  |-------|-------------|
-  | 1st   | 30%         |
-  | 2nd   | 20%         |
-  | 3rd   | 10%         |
-  | 4th–5th | 8% each   |
-  | 6th   | 7%          |
-  | 7th–10th | 4–5% each |
+  | Rank    | Prize share |
+  |---------|-------------|
+  | 1st     | 30%         |
+  | 2nd     | 20%         |
+  | 3rd     | 10%         |
+  | 4th     | 8%          |
+  | 5th     | 8%          |
+  | 6th     | 7%          |
+  | 7th     | 5%          |
+  | 8th     | 4%          |
+  | 9th     | 4%          |
+  | 10th    | 4%          |
 
-- The leaderboard is only meaningful Saturday–Sunday; outside that window it reflects the prior week's results.
+- The leaderboard is only meaningful Saturday–Monday; outside that window it reflects the prior week's results.
 
-Onchain surface for the fishing competition is **not yet documented in this skill** — a future SKILL.md section will cover competition reads and the leaderboard.
+Full contract + API reference, prize-pool math (10% top-10 / 80% treasures / 10% stakers), and active/inactive response patterns: [../fishing/competition.md](../fishing/competition.md).
 
 ---
 

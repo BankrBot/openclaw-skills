@@ -12,6 +12,8 @@ Gives an agent everything it needs to:
 - **Read Cat Town's live world state** — season, time of day, weather, weekend flag — via the GameData contract.
 - **Answer "what can I catch in this weather?"** — combine world state with the public item-truth catalog to surface weather / season / time-of-day exclusive fishing drops.
 - **Read the boutique's daily 3-item rotation** with KIBBLE prices converted to USD via the Kibble Price Oracle.
+- **Report live fishing competition state** (weekly Sat–Mon): running time, weather, participants, 10/80/10 prize-pool split with top-10 payouts, with a reminder offer + "tell me about the last one" fallback when off-season.
+- **Answer KIBBLE tokenomics** — % burned (of total), % staked (of circulating), and live APY — mirroring the game's Jasper NPC math.
 - **Query the staking leaderboard and weekly revenue-deposit history** via public unauthenticated endpoints on `api.cat.town`.
 
 ## Install
@@ -30,8 +32,9 @@ cattown/
 └── references/
     ├── staking/          RevenueShare contract + api.cat.town staking endpoints
     ├── world/            GameData contract + weekly calendar
-    ├── fishing/          fishing drops (item truth API + world-state filter)
-    └── boutique/         daily boutique rotation + KIBBLE price oracle
+    ├── fishing/          fishing drops + weekly competition leaderboard
+    ├── boutique/         daily boutique rotation + KIBBLE price oracle
+    └── kibble/           KIBBLE tokenomics (% burned, % staked, APY)
 ```
 
 New surfaces (fish raffle, fishing competition, gacha, item drops, etc.) will slot in as sibling `references/<feature>/` subdirectories without touching existing docs.

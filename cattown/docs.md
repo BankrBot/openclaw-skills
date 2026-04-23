@@ -11,14 +11,16 @@ AI-readable reference for Cat Town — a Farcaster-native game world on Base. Th
 
 ## Current coverage
 
-This skill currently documents four Cat Town surfaces:
+This skill currently documents six Cat Town surfaces:
 
 1. **KIBBLE staking** — the RevenueShare contract, stake/claim/unlock/unstake flows, staking leaderboard, user deposit history.
 2. **World state** — the GameData contract, current season/time-of-day/weather/weekend.
 3. **Fishing drops** — the public item-truth catalog with world-state-conditioned drops (weather, season, time of day), plus the frontend's exact fishing filter.
-4. **Boutique** — daily 3-item onchain shop with seasonal pools, plus the KIBBLE→USD price oracle.
+4. **Fishing competition** — weekly Sat–Mon competition with live prize-pool math (10/80/10 split) and top-10 leaderboard.
+5. **Boutique** — daily 3-item onchain shop with seasonal pools, plus the KIBBLE→USD price oracle.
+6. **KIBBLE tokenomics** — Jasper's answers: % staked, % burned, live staking APY.
 
-Future revisions will add the fishing competition leaderboard (Isabella's Sat–Sun), the fish raffle (Paulie's Friday 20:00 UTC draw), gacha capsule pools, and the boutique purchase flow. Each will land under its own `references/<feature>/` subdirectory.
+Future revisions will add the fish raffle (Paulie's Friday 20:00 UTC draw), gacha capsule pools, the boutique purchase flow, and the community-pot surface Jasper also touches. Each will land under its own `references/<feature>/` subdirectory.
 
 ---
 
@@ -124,6 +126,45 @@ Seasonal doc pages (public): [shops/boutique](https://docs.cat.town/shops/boutiq
 **USD conversion:** `getKibbleUsdPrice()` returns USD-per-KIBBLE scaled by **`10^18`** (note: `getEthUsdPrice()` on the same contract uses `10^8`). Formula: `usd = (price_wei * rawKibbleUsdPrice) / 10^36`. Live at time of writing: ~$0.0009487 per KIBBLE.
 
 Full reference: [references/boutique/contract.md](references/boutique/contract.md).
+
+---
+
+## Fishing competition (weekly, Sat 00:00 UTC → Mon 00:00 UTC)
+
+| Property       | Value                                                       |
+|----------------|-------------------------------------------------------------|
+| Contract       | `0x62a8F851AEB7d333e07445E59457eD150CEE2B7a` on Base        |
+| Leaderboard API | `GET https://api.cat.town/v1/fishing/competition/leaderboard` (public) |
+| Cycle          | Saturday 00:00 UTC → Monday 00:00 UTC (48h window)          |
+| Host NPC       | Isabella                                                    |
+
+Prize-pool math (mirroring the frontend exactly):
+
+```
+prizePool                             // API field: total volume of KIBBLE spent on fish IDs during comp
+leaderboardShare = prizePool * 0.10   // top-10 prize pool, further split 30/20/10/8/8/7/5/4/4/4
+treasureShare    = prizePool * 0.80   // returned to fishers as treasures
+stakersRevenue   = prizePool * 0.10   // flows to KIBBLE stakers via RevenueShare
+```
+
+When active: lead with running time / weather / participants / prize pool / top 10. When inactive: compute next Saturday 00:00 UTC, offer a reminder, and offer to narrate the last completed competition (the API returns it when `isActive=false`).
+
+Full reference: [references/fishing/competition.md](references/fishing/competition.md).
+
+---
+
+## KIBBLE tokenomics
+
+| Property   | Value                                                              |
+|------------|--------------------------------------------------------------------|
+| Inputs     | `balanceOf(0xdEaD)`, `RevenueShare.getTotalStaked()`, baronbot's 30-day revenue-share history |
+| % burned   | `balanceOf(0xdEaD) / totalSupply` × 100 (live: ~66%)               |
+| % staked   | `totalStaked / (totalSupply − burned)` × 100 (live: ~24%)          |
+| Staking APY | Derived from baronbot's 30-day deposits + stake (live: ~30%)       |
+
+Mirrors Jasper's NPC answers in the Wealth & Whiskers Bank. The % burned uses total supply as the denominator; % staked uses circulating (total − burned). APY is dynamic and uncapped until 1000% APY / 50% monthly rate sanity limits.
+
+Full reference: [references/kibble/tokenomics.md](references/kibble/tokenomics.md).
 
 ---
 
