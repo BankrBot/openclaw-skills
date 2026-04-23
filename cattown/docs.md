@@ -11,12 +11,13 @@ AI-readable reference for Cat Town — a Farcaster-native game world on Base. Th
 
 ## Current coverage
 
-This skill currently documents two Cat Town surfaces:
+This skill currently documents three Cat Town surfaces:
 
 1. **KIBBLE staking** — the RevenueShare contract, stake/claim/unlock/unstake flows, staking leaderboard, user deposit history.
 2. **World state** — the GameData contract, current season/time-of-day/weather/weekend.
+3. **Fishing drops** — the public item-truth catalog with world-state-conditioned drops (weather, season, time of day), plus the frontend's exact fishing filter.
 
-Future revisions will add fishing (Isabella's weekend competition, Skipper's weekday fishing), fish raffle (Paulie, Friday 20:00 UTC draw), gacha (capsule pools), and the item / drop truth surface. Each will land under its own `references/<feature>/` subdirectory.
+Future revisions will add the fishing competition leaderboard (Isabella's Sat–Sun), the fish raffle (Paulie's Friday 20:00 UTC draw), gacha capsule pools, and the boutique rotation. Each will land under its own `references/<feature>/` subdirectory.
 
 ---
 
@@ -90,6 +91,23 @@ Full function table, selectors, live sample: [references/world/contract.md](refe
 
 ---
 
+## Fishing drops (item catalog + world filter)
+
+| Property       | Value                                                       |
+|----------------|-------------------------------------------------------------|
+| Endpoint       | `GET https://api.cat.town/v2/items/master?limit=1000`       |
+| Auth           | Public (no headers)                                         |
+| Catalog size   | ~430 active items                                           |
+| Caching        | Safe to cache ≥1 hour (frontend caches indefinitely)        |
+
+Each item carries optional `dropConditions` keyed by `events`, `seasons`, `timesOfDay`, `weathers`. The frontend's fishing filter keeps only `source=Fishing` + `itemType ∈ {Fish, Treasure}`, matches the requested axis, drops event-exclusive items unless the event is active, and sorts by rarity DESC → name ASC. This returns items **exclusive** to that axis value (e.g. 3 snow-only drops, not 400+ weather-agnostic items).
+
+Weather changes most frequently (minutes-to-hours), so weather-exclusive drops are the most rotational — highest-value thing to surface.
+
+Full recipe + live weather→drops table: [references/fishing/drops.md](references/fishing/drops.md).
+
+---
+
 ## Weekly cadence
 
 Cat Town runs on a fixed weekly UTC cycle. Only the **bold** rows directly affect staking rewards; the rest is context for future skill surfaces.
@@ -109,4 +127,4 @@ Full calendar with revenue-split details and NPC cheat-sheet: [references/world/
 
 ## Not covered yet
 
-Cat Town's codebase exposes additional public surfaces (item catalog with drop conditions, gacha/boutique item pools, fishing catch tables, seasonal events via `/v1/seasonal/*`, on-chain leaderboards) that are out of scope for this revision. When they're added, each will land in a new `references/<feature>/` subdirectory without disturbing existing integrations.
+Cat Town's codebase exposes additional public surfaces (gacha/boutique item pools, fishing competition leaderboard, fish raffle entry flow, seasonal events via `/v1/seasonal/*`, daily rewards) that are out of scope for this revision. When they're added, each will land in a new `references/<feature>/` subdirectory without disturbing existing integrations.

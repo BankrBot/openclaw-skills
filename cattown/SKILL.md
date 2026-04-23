@@ -222,6 +222,31 @@ For the fixed weekly cadence (fishing/gacha revenue deposits, Paulie's raffle, I
 
 ---
 
+## Fishing drops — "what can I catch in this weather?"
+
+When a user asks "what's catchable in the rain?", "what's exclusive to Winter evenings?", or "what drops in a Storm?", combine live world state (from GameData above) with Cat Town's public item catalog:
+
+```
+GET https://api.cat.town/v2/items/master?limit=1000        // public, no auth
+```
+
+Each item has optional `dropConditions: { events?, seasons?, timesOfDay?, weathers? }`. The frontend's fishing filter (ported verbatim from `utils/helpers/fishingHelpers.tsx`) is four steps:
+
+1. Keep only `isActive == true`, `source == "Fishing"`, `itemType ∈ {"Fish", "Treasure"}`.
+2. Match the user-asked axis — `weathers` / `seasons` / `timesOfDay` — including `axis_value` in the item's condition array.
+3. Drop items that require a seasonal event unless that event is currently active (Halloween items are invisible outside Halloween).
+4. Sort by rarity DESC, then name ASC.
+
+**This returns items *exclusive* to that axis value.** `getFishingItemsForWeather("Snow")` → 3 snow-only drops, not the 400+ weather-agnostic items. That matches how the frontend surfaces "special drops this weather."
+
+**Enum mismatch to normalize:** GameData contract returns `timeOfDay` as `"Daytime"` / `"Nighttime"`; the item API uses `"Afternoon"` / `"Night"`. Weather and season strings match (after lowercasing).
+
+Live example — weather=Storm: Misty Duck (Rare), Lovely Duck (Rare), King Snapper (Rare Fish), **Elusive Marlin (Legendary Fish)**. Weather is the most rotational axis (minutes-to-hours), so weather-exclusive drops are the highest-value thing to surface to a user deciding *when* to fish.
+
+Full recipe, complete weather→drops table, and live-sweep counts: [references/fishing/drops.md](references/fishing/drops.md).
+
+---
+
 ## Executing transactions via Bankr
 
 For any write call (`approve`, `stake`, `claim`, `claimAndRestake`, `unlock`, `relock`, `unstake`):

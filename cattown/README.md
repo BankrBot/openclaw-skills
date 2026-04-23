@@ -10,6 +10,7 @@ Gives an agent everything it needs to:
 - **Read a user's position** — staked amount, pending rewards, pool share, unlock state, time left until withdraw.
 - **Exit correctly** — `unlock()` → 14-day wait → `unstake()`, with the right user-facing messaging (share drop to 0%, opportunity cost, `relock()` escape hatch).
 - **Read Cat Town's live world state** — season, time of day, weather, weekend flag — via the GameData contract.
+- **Answer "what can I catch in this weather?"** — combine world state with the public item-truth catalog to surface weather / season / time-of-day exclusive fishing drops.
 - **Query the staking leaderboard and weekly revenue-deposit history** via public unauthenticated endpoints on `api.cat.town`.
 
 ## Install
@@ -27,7 +28,8 @@ cattown/
 ├── docs.md               comprehensive protocol overview (AI-readable)
 └── references/
     ├── staking/          RevenueShare contract + api.cat.town staking endpoints
-    └── world/            GameData contract + weekly calendar
+    ├── world/            GameData contract + weekly calendar
+    └── fishing/          fishing drops (item truth API + world-state filter)
 ```
 
 New surfaces (fish raffle, fishing competition, gacha, item drops, etc.) will slot in as sibling `references/<feature>/` subdirectories without touching existing docs.
