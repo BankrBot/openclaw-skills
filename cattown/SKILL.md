@@ -107,6 +107,18 @@ Single pool, single reward token — KIBBLE in, KIBBLE out. No reward-token sele
 3. `revenueShare.unstake(uint256 N)` — **`N` is the integer KIBBLE count, same convention as stake.** Reverts before the wait ends. Emits `Unstaked(user, amount)`.
 - `revenueShare.relock()` — at any time during the wait, cancels the unlock and puts the user back into the earning pool. Emits `Relocked(user, amount)`.
 
+#### Mapping "unstake" / "withdraw" / "exit" to the right call
+
+Users say "unstake" colloquially to mean the whole exit, not literally the on-chain `unstake()` function. Resolve by reading state first, then routing:
+
+| State                                                    | What to call | What to tell the user                                                                 |
+|----------------------------------------------------------|--------------|---------------------------------------------------------------------------------------|
+| `isUnlocking(user) == false`                             | `unlock()`   | "Started your unlock. You'll be able to withdraw in `LOCK_PERIOD` (~X hours/days)."   |
+| `isUnlocking == true` **and** `now < unlockEndTime`      | *(no tx)*    | "Already unlocking. Ready to withdraw at `unlockEndTime`. `relock()` cancels and returns you to earning." |
+| `isUnlocking == true` **and** `now >= unlockEndTime`     | `unstake(N)` | "Withdrew N KIBBLE. You're fully exited." (Or remaining balance if partial.)          |
+
+Same routing for "withdraw," "exit," "pull my KIBBLE out," "get my stake back." **Never call the on-chain `unstake()` as the first step** — it reverts unless the user has already completed an unlock wait.
+
 ### Unlock state machine — the gotcha to warn users about
 
 ```
