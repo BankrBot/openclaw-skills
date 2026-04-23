@@ -16,6 +16,7 @@ Gives an agent everything it needs to:
 - **Answer KIBBLE tokenomics** — % burned (of total), % staked (of circulating), and live APY — mirroring the game's Jasper NPC math.
 - **Claim the weekly fish-raffle free ticket** (Paulie's draw Fri 20:00 UTC), report the live prize pool and tier, and compute the user's chance to win from the current leaderboard.
 - **Submit gacha pulls** with the async VRF pattern (pay tx → poll `/v2/items/capsule` for new token ids), handle the 100-per-day cap, and quote the USD-denominated KIBBLE cost per pull.
+- **Value and sell items** — look up an item's `sellValue` (US cents), convert to KIBBLE via the oracle, and batch-sell Treasures + Collectibles through the vendor (V2-minter items only, 5% merchant fee).
 - **Query the staking leaderboard and weekly revenue-deposit history** via public unauthenticated endpoints on `api.cat.town`.
 
 ## Install
@@ -38,6 +39,7 @@ cattown/
     ├── fish-raffle/      Paulie's weekly raffle contracts + tickets API
     ├── boutique/         daily boutique rotation + KIBBLE price oracle
     ├── gacha/            gacha machine + async VRF capsule polling
+    ├── sell-items/       vendor sell flow (V2 minter items, 5% tax)
     └── kibble/           KIBBLE tokenomics (% burned, % staked, APY)
 ```
 

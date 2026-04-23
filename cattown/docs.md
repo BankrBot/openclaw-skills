@@ -11,7 +11,7 @@ AI-readable reference for Cat Town — a Farcaster-native game world on Base. Th
 
 ## Current coverage
 
-This skill currently documents eight Cat Town surfaces:
+This skill currently documents nine Cat Town surfaces:
 
 1. **KIBBLE staking** — the RevenueShare contract, stake/claim/unlock/unstake flows, staking leaderboard, user deposit history.
 2. **World state** — the GameData contract, current season/time-of-day/weather/weekend.
@@ -20,9 +20,10 @@ This skill currently documents eight Cat Town surfaces:
 5. **Fish raffle** — Paulie's weekly Fri 20:00 UTC draw with tier-based prize pool, chance-to-win math, free-ticket claim flow, and leaderboard.
 6. **Boutique** — daily 3-item onchain shop with seasonal pools, plus the KIBBLE→USD price oracle.
 7. **Gacha** — pay tx + async VRF-mint pattern with token-id-ordering result polling, daily limit, USD-denominated pricing, seasonal pool filter.
-8. **KIBBLE tokenomics** — Jasper's answers: % staked, % burned, live staking APY.
+8. **Selling items** — vendor flow for Treasures + Collectibles minted by the V2 minter, with catalog-value math (cents → KIBBLE via oracle) and a 5% tax.
+9. **KIBBLE tokenomics** — Jasper's answers: % staked, % burned, live staking APY.
 
-Future revisions will add the boutique purchase flow, the paid-ticket (fish-burn) raffle path, seasonal events via `/v1/seasonal/*`, daily rewards, and the community-pot surface Jasper also touches. Each will land under its own `references/<feature>/` subdirectory.
+Future revisions will add the boutique purchase flow, the paid-ticket (fish-burn) raffle path, legacy (V1-minter) sell support, seasonal events via `/v1/seasonal/*`, daily rewards, and the community-pot surface Jasper also touches. Each will land under its own `references/<feature>/` subdirectory.
 
 ---
 
@@ -193,6 +194,25 @@ Full reference: [references/fish-raffle/contract.md](references/fish-raffle/cont
 The pay tx submits a VRF randomness request; the NFT mints in a separate tx seconds later. Agents must either poll the capsule API for new items (if Bankr supports async polling) or return "ask me again in ~30 s" and re-check later. For multi-pulls, wait until `count(newItems) >= N` before reporting.
 
 Every pull is uniformly weighted against the current season's pool — no pity, no streaks. Full pattern + oracle math + 500-on-cold-wallet quirk: [references/gacha/contract.md](references/gacha/contract.md), [references/gacha/api.md](references/gacha/api.md).
+
+---
+
+## Selling items (V2 minter, vendor)
+
+| Property       | Value                                                         |
+|----------------|---------------------------------------------------------------|
+| SellItems      | `0x49936db5Dcbc906D682CFa2dcfAb0788e3ee5808` on Base          |
+| V2 minter      | `0x7b65ec82cB4600Bc1dCc5124a15594976f19eA14` (only supported source) |
+| Payout token   | KIBBLE                                                        |
+| Tax            | **5%** (`taxRateInBps() = 500`)                               |
+| Batch cap      | 25 items per tx (frontend gate; no onchain cap)               |
+| Inventory API  | `GET https://api.cat.town/v2/inventory/<address>/paginated?hasSellValue=true` (public) |
+
+Sellable types: Treasure + Collectible only (Cosmetics/Fish/Equipment aren't sellable here). `sellValue` in the item catalog is in **US cents**; convert to KIBBLE for display via the oracle, then apply the 5% tax for payout.
+
+Write call (single, batched): `sellMultipleNFTsToContract(address[] nftContracts, uint256[] tokenIds, uint256[] amounts)`. Requires `setApprovalForAll(sellContract, true)` on the V2 minter, once per wallet.
+
+Full reference: [references/sell-items/contract.md](references/sell-items/contract.md).
 
 ---
 

@@ -584,17 +584,25 @@ If the user spins 10 times, you must wait for 10 items with `id > latestId`. Par
 
 **Can Bankr poll for results?** If yes, use the loop above and report when all N have landed. If not, submit the pay tx(s), return immediately with "Spin submitted — ask me again in ~30 seconds to see what dropped" and let the user re-prompt. When they come back, pull `/v2/items/capsule/<user>` and show items with `id > latestId` (where `latestId` was cached in the original turn).
 
+### Always quote the item's value + offer a sell
+
+When reporting a gacha result, look up the item's `sellValue` (in US cents) from `/v2/items/master`, convert to KIBBLE via the oracle, and surface both numbers. Then offer to sell — this skill has a vendor flow (see **Selling items** below).
+
+Format: `"<Rarity> <Name>" (<Type>, <Collection>) worth ~<X> KIBBLE (~$<Y>)`. Example for Fern: `"Common Fern (Collectible, Plant Minis) worth ~105 KIBBLE (~$0.10)"`.
+
 ### Example replies
 
 **Polling path (Bankr can wait):**
 
 > Spinning once… paid ~527 KIBBLE. Waiting on VRF…
 >
-> 🎉 You pulled **Aquamarine Earring** (Rare Eyewear) from the Spring pool. You have **99 pulls left today**.
+> 🎉 You pulled a **Common Fern** (Collectible, Plant Minis collection) worth **~105 KIBBLE (~$0.10)**. You have **99 pulls left today**.
+>
+> Want me to sell it for you? After the 5% vendor fee, you'd get ~100 KIBBLE.
 
 **Non-polling path (no async support):**
 
-> Submitted 5 pulls (~2,635 KIBBLE total). VRF needs a few seconds to mint each one. Ask me "what did I get?" in ~30 seconds and I'll check.
+> Submitted 5 pulls (~2,635 KIBBLE total). VRF needs a few seconds to mint each one. Ask me "what did I get?" in ~30 seconds and I'll check — I can also sell the results right away if you want.
 
 ### Reads cheat-sheet
 
@@ -608,6 +616,81 @@ If the user spins 10 times, you must wait for 10 items with `id > latestId`. Par
 | `GET /v2/items/master?limit=1000`                      | Full catalog; filter `source=Gacha` |
 
 Full contract signatures, VRF event names, oracle math, and the capsule API quirks (500 for cold wallets, etc.): [references/gacha/contract.md](references/gacha/contract.md), [references/gacha/api.md](references/gacha/api.md).
+
+---
+
+## Selling items (vendor, V2 minter only)
+
+Players sell **Treasures** and **Collectibles** (including gacha pulls) to the **SellItems** contract at `0x49936db5Dcbc906D682CFa2dcfAb0788e3ee5808` for KIBBLE, minus a **5% merchant fee**.
+
+This skill revision supports **only items minted by the V2 minter** (`0x7b65ec82cB4600Bc1dCc5124a15594976f19eA14`). Legacy V1-minted items must be filtered out in the preflight.
+
+### Value math
+
+Each sellable item has a `sellValue` in the public item catalog — **US cents**, not KIBBLE, not wei:
+
+```
+GET https://api.cat.town/v2/items/master?limit=1000
+  → items[].sellValue  (cents, e.g. 10 = $0.10)
+```
+
+Convert to KIBBLE for display via the Kibble Price Oracle:
+
+```
+usd              = sellValue / 100
+kibble_value     = usd / (rawKibbleUsdPrice / 10^18)
+payout_after_tax = kibble_value * 0.95                  // 5% vendor fee
+```
+
+A freshly minted NFT (e.g. a gacha pull) also carries a `Sell Value (KIBBLE)` trait with the pre-computed KIBBLE amount. Prefer the trait when available; fall back to the catalog formula.
+
+### Write flow
+
+Single function, batched up to **25 items per call**:
+
+```
+SellItems.sellMultipleNFTsToContract(
+  address[] nftContracts,   // V2 minter address repeated, one per item
+  uint256[] tokenIds,       // token ids to sell
+  uint256[] amounts         // 1 per item (ERC-1155)
+)
+```
+
+Preflight:
+
+1. **Approval** — check `V2Minter.isApprovedForAll(user, sellContract)`. If false, submit `setApprovalForAll(sellContract, true)` first. One-time per wallet.
+2. **V2 filter** — only include items whose source nftContract is the V2 minter. Skip V1, tell the user how many were skipped.
+3. **Ownership** — `V2Minter.balanceOf(user, tokenId) >= 1` for each item.
+4. **Vendor liquidity** — `KIBBLE.balanceOf(sellContract)` must exceed total payout; otherwise reverts `KibbleTransferFailed` ("vendor is out of KIBBLE").
+
+Tax rate is read from `taxRateInBps()` (currently 500 = 5%, rounded from chain on the frontend).
+
+### Inventory API — "what can I sell?"
+
+```
+GET https://api.cat.town/v2/inventory/<address>/paginated?hasSellValue=true&sortBy=kibble&sortOrder=desc
+```
+
+Public, no auth. `hasSellValue=true` filters out unsellable types automatically. Sort by `kibble` to surface the highest-value items first — mirrors how the frontend's vendor modal opens.
+
+### Response pattern — "sell my items"
+
+1. Pull inventory via the API above.
+2. Filter to V2-minted items only.
+3. Sum expected payout (`sellValue` summed, converted to KIBBLE, × 0.95).
+4. Confirm with the user: *"I'll sell N items for ~X KIBBLE (~$Y) after the 5% fee. Go ahead?"*
+5. Run the approval if needed, then `sellMultipleNFTsToContract(...)`.
+6. After confirmation, refetch inventory + KIBBLE balance and report the actual payout.
+
+Example reply after a gacha pull:
+
+> You pulled a Common **Fern** (~105 KIBBLE, $0.10). Want me to sell it right away? That'd net ~100 KIBBLE after the 5% fee.
+
+Or, for a batch:
+
+> You've got 12 V2-minter items worth selling, totaling ~3,420 KIBBLE after the 5% fee. (Skipping 2 legacy items.) Want me to sell all 12, or cherry-pick?
+
+Full ABI surface, approval detail, inventory-API query params, revert catalogue, and the batch recipe: [references/sell-items/contract.md](references/sell-items/contract.md).
 
 ---
 
