@@ -171,6 +171,26 @@ KIBBLE-denominated reads return **whole KIBBLE** (not wei). See the Amount units
 
 Full function-by-function reference: [references/staking-contract.md](references/staking-contract.md).
 
+### KIBBLE circulating supply — always subtract the burn address
+
+When quoting "what % of KIBBLE is staked" (or any % of supply), compute against **circulating supply**, not `totalSupply`. KIBBLE has a deflationary burn mechanic: 2.5% of every fish identified is sent to `0x000000000000000000000000000000000000dEaD`, and this compounds. The burned portion is already substantial — dividing by `totalSupply` materially undercounts the staked share (typically by ~3×).
+
+```
+totalSupply       = 1,000,000,000 KIBBLE                         // fixed, read via totalSupply() on KIBBLE
+burned            = balanceOf(0x000000000000000000000000000000000000dEaD) on KIBBLE   // read live
+circulating       = totalSupply − burned
+percentStaked     = getTotalStaked() / circulating × 100          // reads are whole-KIBBLE integers
+```
+
+Representative recent values (re-read live — the burn keeps growing):
+
+- `totalSupply` ≈ 1,000,000,000 KIBBLE
+- `balanceOf(0xdEaD)` ≈ 663M KIBBLE burned (~66%)
+- circulating ≈ 337M KIBBLE
+- `getTotalStaked()` ≈ 81M KIBBLE → **~24% of circulating KIBBLE is staked**
+
+`balanceOf(0x0)` on KIBBLE is `0`; the protocol burns to `0xdEaD` only. If you must be exhaustive, check both, but `0xdEaD` is where the number lives.
+
 ### Staking leaderboard & user deposit history
 
 Two public JSON endpoints on `https://api.cat.town`, **no auth required**. Use these whenever the user wants their rank, their share of the pool, or their weekly earnings history without paying RPC costs.
