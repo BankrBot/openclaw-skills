@@ -57,14 +57,21 @@ Deposits are triggered by the Cat Town backend calling `depositRevenue(amount, s
 
 Base Sepolia addresses and the full ABI surface are in [references/staking-contract.md](references/staking-contract.md).
 
-### Amount units — read this before building any write tx
+### Amount units — the contract is asymmetric, READ THIS
 
-All `amount` parameters on RevenueShare and the KIBBLE `approve` call are in **base units (wei)**, not human KIBBLE. KIBBLE has **18 decimals**, so:
+RevenueShare denominates its `stake`/`unstake` arguments in **whole KIBBLE units, not wei**. Internally it multiplies by `10^18` before calling `transferFrom` on the KIBBLE token. The ERC-20 `approve` on KIBBLE is still standard wei. So a single "stake 100 KIBBLE" flow mixes units:
 
-- Stake 100 KIBBLE → pass `amount = 100 * 10^18 = 100000000000000000000`
-- Approve 100 KIBBLE → pass `amount = 100 * 10^18 = 100000000000000000000`
-- Apply `* 10^18` **exactly once**. Double-encoding (multiplying by `10^18` twice) produces a value larger than any plausible balance and causes `ERC20: transfer amount exceeds balance` — see Troubleshooting.
-- **Signer = holder.** The address that signs `stake` must be the same address that holds the KIBBLE and signed `approve`. If a smart wallet executes the tx, the balance must sit on that smart wallet — not on an attached EOA.
+| Call                                      | Amount unit           | Example for 100 KIBBLE |
+|-------------------------------------------|-----------------------|------------------------|
+| `kibble.approve(revenueShare, …)`         | **wei** (standard ERC-20) | `100000000000000000000` (= 100 × 10¹⁸) |
+| `revenueShare.stake(uint256 amount)`      | **whole KIBBLE**      | `100`                  |
+| `revenueShare.unstake(uint256 amount)`    | **whole KIBBLE**      | `100`                  |
+
+Read functions return whole-KIBBLE values as well: `getUserStaked`, `getTotalStaked`, `getTotalActiveStaked`, and `pendingRewards` are all in whole KIBBLE, not wei.
+
+**Do not wei-encode the stake amount.** If you pass `100 × 10¹⁸`, the contract's internal scaling turns it into `100 × 10³⁶`, which exceeds any plausible balance and reverts with `ERC20: transfer amount exceeds balance`. This is the single most common failure mode when integrating from code that assumes standard wei conventions. Verified by simulation against the deployed contract — see Troubleshooting.
+
+**Signer = holder.** The address that signs `stake` must be the same address that holds the KIBBLE and signed the `approve`.
 
 ### Core flows
 
@@ -103,20 +110,20 @@ Recommend users `claim()` any pending rewards first, then `unlock()`, then `unst
 
 ### Reading a user's position
 
-All return `uint256` in wei (18 decimals) unless noted.
+KIBBLE-denominated reads return **whole KIBBLE** (not wei). See the Amount units section above.
 
-| Call                               | Meaning                                                            |
-|------------------------------------|--------------------------------------------------------------------|
-| `getUserStaked(address)`           | Currently staked KIBBLE                                            |
-| `pendingRewards(address)`          | Claimable KIBBLE right now                                         |
-| `isUnlocking(address)` → `bool`    | True if user has called `unlock()` and not yet unstaked/relocked   |
-| `unlockStartTime(address)`         | Unix seconds when `unlock()` was called                            |
-| `unlockEndTime(address)`           | Unix seconds when `unstake()` becomes callable                     |
-| `getPoolShareFraction(address)`    | User's share of the active pool (scaled by 1e18)                   |
-| `getTotalActiveStaked()`           | Total KIBBLE earning rewards right now                             |
-| `getTotalStaked()`                 | Total KIBBLE held by the contract (includes unlocking users)       |
-| `LOCK_PERIOD()`                    | Unlock wait duration in seconds                                    |
-| `accRewardPerShare()`              | Global reward accumulator (scaled by 1e18)                         |
+| Call                               | Returns / unit                                     | Meaning                                                            |
+|------------------------------------|----------------------------------------------------|--------------------------------------------------------------------|
+| `getUserStaked(address)`           | whole KIBBLE                                       | Currently staked KIBBLE                                            |
+| `pendingRewards(address)`          | whole KIBBLE                                       | Claimable KIBBLE right now                                         |
+| `isUnlocking(address)`             | `bool`                                             | True if user has called `unlock()` and not yet unstaked/relocked   |
+| `unlockStartTime(address)`         | unix seconds                                       | When `unlock()` was called                                         |
+| `unlockEndTime(address)`           | unix seconds                                       | When `unstake()` becomes callable                                  |
+| `getPoolShareFraction(address)`    | fraction × 1e18                                    | User's share of the active pool                                    |
+| `getTotalActiveStaked()`           | whole KIBBLE                                       | Total KIBBLE earning rewards right now                             |
+| `getTotalStaked()`                 | whole KIBBLE                                       | Total KIBBLE in the contract (includes unlocking users)            |
+| `LOCK_PERIOD()`                    | seconds                                            | Unlock wait duration                                               |
+| `accRewardPerShare()`              | accumulator × 1e18                                 | Global reward accumulator                                          |
 
 Full function-by-function reference: [references/staking-contract.md](references/staking-contract.md).
 
@@ -165,14 +172,29 @@ Remember: submit the ERC-20 `approve` on the KIBBLE token (`0x64cc19A52f4D631eF5
 
 ### `ERC20: transfer amount exceeds balance` on `stake`
 
-The approval succeeded, but `stake(amount)` reverts with this message. The OpenZeppelin `transferFrom` checks allowance first, then balance — so this specific error means allowance is fine but **the amount exceeds the signer's KIBBLE balance**. Two likely causes:
+**99% certainty: you wei-encoded the `stake` argument.** RevenueShare takes `amount` in whole KIBBLE and multiplies by `10^18` internally. If you pass `N × 10^18` thinking it's wei, the contract attempts to pull `N × 10^36` tokens from your balance, which trivially exceeds any balance.
 
-1. **Double-encoded amount.** If you're asked to stake 100 KIBBLE and you encode to wei twice, you get `100 * 10^36` instead of `100 * 10^18`. That's larger than any plausible balance. Fix: apply `* 10^18` exactly once. Diagnostic test: call `stake(1)` (literal uint256 `1` = 1 wei). If that succeeds, encoding was the problem.
-2. **Signer ≠ holder.** The address executing the stake is not the address holding KIBBLE. Common when a smart wallet executes but the balance sits on an attached EOA, or when a session/relay wallet submits on behalf of a user. Confirm `msg.sender` of the stake tx matches the address that holds KIBBLE and signed the approval.
+Fix: pass the whole-KIBBLE integer. To stake 100 KIBBLE, call `stake(100)`, not `stake(100000000000000000000)`.
 
-### `ERC20: insufficient allowance` on `stake`
+The KIBBLE `approve()` call is the opposite — it's a standard ERC-20 call and *does* take wei. So the correct 100-KIBBLE flow is:
 
-`allowance(signer, revenueShare) < stakeAmount`. Submit `approve(revenueShare, stakeAmount_in_wei)` from the same signer first. Remember the approval is on the KIBBLE token, not on RevenueShare.
+```
+kibble.approve(revenueShare, 100_000000000000000000)   // 100 × 10^18 wei
+revenueShare.stake(100)                                // whole KIBBLE
+```
+
+Confirmed by on-chain simulation against `0x9e1Ced3b5130EBfff428eE0Ff471e4Df5383C0a1`:
+
+| Call | Expected behaviour |
+|---|---|
+| `stake(1)` with ≥1 KIBBLE allowance | succeeds (stakes 1 KIBBLE) |
+| `stake(100)` with =100 KIBBLE allowance | succeeds, hits cap exactly |
+| `stake(101)` with 100 KIBBLE allowance | reverts `transfer amount exceeds allowance` |
+| `stake(1e18)` with 100 KIBBLE allowance | reverts `transfer amount exceeds balance` ← the mistake |
+
+### `ERC20: transfer amount exceeds allowance` on `stake`
+
+`stake(N)` requires `allowance(signer, revenueShare) ≥ N × 10^18` on the KIBBLE token. Call `approve(revenueShare, N × 10^18)` from the same signer first.
 
 ### `unstake` reverts with no obvious reason
 
@@ -180,7 +202,7 @@ Check `isUnlocking(signer)`. If `true`, `unstake` reverts until `block.timestamp
 
 ### Diagnostic no-arg write tests
 
-If you want to verify the signer + contract are wired up without worrying about amount encoding, try either:
+To verify the signer + contract are wired up without any amount-encoding risk:
 
 - `unlock()` — no args. Succeeds even with 0 staked (sets `isUnlocking = true`). Follow with `relock()` immediately to avoid side effects.
 - `claim()` — no args. No-ops cleanly when `pendingRewards(signer) == 0`.
