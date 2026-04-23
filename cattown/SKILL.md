@@ -243,7 +243,7 @@ Each item has optional `dropConditions: { events?, seasons?, timesOfDay?, weathe
 
 Live example — weather=Storm: Misty Duck (Rare), Lovely Duck (Rare), King Snapper (Rare Fish), **Elusive Marlin (Legendary Fish)**. Weather is the most rotational axis (minutes-to-hours), so weather-exclusive drops are the highest-value thing to surface to a user deciding *when* to fish.
 
-### Response pattern — lead with big-ticket specials, then offer the common drops
+### Response pattern — lead with big-ticket specials, then offer the standard drops
 
 When a user asks "what can I catch today / right now?", listing only the 3-4 axis-exclusive items feels incomplete. Answer in two tiers. Within each tier, lead with the **big-ticket items** so the reply opens with the most interesting catches.
 
@@ -256,13 +256,13 @@ When a user asks "what can I catch today / right now?", listing only the 3-4 axi
 #### Two tiers
 
 1. **Lead with the special drops** — weather-exclusive and timeOfDay-exclusive items for the current state. Sort with the big-ticket order above — the Legendary goes first in the reply, not last.
-2. **Count the "common drops" also catchable today** — items with NO `weathers` and NO `timesOfDay` conditions, whose season + event gates still pass. Baseline is ~26 per season.
-3. **Offer the deep dive.** End with a prompt like: *"There are X other common drops you can also catch today — want me to list them?"*
+2. **Count the "standard drops" also catchable today** — items with NO `weathers` and NO `timesOfDay` conditions, whose season + event gates still pass. Baseline is ~26 per season.
+3. **Offer the deep dive.** End with a prompt like: *"There are X other standard drops you can also catch today — want me to list them?"*
 
-Concrete filter for common drops:
+Concrete filter for standard drops (note: "standard" = not rotating on weather/time, as opposed to "special" — has nothing to do with the `Common` *rarity* tier):
 
 ```
-common_drops(current_season, current_event):
+standard_drops(current_season, current_event):
   for item in catalog:
     require item.isActive
     require item.source == "Fishing"
@@ -279,7 +279,7 @@ Example reply for Storm / Spring / no active event — note Legendary leads:
 
 > Storm weather right now brings out 4 special drops, headed by **Elusive Marlin** (Legendary Fish). The rest: **King Snapper** (Rare Fish), **Misty Duck** (Rare Treasure), **Lovely Duck** (Rare Treasure).
 >
-> You can also catch **~26 other common Spring drops** today, led by **Alligator Gar** (Legendary Fish), **Diamond** ($100 Epic Treasure), and **Jade Figurine** ($40 Epic). Want me to list the rest?
+> You can also catch **~26 other standard Spring drops** today, led by **Alligator Gar** (Legendary Fish), **Diamond** ($100 Epic Treasure), and **Jade Figurine** ($40 Epic). Want me to list the rest?
 
 #### Fish weight data — not in the API, cross-reference the public docs
 

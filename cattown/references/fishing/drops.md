@@ -127,14 +127,17 @@ The axis-exclusive filter above returns ~3 items for weather, ~8 for a time of d
 
 Items exclusive to the current weather or time of day (using the fishing filter above, applied per axis). These rotate fastest and are the most interesting.
 
-### Tier 2 — common drops (offer as a follow-up)
+### Tier 2 — standard drops (offer as a follow-up)
+
+> **Terminology note.** "Standard" here means *not rotating on weather/time* — items in the pool that are always eligible today (subject only to season + event). It does **not** refer to the `Common` rarity tier. A standard drop can be any rarity from Common to Legendary (e.g. Alligator Gar, the Spring Legendary, is a "standard" drop in this sense).
+
 
 Everything else catchable today: items with **no** weather and **no** time-of-day restrictions that still pass the season + event gates. These are the "this season" and "always-available" fish and treasures.
 
 Filter:
 
 ```
-common_drops(current_season, current_event):
+standard_drops(current_season, current_event):
   for each item in catalog:
     require item.isActive == true
     require item.source == "Fishing"
@@ -150,7 +153,7 @@ common_drops(current_season, current_event):
 
 ### Per-season baseline (no event active)
 
-From a production sweep, each season has exactly **26 common drops** available — steady across the year. The seasonal-Legendary rotates:
+From a production sweep, each season has exactly **26 standard drops** available — steady across the year. The seasonal-Legendary rotates:
 
 | Season  | Common-drop count | Seasonal Legendary   |
 |---------|-------------------|----------------------|
@@ -165,7 +168,7 @@ Same Epic/Rare backbone across seasons: Diamond, Jade Figurine, Message in a Bot
 
 After listing the special drops, end with the common-drop count and an invitation to continue. Example copy (use the real count):
 
-> "You can also catch **~26 other common drops** today, led by **{seasonal-Legendary}**, **Diamond** ($100 treasure), and Catfish. Want me to list the rest by rarity?"
+> "You can also catch **~26 other standard drops** today, led by **{seasonal-Legendary}**, **Diamond** ($100 treasure), and Catfish. Want me to list the rest by rarity?"
 
 If the user accepts, sort by the big-ticket order (see below) and list the top 10 by default — the full list runs into hundreds if events are active.
 
