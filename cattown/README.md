@@ -15,6 +15,7 @@ Gives an agent everything it needs to:
 - **Report live fishing competition state** (weekly Sat–Mon): running time, weather, participants, 10/80/10 prize-pool split with top-10 payouts, with a reminder offer + "tell me about the last one" fallback when off-season.
 - **Answer KIBBLE tokenomics** — % burned (of total), % staked (of circulating), and live APY — mirroring the game's Jasper NPC math.
 - **Claim the weekly fish-raffle free ticket** (Paulie's draw Fri 20:00 UTC), report the live prize pool and tier, and compute the user's chance to win from the current leaderboard.
+- **Submit gacha pulls** with the async VRF pattern (pay tx → poll `/v2/items/capsule` for new token ids), handle the 100-per-day cap, and quote the USD-denominated KIBBLE cost per pull.
 - **Query the staking leaderboard and weekly revenue-deposit history** via public unauthenticated endpoints on `api.cat.town`.
 
 ## Install
@@ -36,6 +37,7 @@ cattown/
     ├── fishing/          fishing drops + weekly competition leaderboard
     ├── fish-raffle/      Paulie's weekly raffle contracts + tickets API
     ├── boutique/         daily boutique rotation + KIBBLE price oracle
+    ├── gacha/            gacha machine + async VRF capsule polling
     └── kibble/           KIBBLE tokenomics (% burned, % staked, APY)
 ```
 

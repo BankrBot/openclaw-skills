@@ -511,6 +511,83 @@ Full ABI surface, write paths, tier math, live-worked chance calcs: [references/
 
 ---
 
+## Gacha — async VRF pulls
+
+**GachaMachine** at `0xAD0ee945B4Eba7FB8eB7540370672E97eB951F1a` (Base) pays out seasonal items. Pulls are **asynchronously fulfilled via VRF** — one tx pays, a separate tx mints the NFT a few seconds later. Agents must account for the delay when answering "what did I get?".
+
+### Basics
+
+- **Daily cap:** 100 pulls per wallet, `dailyUsageLimit()` constant; resets at 00:00 UTC. Per-user remaining: `getPlaysLeftForToday(user)`.
+- **Cost:** USD-denominated. `capsulePriceUSD()` returns cents (currently **50 = $0.50 per pull**). Convert to KIBBLE at pull time using the Kibble Price Oracle — same oracle as the boutique (`0xE97B7ab01837A4CbF8C332181A2048EEE4033FB7`, scale `10^18`). At current rates: **~527 KIBBLE per pull**.
+- **Drops are flat random.** Every pull is independent, uniformly weighted against the current season's pool. No pity, no streaks, no reroll. Two pulls back-to-back are statistically identical.
+- **Seasonal pool** is filterable via `/v2/items/master?limit=1000` (public): `source == "Gacha"` + `dropConditions.seasons` includes the current season (from `GameData.getCurrentSeason()`).
+
+### Write path — `purchaseAndOpenCapsule()` (payable)
+
+Single pull per tx. Multi-pulls are **N sequential txs** — there's no onchain batch call.
+
+```
+Preconditions:
+  - kibble.allowance(user, gacha) >= kibble_cost        (standard ERC-20, wei)
+  - msg.value = VRF fee (small ETH amount, per pull)
+  - getPlaysLeftForToday(user) > 0
+
+Effect of the pay tx:
+  - pulls KIBBLE from user
+  - submits VRF randomness request
+  - does NOT mint the NFT — that happens in a separate tx on VRF callback
+```
+
+### Reading the result — the token-id ordering trick
+
+Because the pay tx and the mint tx are decoupled, the frontend correlates them by **capsule token id** (mirrored here). Process for one or many pulls:
+
+```
+1. Before pulling:
+     latestId = max( item.id for item in GET /v2/items/capsule/<user> )
+     (If the user has never pulled, the endpoint returns a 500 — treat it as empty, latestId = 0.)
+
+2. Submit N pay txs.
+
+3. After confirmations, poll GET /v2/items/capsule/<user> every 1–2 s:
+     newItems = [ item for item in response if item.id > latestId ]
+     if len(newItems) >= N:   return newItems (these are your results)
+4. Time out at ~60 s. If not all N have landed, surface a "still pending" reply.
+```
+
+If the user spins 10 times, you must wait for 10 items with `id > latestId`. Partial results are fine to preview, but be explicit about how many are still pending. Don't assume pull-1's result has a smaller id than pull-2's — VRF callbacks can interleave.
+
+### Response patterns
+
+**Can Bankr poll for results?** If yes, use the loop above and report when all N have landed. If not, submit the pay tx(s), return immediately with "Spin submitted — ask me again in ~30 seconds to see what dropped" and let the user re-prompt. When they come back, pull `/v2/items/capsule/<user>` and show items with `id > latestId` (where `latestId` was cached in the original turn).
+
+### Example replies
+
+**Polling path (Bankr can wait):**
+
+> Spinning once… paid ~527 KIBBLE. Waiting on VRF…
+>
+> 🎉 You pulled **Aquamarine Earring** (Rare Eyewear) from the Spring pool. You have **99 pulls left today**.
+
+**Non-polling path (no async support):**
+
+> Submitted 5 pulls (~2,635 KIBBLE total). VRF needs a few seconds to mint each one. Ask me "what did I get?" in ~30 seconds and I'll check.
+
+### Reads cheat-sheet
+
+| Call                                                   | Use case                            |
+|--------------------------------------------------------|-------------------------------------|
+| `dailyUsageLimit()`                                    | Global 100/day cap                  |
+| `getPlaysLeftForToday(user)`                           | Remaining pulls for this wallet today |
+| `capsulePriceUSD()`                                    | Cost per pull in US cents           |
+| `getAllItemConfigs()` / `getItemConfig(index)`         | Onchain pool definitions            |
+| `GET /v2/items/capsule/<user>`                         | Result polling target               |
+| `GET /v2/items/master?limit=1000`                      | Full catalog; filter `source=Gacha` |
+
+Full contract signatures, VRF event names, oracle math, and the capsule API quirks (500 for cold wallets, etc.): [references/gacha/contract.md](references/gacha/contract.md), [references/gacha/api.md](references/gacha/api.md).
+
+---
+
 ## KIBBLE tokenomics (Jasper's answers)
 
 When a user asks about KIBBLE — "how much is staked?", "how much burned?", "what's the APY?" — mirror the numbers the NPC **Jasper** quotes at the Wealth & Whiskers Bank. Three headline stats, each from live reads:

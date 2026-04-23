@@ -11,7 +11,7 @@ AI-readable reference for Cat Town — a Farcaster-native game world on Base. Th
 
 ## Current coverage
 
-This skill currently documents seven Cat Town surfaces:
+This skill currently documents eight Cat Town surfaces:
 
 1. **KIBBLE staking** — the RevenueShare contract, stake/claim/unlock/unstake flows, staking leaderboard, user deposit history.
 2. **World state** — the GameData contract, current season/time-of-day/weather/weekend.
@@ -19,9 +19,10 @@ This skill currently documents seven Cat Town surfaces:
 4. **Fishing competition** — weekly Sat–Mon competition with live prize-pool math (10/80/10 split) and top-10 leaderboard.
 5. **Fish raffle** — Paulie's weekly Fri 20:00 UTC draw with tier-based prize pool, chance-to-win math, free-ticket claim flow, and leaderboard.
 6. **Boutique** — daily 3-item onchain shop with seasonal pools, plus the KIBBLE→USD price oracle.
-7. **KIBBLE tokenomics** — Jasper's answers: % staked, % burned, live staking APY.
+7. **Gacha** — pay tx + async VRF-mint pattern with token-id-ordering result polling, daily limit, USD-denominated pricing, seasonal pool filter.
+8. **KIBBLE tokenomics** — Jasper's answers: % staked, % burned, live staking APY.
 
-Future revisions will add gacha capsule pools, the boutique purchase flow, the paid-ticket (fish-burn) raffle path, and the community-pot surface Jasper also touches. Each will land under its own `references/<feature>/` subdirectory.
+Future revisions will add the boutique purchase flow, the paid-ticket (fish-burn) raffle path, seasonal events via `/v1/seasonal/*`, daily rewards, and the community-pot surface Jasper also touches. Each will land under its own `references/<feature>/` subdirectory.
 
 ---
 
@@ -175,6 +176,23 @@ Prize pool is `poolBalance * tier.bps / 10000` where the tier is picked by the r
 Chance-to-win approximation: `min(1, 5 * userTickets / totalTickets)`. Live at time of writing: round 31, 2,855 tickets sold, 80-bps tier, ~47,742 KIBBLE pool → ~9,548 KIBBLE per winner.
 
 Full reference: [references/fish-raffle/contract.md](references/fish-raffle/contract.md), [references/fish-raffle/api.md](references/fish-raffle/api.md).
+
+---
+
+## Gacha (async VRF pulls, pay now → receive later)
+
+| Property       | Value                                                         |
+|----------------|---------------------------------------------------------------|
+| Contract       | `0xAD0ee945B4Eba7FB8eB7540370672E97eB951F1a` on Base          |
+| Daily cap      | 100 pulls / wallet / UTC day                                  |
+| Cost           | `capsulePriceUSD()` in US cents (live: **$0.50** ≈ 527 KIBBLE) |
+| Result poll    | `GET https://api.cat.town/v2/items/capsule/<user>` (public)   |
+| Batch model    | N sequential `purchaseAndOpenCapsule()` txs (no onchain batch)|
+| Result detection | Token-id ordering: capture `latestId` pre-pull, poll for items with `id > latestId` |
+
+The pay tx submits a VRF randomness request; the NFT mints in a separate tx seconds later. Agents must either poll the capsule API for new items (if Bankr supports async polling) or return "ask me again in ~30 s" and re-check later. For multi-pulls, wait until `count(newItems) >= N` before reporting.
+
+Every pull is uniformly weighted against the current season's pool — no pity, no streaks. Full pattern + oracle math + 500-on-cold-wallet quirk: [references/gacha/contract.md](references/gacha/contract.md), [references/gacha/api.md](references/gacha/api.md).
 
 ---
 
