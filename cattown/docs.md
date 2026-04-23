@@ -11,13 +11,14 @@ AI-readable reference for Cat Town — a Farcaster-native game world on Base. Th
 
 ## Current coverage
 
-This skill currently documents three Cat Town surfaces:
+This skill currently documents four Cat Town surfaces:
 
 1. **KIBBLE staking** — the RevenueShare contract, stake/claim/unlock/unstake flows, staking leaderboard, user deposit history.
 2. **World state** — the GameData contract, current season/time-of-day/weather/weekend.
 3. **Fishing drops** — the public item-truth catalog with world-state-conditioned drops (weather, season, time of day), plus the frontend's exact fishing filter.
+4. **Boutique** — daily 3-item onchain shop with seasonal pools, plus the KIBBLE→USD price oracle.
 
-Future revisions will add the fishing competition leaderboard (Isabella's Sat–Sun), the fish raffle (Paulie's Friday 20:00 UTC draw), gacha capsule pools, and the boutique rotation. Each will land under its own `references/<feature>/` subdirectory.
+Future revisions will add the fishing competition leaderboard (Isabella's Sat–Sun), the fish raffle (Paulie's Friday 20:00 UTC draw), gacha capsule pools, and the boutique purchase flow. Each will land under its own `references/<feature>/` subdirectory.
 
 ---
 
@@ -105,6 +106,24 @@ Each item carries optional `dropConditions` keyed by `events`, `seasons`, `times
 Weather changes most frequently (minutes-to-hours), so weather-exclusive drops are the most rotational — highest-value thing to surface.
 
 Full recipe + live weather→drops table: [references/fishing/drops.md](references/fishing/drops.md).
+
+---
+
+## Boutique (daily rotation, onchain)
+
+| Property        | Value                                                       |
+|-----------------|-------------------------------------------------------------|
+| Contract        | `0xf9843bF01ae7EF5203fc49C39E4868C7D0ca7a02` on Base        |
+| KIBBLE Oracle   | `0xE97B7ab01837A4CbF8C332181A2048EEE4033FB7`                |
+| Rotation cycle  | Every 00:00 UTC, 3 items from current season's pool         |
+| Primary read    | `getTodaysRotationDetails() → ShopItemView[]`               |
+| Pricing         | `price` in KIBBLE wei; convert to USD via oracle            |
+
+Seasonal doc pages (public): [shops/boutique](https://docs.cat.town/shops/boutique), [spring-fashion](https://docs.cat.town/boutique/spring-fashion), [summer-fashion](https://docs.cat.town/boutique/summer-fashion), [autumn-fashion](https://docs.cat.town/boutique/autumn-fashion), [winter-fashion](https://docs.cat.town/boutique/winter-fashion).
+
+**USD conversion:** `getKibbleUsdPrice()` returns USD-per-KIBBLE scaled by **`10^18`** (note: `getEthUsdPrice()` on the same contract uses `10^8`). Formula: `usd = (price_wei * rawKibbleUsdPrice) / 10^36`. Live at time of writing: ~$0.0009487 per KIBBLE.
+
+Full reference: [references/boutique/contract.md](references/boutique/contract.md).
 
 ---
 

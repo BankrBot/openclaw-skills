@@ -37,13 +37,13 @@ During the Sat–Sun fishing competition (hosted by Isabella), each fish a playe
 | 7.5%    | Town Treasury                  |
 | 2.5%    | Burned                         |
 
-The stakers' 10% accumulates across the weekend and is pushed on-chain as one `depositRevenue(amount, "fishing")` call **by 12:00 UTC Monday** (often earlier). It shows up instantly as `pendingRewards` for every staker whose `isUnlocking == false` at the time of the call.
+The stakers' 10% accumulates across the weekend and is pushed onchain as one `depositRevenue(amount, "fishing")` call **by 12:00 UTC Monday** (often earlier). It shows up instantly as `pendingRewards` for every staker whose `isUnlocking == false` at the time of the call.
 
 Practical implication for agents: Monday morning UTC is the natural moment to prompt users to `claim()` or `claimAndRestake()` — that's when their pending rewards jump after the weekend's competition revenue lands.
 
 ## Gacha revenue → KIBBLE stakers
 
-Gacha revenue aggregates across the week and is pushed on-chain as `depositRevenue(amount, "gacha")` **by 12:00 UTC Wednesday** (often earlier). Same on-chain mechanics as fishing — the only difference is `source`.
+Gacha revenue aggregates across the week and is pushed onchain as `depositRevenue(amount, "gacha")` **by 12:00 UTC Wednesday** (often earlier). Same onchain mechanics as fishing — the only difference is `source`.
 
 ## Fish raffle (Friday 20:00 UTC draw) — Paulie
 
@@ -56,7 +56,7 @@ Paulie's Fish Raffle runs weekly.
 - Prize structure is progressive — each ticket contributes to a shared progress bar that unlocks higher prize tiers (Level 1: 10,000 KIBBLE, Level 2: 20,000 KIBBLE, Level 3+: larger amounts).
 - Multiple winners possible; prize pool is divided evenly among them.
 
-On-chain surface for the fish raffle is **not yet documented in this skill** — a future SKILL.md section will cover entry and leaderboard reads.
+Onchain surface for the fish raffle is **not yet documented in this skill** — a future SKILL.md section will cover entry and leaderboard reads.
 
 ## Weekly fishing competition (Sat–Sun) — Isabella
 
@@ -76,7 +76,7 @@ Isabella hosts the weekend fishing competition. Only catches made during her win
 
 - The leaderboard is only meaningful Saturday–Sunday; outside that window it reflects the prior week's results.
 
-On-chain surface for the fishing competition is **not yet documented in this skill** — a future SKILL.md section will cover competition reads and the leaderboard.
+Onchain surface for the fishing competition is **not yet documented in this skill** — a future SKILL.md section will cover competition reads and the leaderboard.
 
 ---
 

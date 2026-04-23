@@ -123,7 +123,7 @@ No dedicated contract method for "time left" — just subtract. Use the latest b
 
 #### Mapping "unstake" / "withdraw" / "exit" to the right call
 
-Users say "unstake" colloquially to mean the whole exit, not literally the on-chain `unstake()` function. Before acting, read three values: `isUnlocking(user)`, `unlockEndTime(user)`, and the user's current pool share (`getPoolShareFraction(user) / 1e18 * 100` as a percentage). Then route:
+Users say "unstake" colloquially to mean the whole exit, not literally the onchain `unstake()` function. Before acting, read three values: `isUnlocking(user)`, `unlockEndTime(user)`, and the user's current pool share (`getPoolShareFraction(user) / 1e18 * 100` as a percentage). Then route:
 
 | State                                                    | What to call | What to tell the user                                                                 |
 |----------------------------------------------------------|--------------|---------------------------------------------------------------------------------------|
@@ -131,7 +131,7 @@ Users say "unstake" colloquially to mean the whole exit, not literally the on-ch
 | `isUnlocking == true` **and** `now < unlockEndTime`      | *(no tx)*    | "Already unlocking. ~X days Y hours left until you can withdraw. Your pool share is **0%** until you either `unstake()` after the wait or `relock()` now."                                                  |
 | `isUnlocking == true` **and** `now >= unlockEndTime`     | `unstake(N)` | "Withdrew N KIBBLE." (Or remaining balance if partial.)                                |
 
-Same routing for "withdraw," "exit," "pull my KIBBLE out," "get my stake back." **Never call the on-chain `unstake()` as the first step** — it reverts unless the user has already completed an unlock wait.
+Same routing for "withdraw," "exit," "pull my KIBBLE out," "get my stake back." **Never call the onchain `unstake()` as the first step** — it reverts unless the user has already completed an unlock wait.
 
 Why the share drop matters: while `isUnlocking == true`, the user's stake is **removed from `totalActiveStaked`**, so they do not earn any fishing or gacha revenue deposits that land during the 14-day wait. Surfacing the pre-unlock share (Y%) makes the opportunity cost explicit.
 
@@ -204,7 +204,7 @@ Full shapes, field meanings, and example responses: [references/staking/api.md](
 
 ## World state
 
-Cat Town's live world state (season, time of day, weather, weekend flag) lives on a single on-chain contract — **GameData** at `0x298c0d412b95c8fc9a23FEA1E4d07A69CA3E7C34` on Base. Fully read-only from an agent's perspective.
+Cat Town's live world state (season, time of day, weather, weekend flag) lives on a single onchain contract — **GameData** at `0x298c0d412b95c8fc9a23FEA1E4d07A69CA3E7C34` on Base. Fully read-only from an agent's perspective.
 
 The one call you usually want is **`getGameState()`** → `(season, timeOfDay, isWeekend, worldEvent, weather)`. One RPC, every field:
 
@@ -294,6 +294,60 @@ Full recipe, complete weather→drops table, and live-sweep counts: [references/
 
 ---
 
+## Boutique — daily 3-item shop
+
+The boutique is a fully onchain daily shop. Every day at **00:00 UTC** the Boutique contract surfaces **3 items** deterministically selected from the current season's pool. No off-chain API — all state is readable directly on Base.
+
+### Addresses
+
+- **Boutique**: `0xf9843bF01ae7EF5203fc49C39E4868C7D0ca7a02`
+- **Kibble Price Oracle** (for USD conversion): `0xE97B7ab01837A4CbF8C332181A2048EEE4033FB7`
+
+### Primary read — `getTodaysRotationDetails()`
+
+Single call returns today's 3 items as `ShopItemView[]`. Each item carries `price` (in KIBBLE **wei**, divide by `10^18`), `stockRemaining`, `maxSupply`, `isPurchasableNow`, and a `traitNames`/`traitValues` parallel pair that encodes Name, Rarity, Slot, Image. Parse those into a dict to render.
+
+### KIBBLE → USD conversion (the game UI doesn't do this — we should)
+
+The in-game boutique shows KIBBLE prices only. To give users a USD readout, read the Kibble Price Oracle:
+
+- `getKibbleUsdPrice()` → `uint256` USD per 1 KIBBLE, scaled by **`10^18`** (not 1e8 — **don't confuse with `getEthUsdPrice()` which is `10^8` Chainlink style**).
+- Formula: `usd_value = (price_wei * rawKibbleUsdPrice) / 10^36`
+- Live example: raw = `948,723,424,083,878` → **$0.0009487 per KIBBLE** → 10,000 KIBBLE ≈ **$9.49**.
+
+### Response pattern — "what's in the boutique today?"
+
+1. Parallel reads: `getTodaysRotationDetails()` + `getKibbleUsdPrice()`.
+2. For each of the 3 items: parse the trait arrays (Name/Rarity/Slot), compute KIBBLE and USD price, check stock.
+3. Sort big-ticket first — **rarity DESC** (Legendary → Common), then **KIBBLE price DESC**, then name ASC.
+4. Flag `stockRemaining == 0` as "Sold Out"; otherwise show `"X / maxSupply remaining"`.
+5. Open the reply with the current season; close with the matching `docs.cat.town/boutique/…-fashion` link for fuller context.
+
+The collection name (e.g. `"Spring Fashion"`) is on the item itself as the **`Collection`** trait — surface it at the top of the reply so the user knows which collection is currently rotating.
+
+Example reply (real data from today's rotation):
+
+> **Boutique today — Spring Fashion collection:**
+>
+> 1. **White Longsleeve** — Rare Body — **12,500 KIBBLE (~$11.86)** — 1 / 1 remaining
+> 2. **Royal Blue Varsity** — Uncommon Body — **6,000 KIBBLE (~$5.69)** — 2 / 2 remaining
+> 3. **Classic Academic Blouse** — Uncommon Body — **6,000 KIBBLE (~$5.69)** — 1 / 2 remaining
+>
+> Browse the other seasonal collections:
+> - Spring: https://docs.cat.town/boutique/spring-fashion
+> - Summer: https://docs.cat.town/boutique/summer-fashion
+> - Autumn: https://docs.cat.town/boutique/autumn-fashion
+> - Winter: https://docs.cat.town/boutique/winter-fashion
+> - Overview: https://docs.cat.town/shops/boutique
+
+Include all four season links in every response — a user interested in the current collection will often want to peek at others.
+
+Full ABI surface, trait schema (real keys: `Item Name`, `Rarity`, `Item Type`, `Source`, `Slot`, `Sprite`, `imageUrl`, `Collection`, etc.), preview future rotations, and the complete oracle math: [references/boutique/contract.md](references/boutique/contract.md).
+
+**Purchase flow is out of scope for this revision** — this skill currently reads the boutique only.
+
+---
+
 ## Executing transactions via Bankr
 
 For any write call (`approve`, `stake`, `claim`, `claimAndRestake`, `unlock`, `relock`, `unstake`):
@@ -339,7 +393,7 @@ kibble.approve(revenueShare, 100_000000000000000000)   // 100 × 10^18 wei
 revenueShare.stake(100)                                // whole KIBBLE
 ```
 
-Confirmed by on-chain simulation against `0x9e1Ced3b5130EBfff428eE0Ff471e4Df5383C0a1`:
+Confirmed by onchain simulation against `0x9e1Ced3b5130EBfff428eE0Ff471e4Df5383C0a1`:
 
 | Call | Expected behaviour |
 |---|---|

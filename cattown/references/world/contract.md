@@ -1,6 +1,6 @@
 # Cat Town World State — GameData contract
 
-All live world state (season, time of day, weather, weekend flag, current world event code) lives on one on-chain contract. Read-only from an agent's perspective; no admin surface to navigate.
+All live world state (season, time of day, weather, weekend flag, current world event code) lives on one onchain contract. Read-only from an agent's perspective; no admin surface to navigate.
 
 ## Address
 

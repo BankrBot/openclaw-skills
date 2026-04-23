@@ -2,7 +2,7 @@
 
 Two public JSON endpoints served from `https://api.cat.town`. **No authentication** — plain GET, no headers required.
 
-Use these when you need leaderboard or historical-deposit data without paying RPC costs. For live position reads (current stake, pending rewards, unlock state), go on-chain — see [staking-contract.md](staking-contract.md).
+Use these when you need leaderboard or historical-deposit data without paying RPC costs. For live position reads (current stake, pending rewards, unlock state), go onchain — see [staking-contract.md](staking-contract.md).
 
 ---
 
@@ -49,7 +49,7 @@ Ranked list of all stakers with stake amount and pool share.
 
 ### Caching
 
-Cat Town's frontend requests with `Cache-Control: no-cache, no-store, must-revalidate`. Treat this as near-live but not instant. For a second-accurate balance, use the on-chain `getUserStaked` / `getTotalActiveStaked` reads.
+Cat Town's frontend requests with `Cache-Control: no-cache, no-store, must-revalidate`. Treat this as near-live but not instant. For a second-accurate balance, use the onchain `getUserStaked` / `getTotalActiveStaked` reads.
 
 ---
 
@@ -99,7 +99,7 @@ One user's history of fishing / gacha deposits, plus a summary.
 | `deposits[].total_active_staked`          | string  | Pool size (wei) at the moment of deposit — lets you verify `user_share_amount` math. |
 | `summary.total_revenue`                   | string  | Sum of `deposit_amount` across all returned deposits, wei.     |
 | `summary.total_user_share`                | string  | Sum of `user_share_amount` across all returned deposits, wei. This is the user's all-time earnings from staking. |
-| `summary.current_total_staked`            | number  | Current pool total, raw (may drop precision; prefer on-chain read for exact value). |
+| `summary.current_total_staked`            | number  | Current pool total, raw (may drop precision; prefer onchain read for exact value). |
 | `summary.current_total_active_staked`     | number  | Current active pool, raw (same precision caveat).              |
 
 ### Deduplication
