@@ -70,7 +70,7 @@ Future revisions will add gacha capsule pools, the boutique purchase flow, the p
 
 Full reference: [references/staking/contract.md](references/staking/contract.md).
 
-### Off-chain API (public, unauthenticated)
+### Offchain API (public, unauthenticated)
 
 - `GET https://api.cat.town/v2/revenue/staking/leaderboard` — top stakers with rank + pool-share %.
 - `GET https://api.cat.town/v2/revenue/deposits/{address}` — one user's historical fishing/gacha deposits with per-tx share.
@@ -89,7 +89,7 @@ Response shapes + field meanings: [references/staking/api.md](references/staking
 
 Enums: Season `0..3` (Spring/Summer/Autumn/Winter); TimeOfDay string (`"Morning"`, `"Daytime"`, `"Evening"`, `"Nighttime"`); Weather `0..6` (None/Sun/Rain/Wind/Storm/Snow/Heatwave).
 
-World state drives fishing and gacha drop tables (different fish appear in different weather/seasons). Item-level drop data is out of scope for this revision.
+World state drives fishing and gacha drop tables (different fish appear in different weather/seasons). Fishing drop tables are documented in [references/fishing/drops.md](references/fishing/drops.md); gacha pools are covered in the gacha section below.
 
 Full function table, selectors, live sample: [references/world/contract.md](references/world/contract.md).
 
@@ -195,7 +195,7 @@ Full reference: [references/kibble/tokenomics.md](references/kibble/tokenomics.m
 
 ## Weekly cadence
 
-Cat Town runs on a fixed weekly UTC cycle. Only the **bold** rows directly affect staking rewards; the rest is context for future skill surfaces.
+Cat Town runs on a fixed weekly UTC cycle. Only the **bold** rows directly affect staking rewards; the others feed other surfaces (raffle, competition, boutique) that this skill already covers.
 
 | Day       | Event                             | Time                       | Host              |
 |-----------|-----------------------------------|----------------------------|-------------------|
@@ -212,4 +212,4 @@ Full calendar with revenue-split details and NPC cheat-sheet: [references/world/
 
 ## Not covered yet
 
-Cat Town's codebase exposes additional public surfaces (gacha/boutique item pools, fishing competition leaderboard, fish raffle entry flow, seasonal events via `/v1/seasonal/*`, daily rewards) that are out of scope for this revision. When they're added, each will land in a new `references/<feature>/` subdirectory without disturbing existing integrations.
+Cat Town's codebase exposes additional public surfaces that are out of scope for the current revision: gacha spins + the async VRF receive pattern, the boutique purchase flow (approve + `purchaseItem`), the paid fish-raffle path (burning 20 kg of caught fish per ticket via `buyTickets`), seasonal events via `/v1/seasonal/*`, daily rewards, and the community pot Jasper references. When they're added, each will land in a new `references/<feature>/` subdirectory without disturbing existing integrations.

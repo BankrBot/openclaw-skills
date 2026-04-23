@@ -1,6 +1,6 @@
 # Cat Town Boutique — contract + KIBBLE oracle reference
 
-The boutique is a fully onchain daily shop on Base. Every day at **00:00 UTC** the contract surfaces **3 items** selected deterministically from the current season's pool. No off-chain API is needed — items, prices, stock, and rotation are all readable directly from the Boutique contract.
+The boutique is a fully onchain daily shop on Base. Every day at **00:00 UTC** the contract surfaces **3 items** selected deterministically from the current season's pool. No offchain API is needed — items, prices, stock, and rotation are all readable directly from the Boutique contract.
 
 This doc covers the **Boutique** contract (rotation + item state) and the **KIBBLE price oracle** (for USD conversion — the in-game UI shows KIBBLE only).
 

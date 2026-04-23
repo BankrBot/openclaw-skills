@@ -33,7 +33,7 @@ Round the delta to days + hours for user-facing copy.
 
 ## Prize-pool math — the frontend's exact numbers
 
-The contract's `prizePool` field is the **total volume** of KIBBLE spent on fish identifications during the competition (the UI labels it "Total Volume"). It splits three ways, all percentages hardcoded in the frontend ([FishingCompetitionOverview.tsx](file:) lines 38–60):
+The contract's `prizePool` field is the **total volume** of KIBBLE spent on fish identifications during the competition (the UI labels it "Total Volume"). It splits three ways, all percentages hardcoded in the frontend (`components/organisms/Scenes/Fishing/Competition/Modals/FishingSatchel/FishingCompetitionOverview.tsx` lines 38–60):
 
 ```
 prizePool                             // total volume
@@ -48,7 +48,7 @@ These three sum to 100% exactly.
 
 ### Top-10 distribution (of `leaderboardShare`)
 
-From `fishingLeaderboardShareForRank()` in [hooks/api/useFishingLeaderboard.tsx:9-21](file:):
+From `fishingLeaderboardShareForRank()` in `hooks/api/useFishingLeaderboard.tsx:9-21`:
 
 | Rank  | Share of `leaderboardShare` |
 |-------|-----------------------------|

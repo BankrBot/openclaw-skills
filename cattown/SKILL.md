@@ -1,6 +1,6 @@
 ---
 name: cattown
-description: Interact with Cat Town — a Farcaster-native game world on Base. Currently covers KIBBLE staking via the RevenueShare contract (stake, claim, claim-and-restake, unlock, relock, unstake), the staking leaderboard, and a user's revenue-deposit history. Use when the user mentions Cat Town, KIBBLE, the Wealth & Whiskers bank, staking rewards, RevenueShare, fishing revenue, gacha revenue, the staking leaderboard, or the weekly fishing-competition / fish-raffle schedule. More Cat Town surfaces (fish raffle, fishing competition) will be added here over time.
+description: Interact with Cat Town — a Farcaster-native game world on Base. Covers KIBBLE staking (stake/claim/unlock/unstake via the RevenueShare contract), the weekly calendar (Monday fishing-revenue and Wednesday gacha-revenue deposits, Paulie's Friday 20:00 UTC fish raffle, Isabella's Sat–Mon fishing competition), live world state (season, weather, time of day, weekend flag via GameData), world-state-conditioned fishing drops (weather/season/time axes), the fishing-competition leaderboard with prize-pool math, Paulie's fish raffle (free-ticket claim, tier-based prize pool, chance-to-win, leaderboard + last winners), the daily 3-item boutique with KIBBLE→USD conversion via the Kibble Price Oracle, and KIBBLE tokenomics mirroring Jasper's NPC math (% burned, % staked, live staking APY). Use when the user mentions Cat Town, KIBBLE, Wealth & Whiskers, Jasper, Isabella, Paulie, Skipper, Theodore, Cassie, RevenueShare, fishing, gacha, the boutique, raffle tickets, prize pools, drop tables, or any read/write against the Cat Town contracts on Base.
 ---
 
 # Cat Town — Agent Overview
@@ -16,11 +16,15 @@ The town's NPCs run each activity and are worth naming when talking to players:
 
 Current coverage:
 
-- KIBBLE staking via the **RevenueShare** contract — stake, claim, claim-and-restake, unlock, relock, unstake.
-- The staking leaderboard and a user's deposit history (public unauthenticated JSON API).
-- The weekly event calendar (fishing revenue, gacha revenue, fishing competition, fish raffle).
+- **KIBBLE staking** (RevenueShare) — stake, claim, claim-and-restake, unlock, relock, unstake, plus staking leaderboard and deposit history.
+- **World state** (GameData) — live season, time of day, weather, weekend flag.
+- **Fishing drops** — the public item-truth catalog filtered by world state (weather/season/time).
+- **Fishing competition** (Isabella, Sat–Mon) — live prize-pool math, top-10 leaderboard, active/inactive response patterns.
+- **Fish raffle** (Paulie, Fri 20:00 UTC draw) — free-ticket claim flow, tier-based prize pool, chance-to-win, leaderboard + last winners.
+- **Boutique** — daily 3-item onchain rotation with KIBBLE→USD conversion via the Kibble Price Oracle.
+- **KIBBLE tokenomics** — Jasper's math for % burned, % staked, and live staking APY.
 
-This SKILL.md will grow as more Cat Town surfaces (fish raffle entries, fishing-competition reads) are added. The calendar here is the shared reference — expect future sections to point back at it.
+Each surface has its own subdirectory under `references/` for the deep reference. The weekly calendar below is the shared timing reference — many sections link back to it.
 
 Links:
 - Game: https://cat.town
@@ -214,7 +218,7 @@ The one call you usually want is **`getGameState()`** → `(season, timeOfDay, i
 - **isWeekend** (`bool`): true on Sat/Sun UTC (the fishing-competition window)
 - **worldEvent** (`uint8`): event code — detailed event decoding is out of scope for this skill revision
 
-World state drives fishing and gacha drop tables — different fish appear in different weather/seasons — but item-level drop tables are also out of scope for this revision.
+World state drives fishing and gacha drop tables — different fish appear in different weather/seasons. Fishing drop tables are documented in the **Fishing drops** section below; gacha pools are planned for a future revision.
 
 Full function table, selectors, raw calldata, live sample response, and historical-lookup fns (`getSeasonForDate`, `getWeatherForDate`): [references/world/contract.md](references/world/contract.md).
 
@@ -359,7 +363,7 @@ Full ABI surface, per-rank payout worked example at current oracle rate, and the
 
 ## Boutique — daily 3-item shop
 
-The boutique is a fully onchain daily shop. Every day at **00:00 UTC** the Boutique contract surfaces **3 items** deterministically selected from the current season's pool. No off-chain API — all state is readable directly on Base.
+The boutique is a fully onchain daily shop. Every day at **00:00 UTC** the Boutique contract surfaces **3 items** deterministically selected from the current season's pool. No offchain API — all state is readable directly on Base.
 
 ### Addresses
 

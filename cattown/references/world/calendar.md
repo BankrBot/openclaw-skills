@@ -52,11 +52,11 @@ Paulie's Fish Raffle runs weekly.
 - Tickets bought with caught fish (20 kg per ticket, subject to change).
 - Ticket sales window: Monday through Friday UTC.
 - One free ticket per week per player.
-- Draw: Friday 20:00 UTC.
-- Prize structure is progressive — each ticket contributes to a shared progress bar that unlocks higher prize tiers (Level 1: 10,000 KIBBLE, Level 2: 20,000 KIBBLE, Level 3+: larger amounts).
-- Multiple winners possible; prize pool is divided evenly among them.
+- Draw: Friday 20:00 UTC; sales close ~10 minutes earlier at 19:50 UTC.
+- **5 winners per draw**, chosen via Chainlink VRF. Prize pool is split **equally** among the 5 — ranks are ordering only, not prize weighting.
+- Prize pool is a tier-based fraction of the `FreeToPlayPool` balance. 8 tiers keyed to `totalTickets` sold that round, paying 30 bps (0.3%) at 0 tickets up to 100 bps (1.0%) once sales cross 5,500. More tickets sold → bigger cut of the pool paid out.
 
-Onchain surface for the fish raffle is **not yet documented in this skill** — a future SKILL.md section will cover entry and leaderboard reads.
+Full contract + API reference, free-ticket claim flow, tier table, and chance-to-win math: [../fish-raffle/contract.md](../fish-raffle/contract.md), [../fish-raffle/api.md](../fish-raffle/api.md).
 
 ## Weekly fishing competition (Sat–Sun) — Isabella
 

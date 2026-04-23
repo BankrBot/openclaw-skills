@@ -2,7 +2,7 @@
 
 Cat Town's in-game NPC **Jasper** (Wealth & Whiskers Bank) surfaces the tokenomics users routinely ask about: % staked, % burned, and the current staking APY. This doc mirrors Jasper's exact math so Bankr answers with the same numbers the game shows.
 
-Source: [hooks/interactions/Jasper/useJasperBankInteractions.tsx](file:) and [hooks/game/staking/useStakingEstimatedAPY.tsx](file:) in the Cat Town frontend.
+Source (in the Cat Town frontend): `hooks/interactions/Jasper/useJasperBankInteractions.tsx` and `hooks/game/staking/useStakingEstimatedAPY.tsx`.
 
 ## Fixed inputs
 
