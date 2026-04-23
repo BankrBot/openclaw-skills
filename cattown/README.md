@@ -14,6 +14,7 @@ Gives an agent everything it needs to:
 - **Read the boutique's daily 3-item rotation** with KIBBLE prices converted to USD via the Kibble Price Oracle.
 - **Report live fishing competition state** (weekly Sat–Mon): running time, weather, participants, 10/80/10 prize-pool split with top-10 payouts, with a reminder offer + "tell me about the last one" fallback when off-season.
 - **Answer KIBBLE tokenomics** — % burned (of total), % staked (of circulating), and live APY — mirroring the game's Jasper NPC math.
+- **Claim the weekly fish-raffle free ticket** (Paulie's draw Fri 20:00 UTC), report the live prize pool and tier, and compute the user's chance to win from the current leaderboard.
 - **Query the staking leaderboard and weekly revenue-deposit history** via public unauthenticated endpoints on `api.cat.town`.
 
 ## Install
@@ -33,6 +34,7 @@ cattown/
     ├── staking/          RevenueShare contract + api.cat.town staking endpoints
     ├── world/            GameData contract + weekly calendar
     ├── fishing/          fishing drops + weekly competition leaderboard
+    ├── fish-raffle/      Paulie's weekly raffle contracts + tickets API
     ├── boutique/         daily boutique rotation + KIBBLE price oracle
     └── kibble/           KIBBLE tokenomics (% burned, % staked, APY)
 ```

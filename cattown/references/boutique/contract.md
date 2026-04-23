@@ -125,7 +125,7 @@ The oracle tracks KIBBLE's real market price; re-read at least every few minutes
    - Parse `traitNames`/`traitValues` into a dict → pull `Name`, `Rarity`, `Slot`.
    - `kibble_price = price / 10^18`
    - `usd_price = (price * rawKibbleUsdPrice) / 10^36`
-   - Stock: `stockRemaining == 0` → "Sold Out"; else "{stockRemaining} / {maxSupply}".
+   - Stock: if `stockRemaining == 0` → **"Sold Out"**; otherwise format as **`"{stockRemaining} of {maxSupply} remaining"`** — stockRemaining first, maxSupply second. The order matters: `stockRemaining` ≤ `maxSupply` always, so if the first number ever exceeds the second you've swapped them. Reread the struct fields if unsure.
 3. Sort with the big-ticket order: **rarity DESC** (Legendary → Common), then **KIBBLE price DESC**, then name ASC.
 4. Open the reply with the current season, and end with a link to the matching `docs.cat.town/boutique/...-fashion` page.
 
@@ -133,9 +133,9 @@ The oracle tracks KIBBLE's real market price; re-read at least every few minutes
 
 > **Boutique today — Spring Fashion collection (Day 20566):**
 >
-> 1. **White Longsleeve** — Rare Body — **12,500 KIBBLE (~$11.86)** — 1 / 1 remaining
-> 2. **Royal Blue Varsity** — Uncommon Body — **6,000 KIBBLE (~$5.69)** — 2 / 2 remaining
-> 3. **Classic Academic Blouse** — Uncommon Body — **6,000 KIBBLE (~$5.69)** — 1 / 2 remaining
+> 1. **White Longsleeve** — Rare Body — **12,500 KIBBLE (~$11.86)** — 1 of 1 remaining
+> 2. **Royal Blue Varsity** — Uncommon Body — **6,000 KIBBLE (~$5.69)** — 2 of 2 remaining
+> 3. **Classic Academic Blouse** — Uncommon Body — **6,000 KIBBLE (~$5.69)** — 1 of 2 remaining
 >
 > Browse the other seasonal collections:
 > - Spring: https://docs.cat.town/boutique/spring-fashion

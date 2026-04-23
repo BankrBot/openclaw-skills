@@ -383,18 +383,18 @@ The in-game boutique shows KIBBLE prices only. To give users a USD readout, read
 1. Parallel reads: `getTodaysRotationDetails()` + `getKibbleUsdPrice()`.
 2. For each of the 3 items: parse the trait arrays (Name/Rarity/Slot), compute KIBBLE and USD price, check stock.
 3. Sort big-ticket first — **rarity DESC** (Legendary → Common), then **KIBBLE price DESC**, then name ASC.
-4. Flag `stockRemaining == 0` as "Sold Out"; otherwise show `"X / maxSupply remaining"`.
+4. Flag `stockRemaining == 0` as "Sold Out"; otherwise format as `"{stockRemaining} of {maxSupply} remaining"` — **stockRemaining first, maxSupply second**. Sanity check: if your first number is larger than the second, you've swapped them — reread the struct fields. `stockRemaining` can never exceed `maxSupply`.
 5. Open the reply with the current season; close with the matching `docs.cat.town/boutique/…-fashion` link for fuller context.
 
 The collection name (e.g. `"Spring Fashion"`) is on the item itself as the **`Collection`** trait — surface it at the top of the reply so the user knows which collection is currently rotating.
 
-Example reply (real data from today's rotation):
+Example reply (real data from today's rotation) — note the **"N of M remaining"** phrasing:
 
 > **Boutique today — Spring Fashion collection:**
 >
-> 1. **White Longsleeve** — Rare Body — **12,500 KIBBLE (~$11.86)** — 1 / 1 remaining
-> 2. **Royal Blue Varsity** — Uncommon Body — **6,000 KIBBLE (~$5.69)** — 2 / 2 remaining
-> 3. **Classic Academic Blouse** — Uncommon Body — **6,000 KIBBLE (~$5.69)** — 1 / 2 remaining
+> 1. **White Longsleeve** — Rare Body — **12,500 KIBBLE (~$11.86)** — 1 of 1 remaining
+> 2. **Royal Blue Varsity** — Uncommon Body — **6,000 KIBBLE (~$5.69)** — 2 of 2 remaining
+> 3. **Classic Academic Blouse** — Uncommon Body — **6,000 KIBBLE (~$5.69)** — 1 of 2 remaining
 >
 > Browse the other seasonal collections:
 > - Spring: https://docs.cat.town/boutique/spring-fashion
@@ -408,6 +408,102 @@ Include all four season links in every response — a user interested in the cur
 Full ABI surface, trait schema (real keys: `Item Name`, `Rarity`, `Item Type`, `Source`, `Slot`, `Sprite`, `imageUrl`, `Collection`, etc.), preview future rotations, and the complete oracle math: [references/boutique/contract.md](references/boutique/contract.md).
 
 **Purchase flow is out of scope for this revision** — this skill currently reads the boutique only.
+
+---
+
+## Paulie's fish raffle (weekly, Fri 20:00 UTC draw)
+
+**FishRaffle** at `0x5E183eBc7CA4dF353170C35b4D69Ea9f42317b28` (Base). Weekly ISO-week rounds: tickets sell Mon 00:00 UTC → Fri ~19:50 UTC, 5 winners drawn Fri 20:00 UTC via Chainlink VRF. Paid tickets burn 20 kg of caught fish each. Every wallet gets 1 **free ticket per ISO week**.
+
+A second contract, **FreeToPlayPool** at `0x131E680dc7A146F00b282FBD7d6261c5B38c4Fa6`, holds the prize pool balance and the tier table.
+
+### Claim the weekly free ticket
+
+Preflight read, then write:
+
+```
+canClaimFreeTicket(address user) → bool      // gate check
+claimFreeTicket()                             // no args, msg.sender inferred
+```
+
+Always call `canClaimFreeTicket(user)` first. If false, surface the reason:
+
+- Already claimed this week → "You've already claimed your free ticket this week. Next one resets **Monday 00:00 UTC**."
+- Sales closed → "Sales closed at Fri 19:50 UTC. Winners draw at 20:00 UTC."
+- Paused → "The raffle is paused."
+
+Emits `FreeTicketClaimed(user, roundId)` on success. No token approval needed.
+
+### Current state — lead with live numbers
+
+Read in parallel:
+
+- `currentRoundId()`, `currentISOWeek()`, `paused()`, `salesClosed()`
+- `FreeToPlayPool.poolBalance()` + `FreeToPlayPool.getTiers()`
+- `GET https://api.cat.town/v1/tickets/leaderboard` (public, no auth) — provides `totalTickets` and the top buyers
+
+### Prize pool math (tier-based, not linear)
+
+The prize pool is a fraction of `poolBalance`, set by the tier the round's `totalTickets` crosses into. **5 winners get an equal split.**
+
+```
+tier          = tiers.findLast(t => totalTickets >= t.minTickets)   // highest threshold crossed
+prize_pool    = poolBalance * tier.bps / 10000                      // in KIBBLE wei
+per_winner    = prize_pool / winnersPerDraw                         // equal split, NOT ranked
+```
+
+Live tier table:
+
+| minTickets | bps | % of pool |
+|-----------:|----:|----------:|
+| 0          | 30  | 0.30%     |
+| 250        | 40  | 0.40%     |
+| 500        | 50  | 0.50%     |
+| 850        | 60  | 0.60%     |
+| 1,400      | 70  | 0.70%     |
+| 2,200      | 80  | 0.80%     |
+| 3,500      | 90  | 0.90%     |
+| 5,500      | 100 | 1.00%     |
+
+Live example (captured during writing): 2,855 tickets → 80 bps tier → `5,967,812 × 0.008 = ~47,742 KIBBLE` prize pool → **~9,548 KIBBLE per winner** (~$9). Last week's draw confirmed equal payouts of 9,363.86 KIBBLE to each of the 5 winners.
+
+### Chance to win
+
+Use the proportional approximation in replies (accurate enough for small ticket counts):
+
+```
+chance ≈ min(1, winnersPerDraw * userTickets / totalTickets)
+```
+
+Exact form (C = binomial coefficient): `1 − C(totalTickets − userTickets, 5) / C(totalTickets, 5)`. Use the exact form only if the user asks for precision.
+
+For a single free-ticket claimant in a 2,855-ticket round: `5 * 1 / 2855 ≈ 0.175%`. For the current leader with 399 tickets: `~70%`.
+
+### Leaderboard + last winners
+
+- `GET https://api.cat.town/v1/tickets/leaderboard` — current-round `{ roundId, totalTickets, leaderboard[] }` with per-buyer `totalCount`, basename, equipment.
+- `GET https://api.cat.town/v1/tickets/winners` — most recent completed draw with `roundId`, `timestamp`, 5 winners (all with the **same** `prizeAmount`, despite the `rank` field).
+
+### Response pattern — "tell me about the fish raffle"
+
+1. `canClaimFreeTicket(user)` — so you can close with a relevant CTA.
+2. Pull leaderboard + pool balance + current tier.
+3. Lead with live prize pool and per-winner split, then participant count, then top 3.
+4. Close with the user's status: "You've got N tickets → ~X% chance" or "Claim your free ticket? I can do it now."
+
+Example reply (live state):
+
+> **Paulie's raffle is open** — round 31, draws **Friday 20:00 UTC (about 2 days out)**.
+>
+> - **~47,742 KIBBLE prize pool** (~$45), split equally among 5 winners → **~9,548 KIBBLE each**
+> - **2,855 tickets** sold across **204 fishers**; 645 more tickets unlock the 90-bps tier
+> - Top 3: `0xef05…` (399 tickets, ~70% chance), **bitcoinbov.base.eth** (364, ~64%), `0xdc6a…` (310, ~54%)
+>
+> You haven't claimed your free ticket this week — want me to grab it?
+
+Full ABI surface, write paths, tier math, live-worked chance calcs: [references/fish-raffle/contract.md](references/fish-raffle/contract.md). API response shapes: [references/fish-raffle/api.md](references/fish-raffle/api.md).
+
+**Paid tickets (buying with caught fish) are out of scope for this revision** — free claim + reads only.
 
 ---
 

@@ -11,16 +11,17 @@ AI-readable reference for Cat Town — a Farcaster-native game world on Base. Th
 
 ## Current coverage
 
-This skill currently documents six Cat Town surfaces:
+This skill currently documents seven Cat Town surfaces:
 
 1. **KIBBLE staking** — the RevenueShare contract, stake/claim/unlock/unstake flows, staking leaderboard, user deposit history.
 2. **World state** — the GameData contract, current season/time-of-day/weather/weekend.
 3. **Fishing drops** — the public item-truth catalog with world-state-conditioned drops (weather, season, time of day), plus the frontend's exact fishing filter.
 4. **Fishing competition** — weekly Sat–Mon competition with live prize-pool math (10/80/10 split) and top-10 leaderboard.
-5. **Boutique** — daily 3-item onchain shop with seasonal pools, plus the KIBBLE→USD price oracle.
-6. **KIBBLE tokenomics** — Jasper's answers: % staked, % burned, live staking APY.
+5. **Fish raffle** — Paulie's weekly Fri 20:00 UTC draw with tier-based prize pool, chance-to-win math, free-ticket claim flow, and leaderboard.
+6. **Boutique** — daily 3-item onchain shop with seasonal pools, plus the KIBBLE→USD price oracle.
+7. **KIBBLE tokenomics** — Jasper's answers: % staked, % burned, live staking APY.
 
-Future revisions will add the fish raffle (Paulie's Friday 20:00 UTC draw), gacha capsule pools, the boutique purchase flow, and the community-pot surface Jasper also touches. Each will land under its own `references/<feature>/` subdirectory.
+Future revisions will add gacha capsule pools, the boutique purchase flow, the paid-ticket (fish-burn) raffle path, and the community-pot surface Jasper also touches. Each will land under its own `references/<feature>/` subdirectory.
 
 ---
 
@@ -150,6 +151,30 @@ stakersRevenue   = prizePool * 0.10   // flows to KIBBLE stakers via RevenueShar
 When active: lead with running time / weather / participants / prize pool / top 10. When inactive: compute next Saturday 00:00 UTC, offer a reminder, and offer to narrate the last completed competition (the API returns it when `isActive=false`).
 
 Full reference: [references/fishing/competition.md](references/fishing/competition.md).
+
+---
+
+## Fish raffle (weekly, Fri 20:00 UTC draw)
+
+| Property           | Value                                                       |
+|--------------------|-------------------------------------------------------------|
+| FishRaffle         | `0x5E183eBc7CA4dF353170C35b4D69Ea9f42317b28` on Base        |
+| FreeToPlayPool     | `0x131E680dc7A146F00b282FBD7d6261c5B38c4Fa6` on Base        |
+| Leaderboard API    | `GET https://api.cat.town/v1/tickets/leaderboard` (public)  |
+| Winners API        | `GET https://api.cat.town/v1/tickets/winners` (public)      |
+| Cycle              | Mon 00:00 UTC open → Fri 19:50 UTC close → Fri 20:00 UTC draw |
+| Winners per draw   | 5 (equal split of the prize pool)                           |
+| Free ticket        | 1 per wallet per ISO week; `canClaimFreeTicket(user)` → `claimFreeTicket()` |
+
+Prize pool is `poolBalance * tier.bps / 10000` where the tier is picked by the round's `totalTickets`:
+
+| minTickets | bps |
+|-----------:|----:|
+| 0 / 250 / 500 / 850 / 1,400 / 2,200 / 3,500 / 5,500 | 30 / 40 / 50 / 60 / 70 / 80 / 90 / 100 |
+
+Chance-to-win approximation: `min(1, 5 * userTickets / totalTickets)`. Live at time of writing: round 31, 2,855 tickets sold, 80-bps tier, ~47,742 KIBBLE pool → ~9,548 KIBBLE per winner.
+
+Full reference: [references/fish-raffle/contract.md](references/fish-raffle/contract.md), [references/fish-raffle/api.md](references/fish-raffle/api.md).
 
 ---
 
