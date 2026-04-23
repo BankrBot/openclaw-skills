@@ -116,3 +116,59 @@ If an agent is answering "what's special about Storm weather?" — use this filt
 - Items with any `events` condition: 46 (Halloween dominates)
 
 Total active items in catalog: 429.
+
+---
+
+## Response pattern — "what can I catch today?"
+
+The axis-exclusive filter above returns ~3 items for weather, ~8 for a time of day. Used alone for the broad question "what can I catch today?", that feels like an incomplete answer. Structure the reply in two tiers.
+
+### Tier 1 — special drops (lead with these)
+
+Items exclusive to the current weather or time of day (using the fishing filter above, applied per axis). These rotate fastest and are the most interesting.
+
+### Tier 2 — common drops (offer as a follow-up)
+
+Everything else catchable today: items with **no** weather and **no** time-of-day restrictions that still pass the season + event gates. These are the "this season" and "always-available" fish and treasures.
+
+Filter:
+
+```
+common_drops(current_season, current_event):
+  for each item in catalog:
+    require item.isActive == true
+    require item.source == "Fishing"
+    require item.itemType in {"Fish", "Treasure"}
+    require item.dropConditions.weathers is empty or absent
+    require item.dropConditions.timesOfDay is empty or absent
+    if item.dropConditions.seasons is non-empty:
+      require current_season in item.dropConditions.seasons
+    if item.dropConditions.events is non-empty:
+      require current_event in item.dropConditions.events
+    include
+```
+
+### Per-season baseline (no event active)
+
+From a production sweep, each season has exactly **26 common drops** available — steady across the year. The seasonal-Legendary rotates:
+
+| Season  | Common-drop count | Seasonal Legendary   |
+|---------|-------------------|----------------------|
+| Spring  | 26                | Alligator Gar        |
+| Summer  | 26                | Muskellunge          |
+| Autumn  | 26                | Freshwater Stingray  |
+| Winter  | 26                | Sturgeon             |
+
+Same Epic/Rare backbone across seasons: Diamond, Jade Figurine, Message in a Bottle, Bronze Goblet, Catfish, and ~20 others.
+
+### Offer phrasing
+
+After listing the special drops, end with the common-drop count and an invitation to continue. Example copy (use the real count):
+
+> "You can also catch **~26 other common drops** today, including **{seasonal-Legendary}**, Diamond, and Catfish. Want me to list the rest by rarity?"
+
+If the user accepts, sort by rarity DESC → name ASC (same order as the fishing filter) and list the top 10 by default — the full list runs into hundreds if events are active.
+
+### Why two tiers
+
+The exclusive filter alone returns 3–4 items for weather. A user expecting "here's what's catchable today" will think the answer is cut off. Leading with the rotational drops (what makes *this moment* different) and offering the broader catalog on request is both more natural and more complete.

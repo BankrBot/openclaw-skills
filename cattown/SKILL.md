@@ -243,6 +243,36 @@ Each item has optional `dropConditions: { events?, seasons?, timesOfDay?, weathe
 
 Live example — weather=Storm: Misty Duck (Rare), Lovely Duck (Rare), King Snapper (Rare Fish), **Elusive Marlin (Legendary Fish)**. Weather is the most rotational axis (minutes-to-hours), so weather-exclusive drops are the highest-value thing to surface to a user deciding *when* to fish.
 
+### Response pattern — lead with special, then offer the common drops
+
+When a user asks "what can I catch today / right now?", listing only the 3-4 axis-exclusive items feels incomplete. Answer in two tiers and offer the rest:
+
+1. **Lead with the special drops** — weather-exclusive and timeOfDay-exclusive items for the current state. These rotate fastest, highest interest.
+2. **Count the "common drops" also catchable today** — items with NO `weathers` and NO `timesOfDay` conditions, whose season + event gates still pass. As of the last sweep, each season has ~26 of these.
+3. **Offer the deep dive.** End with a prompt like: *"There are X other common drops you can also catch today — want me to list them?"*
+
+Concrete filter for common drops:
+
+```
+common_drops(current_season, current_event):
+  for item in catalog:
+    require item.isActive
+    require item.source == "Fishing"
+    require item.itemType in {"Fish", "Treasure"}
+    require item.dropConditions has no `weathers` array
+    require item.dropConditions has no `timesOfDay` array
+    if item.dropConditions.seasons is set:
+      require current_season in item.dropConditions.seasons
+    if item.dropConditions.events is set:
+      require current_event in item.dropConditions.events
+```
+
+Example reply for Storm / Spring / no active event:
+
+> Storm weather right now brings out 4 special drops: **Misty Duck** (Rare), **Lovely Duck** (Rare), **King Snapper** (Rare Fish), and **Elusive Marlin** (Legendary Fish).
+>
+> You can also catch **~26 other common Spring drops** today, including **Alligator Gar** (Legendary), **Diamond**, **Jade Figurine**, and **Catfish**. Want me to list the rest?
+
 Full recipe, complete weather→drops table, and live-sweep counts: [references/fishing/drops.md](references/fishing/drops.md).
 
 ---
