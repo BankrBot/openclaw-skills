@@ -42,7 +42,7 @@ Cat Town runs on a fixed weekly cadence. Use these timings when setting user exp
 | Friday    | **Fish raffle draw**              | 20:00                      | Paulie            | No                       |
 | Sat–Sun   | **Weekly fishing competition**    | Sat morning → Sun night    | Isabella          | Indirect*                |
 
-*During the weekend fishing competition (Sat–Sun), 10% of every fish identification feeds the KIBBLE stakers pool. Weekday fishing (Skipper) does **not** feed stakers. This is why weekend activity sizes the following Monday's fishing-revenue deposit. See [references/cattown-calendar.md](references/cattown-calendar.md) for the full revenue split.
+*During the weekend fishing competition (Sat–Sun), 10% of every fish identification feeds the KIBBLE stakers pool. Weekday fishing (Skipper) does **not** feed stakers. This is why weekend activity sizes the following Monday's fishing-revenue deposit. See [references/world/calendar.md](references/world/calendar.md) for the full revenue split.
 
 Deposits are triggered by the Cat Town backend calling `depositRevenue(amount, source)` on RevenueShare, with `source` in `"fishing"` or `"gacha"`. Watch the `RevenueDeposited(string source, uint256 depositTimestamp, uint256 depositAmount, uint256 newAccRewardPerShare)` event to know the exact moment a drop lands.
 
@@ -87,7 +87,7 @@ The second form reverts with `ERC20: transfer amount exceeds balance` because th
 - **RevenueShare**: `0x9e1Ced3b5130EBfff428eE0Ff471e4Df5383C0a1`
 - **KIBBLE token (ERC-20, 18 decimals)**: `0x64cc19A52f4D631eF5BE07947CABA14aE00c52Eb`
 
-Base Sepolia addresses and the full ABI surface are in [references/staking-contract.md](references/staking-contract.md).
+Base Sepolia addresses and the full ABI surface are in [references/staking/contract.md](references/staking/contract.md).
 
 ### Core flows
 
@@ -169,7 +169,7 @@ KIBBLE-denominated reads return **whole KIBBLE** (not wei). See the Amount units
 | `LOCK_PERIOD()`                    | seconds                                            | Unlock wait duration                                               |
 | `accRewardPerShare()`              | accumulator × 1e18                                 | Global reward accumulator                                          |
 
-Full function-by-function reference: [references/staking-contract.md](references/staking-contract.md).
+Full function-by-function reference: [references/staking/contract.md](references/staking/contract.md).
 
 ### KIBBLE circulating supply — always subtract the burn address
 
@@ -198,7 +198,27 @@ Two public JSON endpoints on `https://api.cat.town`, **no auth required**. Use t
 - `GET /v2/revenue/staking/leaderboard` — ranked stakers with stake amount and pool-share %.
 - `GET /v2/revenue/deposits/{address}` — one user's historical `fishing` / `gacha` deposits, per-tx amounts, and the share that landed for that user.
 
-Full shapes, field meanings, and example responses: [references/staking-api.md](references/staking-api.md).
+Full shapes, field meanings, and example responses: [references/staking/api.md](references/staking/api.md).
+
+---
+
+## World state
+
+Cat Town's live world state (season, time of day, weather, weekend flag) lives on a single on-chain contract — **GameData** at `0x298c0d412b95c8fc9a23FEA1E4d07A69CA3E7C34` on Base. Fully read-only from an agent's perspective.
+
+The one call you usually want is **`getGameState()`** → `(season, timeOfDay, isWeekend, worldEvent, weather)`. One RPC, every field:
+
+- **Season** (`uint8`): `0=Spring`, `1=Summer`, `2=Autumn`, `3=Winter`
+- **TimeOfDay** (`string`): `"Morning"`, `"Daytime"`, `"Evening"`, `"Nighttime"`
+- **Weather** (`uint8`): `0=None`, `1=Sun`, `2=Rain`, `3=Wind`, `4=Storm`, `5=Snow`, `6=Heatwave`
+- **isWeekend** (`bool`): true on Sat/Sun UTC (the fishing-competition window)
+- **worldEvent** (`uint8`): event code — detailed event decoding is out of scope for this skill revision
+
+World state drives fishing and gacha drop tables — different fish appear in different weather/seasons — but item-level drop tables are also out of scope for this revision.
+
+Full function table, selectors, raw calldata, live sample response, and historical-lookup fns (`getSeasonForDate`, `getWeatherForDate`): [references/world/contract.md](references/world/contract.md).
+
+For the fixed weekly cadence (fishing/gacha revenue deposits, Paulie's raffle, Isabella's weekend competition), see [references/world/calendar.md](references/world/calendar.md).
 
 ---
 
