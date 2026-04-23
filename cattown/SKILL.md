@@ -48,6 +48,38 @@ Deposits are triggered by the Cat Town backend calling `depositRevenue(amount, s
 
 ---
 
+## ⚠️ CRITICAL: stake/unstake take INTEGER KIBBLE, not wei — read this first
+
+This contract breaks the 99%-of-ERC-20 default. If you reflexively wei-encode the stake/unstake amount because "that's how tokens work," the tx reverts. This is the single failure mode you will hit on this contract. Stop here and internalize the table before touching any write path.
+
+| Call                                      | Amount unit               | Example for 1 KIBBLE              |
+|-------------------------------------------|---------------------------|-----------------------------------|
+| `kibble.approve(revenueShare, …)`         | **wei** (standard ERC-20) | `1000000000000000000` (= 1 × 10¹⁸) |
+| `revenueShare.stake(uint256 amount)`      | **integer KIBBLE**        | `1`                               |
+| `revenueShare.unstake(uint256 amount)`    | **integer KIBBLE**        | `1`                               |
+
+Reads are also integer KIBBLE: `getUserStaked`, `pendingRewards`, `getTotalStaked`, `getTotalActiveStaked`.
+
+### Raw calldata — right vs. wrong
+
+```
+✅ stake(1)     → 0xa694fc3a0000000000000000000000000000000000000000000000000000000000000001
+❌ stake(1e18)  → 0xa694fc3a0000000000000000000000000000000000000000000000000de0b6b3a7640000
+```
+
+The second form reverts with `ERC20: transfer amount exceeds balance` because the contract multiplies your argument by `10^18` internally, turning `1e18` into `1e36` wei. Verified via simulation against the deployed contract on Base.
+
+### Pre-submit validation (run this before every stake/unstake)
+
+- Is the amount `< 1,000,000`? → probably correct (integer KIBBLE).
+- Is the amount `≥ 10^15`? → almost certainly wrong — you wei-encoded by reflex.
+- Sanity check: `stake(1)` = 1 KIBBLE. `stake(100)` = 100 KIBBLE. `stake(10000)` = 10,000 KIBBLE.
+- `approve` is the OPPOSITE — it is wei. Staking `N` KIBBLE requires `approve(revenueShare, N * 10^18)`.
+
+**Signer = holder.** The address that signs `stake` must be the same address that holds the KIBBLE and signed the `approve`.
+
+---
+
 ## KIBBLE Staking
 
 ### Addresses (Base, chain id 8453)
@@ -57,29 +89,13 @@ Deposits are triggered by the Cat Town backend calling `depositRevenue(amount, s
 
 Base Sepolia addresses and the full ABI surface are in [references/staking-contract.md](references/staking-contract.md).
 
-### Amount units — the contract is asymmetric, READ THIS
-
-RevenueShare denominates its `stake`/`unstake` arguments in **whole KIBBLE units, not wei**. Internally it multiplies by `10^18` before calling `transferFrom` on the KIBBLE token. The ERC-20 `approve` on KIBBLE is still standard wei. So a single "stake 100 KIBBLE" flow mixes units:
-
-| Call                                      | Amount unit           | Example for 100 KIBBLE |
-|-------------------------------------------|-----------------------|------------------------|
-| `kibble.approve(revenueShare, …)`         | **wei** (standard ERC-20) | `100000000000000000000` (= 100 × 10¹⁸) |
-| `revenueShare.stake(uint256 amount)`      | **whole KIBBLE**      | `100`                  |
-| `revenueShare.unstake(uint256 amount)`    | **whole KIBBLE**      | `100`                  |
-
-Read functions return whole-KIBBLE values as well: `getUserStaked`, `getTotalStaked`, `getTotalActiveStaked`, and `pendingRewards` are all in whole KIBBLE, not wei.
-
-**Do not wei-encode the stake amount.** If you pass `100 × 10¹⁸`, the contract's internal scaling turns it into `100 × 10³⁶`, which exceeds any plausible balance and reverts with `ERC20: transfer amount exceeds balance`. This is the single most common failure mode when integrating from code that assumes standard wei conventions. Verified by simulation against the deployed contract — see Troubleshooting.
-
-**Signer = holder.** The address that signs `stake` must be the same address that holds the KIBBLE and signed the `approve`.
-
 ### Core flows
 
 Single pool, single reward token — KIBBLE in, KIBBLE out. No reward-token selection, no per-user lock duration, no multipliers. One global `accRewardPerShare` accumulator updated on each `depositRevenue`.
 
-**1. Stake**
-1. `kibble.approve(revenueShare, amount)` — required once if `allowance(user, revenueShare) < amount`.
-2. `revenueShare.stake(uint256 amount)` — emits `Staked(user, amount)`.
+**1. Stake** (mixed units — re-read the CRITICAL section above if uncertain)
+1. `kibble.approve(revenueShare, amount_wei)` — `amount_wei = N * 10^18` where `N` is the KIBBLE count. Required once if `allowance(user, revenueShare) < amount_wei`.
+2. `revenueShare.stake(uint256 N)` — **`N` is the integer KIBBLE count, NOT wei.** If this reverts with `ERC20: transfer amount exceeds balance`, you wei-encoded — pass the plain integer instead. Emits `Staked(user, amount)`.
 
 **2. Claim** (after each fishing/gacha deposit)
 - `revenueShare.claim()` — transfers `pendingRewards(user)` to the user. Emits `Claimed(user, amount)`.
@@ -88,7 +104,7 @@ Single pool, single reward token — KIBBLE in, KIBBLE out. No reward-token sele
 **3. Exit (unlock → wait → unstake)**
 1. `revenueShare.unlock()` — emits `UnlockInitiated(user, unlockEndTime)`. Sets `isUnlocking[user] = true`.
 2. Wait until `block.timestamp >= unlockEndTime(user)`. The wait length is `LOCK_PERIOD()` — **always read this from chain; do not hardcode** (the contract is UUPS-upgradeable).
-3. `revenueShare.unstake(uint256 amount)` — reverts before the wait ends. Emits `Unstaked(user, amount)`.
+3. `revenueShare.unstake(uint256 N)` — **`N` is the integer KIBBLE count, same convention as stake.** Reverts before the wait ends. Emits `Unstaked(user, amount)`.
 - `revenueShare.relock()` — at any time during the wait, cancels the unlock and puts the user back into the earning pool. Emits `Relocked(user, amount)`.
 
 ### Unlock state machine — the gotcha to warn users about
