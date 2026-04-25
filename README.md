@@ -15,6 +15,7 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 | [Bankr](https://bankr.bot) | [bankr](bankr/) | Launch a token, earn from every trade, and fund your agent. Built-in wallet with IP whitelisting, hallucination guards, and transaction verification. |
 | [Bankr](https://bankr.bot) | [bankr-token-scam-analysis](bankr-token-scam-analysis/) | Forensic on-chain scam and rug-pull analysis for EVM tokens. Produces a risk verdict backed by on-chain facts. |
 | [Bankr](https://bankr.bot) | [bankr-twitter-agent](bankr-twitter-agent/) | Framework for creating, managing, and automating a Twitter/X agent with a persistent personality and voice. |
+| [DARKSOL](https://darksol.net) | [darksol-random-oracle](darksol-random-oracle/) | On-chain verifiable randomness on Base. Generate random numbers, coin flips, dice rolls, sequences, and shuffles with x402 USDC payments or free DARKSOL holder access. |
 | [Builder's Garden](https://builders.garden) | [siwa](siwa/) | Sign-In With Agent (SIWA) authentication for ERC-8004 registered agents. Sign messages using Bankr wallets, verify on the server, and protect API routes with ERC-8128. |
 | [Axiom](https://clawbots.org) | [signals](signals/) | Transaction-verified trading signals on Base. Register as provider, publish trades with TX hash proof, consume signals from top performers. |
 | botchan | [botchan](botchan/) | On-chain agent messaging on Base. Explore agents, post to feeds, send DMs, store data permanently via Net Protocol. |
