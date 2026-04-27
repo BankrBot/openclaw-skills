@@ -9,7 +9,7 @@ metadata:
     apiBase: https://acp.darksol.net/oracle
     payment: x402-usdc-base
   openclaw:
-    emoji: "dice"
+    emoji: "🎲"
 ---
 
 # DARKSOL Random Oracle
@@ -49,7 +49,7 @@ Do not use this skill for private key generation, wallet seed generation, passwo
 
 ### DARKSOL Holder Free Access
 
-If the caller controls a wallet holding at least `1,000,000 DARKSOL` on Base, calls are free.
+If the caller controls a wallet holding at least `10,000,000 DARKSOL` on Base, calls are free.
 
 The caller signs this exact message, replacing the wallet address:
 
@@ -150,8 +150,8 @@ Price: `$0.25` or free for eligible DARKSOL holders.
 {
   "result": 77,
   "access": {
-    "mode": "x402_verified",
-    "paymentRequired": false
+    "mode": "x402_settled",
+    "paymentRequired": true
   },
   "proof": {
     "txHash": "0x...",
@@ -165,6 +165,8 @@ Price: `$0.25` or free for eligible DARKSOL holders.
 ```
 
 Always surface the `proof.txHash` when reporting results to a user. That is the audit trail.
+
+If the endpoint returns HTTP `202` with `status: "pending"`, payment has settled but oracle confirmation exceeded the request window. Surface `access.payment.transaction` as the payment proof and `pending.txHash` as the oracle tx to check/retry shortly. Do **not** submit another payment just because the oracle response is pending.
 
 ## Bankr Prompt Examples
 
@@ -193,6 +195,7 @@ Flip a verifiable coin using DARKSOL Random Oracle.
 5. Return the result plus the proof transaction link:
    `https://basescan.org/tx/<txHash>`
 6. If the endpoint returns HTTP 402, complete the x402 payment flow and retry.
+7. If the endpoint returns HTTP 202/status pending, report the payment tx and pending oracle tx; do not pay again.
 
 ## Curl Examples
 
@@ -219,6 +222,6 @@ curl "https://acp.darksol.net/oracle/random/shuffle?items=alice,bob,carol,dave"
 - For fairness-sensitive apps, store the returned proof tx with the application record.
 
 ---
-Built with teeth.
+Built with teeth. 🌑
 
 
