@@ -233,6 +233,15 @@ Omit `threadId` to start a new conversation. CLI equivalent: `bankr agent prompt
 - **Write endpoints** (`/wallet/transfer`, `/wallet/sign`, `/wallet/submit`) — require `walletApiEnabled`, `readOnly` check, and `allowedRecipients` enforcement
 - IP allowlist enforced on all endpoints
 
+#### Recipient & user lookup helpers (public, no auth)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/addresses/resolve?value=<recipient>&type=<address\|ens\|twitter\|farcaster>` | GET | Resolve a recipient (0x address, ENS-style name `.eth`/`.base.eth`/`.cb.id`, or social handle) to a 0x address. Used by `bankr wallet transfer --to` to support ENS input. |
+| `/users/search?...` | GET | Search Bankr users by Twitter or Farcaster username. |
+
+The legacy aliases `/public/resolve-recipient` and `/public/search-users` still work but are marked deprecated (Sunset: 2026-06-03) — migrate callers to the structured `/addresses/*` and `/users/*` namespaces.
+
 #### Agent API (`/agent/*`) — AI-powered endpoints (async)
 
 | Endpoint | Method | Description |
@@ -256,9 +265,9 @@ For full API details (request/response schemas, job states, rich data, polling s
 
 **Reference**: [references/api-workflow.md](references/api-workflow.md) | [references/sign-submit-api.md](references/sign-submit-api.md)
 
-## CLI Command Reference (v0.2.0)
+## CLI Command Reference (v0.3.x)
 
-CLI 0.2.0 organizes commands into three namespaces: `wallet`, `agent`, and `tokens`. Old flat commands (`balances`, `prompt`, `status`, etc.) still work as deprecated aliases.
+`@bankr/cli` 0.2+ organizes commands into three namespaces: `wallet`, `agent`, and `tokens`. Old flat commands (`balances`, `prompt`, `status`, etc.) still work as deprecated aliases.
 
 ### `bankr wallet` — Wallet Operations
 
@@ -271,8 +280,8 @@ CLI 0.2.0 organizes commands into three namespaces: `wallet`, `agent`, and `toke
 | `bankr wallet portfolio --all` | Include both PnL and NFTs |
 | `bankr wallet portfolio --chain <chains>` | Filter by chain(s): base, polygon, mainnet, unichain, solana (comma-separated) |
 | `bankr wallet portfolio --json` | Output raw JSON |
-| `bankr wallet transfer --to <recipient> --token <symbol> --amount <amount>` | Transfer tokens with symbol resolution |
-| `bankr wallet transfer --to <recipient> --token USDC --amount 50 --chain base` | Transfer with explicit chain |
+| `bankr wallet transfer --to <recipient> --token <symbol> --amount <amount>` | Transfer tokens; `--to` accepts a 0x address or ENS-style name (`.eth`, `.base.eth`, `.cb.id`), `--token` resolves symbols to contracts. Social handles work via the AI agent only. |
+| `bankr wallet transfer --to vitalik.eth --token USDC --amount 50 --chain base` | ENS recipient with explicit chain |
 | `bankr wallet sign` | Sign messages/typed data/transactions |
 | `bankr wallet submit` | Submit raw transactions |
 
@@ -492,10 +501,11 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 ### Transfers
 
-- Send to addresses, ENS, or social handles
+- Send to 0x addresses, ENS-style names (`.eth`, `.base.eth`, `.cb.id`), or social handles
+- CLI direct (`bankr wallet transfer`) accepts 0x addresses + ENS only — social handles go through the AI agent
 - Multi-chain support
 - Flexible amount formats
-- Social handle resolution (Twitter, Farcaster, Telegram)
+- Social handle resolution (Twitter, Farcaster, Telegram) via the agent
 
 **Reference**: [references/transfers.md](references/transfers.md)
 
@@ -859,11 +869,12 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 
 ### Transfers (Direct)
 
-Transfer tokens via CLI or Wallet API without AI processing:
+Transfer tokens via CLI or Wallet API without AI processing. The CLI's `--to` accepts a 0x address or ENS-style name (`.eth`, `.base.eth`, `.cb.id`); the Wallet API accepts the same plus anything `/addresses/resolve` understands. For social handles (Twitter, Farcaster, Telegram) use the AI agent.
 
 ```bash
-# CLI — token symbol resolution built in
+# CLI — token symbol resolution + ENS resolution built in
 bankr wallet transfer --to vitalik.eth --token USDC --amount 50 --chain base
+bankr wallet transfer --to name.base.eth --native --amount 0.01
 bankr wallet transfer --to 0x1234... --token ETH --amount 0.1
 
 # REST API
