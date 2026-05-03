@@ -18,6 +18,24 @@ x402 Cloud lets you deploy paid API endpoints that agents and developers pay for
 
 No credit card required. First 1,000 settled requests each month are free. Payments settle on-chain in USDC on Base — your share goes directly to your wallet.
 
+## Deploying via Agent
+
+The Bankr agent can deploy x402 endpoints directly through natural language — no CLI setup required:
+
+```bash
+bankr agent prompt "Deploy an x402 endpoint called price-feed that returns crypto prices for $0.001 per request"
+bankr agent prompt "Create an x402 service that summarizes articles using AI"
+bankr agent prompt "Update my sentiment-analysis x402 endpoint to charge $0.005"
+```
+
+The agent handles scaffolding the handler code, configuring pricing, and deploying. You can also manage existing endpoints:
+
+```bash
+bankr agent prompt "List my x402 endpoints"
+bankr agent prompt "Delete my old weather endpoint on x402"
+bankr agent prompt "Show revenue for my x402 services"
+```
+
 ## CLI Commands
 
 All commands use the Bankr CLI (`bankr` or `bun run --cwd packages/cli start`).

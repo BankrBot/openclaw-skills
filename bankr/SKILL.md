@@ -1,6 +1,6 @@
 ---
 name: bankr
-description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, check portfolio balances (with PnL and NFTs), view token prices, search tokens, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, call x402 paid API endpoints, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet. Supports Base, Ethereum, Polygon, Solana, and Unichain.
+description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, check portfolio balances (with PnL and NFTs), view token prices, search tokens, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, call or deploy x402 paid API endpoints, browse the web, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet. Supports Base, Ethereum, Polygon, Solana, and Unichain.
 metadata:
   {
     "clawdbot":
@@ -250,6 +250,12 @@ The legacy aliases `/public/resolve-recipient` and `/public/search-users` still 
 | `/agent/job/{jobId}` | GET | Check job status and results |
 | `/agent/job/{jobId}/cancel` | POST | Cancel a running job |
 
+#### Public endpoints (no auth required)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/token-launches` | GET | List recent token launches (cached, public) |
+
 #### Deprecated endpoints
 
 The following `/agent/*` endpoints still work but are deprecated in favor of `/wallet/*`:
@@ -442,6 +448,7 @@ The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unifie
 - **New accounts start with $0 LLM credits** — top up via `bankr llm credits add 25` or at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) before making any LLM calls, or you will get a 402 error
 - Check credits: `bankr llm credits` | Top up: `bankr llm credits add <amount>` | Auto top-up: `bankr llm credits auto --enable --amount 25 --tokens USDC`
 - In OpenClaw config, prefix model IDs with `bankr/` (e.g. `bankr/claude-sonnet-4.6`). In direct API calls, use bare IDs (e.g. `claude-sonnet-4.6`)
+- **Per-model discounts** available for Bankr Club members and partners — applied automatically at billing time
 
 ### Quick Commands
 
@@ -548,6 +555,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - Both creator AND fee recipient can claim bonding curve fees (gas sponsored)
 - Optional vesting parameters (Solana)
 - Rate limits: 1/day standard, 10/day Bankr Club (gas sponsored within limits)
+- Tokens deployed through Bankr are always visible in your portfolio, even without market price data
 
 **Reference**: [references/token-deployment.md](references/token-deployment.md)
 
@@ -563,12 +571,25 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 ### x402 Paid API Calls
 
-The agent can discover and call x402-protected API endpoints, automatically handling USDC payments on Base:
+The agent can discover, call, and deploy x402-protected API endpoints, automatically handling USDC payments on Base:
 
 - **Discover** endpoints in the Bankr registry or via web search
 - **Inspect** endpoint pricing, methods, and input/output schemas
 - **Call** endpoints with automatic payment signing (max $10/request)
+- **Deploy** new x402 endpoints directly through the agent (write handler code, set pricing, deploy)
 - Works with any x402-compatible endpoint (Bankr-hosted or external)
+
+**Reference**: [references/x402-cloud.md](references/x402-cloud.md)
+
+### Web Browsing
+
+The agent has a built-in headless browser for web interactions:
+
+- **Open** URLs and navigate web pages
+- **Read** page content, extract data, and take screenshots
+- **Interact** with page elements (click, type, scroll)
+- **Persist** browser sessions across multi-step workflows
+- Useful for research, data extraction, and interacting with web apps that don't have APIs
 
 **Reference**: [references/x402-cloud.md](references/x402-cloud.md)
 
@@ -860,6 +881,14 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Find x402 endpoints for sentiment analysis"
 - "Call the weather endpoint on x402"
 - "What x402 endpoints are available for price data?"
+- "Deploy an x402 endpoint that returns crypto prices"
+- "Create an x402 service that summarizes articles"
+
+### Web Browsing
+
+- "Browse coingecko.com and get the top trending tokens"
+- "Go to this URL and extract the token contract address"
+- "Check the Uniswap UI for the current ETH/USDC pool stats"
 
 ### Arbitrary Transactions
 

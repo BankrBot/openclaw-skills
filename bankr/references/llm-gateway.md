@@ -40,7 +40,8 @@ bankr config get llmKey
 
 | Model | Provider | Best For |
 |-------|----------|----------|
-| `claude-opus-4.6` | Anthropic | Most capable, advanced reasoning |
+| `claude-opus-4.7` | Anthropic | Latest, most capable reasoning |
+| `claude-opus-4.6` | Anthropic | Advanced reasoning |
 | `claude-opus-4.5` | Anthropic | Complex reasoning, architecture |
 | `claude-sonnet-4.6` | Anthropic | Balanced speed and quality |
 | `claude-sonnet-4.5` | Anthropic | Previous generation Sonnet |
@@ -63,6 +64,10 @@ bankr config get llmKey
 # Fetch live model list from the gateway
 bankr llm models
 ```
+
+### Per-Model Discounts
+
+The gateway supports per-model discounts based on account tier. Bankr Club members and partner-provisioned wallets receive automatic discounts on eligible models — applied at billing time with no configuration needed. Check `bankr llm models` for current pricing and active promotions.
 
 ## Credits
 
