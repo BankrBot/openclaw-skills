@@ -1,5 +1,5 @@
 ---
-name: shopify
+name: bankr-shopify
 description: >
   Shopify Admin & Storefront GraphQL APIs via curl, with Bankr-native bridges.
   Manage products, orders, customers, inventory, metafields, webhooks, and bulk
