@@ -346,6 +346,34 @@ Valid config keys: `apiKey`, `apiUrl`, `llmKey`, `llmUrl`
 
 Default config location: `~/.bankr/config.json`. Override with `--config` or `BANKR_CONFIG` env var.
 
+### Non-Interactive Mode
+
+For headless environments — CI pipelines, Docker containers, cron jobs — pass the `--not-interactive` (alias `--ni`) global flag, or set `BANKR_NOT_INTERACTIVE=1`. Both forms work before or after the subcommand.
+
+The flag implies `--yes` on every confirmation prompt and fails fast (exit 1, clear error) when a command would otherwise hang on a required prompt. Use it whenever the user asks for an automated/scripted invocation.
+
+| Command | Required headless flag(s) when --ni is set |
+|---------|---------------------------------------------|
+| `bankr login` | `--api-key <key>`, `login siwe --private-key <key>`, or `login email <addr> [--code <otp>]` |
+| `bankr launch` | `--name <name>` (other fields default to empty) |
+| `bankr fees claim-wallet` | `--all` (plus `--private-key` or `BANKR_PRIVATE_KEY`) |
+| `bankr agent` | a prompt argument or piped stdin |
+
+Read-only commands (`whoami`, `wallet portfolio`, `tokens`, `agent status`, etc.) don't prompt at all — `--ni` is harmless but redundant.
+
+Examples:
+
+```bash
+# Cron — claim creator fees nightly
+BANKR_PRIVATE_KEY=0x... bankr --ni fees claim-wallet --all
+
+# CI — programmatic token launch (simulate, no broadcast)
+bankr --ni launch --name MyToken --symbol MTK --simulate
+
+# Pipeline — agent prompt from stdin
+echo "summarize today's trades" | bankr --ni agent prompt
+```
+
 ### Deprecated Aliases
 
 Old flat commands still work but prefer the namespaced versions:
@@ -369,6 +397,7 @@ Old flat commands still work but prefer the namespaced versions:
 | `BANKR_API_URL` | API URL (default: `https://api.bankr.bot`) |
 | `BANKR_LLM_KEY` | LLM gateway key (falls back to `BANKR_API_KEY` if not set) |
 | `BANKR_LLM_URL` | LLM gateway URL (default: `https://llm.bankr.bot`) |
+| `BANKR_NOT_INTERACTIVE` | Set to `1` to enable non-interactive mode globally (equivalent to passing `--ni` / `--not-interactive` on every invocation) |
 
 Environment variables override config file values. Config file values override defaults.
 
