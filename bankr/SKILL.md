@@ -310,6 +310,22 @@ For full API details (request/response schemas, job states, rich data, polling s
 | `bankr tokens search <query>` | Search for tokens by name or symbol |
 | `bankr tokens info <symbol-or-address>` | Get detailed token information |
 
+### `bankr club` — Bankr Club Membership
+
+Manage Bankr Club subscription from the CLI (status, signup, cancel). Pay with USDC (default), BNKR, ETH, or any Base ERC-20 — non-USDC/BNKR tokens are swapped to USDC at checkout.
+
+| Command | Description |
+|---------|-------------|
+| `bankr club` | Show membership status (default; same as `status`) |
+| `bankr club status` | Show plan, renewal date, and daily message count |
+| `bankr club signup` | Subscribe (monthly, USDC default) |
+| `bankr club signup --yearly` | Subscribe yearly ($198 — saves ~$42/year) |
+| `bankr club signup --token <symbol-or-addr>` | Pay with `USDC` (default), `BNKR`, `ETH`, or any 0x-prefixed Base ERC-20 |
+| `bankr club signup -y` | Skip the confirmation prompt |
+| `bankr club cancel` | Cancel subscription (access continues until period ends) |
+
+Pricing is $20/mo or $198/yr USD-equivalent. Actual on-chain amount depends on the chosen token's price at quote time. The `--token` flag was added in CLI 0.3.4; older versions only support USDC.
+
 ### Auth & Config Commands
 
 | Command | Description |
