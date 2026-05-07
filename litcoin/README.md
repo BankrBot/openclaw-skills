@@ -55,7 +55,7 @@ pip install litcoin
 Gives your agent the ability to:
 
 - **Mine**: Comprehension challenges (no LLM needed) + research optimization
-- **Research**: Solve real problems across 20 adapters (algorithms, math, bioinformatics, ML, pattern recognition, software engineering, code optimization, security audits, red team, knowledge synthesis, exploit forensics, adversarial robustness, agentic traces, TCG intelligence, and more)
+- **Research**: Solve real problems across 24 adapters (algorithms, math, bioinformatics, ML, pattern recognition, software engineering, code optimization, security audits, red team, knowledge synthesis, exploit forensics, adversarial robustness, agentic traces, TCG intelligence, RuneScape vertical with insight + TA + sentiment + update-impact across OSRS and RS3, and more)
 - **DeFi**: Stake (4 tiers), open vaults (LITCOIN or USDC collateral), mint LITCREDIT, manage guilds, deposit escrow
 - **Relay**: Serve AI inference and earn 2x LITCOIN
 - **Agents**: Deploy autonomous Sentinels that run the full flywheel 24/7

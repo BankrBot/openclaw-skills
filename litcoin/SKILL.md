@@ -5,7 +5,7 @@ license: MIT-0
 compatibility: "Requires Python 3.9+ and pip. Network access to api.litcoin.app."
 metadata:
   author: tekkaadan
-  version: "2.2.0"
+  version: "2.3.0"
   homepage: "https://litcoin.app"
   repository: "https://github.com/tekkaadan/litcoin-skill"
   tags: [crypto, mining, defi, ai-agent, base, research, staking, litcoin]
@@ -76,10 +76,11 @@ result = agent.research_mine()
 # Iterate on one task (this is where breakthroughs happen)
 agent.research_loop(task_id="sort-benchmark-001", rounds=50, delay=30)
 
-# List available tasks (20 adapters: code_optimization, algorithm, pattern_recognition, software_engineering,
+# List available tasks (24 adapters: code_optimization, algorithm, pattern_recognition, software_engineering,
 # bioinformatics, mathematics, compression, security-audit, red-team, proof-of-verification,
 # knowledge-synthesis, exploit-forensics, adversarial-robustness, agentic-trace,
-# tcg-card-profile, tcg-sentiment, and more)
+# tcg-card-profile, tcg-sentiment, vault-comp, variant-pathogenicity,
+# runescape-insight, runescape-ta, runescape-sentiment, runescape-update-impact, and more)
 tasks = agent.research_tasks()
 ```
 
@@ -297,6 +298,8 @@ Miners can opt INTO a pool's boost program to earn the boost share that delegato
 
 The boost share is sourced from a 2.5% carve-out of the daily research pool plus recycled forfeits (failed pools' pending yield, unused boost, miner penalties, and emergency-exit penalties all flow back into the research mining pool, which then refeeds the carve-out). Unbacked miners are unaffected.
 
+**Auto-enrollment (added 2026-05-04).** Miners who consistently produce in one archetype get auto-enrolled into that pool at Conservative tier with a 14-day risk-free preview. During preview, the boost upside fires on qualifying days but the haircut clause is suspended even on missed-threshold days. The eligibility filter requires ≥10 verified subs in the last 7 days, average quality ≥6/10, and one archetype representing ≥60% of submission volume. Generalists are excluded (they would miss threshold and lose money). After preview matures, normal rules apply automatically. Operator can opt out anytime during preview, zero penalty. Check status with `GET /v1/boost/preview-status?wallet=...` or via the dashboard banner.
+
 ### Read State
 - `balance()` — LITCOIN + LITCREDIT
 - `oracle_prices()` — CPI and LITCOIN prices
@@ -320,10 +323,10 @@ The SDK raises exceptions with clear messages:
 
 - Chain: Base mainnet (8453)
 - Token: `0x316ffb9c875f900AdCF04889E415cC86b564EBa3`
-- SDK: v4.14.1 on [PyPI](https://pypi.org/project/litcoin/)
+- SDK: v4.14.8 on [PyPI](https://pypi.org/project/litcoin/)
 - Emission: 1.0% APR of treasury (soft-landing)
 - 1 LITCREDIT = 1,000 output tokens of frontier AI
-- 20 research adapters producing verified code and structured data
+- 24 research adapters producing verified code and structured data (incl. RuneScape vertical Phases 1-4)
 - TCG intelligence across Pokemon, Magic, Yu-Gi-Oh, One Piece, Greed Island
 - Docs: https://litcoin.app/docs
 - Cards: https://litcoin.app/cards
