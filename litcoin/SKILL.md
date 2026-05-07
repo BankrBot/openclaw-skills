@@ -323,7 +323,7 @@ The SDK raises exceptions with clear messages:
 
 - Chain: Base mainnet (8453)
 - Token: `0x316ffb9c875f900AdCF04889E415cC86b564EBa3`
-- SDK: v4.14.8 on [PyPI](https://pypi.org/project/litcoin/)
+- SDK: v4.14.9 on [PyPI](https://pypi.org/project/litcoin/)
 - Emission: 1.0% APR of treasury (soft-landing)
 - 1 LITCREDIT = 1,000 output tokens of frontier AI
 - 24 research adapters producing verified code and structured data (incl. RuneScape vertical Phases 1-4)
