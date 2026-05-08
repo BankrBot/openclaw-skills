@@ -55,19 +55,19 @@ List endpoints support cursor-based pagination:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v2/listings/collection/{slug}/all` | GET | All listings for collection |
+| `/api/v2/listings/collection/{slug}/all` | GET | All listings for collection (filter by `?maker=`) |
 | `/api/v2/listings/collection/{slug}/nfts/{token_id}/best` | GET | Best listing for NFT |
-| `/api/v2/orders/{chain}/seaport/listings` | GET | Listings by contract/token |
 | `/api/v2/orders/{chain}/seaport/listings` | POST | Create new listing |
 | `/api/v2/listings/fulfillment_data` | POST | Get buy transaction data |
+| `/api/v2/listings/sweep` | POST | Bulk-buy items from a collection |
 
 ### Offers
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v2/offers/collection/{slug}/all` | GET | All offers for collection |
+| `/api/v2/offers/collection/{slug}/all` | GET | All offers for collection (filter by `?maker=`) |
+| `/api/v2/offers/collection/{slug}/nfts/{token_id}` | GET | All offers for a specific NFT |
 | `/api/v2/offers/collection/{slug}/nfts/{token_id}/best` | GET | Best offer for NFT |
-| `/api/v2/orders/{chain}/seaport/offers` | GET | Offers by contract/token |
 | `/api/v2/orders/{chain}/seaport/offers` | POST | Create new offer |
 | `/api/v2/offers/fulfillment_data` | POST | Get sell transaction data |
 
@@ -100,6 +100,14 @@ List endpoints support cursor-based pagination:
 |----------|--------|-------------|
 | `/api/v2/accounts/{address}` | GET | Account profile |
 | `/api/v2/accounts/resolve/{identifier}` | GET | Resolve ENS name, username, or address |
+
+### Swap & Transactions
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v2/swap/quote` | GET | Get a single-asset swap quote |
+| `/api/v2/swap/execute` | POST | Get executable transactions for a multi-asset swap |
+| `/api/v2/transactions/receipt` | POST | Fetch transaction status (any tx type — sweep, swap, fulfillment) |
 
 ## Event Types
 

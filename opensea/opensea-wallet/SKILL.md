@@ -112,8 +112,61 @@ opensea swaps execute --wallet-provider private-key ...
 - **Raw `PRIVATE_KEY` is for local development only.** Never paste a raw private key into a shared agent environment, hosted CI, or any context where the key could be logged or exfiltrated.
 - Production and shared-agent setups must use a managed provider with conservative signing policies (value caps, allowlists, multi-party approval).
 
+## Security model
+
+The agent's environment holds *signing* credentials, not *administrative* ones. This is a structural property, and getting it right depends on each provider being configured correctly — none of the four supported providers ship in this state by default.
+
+### What the agent must never do
+
+- Modify its own signing policy, role, or scope.
+- Rotate its own owner key, auth key, or API user.
+- Export or claim ownership of the wallet's private key.
+- Construct any of the requests in `../docs/policy-administration.md`.
+
+If a user asks the agent to do any of these, the agent should refuse and direct them to the user-only recipes in `../docs/policy-administration.md`. A leaked agent env is recoverable only if the credentials it held could not, on their own, lift the spending cap or rewrite the allowlist.
+
+### Per-tx caps: enforced by the provider
+
+Each provider enforces per-tx caps and allowlists in a different layer, but all four are checked **before** the signing operation completes:
+
+| Provider | Where caps are enforced |
+|---|---|
+| Privy | TEE-evaluated wallet policy (`policy_ids` on the wallet) |
+| Turnkey | Policy engine, scoped to the API user's allowed activities |
+| Fireblocks | TAP rules in the workspace |
+| Bankr | Per-API-key `allowedRecipients` allowlist + daily message limits |
+
+Run `opensea wallet info` to see whether your wallet has these in place. The command prints loud warnings when the per-tx layer is missing.
+
+### Aggregate caps: not natively enforced by any provider
+
+**None of Privy, Turnkey, Fireblocks, or Bankr expose stateful daily/weekly cumulative spend caps as a native primitive.** Their policies/TAP/key-flag layers are stateless per-transaction evaluators (or per-message-quota in Bankr's case, which is not a dollar cap).
+
+The intended pattern for aggregate ceilings is **wallet float**: keep the agent's wallet balance sized to roughly one budget period, and have the user replenish on their own cadence. The wallet balance is the real cap; if the agent tries to overspend, transactions fail at the provider layer (per-tx cap) or chain layer (insufficient funds), not at an honor-system limit the agent could decide to ignore. See `references/wallet-funding.md` for the worked pattern.
+
+(Privy is investigating transaction-approval webhooks that would allow stateful evaluation; if and when those land, the field will support aggregate caps natively. Until then, wallet float is the answer.)
+
+### Policy mutation: requires a separately-held credential
+
+Each provider has a different out-of-band credential that gates mutation:
+
+| Provider | Mutation gate |
+|---|---|
+| Privy | `owner_id` key quorum on the wallet — owner key held off-machine |
+| Turnkey | Root user quorum — non-root API user used for signing |
+| Fireblocks | Admin quorum for TAP changes; API user role set to `Signer` only |
+| Bankr | Dashboard re-scoping at bankr.bot/api — no API to mutate scope |
+
+Setting these up is part of the happy path in `references/wallet-setup.md`, not optional hardening. `opensea wallet info` reports whether the structural gate is in place where it can be detected via API; for Fireblocks and Bankr, where it cannot, the command prints a static reminder to verify at the console.
+
+### Where mutation recipes live
+
+The actual HTTP/SDK recipes for changing policies, rotating keys, and re-scoping API users are in `../docs/policy-administration.md` — that is, in the skill repo's top-level `docs/` folder, **alongside** the per-skill folders like `opensea-wallet/`, not **inside** any of them. Skill loaders only mount individual skill directories (`opensea-wallet/SKILL.md` and the files it explicitly references), so the mutation recipes never enter an agent's context. If a future contributor moves this file inside a skill folder, an agent will read it and try to "help" by running the recipes — defeating the structural separation.
+
 ## References
 
-- `references/wallet-setup.md`: detailed setup instructions for each provider
-- `references/wallet-policies.md`: policy configuration for signing limits and allowlists
+- `references/wallet-setup.md`: detailed setup instructions for each provider, with hardening as part of the happy path
+- `references/wallet-policies.md`: policy templates and field reference (no mutation recipes)
+- `references/wallet-funding.md`: hot/cold wallet float pattern for aggregate-cap enforcement
+- `../docs/policy-administration.md` (in the skill repo's top-level `docs/`, outside any individual skill mount path): user-only mutation recipes for all four providers
 - [OpenSea CLI](https://github.com/ProjectOpenSea/opensea-cli)

@@ -98,42 +98,36 @@ GET /api/v2/offers/collection/{collection_slug}/all
 opensea offers all boredapeyachtclub --limit 50
 ```
 
-### Get Listings for Specific NFT
+### Get Best Listing for Specific NFT
 
 ```bash
-GET /api/v2/orders/{chain}/seaport/listings
+GET /api/v2/listings/collection/{slug}/nfts/{token_id}/best
 ```
-
-**Query parameters:**
-- `asset_contract_address`: Contract address
-- `token_ids`: Comma-separated token IDs
-- `limit`, `next`: Pagination
 
 **Example:**
 ```bash
-curl -G "https://api.opensea.io/api/v2/orders/ethereum/seaport/listings" \
-  -H "x-api-key: $OPENSEA_API_KEY" \
-  --data-urlencode "asset_contract_address=0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d" \
-  --data-urlencode "token_ids=1234"
+curl "https://api.opensea.io/api/v2/listings/collection/boredapeyachtclub/nfts/1234/best" \
+  -H "x-api-key: $OPENSEA_API_KEY"
 ```
+
+For all listings on a collection (optionally filtered by maker), use `GET /api/v2/listings/collection/{slug}/all?maker=0x...`. There is no per-NFT all-listings endpoint — the best-listing endpoint returns a single result.
 
 ### Get Offers for Specific NFT
 
 ```bash
-GET /api/v2/orders/{chain}/seaport/offers
+GET /api/v2/offers/collection/{slug}/nfts/{token_id}
 ```
 
 **Query parameters:**
-- `asset_contract_address`: Contract address
-- `token_ids`: Comma-separated token IDs
+- `limit`, `next`: Pagination
 
 **Example:**
 ```bash
-curl -G "https://api.opensea.io/api/v2/orders/ethereum/seaport/offers" \
-  -H "x-api-key: $OPENSEA_API_KEY" \
-  --data-urlencode "asset_contract_address=0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d" \
-  --data-urlencode "token_ids=1234"
+curl "https://api.opensea.io/api/v2/offers/collection/boredapeyachtclub/nfts/1234" \
+  -H "x-api-key: $OPENSEA_API_KEY"
 ```
+
+For just the best offer, use `GET /api/v2/offers/collection/{slug}/nfts/{token_id}/best`. For collection-wide offers filtered by maker, use `GET /api/v2/offers/collection/{slug}/all?maker=0x...`.
 
 ### Get Order by Hash
 

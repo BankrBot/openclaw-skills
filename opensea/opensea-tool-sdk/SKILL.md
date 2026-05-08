@@ -1,6 +1,6 @@
 ---
 name: opensea-tool-sdk
-description: Build, register, and gate AI-callable tool endpoints using the OpenSea Tool Registry (proposed ERC) on Base. Scaffold HTTPS tools with JSON Schema interfaces, register them onchain, gate access via NFT ownership or x402 pay-per-call (USDC), and call gated tools. For querying OpenSea marketplace data use opensea-api instead.
+description: Build, register, and gate AI-callable tool endpoints using the OpenSea Tool Registry (ERC-8257) on Base. Scaffold HTTPS tools with JSON Schema interfaces, register them onchain, gate access via NFT ownership or x402 pay-per-call (USDC), and call gated tools. For querying OpenSea marketplace data use opensea-api instead.
 homepage: https://github.com/ProjectOpenSea/tool-sdk
 repository: https://github.com/ProjectOpenSea/tool-sdk
 license: MIT
@@ -17,7 +17,7 @@ dependencies:
 
 # OpenSea Tool SDK
 
-Build, register, and gate AI-callable tool endpoints using the OpenSea Tool Registry (proposed ERC) on Base.
+Build, register, and gate AI-callable tool endpoints using the OpenSea Tool Registry (ERC-8257) on Base.
 
 ## When to use this skill (`scope_in`)
 

@@ -18,7 +18,7 @@ Entry point for OpenSea agent skills. Pick the sub-skill based on task, then rea
 | Buy/sell NFTs on Seaport, sweeps, cross-chain | [`opensea-marketplace/SKILL.md`](opensea-marketplace/SKILL.md) |
 | Swap ERC20 tokens via DEX aggregator | [`opensea-swaps/SKILL.md`](opensea-swaps/SKILL.md) |
 | Configure wallet signing (Privy/Turnkey/Fireblocks/Bankr) | [`opensea-wallet/SKILL.md`](opensea-wallet/SKILL.md) |
-| Build/register/gate AI agent tools (proposed ERC) | [`opensea-tool-sdk/SKILL.md`](opensea-tool-sdk/SKILL.md) |
+| Build/register/gate AI agent tools (ERC-8257) | [`opensea-tool-sdk/SKILL.md`](opensea-tool-sdk/SKILL.md) |
 
 Always read the sub-skill `SKILL.md` before executing. This router intentionally has no operational detail.
 

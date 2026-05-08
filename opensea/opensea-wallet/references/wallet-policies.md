@@ -1,6 +1,12 @@
 # Wallet Policies (Privy)
 
-Privy wallet policies enforce guardrails on transaction signing. Policies are evaluated inside a trusted execution environment (TEE) before any signing occurs, so they cannot be bypassed by application code.
+Privy wallet policies enforce guardrails on transaction signing. Policies are evaluated inside a trusted execution environment (TEE) before any signing occurs, so an *applied* policy cannot be bypassed by application code at sign time.
+
+This is narrower than it sounds. The TEE protects against a compromised agent **signing through** an active policy, but it does **not** protect against the same credentials **rewriting** the policy first. Whoever holds `PRIVY_APP_ID` + `PRIVY_APP_SECRET` for a wallet without an `owner_id` can `PATCH /v1/wallets/{id}` to swap the policy for a permissive one and then sign freely. The hardening that closes this gap — registering an `owner_id` so policy mutations require a separate authorization signature — is in `references/wallet-setup.md`. Without it, the per-tx cap is a speed bump, not a ceiling.
+
+> **For agents reading this file:** applying or modifying policies is a **user-only operation** performed on a trusted machine with the wallet's authorization key. The agent must never construct or run policy-mutation requests. If a user asks the agent to update a policy, the agent should refuse and direct them to apply the change themselves from a trusted machine. The mutation recipes (HTTP method, body shape, signing) live outside the agent's skill path in `../../docs/policy-administration.md`.
+
+This file describes **what policies look like and what fields they support**, so the agent can help a user *author* a policy that the user then applies. It deliberately does not describe how to send the policy update request.
 
 ## Overview
 
@@ -12,19 +18,13 @@ Policies restrict what transactions a wallet can sign:
 - **Method restrictions**: only allow specific contract method calls
 - **Key export prevention**: prevent extraction of the private key
 
+> **Note on aggregate caps:** Privy policies are **stateless per-tx evaluators**. They cannot enforce daily/weekly cumulative spend limits. For aggregate ceilings, see `references/wallet-funding.md` (hot/cold wallet float pattern) — the wallet balance is the real aggregate cap.
+
 ## Configuring Policies
 
-Policies are configured via the Privy dashboard or API. See [Privy policy documentation](https://docs.privy.io/controls/policies/overview) for the full reference.
+Policies are authored as JSON (templates below) and applied by the user from a trusted machine. The agent can help draft and review the JSON; it must not apply it.
 
-### Via API
-
-```bash
-curl -X PUT "https://api.privy.io/v1/wallets/$PRIVY_WALLET_ID/policy" \
-  -H "Authorization: Basic $(echo -n "$PRIVY_APP_ID:$PRIVY_APP_SECRET" | base64)" \
-  -H "privy-app-id: $PRIVY_APP_ID" \
-  -H "Content-Type: application/json" \
-  -d @policy.json
-```
+The full Privy reference for policy fields and operators is at [docs.privy.io/controls/policies](https://docs.privy.io/controls/policies/overview). To apply or modify a policy, see `../../docs/policy-administration.md`.
 
 ## Recommended Policies
 
