@@ -1,6 +1,52 @@
 # Safety & Access Control Reference
 
-Comprehensive safety guidance for building agents and integrations with the Bankr API and CLI. Covers API key types, access controls, wallet separation, rate limits, and operational best practices.
+Comprehensive safety guidance for building agents and integrations with the Bankr API and CLI. Covers wallet-level security settings, API key access controls, wallet separation, rate limits, and operational best practices.
+
+Bankr has two independent layers of safety controls: **wallet-level** (configured at [bankr.bot](https://bankr.bot) → Security; applies to every surface) and **per-API-key** (configured at [bankr.bot/api](https://bankr.bot/api); applies to one key). Both run independently — a transaction must satisfy both to broadcast.
+
+## Wallet-Level Security Settings
+
+User-controlled wallet safety features configured at [bankr.bot](https://bankr.bot) → Security. These apply to every surface — chat, agent, API, CLI — because they are enforced at the transaction broadcast chokepoint. Modifying them requires web (Privy) authentication; an API key cannot change them.
+
+### Controls
+
+| Control | Default | Effect |
+|---------|---------|--------|
+| Pause all transactions | Off | Blocks every outbound transaction until unpaused |
+| Daily spending limit | $500 / 24h | Rejects any tx that pushes rolling-24h USD outflow past the limit |
+| Per-transaction limit | $500 | Rejects any single tx priced above the limit |
+| Permitted recipients | Off | Restricts transfers/swaps to an allowlist; new entries enter a configurable cooldown |
+| Disable arbitrary contract calls | Off | Blocks `write_contract`, raw `/wallet/submit`, and arbitrary transaction tools (named operations like swaps still work) |
+
+USD limits accept `1` to `1,000,000`. Setting `0` is rejected — disable the limit instead. Cooldown accepts `0` to `168` hours (default 24h).
+
+### Pricing & Fail-Closed Behavior
+
+Bankr prices each transaction at submission time using on-chain quotes (0x for EVM, Jupiter for Solana). If pricing is unavailable and a USD limit is enabled, the transaction is **rejected** rather than waved through. Disable the limit if you need to proceed unpriced.
+
+### Recipient Cooldown
+
+Newly-added entries on the permitted-recipients list wait the configured cooldown (default 24h) before they're usable. Re-adding a previously-removed recipient restarts the cooldown. Your own EVM and Solana addresses are always implicitly allowed.
+
+### Spend Tracking
+
+Successful transactions are recorded in a per-wallet spend log, idempotent on transaction hash, so retries can't inflate the daily counter.
+
+### Relationship to API-Key Controls
+
+The wallet-level permitted-recipients list is independent from the API-key `allowedRecipients`. When both are configured, both must pass:
+
+- **API-key allowlist** = where this key is allowed to send
+- **Wallet allowlist** = where this wallet is allowed to send, regardless of key
+
+### Incident Response
+
+If you suspect a key is compromised:
+
+1. **Pause** the wallet at [bankr.bot](https://bankr.bot) → Security. Halts every outbound transaction immediately, including in-flight broadcasts. Revoking the key alone does not stop transactions already past auth.
+2. **Revoke** the key at [bankr.bot/api](https://bankr.bot/api).
+3. **Rotate** — generate a new key with the same access profile and update deployments.
+4. **Audit** — review recent transactions and agent job history before unpausing.
 
 ## API Key Types & Separation
 
@@ -211,12 +257,13 @@ Replenish periodically rather than pre-loading large amounts.
 
 Choose the right combination based on your agent's purpose:
 
-| Use Case | readOnly | allowedIps | Funding Level |
-|----------|----------|------------|---------------|
-| Monitoring / analytics bot | Yes | Yes (server IP) | None needed |
-| Trading bot (server-side) | No | Yes (server IP) | Limited trading capital |
-| Development / testing | No | No | Minimal (test amounts) |
-| Read-only research agent | Yes | No | None needed |
+| Use Case | readOnly | allowedIps | Recipient Allowlist | Wallet Daily Limit |
+|----------|----------|------------|---------------------|-------------------|
+| Monitoring / analytics bot | Yes | Yes (server IP) | — | — |
+| Trading bot (server-side) | No | Yes (server IP) | Yes | Yes ($500–$5,000) |
+| Public-facing demo | Yes | No | — | — |
+| Development / testing | No | No | No | Yes ($100) |
+| Read-only research agent | Yes | No | — | — |
 
 ## Rate Limits
 
@@ -307,6 +354,8 @@ Before deploying an agent or integration:
 
 - [ ] Use a **dedicated agent wallet** — not your personal account
 - [ ] Fund the agent wallet with **limited amounts** appropriate to its purpose
+- [ ] Review **wallet-level security settings** at [bankr.bot](https://bankr.bot) → Security — set appropriate daily and per-transaction USD limits
+- [ ] Enable **permitted recipients** with cooldown if the agent sends to a known set of addresses
 - [ ] Set API key to **read-only** if the agent only needs to query data
 - [ ] Configure **IP whitelisting** for server-side agents with known IPs
 - [ ] Store keys in **environment variables** (`BANKR_API_KEY`, `BANKR_LLM_KEY`), never in source code or version control
@@ -317,3 +366,4 @@ Before deploying an agent or integration:
 - [ ] Implement **error handling** for rate limits (429) and access control errors (403)
 - [ ] Monitor the agent's **daily message usage** against your tier limit
 - [ ] Review and **rotate all keys** (API and LLM) periodically; revoke immediately if compromised
+- [ ] Know the **incident response** procedure: pause wallet → revoke key → rotate → audit

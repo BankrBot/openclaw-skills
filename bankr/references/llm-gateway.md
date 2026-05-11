@@ -97,6 +97,17 @@ bankr llm credits auto --disable
 
 When credits are exhausted, gateway requests will fail with HTTP 402.
 
+### Agent Credit Top-Up
+
+The AI agent can also top up credits directly in conversation:
+
+```bash
+bankr agent prompt "Top up my LLM credits with $25"
+bankr agent prompt "Add $10 of LLM credits using my ETH"
+```
+
+1 credit = $1 USD. Paid in USDC on Base by default; any other Base ERC-20 token you hold is auto-swapped to USDC at checkout. Maximum $1,000 per top-up.
+
 > **LLM credits vs trading wallet:** These are completely separate balances on the same account and API key. Your trading wallet (ETH, SOL, USDC) is for on-chain transactions. LLM credits (USD) are for gateway API calls. Having crypto does NOT give you LLM credits.
 
 ## LLM Gateway Setup

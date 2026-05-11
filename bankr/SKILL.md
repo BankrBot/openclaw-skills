@@ -507,6 +507,17 @@ bankr llm setup claude                     # Print Claude Code env vars
 bankr llm claude                           # Launch Claude Code through gateway
 ```
 
+### Agent Credit Top-Up
+
+The AI agent can top up your LLM credits directly in conversation — no CLI or web dashboard needed:
+
+```bash
+bankr agent prompt "Top up my LLM credits with $25"
+bankr agent prompt "Add $10 of LLM credits using my ETH"
+```
+
+1 credit = $1 USD. Paid in USDC on Base by default; any other Base ERC-20 token you hold is auto-swapped to USDC at checkout. Maximum $1,000 per top-up.
+
 ### Model Deprecation
 
 The gateway supports model deprecation with auto-redirect to replacement models. Deprecated models return `X-Model-Deprecated` and `X-Model-Replacement` response headers. Hard-deprecated models return HTTP 410 — update your model ID to the replacement indicated in the header.
@@ -662,13 +673,46 @@ The agent has a built-in headless browser for web interactions:
 
 ## Safety & Access Control
 
-**Dedicated Agent Wallet**: When building autonomous agents, create a separate Bankr account rather than using your personal wallet. This isolates agent funds — if a key is compromised, only the agent wallet is exposed. Fund it with limited amounts and replenish as needed.
+Bankr has two independent layers of safety controls. A transaction must satisfy **both** to broadcast.
+
+### Wallet-Level Security (bankr.bot → Security)
+
+User-controlled settings that apply to every surface — chat, agent, API, CLI. Configured at [bankr.bot](https://bankr.bot) → Security; requires web authentication (an API key cannot change them).
+
+| Control | Default | Effect |
+|---------|---------|--------|
+| Pause all transactions | Off | Blocks every outbound transaction until unpaused |
+| Daily spending limit | $500 / 24h | Rejects any tx that pushes rolling-24h USD outflow past the limit |
+| Per-transaction limit | $500 | Rejects any single tx priced above the limit |
+| Permitted recipients | Off | Restricts transfers/swaps to an allowlist; new entries enter a configurable cooldown (default 24h) |
+| Disable arbitrary contract calls | Off | Blocks `write_contract`, raw `/wallet/submit`, and arbitrary transaction tools (named operations like swaps still work) |
+
+If USD pricing is unavailable and a limit is enabled, the transaction is **rejected** (fail-closed) rather than waved through. Your own wallet addresses are always implicitly allowed as recipients.
+
+### API-Key Level Controls (bankr.bot/api)
+
+Per-key settings configured at [bankr.bot/api](https://bankr.bot/api):
 
 **API Key Types**: Bankr uses a single key format (`bk_...`) with capability flags (`walletApiEnabled`, `agentApiEnabled`, `tokenLaunchApiEnabled`, `llmGatewayEnabled`). You can optionally configure a separate LLM Gateway key via `bankr config set llmKey` or `BANKR_LLM_KEY` — useful when you want independent revocation or different permissions for agent vs LLM access.
 
 **Read-Only API Keys**: New keys default to `readOnly: true`. This filters all write tools (swaps, transfers, staking, token launches, etc.) from agent sessions. The `/wallet/sign`, `/wallet/submit`, and `/wallet/transfer` write endpoints return 403. Use `--read-write` during login or toggle in the web settings to disable. Ideal for monitoring bots and research agents.
 
 **IP Whitelisting**: Set `allowedIps` on your API key to restrict usage to specific IPs or CIDR ranges (e.g., `10.0.0.0/24`). Requests from non-whitelisted IPs are rejected with 403 at the auth layer.
+
+**Recipient Allowlist**: Restrict which addresses the key can send funds to. Independent from the wallet-level permitted recipients — when both are configured, both must pass.
+
+### Incident Response
+
+If you suspect a key is compromised:
+
+1. **Pause** the wallet at [bankr.bot](https://bankr.bot) → Security — halts every outbound transaction immediately
+2. **Revoke** the key at [bankr.bot/api](https://bankr.bot/api)
+3. **Rotate** — generate a new key and update deployments
+4. **Audit** — review recent transactions and agent job history before unpausing
+
+### General
+
+**Dedicated Agent Wallet**: When building autonomous agents, create a separate Bankr account rather than using your personal wallet. This isolates agent funds — if a key is compromised, only the agent wallet is exposed. Fund it with limited amounts and replenish as needed.
 
 **Rate Limits**: 100 messages/day (standard), 1,000/day (Bankr Club), or custom per key. Resets 24h from first message (rolling window). LLM Gateway uses a credit-based system.
 
@@ -920,6 +964,12 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 
 - "Deploy a token called BankrFan with symbol BFAN on Base"
 - "Claim fees for my token MTK"
+
+### LLM Credits
+
+- "Top up my LLM credits with $25"
+- "Add $50 of LLM credits"
+- "Top up LLM credits using my ETH"
 
 ### x402 Paid API Calls
 
