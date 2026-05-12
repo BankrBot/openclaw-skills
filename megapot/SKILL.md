@@ -1,6 +1,6 @@
 ---
 name: megapot
-description: Megapot is an on-chain lottery on Base, USDC-denominated, with daily ~24h drawings. Use this skill whenever the user wants to buy lottery tickets, check the current jackpot, see time remaining or tickets sold, claim winnings on a specific ticket, set up a recurring/daily ticket subscription, deposit USDC as a liquidity provider, withdraw an LP position, or look up any Megapot contract address or ABI. Also trigger on phrases like "jackpot", "lottery ticket", "Megapot", "quick pick", "buy a ticket", "what's the prize pool", or references to docs.megapot.io / llms.megapot.io / the Jackpot contract 0x3bAe643002069dBCbcd62B1A4eb4C4A397d042a2.
+description: On-chain USDC lottery on Base with daily drawings. Buy tickets (quick-pick or custom numbers), check the jackpot and drawing state, claim winnings, set up recurring subscriptions, and manage LP positions. Trigger on "megapot", "lottery ticket", "jackpot", "quick pick", or "did I win".
 tags: [base, lottery, defi, usdc, megapot]
 version: 1
 visibility: public
@@ -30,6 +30,10 @@ This skill is a **router**. It tells the agent which Megapot task is involved an
 
 Full table (testnet, staging, all 13 contracts) and ABIs at `https://llms.megapot.io/`. ABIs: `https://llms.megapot.io/abi/<ContractName>.json`.
 
+## Prerequisites
+
+- The [bankr skill](https://github.com/BankrBot/skills/tree/main/bankr) must be installed for wallet operations (signing, submitting transactions on Base).
+
 ## How to use this skill
 
 1. **Match the user's intent against the decision tree below.**
@@ -45,12 +49,13 @@ Full table (testnet, staging, all 13 contracts) and ABIs at `https://llms.megapo
 | Buy 1–10 tickets with custom numbers (or a mix) | `https://llms.megapot.io/tasks/buy-tickets` |
 | Buy 11+ tickets (keeper-executed batch) | `https://llms.megapot.io/tasks/buy-bulk` |
 | Set up recurring daily ticket purchases | `https://llms.megapot.io/tasks/subscribe` |
-| Claim winning ticket payouts | `https://llms.megapot.io/tasks/claim-winnings` |
 | Deposit USDC into the LP pool | `https://llms.megapot.io/tasks/lp-deposit` |
 | Withdraw an LP position | `https://llms.megapot.io/tasks/lp-withdraw` |
 | Atomically claim + re-buy | `https://llms.megapot.io/tasks/auto-compound` |
 | Read live drawing state (jackpot, time, lock) | `https://llms.megapot.io/tasks/read-state` — or `references/read-state.md` for the common shortcut |
-| Wallet history, past wins, leaderboards, cross-drawing aggregates | **Not supported in this skill** — direct the user to `https://megapot.io` to view their account history. Do not attempt to reconstruct this via RPC scans. |
+| Check if user's wallet has won anything ("did I win?") | `references/data-api.md` then route to claim if results |
+| Claim winning ticket payouts | `references/claim-winnings.md` (uses data-api.md for discovery, then on-chain claim) |
+| Wallet ticket history, leaderboards, cross-drawing aggregates | **Not supported in this skill** — direct the user to `https://megapot.io`. Do not call the Data API for these. |
 | Deep ABI / address / cross-chain lookup | `https://llms.megapot.io/tasks/contracts-reference` |
 | Anything not above | `https://llms.megapot.io/` |
 
@@ -76,11 +81,13 @@ If a user explicitly requests no referral attribution, pass `referrers: []` and 
 - **Approval spender varies by task.** Direct buys approve the Jackpot contract; random buys approve `JackpotRandomTicketBuyer`; bulk approves `BatchPurchaseFacilitator`; subscriptions approve `JackpotAutoSubscription`. The task pages always show the correct spender — read it from there.
 - **`Jackpot.buyTickets` reverts with `InvalidTicketCount` for arrays > 10.** Route 11+ tickets through `buy-bulk`.
 - **Subscription mix is locked at creation.** To change static picks the user must cancel and recreate.
-- **Past drawings vs. live state.** Live drawing state (current jackpot, time remaining, tickets sold) is read on-chain via `getDrawingState(currentDrawingId())`. This skill does **not** cover cross-drawing wallet history or leaderboards — for that, direct the user to `https://megapot.io`. Do not attempt to reconstruct history via RPC scans; it's slow, expensive, and unreliable.
+- **Past drawings vs. live state.** Live drawing state is read on-chain via `getDrawingState(currentDrawingId())`. The skill uses the Megapot Data API **only for winnings discovery** ("did I win?" / claim flow) on the anonymous rate tier — see `references/data-api.md`. Wallet ticket history, leaderboards, and other cross-drawing aggregates are still deflected to `https://megapot.io`. Do not attempt to reconstruct history via RPC scans.
 - **Settlement timing.** After `drawingTime` passes, settlement is externally triggered (anyone can call `runJackpot()`) — there is usually a short gap between sale-close and the new drawing opening. Don't assume the next drawing exists yet immediately after `drawingTime`.
 
 ## References in this skill
 
 - `references/read-state.md` — minimal ABI + return tuple for the common drawing-state read.
 - `references/buy-random.md` — full recipe for the most common Bankr-user action (1–10 random tickets).
+- `references/data-api.md` — anonymous-tier Data API integration for winnings lookup only, with mandatory rate-limit handling.
+- `references/claim-winnings.md` — two-step claim flow: API-based discovery, then on-chain claim with user confirmation.
 - `references/triggers.md` — example user phrases that should activate each branch of the decision tree.

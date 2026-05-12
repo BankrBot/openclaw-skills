@@ -2,7 +2,7 @@
 
 Use this for any read-only question about the current drawing: "what's the jackpot at?", "how much time left?", "how many tickets sold?", "is the round over?", etc.
 
-This skill does not cover cross-drawing aggregates, wallet history, or leaderboards — for those, direct the user to `https://megapot.io`.
+For winnings discovery ("did I win?") use `data-api.md`. For cross-drawing ticket history, leaderboards, or aggregates, direct the user to `https://megapot.io`.
 
 ## The shortcut
 

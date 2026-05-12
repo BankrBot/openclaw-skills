@@ -46,27 +46,40 @@ How real Bankr users tend to phrase Megapot requests, mapped to the right task. 
 
 → `references/read-state.md` for the shortcut; only fetch `https://llms.megapot.io/tasks/read-state` if the question needs more than `getDrawingState`.
 
-## Wallet history / past wins / leaderboards — NOT SUPPORTED
-
-The following requests are **out of scope** for this skill:
+## Check winnings ("did I win?")
 
 - "did i win anything?"
-- "how many tickets have i bought total?"
-- "show me my megapot history"
-- "what are the biggest wins this round?"
-- "show me the megapot leaderboard"
+- "did i win the megapot?"
+- "check my megapot winnings"
+- "do i have any unclaimed wins?"
+- "any megapot payouts waiting for me?"
 
-For these, tell the user to check `https://megapot.io` directly — their account page has the full history. **Do not attempt to scan past drawings via RPC** — it's slow, unreliable, and the user has a better answer one click away.
+→ `references/data-api.md` for the API call, then `references/claim-winnings.md` if there are results. If the API returns 429 or 5xx, deflect to `https://megapot.io` per the mandatory rate-limit handling in `data-api.md`.
 
-If the user knows a specific ticket ID and wants to know whether it won, that's answerable on-chain via the settled drawing's `winningTicket` field — but route them through `claim-winnings` (below) since the natural follow-on is to claim, not just to check.
+If the result is non-empty, naturally offer to claim ("You have 2 unclaimed wins totaling 142.50 USDC — want me to claim them?"). Do not auto-claim — claim only on explicit user confirmation.
 
 ## Claim winnings
 
 - "claim my megapot winnings"
+- "claim my wins"
 - "i won, get my payout"
-- "claim ticket #12345"
+- "yes, claim them" (in response to a winnings-found prompt)
+- "claim ticket #12345" (direct claim by ticket ID — skips the API lookup)
 
-→ `https://llms.megapot.io/tasks/claim-winnings`. The user needs to know the specific ticket ID(s) they're claiming for — this skill does not look up winning tickets for them; that's a megapot.io feature. Confirm the tickets and amount before signing.
+→ `references/claim-winnings.md`. If the user gives a specific ticket ID, go straight to the on-chain claim. If they say "claim my winnings" without specifying, run the discovery flow from `data-api.md` first, confirm, then claim.
+
+## Wallet ticket history / leaderboards / cross-drawing aggregates — NOT SUPPORTED
+
+The following requests are **out of scope** and the agent should deflect to `https://megapot.io`:
+
+- "how many tickets have i bought total?"
+- "show me my megapot history"
+- "what are the biggest wins this round?"
+- "show me the megapot leaderboard"
+- "how much have i spent on megapot?"
+- "show me round 47 results"
+
+The skill uses the Data API only for the user's own winnings discovery (above). Broader history features are intentionally not implemented to keep request volume under the anonymous-tier rate limit. **Do not attempt to scan past drawings via RPC** — slow, unreliable, and the user has a better answer one click away at megapot.io.
 
 ## LP
 

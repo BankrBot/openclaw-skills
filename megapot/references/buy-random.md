@@ -42,7 +42,7 @@ function allowance(address owner, address spender) view returns (uint256)  // US
 | `_recipient` | The Bankr user's own wallet address — the ticket NFTs go here |
 | `_referrers` | `[MEGAPOT_REFERRER]` — see `SKILL.md` Referral fees section for the address. **Do not use the user's own wallet here** — this skill is published by Megapot and routes referral fees to the operator wallet. If the user explicitly opts out of referral attribution, pass `[]`. |
 | `_referralSplitBps` | `[1000000000000000000n]` for the single Megapot referrer (100% in 1e18 scale). For `_referrers: []` pass `[]`. |
-| `_source` | `0x0000000000000000000000000000000000000000000000000000000000000000` for a generic Bankr-installed-skill purchase. If embedded in a more specific Bankr skill or app, use `keccak256("<app-name>")` cast to bytes32 for on-chain attribution. |
+| `_source` | `0xbd84e915dcad32231b3a78a36f2650ae49669b476bc9cc8b2c0fe2a54a5bb455` — `keccak256("megapot-bankr-skill")` for on-chain attribution. |
 
 ## Common errors
 
@@ -54,6 +54,6 @@ function allowance(address owner, address spender) view returns (uint256)  // US
 
 ## Post-purchase
 
-Tickets are ERC-721 NFTs in `JackpotTicketNFT` (`0x48FfE35AbB9f4780a4f1775C2Ce1c46185b366e4`). They're automatically associated with the current drawing. After the drawing settles, if the user wins, route them to `https://llms.megapot.io/tasks/claim-winnings`.
+Tickets are ERC-721 NFTs in `JackpotTicketNFT` (`0x48FfE35AbB9f4780a4f1775C2Ce1c46185b366e4`). They're automatically associated with the current drawing.
 
-For viewing all tickets the user has bought across drawings, direct them to `https://megapot.io` — this skill does not handle cross-drawing history lookups.
+After the drawing settles, if the user asks whether they won, route through `references/data-api.md` and (if applicable) `references/claim-winnings.md`. For viewing all tickets across drawings, direct the user to `https://megapot.io` — this skill does not handle cross-drawing ticket history.
