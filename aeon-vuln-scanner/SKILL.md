@@ -29,7 +29,7 @@ A scanner that dumps zero-days into public PRs isn't a helper. It's a publisher.
 - Handles untrusted input (auth, crypto, network, file I/O, templating).
 - **Skip** intentionally vulnerable teaching repos (juice-shop, webgoat, vulnerable-*, *-ctf, hackme-*).
 - **Skip** if no PVR enabled AND no `SECURITY.md` — no safe channel for code flaws.
-- **Skip** if scanned in the last 30 days (dedup via `memory/vuln-scanned.json`).
+- **Skip** if scanned in the last 30 days (dedup via a local `vuln-scanned.json` state file).
 
 ## Scanners
 
@@ -122,7 +122,7 @@ If you have a minimal fix, push to your fork only on `private/fix-<slug>`. Do **
 
 ## Dedup state
 
-`memory/vuln-scanned.json` — `{"repo": "owner/name", "scanned_at": "...", "findings": N, "channel": "..."}`. 30-day window.
+`vuln-scanned.json` (local state file) — `{"repo": "owner/name", "scanned_at": "...", "findings": N, "channel": "..."}`. 30-day window.
 
 ## Required scopes
 

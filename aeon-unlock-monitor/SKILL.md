@@ -82,7 +82,7 @@ If volume is unavailable, mark `vol=unknown`, tier conservatively, flag the gap.
 
 ## Dedup
 
-`memory/state/unlock-monitor-seen.json` — `${ticker}:${unlock_date}` keys, 90-day rolling window. Skip exact matches against the file and against the last 7 days of run logs.
+A local state file (e.g. `state/unlock-monitor-seen.json`) holds `${ticker}:${unlock_date}` keys on a 90-day rolling window. Skip exact matches against the file and against the last 7 days of prior outputs.
 
 ## Output
 
