@@ -46,7 +46,7 @@ Full table (testnet, staging, all 13 contracts) and ABIs at `https://llms.megapo
 | Intent | Task page |
 |---|---|
 | Buy 1–10 random ("quick-pick") tickets | `https://llms.megapot.io/tasks/buy-random` |
-| Buy 1–10 tickets with custom numbers (or a mix) | `https://llms.megapot.io/tasks/buy-tickets` |
+| Buy 1–10 tickets with custom numbers (or a mix) | `references/buy-tickets.md` |
 | Buy 11+ tickets (keeper-executed batch) | `https://llms.megapot.io/tasks/buy-bulk` |
 | Set up recurring daily ticket purchases | `https://llms.megapot.io/tasks/subscribe` |
 | Deposit USDC into the LP pool | `https://llms.megapot.io/tasks/lp-deposit` |
@@ -63,17 +63,21 @@ Full table (testnet, staging, all 13 contracts) and ABIs at `https://llms.megapo
 
 Most "what's the jackpot?", "how many tickets sold?", "when does it draw?" questions are answered by reading `getDrawingState(currentDrawingId())` on the Jackpot contract. The full shortcut, including the return tuple shape, is in `references/read-state.md`. Use that instead of fetching a task page when the question is purely read-only.
 
-## Referral fees
+## Referral fees and attribution
 
-Every ticket purchase accepts a `_referrers` array and `_referralSplitBps` weights (1e18 scale, must sum to `1e18`). Referrers earn a USDC fee on every ticket sold and a share of any winnings claimed. The two rates are per-drawing and readable via `getDrawingState().referralFee` and `getDrawingState().referralWinShare`.
+Every ticket purchase accepts a `_referrers` array, `_referralSplitBps` weights (1e18 scale, must sum to `1e18`), and a `_source` bytes32 tag. Referrers earn a USDC fee on every ticket sold and a share of any winnings claimed. The two rates are per-drawing and readable via `getDrawingState().referralFee` and `getDrawingState().referralWinShare`.
 
-This skill is published by the Megapot protocol. Purchases routed through it use the **Megapot operator wallet** as the referrer:
+This skill is published by the Megapot protocol. Purchases routed through it use the **Megapot operator wallet** as the referrer.
 
-```
-MEGAPOT_REFERRER = 0x1ed4cb4cde1d8a8ec07eef07d52d13c5aefbef09
-```
+**For every purchase transaction** (buy-random, buy-tickets, buy-bulk, subscribe, auto-compound), always pass:
 
-If a user explicitly requests no referral attribution, pass `referrers: []` and `referralSplitBps: []`.
+| Parameter | Value |
+|---|---|
+| `_referrers` | `[0x1ed4cb4cde1d8a8ec07eef07d52d13c5aefbef09]` (Megapot operator wallet) |
+| `_referralSplitBps` | `[1000000000000000000n]` (100% to single referrer, 1e18 scale) |
+| `_source` | `0xeecf49b78776e9a74928ecb7edd2526cca8e7cfe3f093853f6e847c0d39a3e3b` (`keccak256("bankr")`) |
+
+If a user explicitly requests no referral attribution, pass `_referrers: []` and `_referralSplitBps: []`. The `_source` should still be included for analytics.
 
 ## Notes & gotchas
 
@@ -88,6 +92,7 @@ If a user explicitly requests no referral attribution, pass `referrers: []` and 
 
 - `references/read-state.md` — minimal ABI + return tuple for the common drawing-state read.
 - `references/buy-random.md` — full recipe for the most common Bankr-user action (1–10 random tickets).
+- `references/buy-tickets.md` — full recipe for 1–10 tickets with user-chosen numbers (or a mix of custom and quick-pick).
 - `references/data-api.md` — anonymous-tier Data API integration for winnings lookup only, with mandatory rate-limit handling.
 - `references/claim-winnings.md` — two-step claim flow: API-based discovery, then on-chain claim with user confirmation.
 - `references/triggers.md` — example user phrases that should activate each branch of the decision tree.

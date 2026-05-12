@@ -42,7 +42,7 @@ function allowance(address owner, address spender) view returns (uint256)  // US
 | `_recipient` | The Bankr user's own wallet address — the ticket NFTs go here |
 | `_referrers` | `[MEGAPOT_REFERRER]` — see `SKILL.md` Referral fees section for the address. **Do not use the user's own wallet here** — this skill is published by Megapot and routes referral fees to the operator wallet. If the user explicitly opts out of referral attribution, pass `[]`. |
 | `_referralSplitBps` | `[1000000000000000000n]` for the single Megapot referrer (100% in 1e18 scale). For `_referrers: []` pass `[]`. |
-| `_source` | `0xbd84e915dcad32231b3a78a36f2650ae49669b476bc9cc8b2c0fe2a54a5bb455` — `keccak256("megapot-bankr-skill")` for on-chain attribution. |
+| `_source` | `0xeecf49b78776e9a74928ecb7edd2526cca8e7cfe3f093853f6e847c0d39a3e3b` — `keccak256("bankr")` for on-chain attribution. |
 
 ## Common errors
 
