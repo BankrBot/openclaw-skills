@@ -45,14 +45,14 @@ Full table (testnet, staging, all 13 contracts) and ABIs at `https://llms.megapo
 
 | Intent | Task page |
 |---|---|
-| Buy 1–10 random ("quick-pick") tickets | `https://llms.megapot.io/tasks/buy-random` |
+| Buy 1–10 random ("quick-pick") tickets | `references/buy-random.md` |
 | Buy 1–10 tickets with custom numbers (or a mix) | `references/buy-tickets.md` |
 | Buy 11+ tickets (keeper-executed batch) | `https://llms.megapot.io/tasks/buy-bulk` |
 | Set up recurring daily ticket purchases | `https://llms.megapot.io/tasks/subscribe` |
 | Deposit USDC into the LP pool | `https://llms.megapot.io/tasks/lp-deposit` |
 | Withdraw an LP position | `https://llms.megapot.io/tasks/lp-withdraw` |
 | Atomically claim + re-buy | `https://llms.megapot.io/tasks/auto-compound` |
-| Read live drawing state (jackpot, time, lock) | `https://llms.megapot.io/tasks/read-state` — or `references/read-state.md` for the common shortcut |
+| Read live drawing state (jackpot, time, lock) | `references/read-state.md` |
 | Check if user's wallet has won anything ("did I win?") | `references/data-api.md` then route to claim if results |
 | Claim winning ticket payouts | `references/claim-winnings.md` (uses data-api.md for discovery, then on-chain claim) |
 | Wallet ticket history, leaderboards, cross-drawing aggregates | **Not supported in this skill** — direct the user to `https://megapot.io`. Do not call the Data API for these. |

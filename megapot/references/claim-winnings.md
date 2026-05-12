@@ -1,6 +1,6 @@
 # Claim winnings
 
-The user has won lottery tickets and wants to claim them. This is a **two-step flow**: discover unclaimed wins via the Data API, confirm with the user, then execute the on-chain claim transaction(s).
+The user has won lottery tickets and wants to claim them. This is a **two-step flow**: discover unclaimed wins via the Data API, confirm with the user, then execute the on-chain claim.
 
 ## Flow
 
@@ -9,12 +9,12 @@ The user has won lottery tickets and wants to claim them. This is a **two-step f
 Call the Data API (see `data-api.md` for full details):
 
 ```
-GET https://api.megapot.io/v1/wallets/{userWallet}/wins?limit=50
+GET https://api.megapot.io/v1/wallets/{userWallet}/wins?claimed=false&limit=50
 ```
 
-Filter the response to entries where `claimed === false`.
+The `?claimed=false` filter is server-side — the response contains only unclaimed wins.
 
-**Handle empty result:** if the filtered list is empty, tell the user "You have no unclaimed winnings on this wallet." Stop.
+**Handle empty result:** if `data` is an empty array, tell the user "You have no unclaimed winnings on this wallet." Stop.
 
 **Handle 429 / 5xx:** see `data-api.md` for the mandatory deflection-to-megapot.io behavior. Do not proceed to step 2 with stale or partial data.
 
@@ -23,7 +23,7 @@ Filter the response to entries where `claimed === false`.
 Before signing **any** transaction, present:
 
 - Total number of claimable tickets
-- Total USDC value (sum of `amount.amount` across all unclaimed wins, divided by `1_000_000`)
+- Total USDC value (sum of `amount.amount` across all wins, divided by `1_000_000`)
 - The wallet address tickets will be claimed to (the user's own wallet)
 - Per-ticket breakdown if there are 5 or fewer wins; summarize if more
 
@@ -40,35 +40,37 @@ Example confirmation prompt:
 
 ### Step 3 — Execute the on-chain claim
 
-The on-chain claim function lives on the Jackpot contract (`0x3bAe643002069dBCbcd62B1A4eb4C4A397d042a2`). The exact ABI fragment and parameter shape is on the canonical task page:
+Call `claimWinnings` on the Jackpot contract (`0x3bAe643002069dBCbcd62B1A4eb4C4A397d042a2`):
 
 ```
-https://llms.megapot.io/tasks/claim-winnings
+function claimWinnings(uint256[] _userTicketIds)
+
+event TicketWinningsClaimed(
+  address indexed userAddress,
+  uint256 indexed drawingId,
+  uint256 userTicketId,
+  uint256 matchedNormals,
+  bool bonusballMatch,
+  uint256 winningsAmount
+)
+
+error NoTicketsToClaim()
+error NotTicketOwner()
 ```
 
-**Fetch that page at task time** for the current ABI — do not rely on memorized signatures. Contract surface evolves.
-
-For each unclaimed win the agent will need:
-- `user_ticket_id` (from the API response — pass as `uint256`)
-- `round_id` (from the API response — pass as `uint256` if the claim function requires it; check the task page)
+Pass the array of `user_ticket_id` values from the API response, cast to `uint256`. Chunk to **~50 ticket IDs per transaction** for gas safety. Confirm once at step 2 for the whole batch — don't re-prompt before each chunk.
 
 ### Step 4 — Report results
 
-After each successful claim transaction:
-- Confirm to the user which ticket was claimed and the amount received
-- Decode the relevant event from the receipt to verify the actual claimed amount matches the expected amount
+Decode `TicketWinningsClaimed` events from the receipt. Each event includes `userTicketId`, `matchedNormals`, `bonusballMatch`, and `winningsAmount` (USDC, 6 decimals). Verify total `winningsAmount` across all events matches the expected sum from step 2.
 
-If a transaction fails (revert, etc.), surface the error and ask the user whether to continue with remaining claims.
+Present a summary to the user: total USDC claimed, number of tickets claimed, and the transaction hash.
 
-## Multi-claim batching
-
-If the Jackpot contract supports a batched claim function (check `https://llms.megapot.io/tasks/claim-winnings`), use it for multi-ticket claims to save gas. Otherwise, claim sequentially.
-
-When claiming sequentially, **confirm once** at step 2 for the whole batch — don't re-prompt before each individual claim. The user already approved the full list.
+If a chunk transaction fails (revert, etc.), surface the error and ask the user whether to continue with remaining chunks.
 
 ## Direct-claim-by-ticket-ID (advanced)
 
-If the user explicitly provides a ticket ID (e.g. "claim ticket #44227164...") without asking us to check first, skip step 1 and go straight to step 3. The Data API call is then unnecessary.
+If the user explicitly provides a ticket ID (e.g. "claim ticket #47") without asking us to check first, skip step 1 and go straight to step 3. The Data API call is then unnecessary.
 
 This is the only path that works when the API is rate-limited — power users who know their ticket IDs can still claim.
 
@@ -76,7 +78,8 @@ This is the only path that works when the API is rate-limited — power users wh
 
 | Error | Cause |
 |---|---|
-| Empty `data` array from API | User has no wins on record for this wallet — not an error, just zero state |
-| All wins have `claimed: true` | User has already claimed everything — tell them so |
+| Empty `data` array from API | User has no unclaimed wins on record for this wallet — not an error, just zero state |
+| `NoTicketsToClaim()` | All supplied ticket IDs have already been claimed or have no payout tier |
+| `NotTicketOwner()` | A ticket in the array is not owned by the calling wallet |
 | Transaction reverts on claim | Ticket may have been claimed since the API was last indexed; the API has indexing lag (~minutes). Re-query and retry. |
 | 429 on the API call | Rate-limited — deflect per `data-api.md` |

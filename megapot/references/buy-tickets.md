@@ -6,8 +6,8 @@ For fully random tickets see `references/buy-random.md`. For 11+ tickets see `ht
 
 ## Flow (executed via Bankr's wallet tools)
 
-1. **Read drawing state** on the Jackpot contract — `ticketPrice()`, `normalBallMax()`, `currentDrawingId()`, and `getDrawingState(currentDrawingId())` for `bonusballMax` and `drawingTime`.
-2. **Validate the user's picks.** Each ticket needs exactly 5 normal balls in `[1, normalBallMax]` (unique, ascending) and 1 bonus ball in `[1, bonusballMax]`. Reject invalid picks with a clear message before hitting the chain. For quick-pick slots in a mixed order, use `normals: []` and `bonusball: 0`.
+1. **Read drawing state** on the Jackpot contract — call `currentDrawingId()`, then `getDrawingState(currentDrawingId())`. The returned tuple includes `ticketPrice`, `ballMax` (normal ball upper bound), `bonusballMax`, and `drawingTime`. No separate `normalBallMax()` call needed.
+2. **Validate the user's picks.** Each ticket needs exactly 5 normal balls in `[1, ballMax]` (unique, ascending) and 1 bonus ball in `[1, bonusballMax]`. Reject invalid picks with a clear message before hitting the chain. For quick-pick slots in a mixed order, use `normals: []` and `bonusball: 0`.
 3. **Confirm with user.** Show: ticket count, each ticket's numbers, total USDC cost, current drawing ID, time remaining until drawing close. Do **not** sign anything without explicit confirmation.
 4. **Approve USDC** to the **Jackpot** contract (`0x3bAe643002069dBCbcd62B1A4eb4C4A397d042a2`). This is different from buy-random which approves to `JackpotRandomTicketBuyer`. Amount = `ticketPrice * ticketCount`.
 5. **Call `buyTickets`** on the **Jackpot** contract with the args below.
@@ -17,7 +17,6 @@ For fully random tickets see `references/buy-random.md`. For 11+ tickets see `ht
 
 ```
 function ticketPrice() view returns (uint256)                              // Jackpot
-function normalBallMax() view returns (uint8)                              // Jackpot
 function currentDrawingId() view returns (uint256)                         // Jackpot
 function getDrawingState(uint256 _drawingId) view returns (
   (
@@ -68,10 +67,10 @@ function allowance(address owner, address spender) view returns (uint256)  // US
 
 | Arg | Value to pass |
 |---|---|
-| `_tickets` | Array of `{ normals: uint8[], bonusball: uint8 }`. 1–10 entries. Each custom ticket: `normals` is exactly 5 unique ascending values in `[1, normalBallMax]`, `bonusball` in `[1, bonusballMax]`. For quick-pick slots in a mixed order: `{ normals: [], bonusball: 0 }`. |
+| `_tickets` | Array of `{ normals: uint8[], bonusball: uint8 }`. 1–10 entries. Each custom ticket: `normals` is exactly 5 unique ascending values in `[1, ballMax]`, `bonusball` in `[1, bonusballMax]`. For quick-pick slots in a mixed order: `{ normals: [], bonusball: 0 }`. |
 | `_recipient` | The Bankr user's own wallet address — the ticket NFTs go here |
 | `_referrers` | `[MEGAPOT_REFERRER]` — see `SKILL.md` Referral fees section for the address. If the user explicitly opts out of referral attribution, pass `[]`. |
-| `_referralSplit` | `[1000000000000000000n]` for the single Megapot referrer (100% in 1e18 scale). For `_referrers: []` pass `[]`. Despite the `Bps` suffix in the ABI parameter name, this uses 1e18 (PRECISE_UNIT) scale, NOT basis points. |
+| `_referralSplit` | `[1000000000000000000n]` for the single Megapot referrer (100% in 1e18 scale). For `_referrers: []` pass `[]`. |
 | `_source` | `0xeecf49b78776e9a74928ecb7edd2526cca8e7cfe3f093853f6e847c0d39a3e3b` — `keccak256("bankr")` for on-chain attribution. |
 
 ## Example: "buy a ticket with numbers 1 6 16 22 25 bonus 4"
