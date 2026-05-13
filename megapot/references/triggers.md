@@ -12,13 +12,13 @@ How real Bankr users tend to phrase Megapot requests, mapped to the right task. 
 
 → `https://llms.megapot.io/tasks/buy-random` (see also `references/buy-random.md`)
 
-## Buy custom-number tickets (1–10)
+## Buy custom-number tickets (1–10) — NOT SUPPORTED
 
 - "buy a megapot ticket with the numbers 7 14 22 31 45 bonus 8"
 - "lemme pick my own numbers"
 - "buy 3 tickets, one with these picks and two random"
 
-→ `https://llms.megapot.io/tasks/buy-tickets`
+→ **Not supported.** Tell the user that choosing specific numbers is only available at https://megapot.io. Offer to buy quick-pick (random) tickets instead.
 
 ## Buy bulk (11+)
 

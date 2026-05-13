@@ -46,7 +46,7 @@ Full table (testnet, staging, all 13 contracts) and ABIs at `https://llms.megapo
 | Intent | Task page |
 |---|---|
 | Buy 1–10 random ("quick-pick") tickets | `references/buy-random.md` |
-| Buy 1–10 tickets with custom numbers (or a mix) | `references/buy-tickets.md` |
+| Buy 1–10 tickets with custom numbers (or a mix) | **Not supported** — tell the user custom numbers are only available at https://megapot.io. Offer quick-pick instead. |
 | Buy 11+ tickets (keeper-executed batch) | `https://llms.megapot.io/tasks/buy-bulk` |
 | Set up recurring daily ticket purchases | `https://llms.megapot.io/tasks/subscribe` |
 | Deposit USDC into the LP pool | `https://llms.megapot.io/tasks/lp-deposit` |
