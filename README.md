@@ -57,19 +57,19 @@ Bankr Skills equip builders with plug-and-play tools to build more powerful agen
 
 1. Fork this repo and create a branch.
 2. Create a directory for your skill:
-   ```
+  ```
    mkdir your-skill-name/
-   ```
+  ```
 3. Add a `SKILL.md` — this is the only required file.
 4. Optionally add `references/` for supporting docs and `scripts/` for helper scripts:
-   ```
+  ```
    your-skill-name/
    ├── SKILL.md
    ├── references/
    │   └── your-docs.md
    └── scripts/
        └── your-script.sh
-   ```
+  ```
 5. Open a pull request with a description of what your skill does.
 
 **Guidelines:** Keep `SKILL.md` clear and well-documented. Include usage examples. Test before submitting.
