@@ -15,6 +15,8 @@ For fully random tickets see `references/buy-random.md`. For 11+ tickets see `ht
 
 ## ABI fragments needed
 
+Use these signatures **exactly** when constructing the transaction — do not substitute `uint8[5]` for `uint8[]`.
+
 ```
 function ticketPrice() view returns (uint256)                              // Jackpot
 function currentDrawingId() view returns (uint256)                         // Jackpot
@@ -65,9 +67,11 @@ function allowance(address owner, address spender) view returns (uint256)  // US
 
 ## Argument shape for `buyTickets`
 
+> **⚠️ CRITICAL ABI NOTE:** The `normals` field is typed as `uint8[]` (dynamic array), **NOT** `uint8[5]` (fixed-size array). These have completely different ABI encodings and different function selectors. Even though validation requires exactly 5 elements, the Solidity type is **dynamic** `uint8[]`. Using `uint8[5]` in the function signature will produce the wrong selector and the transaction will revert.
+
 | Arg | Value to pass |
 |---|---|
-| `_tickets` | Array of `{ normals: uint8[], bonusball: uint8 }`. 1–10 entries. Each custom ticket: `normals` is exactly 5 unique ascending values in `[1, ballMax]`, `bonusball` in `[1, bonusballMax]`. For quick-pick slots in a mixed order: `{ normals: [], bonusball: 0 }`. |
+| `_tickets` | Array of `{ normals: uint8[], bonusball: uint8 }`. 1–10 entries. Each custom ticket: `normals` is exactly 5 unique ascending values in `[1, ballMax]`, `bonusball` in `[1, bonusballMax]`. For quick-pick slots in a mixed order: `{ normals: [], bonusball: 0 }`. The Solidity type for `normals` is `uint8[]` (dynamic) — do **not** encode as `uint8[5]`. |
 | `_recipient` | The Bankr user's own wallet address — the ticket NFTs go here |
 | `_referrers` | `[MEGAPOT_REFERRER]` — see `SKILL.md` Referral fees section for the address. If the user explicitly opts out of referral attribution, pass `[]`. |
 | `_referralSplit` | `[1000000000000000000n]` for the single Megapot referrer (100% in 1e18 scale). For `_referrers: []` pass `[]`. |
@@ -95,6 +99,7 @@ tickets = [
 
 | Error | Cause |
 |---|---|
+| Transaction reverts with no revert reason / encoding error | The function signature uses `uint8[5]` instead of `uint8[]` for `normals`. This produces the wrong selector — fix by using `(uint8[] normals, uint8 bonusball)[]` exactly as written in the ABI above. |
 | `InvalidNormalsCount()` | `normals` array length is not exactly 5 (and is not empty for quick-pick) |
 | `InvalidBonusball()` | `bonusball` is outside `[1, bonusballMax]` (and is not 0 for quick-pick) |
 | `InvalidTicketCount()` | Ticket array is empty or has more than 10 entries. For 11+, route to `buy-bulk`. |
