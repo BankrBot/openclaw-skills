@@ -500,8 +500,10 @@ The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unifie
 ```bash
 bankr llm models                           # List available models
 bankr llm credits                          # Check credit balance
-bankr llm credits add 25                   # Top up $25 credits (USDC)
-bankr llm credits auto --enable --amount 25 --tokens USDC  # Auto top-up
+bankr llm credits add 25                   # Top up $25 credits (defaults to Base USDC)
+bankr llm credits add 25 --token USDT      # Pay USDT on whichever chain holds the most
+bankr llm credits add 25 --token ETH       # Native token; auto-swapped on its chain
+bankr llm credits auto --enable --amount 25 --tokens USDC,USDT  # Multi-chain auto top-up
 bankr llm setup openclaw --install         # Install Bankr provider into OpenClaw
 bankr llm setup claude                     # Print Claude Code env vars
 bankr llm claude                           # Launch Claude Code through gateway
@@ -516,7 +518,7 @@ bankr agent prompt "Top up my LLM credits with $25"
 bankr agent prompt "Add $10 of LLM credits using my ETH"
 ```
 
-1 credit = $1 USD. Paid in USDC on Base by default; any other Base ERC-20 token you hold is auto-swapped to USDC at checkout. Maximum $1,000 per top-up.
+1 credit = $1 USD. Multi-chain: pay with USDC or USDT directly on Base, Polygon, Ethereum, Arbitrum, or BNB Chain, or with any other ERC-20 (auto-swapped to the chain's preferred stablecoin — USDC on most chains, USDT on BNB). When using `--token`, the CLI picks the chain with the highest USD balance of that token. Maximum $1,000 per top-up.
 
 ### Model Deprecation
 
@@ -970,6 +972,8 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Top up my LLM credits with $25"
 - "Add $50 of LLM credits"
 - "Top up LLM credits using my ETH"
+- "Top up my LLM credits with $25 using USDT on Polygon"
+- "Add $10 of LLM credits paid in USDT on BNB"
 
 ### x402 Paid API Calls
 
