@@ -79,19 +79,24 @@ Check your LLM gateway credit balance:
 bankr llm credits
 ```
 
-Top up credits from your wallet:
+Top up credits from your wallet. Pay on any supported EVM chain — **Base, Polygon, Ethereum, Arbitrum, or BNB Chain** — and the CLI picks the chain holding the highest USD balance of your chosen token.
 
 ```bash
-bankr llm credits add 25                   # Add $25 credits (USDC default)
-bankr llm credits add 50 --token 0x...     # Add $50 from a specific token
+bankr llm credits add 25                   # Defaults to Base USDC
+bankr llm credits add 25 --token USDC      # USDC on the chain with the largest balance
+bankr llm credits add 25 --token USDT      # USDT (Polygon / Ethereum / Arbitrum / BNB)
+bankr llm credits add 50 --token ETH       # Native ETH (Base / Ethereum / Arbitrum)
+bankr llm credits add 50 --token 0x...     # By contract address
 bankr llm credits add 25 -y                # Skip confirmation prompt
 ```
 
-Configure automatic top-up so credits never run out:
+USDC and USDT are sent directly when they're an accepted stablecoin on the resolved chain. Any other token is auto-swapped to the chain's preferred stablecoin (USDC on most chains, USDT on BNB) with ≤5% slippage protection.
+
+Configure automatic top-up so credits never run out (tokens are resolved across every supported chain — the worker tries them in priority order on their saved chains):
 
 ```bash
 bankr llm credits auto                     # View current auto top-up config
-bankr llm credits auto --enable --amount 25 --threshold 5 --tokens USDC
+bankr llm credits auto --enable --amount 25 --threshold 5 --tokens USDC,USDT
 bankr llm credits auto --disable
 ```
 
@@ -106,7 +111,7 @@ bankr agent prompt "Top up my LLM credits with $25"
 bankr agent prompt "Add $10 of LLM credits using my ETH"
 ```
 
-1 credit = $1 USD. Paid in USDC on Base by default; any other Base ERC-20 token you hold is auto-swapped to USDC at checkout. Maximum $1,000 per top-up.
+1 credit = $1 USD. Multi-chain: pay with USDC or USDT directly on Base, Polygon, Ethereum, Arbitrum, or BNB Chain, or with any other ERC-20 (auto-swapped to the chain's preferred stablecoin — USDC on most chains, USDT on BNB). Maximum $1,000 per top-up.
 
 > **LLM credits vs trading wallet:** These are completely separate balances on the same account and API key. Your trading wallet (ETH, SOL, USDC) is for on-chain transactions. LLM credits (USD) are for gateway API calls. Having crypto does NOT give you LLM credits.
 
