@@ -10,7 +10,7 @@ For fully random tickets see `references/buy-random.md`. For 11+ tickets see `ht
 2. **Validate the user's picks.** Each ticket needs exactly 5 normal balls in `[1, ballMax]` (unique, ascending) and 1 bonus ball in `[1, bonusballMax]`. Reject invalid picks with a clear message before hitting the chain. For quick-pick slots in a mixed order, use `normals: []` and `bonusball: 0`.
 3. **Confirm with user.** Show: ticket count, each ticket's numbers, total USDC cost, current drawing ID, time remaining until drawing close. Do **not** sign anything without explicit confirmation.
 4. **Approve USDC** to the **Jackpot** contract (`0x3bAe643002069dBCbcd62B1A4eb4C4A397d042a2`). This is different from buy-random which approves to `JackpotRandomTicketBuyer`. Amount = `ticketPrice * ticketCount`.
-5. **Call `buyTickets`** on the **Jackpot** contract with the args below.
+5. **Call `buyTickets`** on the **Jackpot** contract — use the **raw calldata submission** approach described below (the `write_contract` tool cannot encode the nested tuple array parameter).
 6. **Decode the `TicketPurchased` and `TicketOrderProcessed` events** from the receipt and report drawing ID, ticket IDs, chosen numbers, and total cost back to the user.
 
 ## ABI fragments needed
@@ -67,39 +67,95 @@ function allowance(address owner, address spender) view returns (uint256)  // US
 
 ## Argument shape for `buyTickets`
 
-> **⚠️ CRITICAL ABI NOTE:** The `normals` field is typed as `uint8[]` (dynamic array), **NOT** `uint8[5]` (fixed-size array). These have completely different ABI encodings and different function selectors. Even though validation requires exactly 5 elements, the Solidity type is **dynamic** `uint8[]`. Using `uint8[5]` in the function signature will produce the wrong selector and the transaction will revert.
+> **⚠️ ENCODING LIMITATION:** Bankr's `write_contract` tool **cannot** encode the `_tickets` parameter (a nested tuple array `(uint8[],uint8)[]`). You **must** use the raw calldata submission approach below. Do not attempt `write_contract` for this function — it will fail with "Value is not a valid array".
 
-| Arg | Value to pass |
-|---|---|
-| `_tickets` | Array of `{ normals: uint8[], bonusball: uint8 }`. 1–10 entries. Each custom ticket: `normals` is exactly 5 unique ascending values in `[1, ballMax]`, `bonusball` in `[1, bonusballMax]`. For quick-pick slots in a mixed order: `{ normals: [], bonusball: 0 }`. The Solidity type for `normals` is `uint8[]` (dynamic) — do **not** encode as `uint8[5]`. |
-| `_recipient` | The Bankr user's own wallet address — the ticket NFTs go here |
-| `_referrers` | `[MEGAPOT_REFERRER]` — see `SKILL.md` Referral fees section for the address. If the user explicitly opts out of referral attribution, pass `[]`. |
-| `_referralSplit` | `[1000000000000000000n]` for the single Megapot referrer (100% in 1e18 scale). For `_referrers: []` pass `[]`. |
-| `_source` | `0xeecf49b78776e9a74928ecb7edd2526cca8e7cfe3f093853f6e847c0d39a3e3b` — `keccak256("bankr")` for on-chain attribution. |
+| Arg | Solidity type | Value to pass |
+|---|---|---|
+| `_tickets` | `(uint8[],uint8)[]` | 1–10 entries. Each custom ticket: `normals` is exactly 5 unique ascending values in `[1, ballMax]`, `bonusball` in `[1, bonusballMax]`. For quick-pick slots in a mixed order: `normals: []` and `bonusball: 0`. **Type is `uint8[]` (dynamic), NOT `uint8[5]`.** |
+| `_recipient` | `address` | The Bankr user's own wallet address — the ticket NFTs go here |
+| `_referrers` | `address[]` | `[0x1ed4cb4cde1d8a8ec07eef07d52d13c5aefbef09]` — see `SKILL.md` Referral fees section. If the user explicitly opts out, pass `[]`. |
+| `_referralSplit` | `uint256[]` | `[1000000000000000000]` for the single referrer (100% in 1e18 scale). For `_referrers: []` pass `[]`. |
+| `_source` | `bytes32` | `0xeecf49b78776e9a74928ecb7edd2526cca8e7cfe3f093853f6e847c0d39a3e3b` — `keccak256("bankr")` for on-chain attribution. |
 
-## Example: "buy a ticket with numbers 1 6 16 22 25 bonus 4"
+## How to submit: raw calldata via arbitrary transaction
+
+Since `write_contract` cannot handle this function, encode calldata and submit as a raw transaction.
+
+**Function selector:** `0xde88c28a`
+**Canonical signature:** `buyTickets((uint8[],uint8)[],address,address[],uint256[],bytes32)`
+
+### Step-by-step
+
+1. **Encode the calldata** using `cast` (Foundry) or equivalent:
+
+```bash
+cast calldata "buyTickets((uint8[],uint8)[],address,address[],uint256[],bytes32)" \
+  "[([1,6,16,22,25],4)]" \
+  "<RECIPIENT_ADDRESS>" \
+  "[0x1ed4cb4cde1d8a8ec07eef07d52d13c5aefbef09]" \
+  "[1000000000000000000]" \
+  "0xeecf49b78776e9a74928ecb7edd2526cca8e7cfe3f093853f6e847c0d39a3e3b"
+```
+
+For multiple tickets (1 custom + 2 quick-pick):
+```bash
+cast calldata "buyTickets((uint8[],uint8)[],address,address[],uint256[],bytes32)" \
+  "[([3,11,14,22,27],7),([],0),([],0)]" \
+  "<RECIPIENT_ADDRESS>" \
+  "[0x1ed4cb4cde1d8a8ec07eef07d52d13c5aefbef09]" \
+  "[1000000000000000000]" \
+  "0xeecf49b78776e9a74928ecb7edd2526cca8e7cfe3f093853f6e847c0d39a3e3b"
+```
+
+2. **Submit the raw transaction** via Bankr's arbitrary transaction tool:
 
 ```
-tickets = [
-  { normals: [1, 6, 16, 22, 25], bonusball: 4 }
+Submit this transaction:
+{
+  "to": "0x3bAe643002069dBCbcd62B1A4eb4C4A397d042a2",
+  "data": "<ENCODED_CALLDATA_FROM_STEP_1>",
+  "value": "0",
+  "chainId": 8453
+}
+```
+
+### If `cast` is unavailable
+
+Use any ABI encoder that supports Solidity tuple arrays. In viem/ethers, tuples are represented as positional arrays (not objects):
+
+```javascript
+// viem encodeFunctionData format:
+args = [
+  [[[1, 6, 16, 22, 25], 4]],       // _tickets: array of [normals[], bonusball]
+  "0xRecipient...",                   // _recipient
+  ["0x1ed4cb4cde1d8a8ec07eef07d52d13c5aefbef09"], // _referrers
+  [1000000000000000000n],            // _referralSplit
+  "0xeecf49b78776e9a74928ecb7edd2526cca8e7cfe3f093853f6e847c0d39a3e3b" // _source
 ]
 ```
 
-## Example: "buy 3 tickets — one with 3 11 14 22 27 bonus 7, and two random"
+### If no encoding tool is available at all
 
-```
-tickets = [
-  { normals: [3, 11, 14, 22, 27], bonusball: 7 },
-  { normals: [], bonusball: 0 },
-  { normals: [], bonusball: 0 }
-]
-```
+If you cannot encode calldata (no `cast`, no script execution), inform the user that custom-number ticket purchases require an ABI encoder and suggest:
+1. Use `references/buy-random.md` for quick-pick tickets (simpler args, works with `write_contract`)
+2. Or purchase custom-number tickets directly at https://megapot.io
+
+## Examples
+
+### "buy a ticket with numbers 1 6 16 22 25 bonus 4"
+
+Cast tuple format: `[([1,6,16,22,25],4)]`
+
+### "buy 3 tickets — one with 3 11 14 22 27 bonus 7, and two random"
+
+Cast tuple format: `[([3,11,14,22,27],7),([],0),([],0)]`
 
 ## Common errors
 
 | Error | Cause |
 |---|---|
-| Transaction reverts with no revert reason / encoding error | The function signature uses `uint8[5]` instead of `uint8[]` for `normals`. This produces the wrong selector — fix by using `(uint8[] normals, uint8 bonusball)[]` exactly as written in the ABI above. |
+| "Value is not a valid array" from `write_contract` | The tool cannot encode nested tuple arrays. Use the raw calldata approach above instead of `write_contract`. |
+| Wrong function selector / transaction reverts immediately | The function signature uses `uint8[5]` instead of `uint8[]` for `normals`. The correct canonical signature is `buyTickets((uint8[],uint8)[],address,address[],uint256[],bytes32)` with selector `0xde88c28a`. |
 | `InvalidNormalsCount()` | `normals` array length is not exactly 5 (and is not empty for quick-pick) |
 | `InvalidBonusball()` | `bonusball` is outside `[1, bonusballMax]` (and is not 0 for quick-pick) |
 | `InvalidTicketCount()` | Ticket array is empty or has more than 10 entries. For 11+, route to `buy-bulk`. |
