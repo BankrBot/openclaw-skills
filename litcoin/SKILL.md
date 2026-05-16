@@ -1,12 +1,21 @@
 ---
 name: litcoin-miner
-description: "Mine LITCOIN — a proof-of-comprehension and proof-of-research cryptocurrency on Base. Use when the user wants to mine crypto with AI, earn tokens through reading comprehension or solving optimization problems, stake LITCOIN, open vaults, mint LITCREDIT, manage mining guilds, deploy autonomous agents, or interact with the LITCOIN DeFi protocol."
+description: "Mine, stake, claim, and manage LITCOIN end-to-end through Bankr. Hosted mining via @bankrbot: 'start a research miner for me' deploys a server-side Sentinel that uses the Bankr key as the LLM key against llm.bankr.bot, so no other AI provider is needed. Stake at one of four tiers (Spark, Circuit, Conduit, Architect), claim accumulated rewards, delegate LITCOIN to one of six Nen archetype boost pools, opt into the miner boost program, open vaults, mint LITCREDIT, manage mining guilds, check or fund the compute escrow, become a LITCOIN X compute provider, or interact with the LITCOIN DeFi protocol on Base."
 license: MIT-0
-compatibility: "Requires Python 3.9+ and pip. Network access to api.litcoiin.xyz."
-homepage: "https://litcoiin.xyz"
+compatibility: "Requires Python 3.9+ and pip. Network access to api.litcoin.app."
 metadata:
   author: tekkaadan
-  version: "2.0.0"
+  version: "2.4.0"
+  homepage: "https://litcoin.app"
+  repository: "https://github.com/tekkaadan/litcoin-skill"
+  tags: [crypto, mining, defi, ai-agent, base, research, staking, litcoin]
+  hermes:
+    tags: [crypto, mining, defi, ai-agent, base, research, staking]
+    required_environment_variables:
+      - name: BANKR_API_KEY
+        prompt: "Paste your Bankr API key (starts with 'bk_'). Get one at https://bankr.bot/api with agent write access enabled."
+        help: "Controls the on-chain wallet used for mining, claims, staking, and vault operations."
+        required_for: [mining, claims, staking, vaults, compute]
   openclaw:
     requires:
       env: ["BANKR_API_KEY"]
@@ -15,9 +24,6 @@ metadata:
     requires:
       env: ["BANKR_API_KEY"]
       primaryEnv: "BANKR_API_KEY"
-  hermes:
-    tags: [crypto, mining, defi, ai-agent, base, research, staking]
-    category: crypto
 ---
 
 # LITCOIN Miner
@@ -70,7 +76,11 @@ result = agent.research_mine()
 # Iterate on one task (this is where breakthroughs happen)
 agent.research_loop(task_id="sort-benchmark-001", rounds=50, delay=30)
 
-# List available tasks (20 tasks across code_optimization, algorithm, pattern_recognition, software_engineering, bioinformatics, mathematics)
+# List available tasks (24 adapters: code_optimization, algorithm, pattern_recognition, software_engineering,
+# bioinformatics, mathematics, compression, security-audit, red-team, proof-of-verification,
+# knowledge-synthesis, exploit-forensics, adversarial-robustness, agentic-trace,
+# tcg-card-profile, tcg-sentiment, vault-comp, variant-pathogenicity,
+# runescape-insight, runescape-ta, runescape-sentiment, runescape-update-impact, and more)
 tasks = agent.research_tasks()
 ```
 
@@ -86,6 +96,56 @@ agent = Agent(
 )
 agent.research_mine()
 ```
+
+## Bankr X Bot (@bankrbot) Integration
+
+Every Python SDK call above maps to a coordinator endpoint at `https://api.litcoin.app/v1/bankr/*`. Bankr's @bankrbot on X is wired into this surface, so a Bankr user can do the entire LITCOIN flywheel from X with plain-language requests like:
+
+- "claim my litcoin rewards"
+- "stake 5M litcoin into tier 2"
+- "upgrade my stake to architect"
+- "add 10M to my stake"
+- "open a usdc vault with 1000"
+- "mint 500 litcredit from vault 7"
+- "delegate 100% of my stake to manipulator"
+- "opt me into the conjurer boost pool"
+- "join guild 1 with 5M"
+- "deposit 100 litcredit into compute escrow"
+
+Bankr resolves the user's wallet from their bk_ key, the coordinator builds the calldata, Bankr signs and submits the tx on Base. No private key ever touches the coordinator. The full Bankr surface today:
+
+| Domain | Endpoints |
+|---|---|
+| Claims | `/v1/bankr/claim-with-key` |
+| Staking | `stake` `unstake` `early-unstake` `upgrade-tier` `add-to-stake` `stake/info` |
+| Vaults | `vault/open` `vault/add-collateral` `vault/mint` `vault/repay` `vault/withdraw` `vault/close` `vault/details` |
+| Delegation | `delegate` `undelegate` `boost/opt-in` `boost/opt-out` |
+| Guilds | `guild/join` `guild/leave` `guild/unstake` |
+| Hosted mining | `mine/start` `mine/stop` `mine/status` |
+| Compute | `escrow/deposit` `compute/status` `compute/balance` `compute/become-provider` |
+| Read | `balance` |
+| Buy | Bankr's native swap on Aerodrome handles this. DM `@bankrbot "swap 100 usdc for litcoin"` directly. No coordinator endpoint needed. |
+
+All Bankr-routed delegation changes pass through a 24-hour safety window (rate-limited to 3 per wallet per 24h, max 50% of stake-power per change) before activating. All other Bankr calls execute immediately on-chain. Set `BANKR_API_KEY` once and every Agent method routes through Bankr automatically.
+
+### Hosted mining via Bankr (zero AI key required)
+
+`POST /v1/bankr/mine/start` deploys a hosted Sentinel that runs server-side. The Bankr key doubles as the AI key against `https://llm.bankr.bot/v1`, so the user never needs an OpenRouter account or a Python install. Strategies accept human-friendly aliases (`sentinel`, `architect`, `vanguard`, `research`, `audit`, `forensics`, `recipe`) plus the canonical IDs. The underlying 5M LITCOIN balance check from `/v1/agent/deploy` still applies.
+
+```
+POST /v1/bankr/mine/start
+{ "bankrKey": "bk_...", "strategy": "research" }
+
+POST /v1/bankr/mine/status
+{ "bankrKey": "bk_..." }
+
+POST /v1/bankr/mine/stop
+{ "bankrKey": "bk_..." }
+```
+
+### Becoming a compute provider (via Bankr or otherwise)
+
+Compute serving requires a long-lived WebSocket from the LITCOIN X desktop app. `POST /v1/bankr/compute/become-provider` checks 5M LITCOIN eligibility (staked or liquid) and returns a structured next-steps payload pointing at `litcoin.app/x`. The desktop app does the real registration on first launch. `POST /v1/bankr/compute/status` returns live provider metrics once the desktop app is running.
 
 ## Staking (Mining Boost)
 
@@ -147,6 +207,30 @@ result = agent.compute("Explain proof of research")
 print(result['response'])
 ```
 
+## TCG Intelligence
+
+Query the card catalog across Pokemon, Magic, Yu-Gi-Oh, One Piece, and Greed Island. 800K+ cards indexed with live pricing and community sentiment.
+
+```python
+# Catalog stats
+stats = agent.tcg_stats()
+
+# Search by game, rarity, sort by price
+holos = agent.tcg_search(game="pokemon", rarity="Holo Rare", sort="price-desc", limit=10)
+
+# Single card details + latest price
+card = agent.tcg_card("pokemon", "base1", "4")  # Base set Charizard
+
+# 90-day price history for one card
+history = agent.tcg_price_history("pokemon", "base1", "4", days=90)
+
+# Currently trending cards
+trending = agent.tcg_trending(game="mtg", days=7, limit=20)
+
+# Live prices for top-value cards (refreshed every 30 minutes)
+live = agent.tcg_prices_live()
+```
+
 ## Full Flywheel Example
 
 ```python
@@ -204,8 +288,16 @@ print(result['response'])
 - `vault_health(vault_id)` — Collateral ratio
 
 ### Compute
-- `deposit_escrow(amount)` — Deposit LITCREDIT
-- `compute(prompt)` — AI inference via relay network
+- `deposit_escrow(amount)` - Deposit LITCREDIT
+- `compute(prompt)` - AI inference via relay network
+
+### TCG Intelligence
+- `tcg_stats()` - Catalog stats across all five games
+- `tcg_search(game, query, set_code, rarity, sort, limit, offset)` - Search cards (sort: name, number, rarity, price-desc, price-asc, recent)
+- `tcg_card(game, set_code, card_number)` - Full card details + latest price
+- `tcg_price_history(game, set_code, card_number, days)` - Daily price history (up to 365 days)
+- `tcg_trending(game, days, limit)` - Trending cards by price momentum + sentiment
+- `tcg_prices_live()` - Live prices for top-value cards across all games
 
 ### Guilds
 - `create_guild(name)` — Create guild
@@ -214,6 +306,49 @@ print(result['response'])
 - `stake_guild(tier)` — Stake pool (leader)
 - `unstake_guild()` — Unstake pool (leader)
 - `guild_membership()` — Your guild info
+
+### Delegation (Liquidity → Production)
+Direct your already-staked LITCOIN at one of six research archetypes
+(Enhancer, Transmuter, Conjurer, Specialist, Manipulator, Emitter). Backed
+miners get a boost; you earn commission on what they produce. Funds never
+move — your principal stays in the staking contract. Tier-weighted power:
+Spark 1x, Circuit 2x, Core 4x, Architect 8x.
+
+Pool IDs: `0=Enhancer 1=Transmuter 2=Conjurer 3=Specialist 4=Manipulator 5=Emitter`
+
+- `delegate(allocations)` — Sign + record delegation. Allocations is a list
+  of `{poolId, bps}` (basis points of stake, 0-10000, total ≤ 10000).
+  Example: `agent.delegate([{"poolId": 4, "bps": 10000}])` (100% to Manipulator)
+  Split: `agent.delegate([{"poolId": 0, "bps": 6000}, {"poolId": 3, "bps": 4000}])`
+- `undelegate(pool_ids)` — Start the 7-day cooldown for one or more pools
+- `list_delegations()` — Your active positions
+- `delegation_pools()` — All six pool aggregates
+- `delegation_pool(pool_id)` — One pool's stats and backers
+- `delegation_history(limit=25)` — Your recent delegation actions
+- `commission_status()` — Claimable commission for your wallet
+- `claim_commission()` — Coordinator-signed commission claim ready to submit
+- `pending_delegations()` — Bankr-routed delegations in their 24h safety window
+- `confirm_delegation(pending_id)` — Activate a pending delegation immediately
+- `revoke_delegation(pending_id)` — Cancel a pending delegation before activation
+- `delegation_lock_status()` — 7-day commitment lock countdown for your positions
+- `emergency_exit()` — Break the 7-day commitment. Penalty: 14 days of staking yield, routed to research mining pool. Principal untouched.
+- `backed_miners()` — Pools you back, miners opted in, recent commission earnings
+
+**Delegation safety system.** Bankr-routed delegations land in a 24-hour safety window before activating. During the window you can confirm to activate immediately, or revoke to cancel. After 24h with no action, the delegation auto-activates. Telegram notifications fire if you've bound a chat. Rate limit: max 3 Bankr-routed delegation changes per wallet per 24h. Amount cap: a single change cannot move more than 50% of stake-power. The safety system applies ONLY to Bankr-routed paths. Direct wallet (MetaMask) and agent SDK delegations activate immediately.
+
+**Lock + emergency exit.** When a delegation signature lands, every position is locked for 7 days. You cannot re-delegate elsewhere until the lock expires. Emergency exit costs 14 days of current staking yield, debited from claimable balance and routed to the research pool. Principal stays in the staking contract throughout — emergency exit only clears the *delegation* state, not your stake.
+
+### Boost program (miner-side)
+
+Miners can opt INTO a pool's boost program to earn the boost share that delegators direct to that pool. Higher commitment = more share weight, but harder penalty if pool quality slips below threshold. Threshold = avg quality ≥6/10 AND ≥5 verified subs/day.
+
+- `opt_in_to_boost(pool_id, commitment_tier=1)` — Commit this miner to a pool. Tiers: 1=Conservative (1× weight, 10% miss penalty), 2=Aggressive (2×, 20%), 3=All-In (3×, 35%).
+- `opt_out_of_boost(pool_id)` — End the commitment. Future settlements will skip this miner in this pool.
+- `boost_optin_status()` — Active opt-ins for your wallet across all six pools.
+
+The boost share is sourced from a 2.5% carve-out of the daily research pool plus recycled forfeits (failed pools' pending yield, unused boost, miner penalties, and emergency-exit penalties all flow back into the research mining pool, which then refeeds the carve-out). Unbacked miners are unaffected.
+
+**Auto-enrollment (added 2026-05-04).** Miners who consistently produce in one archetype get auto-enrolled into that pool at Conservative tier with a 14-day risk-free preview. During preview, the boost upside fires on qualifying days but the haircut clause is suspended even on missed-threshold days. The eligibility filter requires ≥10 verified subs in the last 7 days, average quality ≥6/10, and one archetype representing ≥60% of submission volume. Generalists are excluded (they would miss threshold and lose money). After preview matures, normal rules apply automatically. Operator can opt out anytime during preview, zero penalty. Check status with `GET /v1/boost/preview-status?wallet=...` or via the dashboard banner.
 
 ### Read State
 - `balance()` — LITCOIN + LITCREDIT
@@ -238,9 +373,11 @@ The SDK raises exceptions with clear messages:
 
 - Chain: Base mainnet (8453)
 - Token: `0x316ffb9c875f900AdCF04889E415cC86b564EBa3`
-- SDK: v4.9.2 on [PyPI](https://pypi.org/project/litcoin/)
-- MCP Server: `npx litcoin-mcp` (43 tools)
-- Emission: 1.5%/day (~34.4M LITCOIN)
+- SDK: v4.15.1 on [PyPI](https://pypi.org/project/litcoin/)
+- Emission: 1.0% APR of treasury (soft-landing)
 - 1 LITCREDIT = 1,000 output tokens of frontier AI
-- Docs: https://litcoiin.xyz/docs
-- Source: https://litcoiin.xyz
+- 24 research adapters producing verified code and structured data (incl. RuneScape vertical Phases 1-4)
+- TCG intelligence across Pokemon, Magic, Yu-Gi-Oh, One Piece, Greed Island
+- Docs: https://litcoin.app/docs
+- Cards: https://litcoin.app/cards
+- Source: https://litcoin.app
