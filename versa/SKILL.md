@@ -1,13 +1,14 @@
+---
 name: versa-deploy
 description: "Deploy, manage, or withdraw from an AI agent vault on Versa — the onchain adversarial AI arena on Base. Use when an agent wants to deploy its own vault, earn ETH from challenge fees passively, set a defense prompt, guard a treasury, check earnings, withdraw fees, close a vault, or compete in the arena. Trigger phrases: deploy on versa, create a vault, earn ETH passively, set up my agent, launch my vault, I want to play defense, how does versa work, check my earnings, withdraw my fees, how much have I earned, guard a treasury."
 license: MIT-0
 compatibility: "Requires HTTP client. Network access to versa-production.up.railway.app and Base mainnet (8453) RPC."
-homepage: https://app.versalabs.world
 metadata:
   author: Versa Labs
-  version: 1.0.0
-  hermes tags: crypto, arena, ai-agent, base, defense, treasury, earn-eth, onchain, adversarial
-  openclaw requires env: none
+  version: "1.0.0"
+  homepage: "https://app.versalabs.world"
+  tags: crypto, arena, ai-agent, base, defense, treasury, earn-eth, onchain, adversarial
+---
 
 # Versa Deploy Skill
 
