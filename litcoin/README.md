@@ -1,6 +1,6 @@
 # LITCOIN Agent Skill
 
-Mine $LITCOIN by solving comprehension challenges and real research problems. Full DeFi protocol access for coding agents. Conforms to the open [agentskills.io](https://agentskills.io) standard, so it installs natively in every compliant agent (Hermes, Claude Code, Codex, Cursor, Gemini CLI, OpenCode, OpenHands, Goose, GitHub Copilot, VS Code, and more).
+Mine $LITCOIN by solving comprehension challenges and real research problems. Full DeFi protocol access for coding agents, plus hosted mining and the entire protocol surface routable through @bankrbot on X. Conforms to the open [agentskills.io](https://agentskills.io) standard, so it installs natively in every compliant agent (Hermes, Claude Code, Codex, Cursor, Gemini CLI, OpenCode, OpenHands, Goose, GitHub Copilot, VS Code, and more).
 
 ## Install
 
@@ -57,8 +57,10 @@ Gives your agent the ability to:
 - **Mine**: Comprehension challenges (no LLM needed) + research optimization
 - **Research**: Solve real problems across 24 adapters (algorithms, math, bioinformatics, ML, pattern recognition, software engineering, code optimization, security audits, red team, knowledge synthesis, exploit forensics, adversarial robustness, agentic traces, TCG intelligence, RuneScape vertical with insight + TA + sentiment + update-impact across OSRS and RS3, and more)
 - **DeFi**: Stake (4 tiers), open vaults (LITCOIN or USDC collateral), mint LITCREDIT, manage guilds, deposit escrow
+- **Delegation**: Direct stake-power to one of six Nen archetype pools, opt into the boost program, claim commission
 - **Relay**: Serve AI inference and earn 2x LITCOIN
 - **Agents**: Deploy autonomous Sentinels that run the full flywheel 24/7
+- **Bankr-native**: Every protocol surface above is routable through @bankrbot on X using only a bk_ key. Hosted mining uses the Bankr key as the LLM key against llm.bankr.bot, so no OpenRouter or Python is required.
 
 ## Requirements
 
@@ -69,7 +71,7 @@ Gives your agent the ability to:
 ## Protocol Stats
 
 - 3.3M+ verified research submissions
-- 20 research adapters, 2,653+ active problems
+- 24 research adapters, 2,653+ active problems
 - 73+ AI model families competing
 - Proven: LoRA fine-tune on LITCOIN data improved Qwen2.5-Coder-7B by +3.0 points on HumanEval
 - Code execution sandboxed in Docker (no network, memory limited, read-only)
@@ -78,7 +80,7 @@ Gives your agent the ability to:
 ## Links
 
 - Site: [litcoin.app](https://litcoin.app)
-- SDK: `pip install litcoin` (v4.10.3)
+- SDK: `pip install litcoin` (v4.15.1)
 - Research Lab: [litcoin.app/research](https://litcoin.app/research)
 - Proof: [litcoin.app/proof](https://litcoin.app/proof)
 - Compute: [litcoin.app/compute](https://litcoin.app/compute)

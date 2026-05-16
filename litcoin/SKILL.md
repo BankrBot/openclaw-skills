@@ -1,11 +1,11 @@
 ---
 name: litcoin-miner
-description: "Mine LITCOIN, a proof-of-comprehension and proof-of-research cryptocurrency on Base. Use when the user wants to mine crypto with AI, earn tokens through reading comprehension or solving optimization problems, stake LITCOIN, open vaults, mint LITCREDIT, manage mining guilds, deploy autonomous agents, or interact with the LITCOIN DeFi protocol."
+description: "Mine, stake, claim, and manage LITCOIN end-to-end through Bankr. Hosted mining via @bankrbot: 'start a research miner for me' deploys a server-side Sentinel that uses the Bankr key as the LLM key against llm.bankr.bot, so no other AI provider is needed. Stake at one of four tiers (Spark, Circuit, Conduit, Architect), claim accumulated rewards, delegate LITCOIN to one of six Nen archetype boost pools, opt into the miner boost program, open vaults, mint LITCREDIT, manage mining guilds, check or fund the compute escrow, become a LITCOIN X compute provider, or interact with the LITCOIN DeFi protocol on Base."
 license: MIT-0
 compatibility: "Requires Python 3.9+ and pip. Network access to api.litcoin.app."
 metadata:
   author: tekkaadan
-  version: "2.3.0"
+  version: "2.4.0"
   homepage: "https://litcoin.app"
   repository: "https://github.com/tekkaadan/litcoin-skill"
   tags: [crypto, mining, defi, ai-agent, base, research, staking, litcoin]
@@ -96,6 +96,56 @@ agent = Agent(
 )
 agent.research_mine()
 ```
+
+## Bankr X Bot (@bankrbot) Integration
+
+Every Python SDK call above maps to a coordinator endpoint at `https://api.litcoin.app/v1/bankr/*`. Bankr's @bankrbot on X is wired into this surface, so a Bankr user can do the entire LITCOIN flywheel from X with plain-language requests like:
+
+- "claim my litcoin rewards"
+- "stake 5M litcoin into tier 2"
+- "upgrade my stake to architect"
+- "add 10M to my stake"
+- "open a usdc vault with 1000"
+- "mint 500 litcredit from vault 7"
+- "delegate 100% of my stake to manipulator"
+- "opt me into the conjurer boost pool"
+- "join guild 1 with 5M"
+- "deposit 100 litcredit into compute escrow"
+
+Bankr resolves the user's wallet from their bk_ key, the coordinator builds the calldata, Bankr signs and submits the tx on Base. No private key ever touches the coordinator. The full Bankr surface today:
+
+| Domain | Endpoints |
+|---|---|
+| Claims | `/v1/bankr/claim-with-key` |
+| Staking | `stake` `unstake` `early-unstake` `upgrade-tier` `add-to-stake` `stake/info` |
+| Vaults | `vault/open` `vault/add-collateral` `vault/mint` `vault/repay` `vault/withdraw` `vault/close` `vault/details` |
+| Delegation | `delegate` `undelegate` `boost/opt-in` `boost/opt-out` |
+| Guilds | `guild/join` `guild/leave` `guild/unstake` |
+| Hosted mining | `mine/start` `mine/stop` `mine/status` |
+| Compute | `escrow/deposit` `compute/status` `compute/balance` `compute/become-provider` |
+| Read | `balance` |
+| Buy | Bankr's native swap on Aerodrome handles this. DM `@bankrbot "swap 100 usdc for litcoin"` directly. No coordinator endpoint needed. |
+
+All Bankr-routed delegation changes pass through a 24-hour safety window (rate-limited to 3 per wallet per 24h, max 50% of stake-power per change) before activating. All other Bankr calls execute immediately on-chain. Set `BANKR_API_KEY` once and every Agent method routes through Bankr automatically.
+
+### Hosted mining via Bankr (zero AI key required)
+
+`POST /v1/bankr/mine/start` deploys a hosted Sentinel that runs server-side. The Bankr key doubles as the AI key against `https://llm.bankr.bot/v1`, so the user never needs an OpenRouter account or a Python install. Strategies accept human-friendly aliases (`sentinel`, `architect`, `vanguard`, `research`, `audit`, `forensics`, `recipe`) plus the canonical IDs. The underlying 5M LITCOIN balance check from `/v1/agent/deploy` still applies.
+
+```
+POST /v1/bankr/mine/start
+{ "bankrKey": "bk_...", "strategy": "research" }
+
+POST /v1/bankr/mine/status
+{ "bankrKey": "bk_..." }
+
+POST /v1/bankr/mine/stop
+{ "bankrKey": "bk_..." }
+```
+
+### Becoming a compute provider (via Bankr or otherwise)
+
+Compute serving requires a long-lived WebSocket from the LITCOIN X desktop app. `POST /v1/bankr/compute/become-provider` checks 5M LITCOIN eligibility (staked or liquid) and returns a structured next-steps payload pointing at `litcoin.app/x`. The desktop app does the real registration on first launch. `POST /v1/bankr/compute/status` returns live provider metrics once the desktop app is running.
 
 ## Staking (Mining Boost)
 
@@ -323,7 +373,7 @@ The SDK raises exceptions with clear messages:
 
 - Chain: Base mainnet (8453)
 - Token: `0x316ffb9c875f900AdCF04889E415cC86b564EBa3`
-- SDK: v4.14.9 on [PyPI](https://pypi.org/project/litcoin/)
+- SDK: v4.15.1 on [PyPI](https://pypi.org/project/litcoin/)
 - Emission: 1.0% APR of treasury (soft-landing)
 - 1 LITCREDIT = 1,000 output tokens of frontier AI
 - 24 research adapters producing verified code and structured data (incl. RuneScape vertical Phases 1-4)
