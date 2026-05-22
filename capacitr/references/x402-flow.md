@@ -1,18 +1,18 @@
 # Capacitr x402 flow
 
 `/api/analyze-link` is the only paid endpoint. Settlement is handled
-per the [x402 v1 spec](https://x402.gitbook.io/x402). Capacitr accepts
-two assets on Base:
+per the [x402 spec](https://x402.gitbook.io/x402). Capacitr accepts
+two assets on Base, routed to different facilitators depending on the
+asset transfer method advertised in the 402 envelope:
 
-| Asset | Address | Settlement | Verified by |
+| Asset | Address | Methods advertised | Settled by |
 |---|---|---|---|
-| USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | **Facilitated** when `X402_FACILITATOR_URL` is set on the server (default Coinbase) | Coinbase x402 facilitator |
-| `$CAPACITR` | `$CAPACITR_TOKEN_ADDRESS` (see discovery) | **Structural only** in v1 | Capacitr server (shape, payee, amount) |
+| USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | `eip3009` | Coinbase CDP facilitator |
+| `$CAPACITR` | `$CAPACITR_TOKEN_ADDRESS` (see discovery) | `permit2` **or** `erc7710` (operator picks one) | Coinbase CDP (permit2) or MetaMask CDP (erc7710) |
 
-The trust delta is intentional and surfaced via `accepts[].settlement`
-in the 402 challenge and via `notes.settlement_trust` in the discovery
-preflight. Agents should choose USDC when stronger settlement assurance
-matters.
+Real on-chain settlement is verified end-to-end for all three
+combinations — see `SKILL.md` "Proven on-chain settlement" for the
+basescan transaction hashes.
 
 ## Step-by-step
 
@@ -24,7 +24,9 @@ matters.
    ```
    Response: `402` with `x402.accepts[]`.
 
-2. **Parse `accepts[]`.** Each entry looks like:
+2. **Parse `accepts[]`.** Each entry advertises one
+   `assetTransferMethod` in `extra`:
+
    ```json
    {
      "scheme":             "exact",
@@ -37,7 +39,13 @@ matters.
      "maxTimeoutSeconds":  30,
      "asset":              "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
      "outputSchema":       null,
-     "extra":              { "name": "Capacitr", "version": "1.0", "symbol": "usdc" },
+     "extra":              {
+       "assetTransferMethod": "eip3009",
+       "name": "USD Coin",
+       "version": "2",
+       "symbol": "usdc",
+       "product": "Capacitr"
+     },
      "settlement":         "facilitated"
    }
    ```
@@ -45,22 +53,42 @@ matters.
    USDC is always at index 0 when configured, so naive clients can
    take `accepts[0]`.
 
-3. **Sign an EIP-3009 `transferWithAuthorization`** for the chosen
-   asset against your wallet, paying `payTo` from your address with
-   `value === maxAmountRequired`.
+3. **Sign the right primitive for the advertised method.**
 
-   The EIP-712 domain MUST come from `accepts[].extra` (`name` +
-   `version`) and `accepts[].asset` (`verifyingContract`). Capacitr's
-   facilitator rebuilds the typed-data hash from those fields — if you
-   hard-code different values your signature will be rejected as
-   invalid.
+   The `extra.assetTransferMethod` field tells you what to sign and
+   the EIP-712 domain values to use. Capacitr's server rebuilds the
+   typed-data hash from `accepts[].extra` (`name` + `version`) and
+   `accepts[].asset` (`verifyingContract`) and forwards to the
+   facilitator — if you hard-code different values your signature
+   will be rejected as `invalid`.
+
+   See **SKILL.md** for the full typed-data shapes per method. Short
+   summary:
+
+   - **`eip3009`** (USDC): one EIP-712 sig of
+     `TransferWithAuthorization` against the token contract.
+   - **`permit2`** ($CAPACITR via Coinbase): two EIP-712 sigs — token
+     `Permit` granting MaxUint allowance to the canonical Permit2
+     contract, plus a Permit2 `PermitWitnessTransferFrom` binding the
+     amount, recipient, and `x402ExactPermit2Proxy` spender.
+   - **`erc7710`** ($CAPACITR via MetaMask): one ERC-7710 delegation
+     signed by a MetaMask Smart Account or EIP-7702-upgraded EOA, with
+     an ERC-20 transfer scope and a redeemer caveat naming MetaMask's
+     facilitator.
 
    Signing options:
-   - **Bankr platform:** signing is handled by Bankr's wallet layer; no
-     extra integration required from this skill.
+   - **Bankr platform:** signing handled by Bankr's wallet layer; no
+     extra integration required from this skill. Bankr picks the
+     `accepts[]` entry matching its wallet's capability.
    - **Privy embedded wallet:** `useX402Fetch()` from
      `@privy-io/react-auth` v3.7+ wraps the signing + retry in a single
-     fetch call (browsers only).
+     fetch call (browsers only; USDC / `eip3009` only today).
+   - **`@coinbase/x402`:** if you're settling USDC or paying $CAPACITR
+     via the `permit2` method, the official Coinbase x402 SDK can build
+     and sign the headers for you. Same SDK Capacitr uses server-side.
+   - **`@metamask/smart-accounts-kit`:** for the `erc7710` path,
+     `createOpenDelegation` + `signDelegation` produces the delegation
+     bytes that go into `payload.permissionContext`.
    - **Vanilla x402 / your own signer:** sign with viem `signTypedData`
      or equivalent, then set the resulting payload as `X-Payment` per
      the [x402 spec](https://x402.gitbook.io/x402).
@@ -69,16 +97,19 @@ matters.
    ```bash
    curl -sS -X POST \
         -H "Content-Type: application/json" \
-        -H "X-Payment: <base64 JSON authorization>" \
+        -H "X-Payment: <base64 JSON paymentPayload>" \
         -d '{"url":"https://x.com/example/status/123"}' \
         "$CAPACITR_BASE_URL/api/analyze-link"
    ```
 
 5. **Outcome.**
-   - `200`: success. Result body returned.
+   - `200`: success. Result body returned. Real on-chain settlement
+     has already cleared at this point (or is in flight, per the
+     facilitator's `waitUntil` policy).
    - `402`: the header was rejected (asset not configured, payee wrong,
-     amount below `maxAmountRequired`, or the facilitator declined).
-     Re-fetch discovery if `prices_version` changed and retry.
+     amount below `maxAmountRequired`, signature mismatch, or the
+     facilitator declined). Re-fetch discovery if `prices_version`
+     changed and retry.
    - `502`: facilitator unreachable. Back off and retry.
    - `429`: rate limit. Honour `Retry-After`.
 
@@ -93,17 +124,20 @@ discovery before re-signing.
 Operators can force a cache bust by setting
 `CAPACITR_PRICES_VERSION_OVERRIDE` to any string.
 
-## $CAPACITR trust delta
+## Operator switches that agents see in `accepts[]`
 
-In v1, `$CAPACITR` payments are accepted on structural validation
-alone — the server checks payee, asset address, and amount but does
-**not** verify settlement on-chain. Coinbase's x402 facilitator does
-not support custom ERC-20s today; a self-hosted or PayAI/Corbits
-facilitator with custom-ERC-20 support is the v2 lever.
+Capacitr operators control which $CAPACITR settlement path is exposed
+via the `CAPACITR_FACILITATOR` env on the server:
 
-If your application has a higher trust bar than `"the agent's wallet
-holds enough $CAPACITR and is willing to authorize a transfer"`,
-choose USDC.
+- `CAPACITR_FACILITATOR=coinbase` → `extra.assetTransferMethod = "permit2"`
+- `CAPACITR_FACILITATOR=metamask` (default) → `extra.assetTransferMethod = "erc7710"`
+
+The agent never needs to know which env is set — it just reads the
+method from the 402 envelope and signs accordingly. If the operator
+flips the switch, the agent sees the new method in the next 402 and
+adapts.
+
+USDC always uses `eip3009`, regardless of this setting.
 
 ## Disabled gates
 
