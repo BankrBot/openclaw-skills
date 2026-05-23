@@ -1,39 +1,37 @@
-# Capacitr API reference
+# Capacitr API reference (skill scope)
 
-Canonical endpoint shapes. The discovery preflight at
-`/api/skill/discovery` is authoritative for which endpoints are live
-and their current prices; this file documents the steady-state contract.
+Two endpoints relevant to this skill — discovery (always free, used for
+preflight) and the single paid call.
 
 ## Discovery
 
 `GET /api/skill/discovery`
 
-Public, no auth, cached 30 seconds.
+Returns current pricing, accepted assets per route, EIP-712 domain
+hints, and the canonical `accepts[]` shape used in 402 envelopes. Hit
+this once at session start; re-fetch when a later 402 carries a
+different `prices_version`.
 
-Response:
+```bash
+curl -sS https://app.capacitr.xyz/api/skill/discovery | jq .
+```
+
+Response (truncated):
+
 ```json
 {
   "version": 1,
-  "prices_version": "<short hex>",
-  "base_url": "https://app.capacitr.xyz",
-  "auth_methods": {
-    "privy_jwt": { "header": "Authorization", "scheme": "Bearer" },
-    "skill_key": { "header": "x-capacitr-skill-key", "prefix": "csk_live_" },
-    "x402":      { "header": "X-Payment", "spec": "x402/v1" }
-  },
+  "prices_version": "<sha256 fingerprint>",
+  "payee": "0x6503fB61705EB6B3C57EE1ab88a1a75A6eE01869",
   "assets": [
-    {
-      "symbol": "usdc",
-      "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-      "settlement": "facilitated",
-      "prices": { "url_scan": 100000, "text_query": 50000 }
-    }
+    { "symbol": "usdc",     "address": "0x833589…", "settlement": "facilitated" },
+    { "symbol": "capacitr", "address": "0x65F8152809…", "settlement": "facilitated" }
   ],
   "accepts": {
-    "url_scan":   [ /* x402 accepts entries */ ],
-    "text_query": [ /* x402 accepts entries */ ]
+    "text_query": [ /* AcceptEntry[] */ ],
+    "url_scan":   [ /* AcceptEntry[] */ ]
   },
-  "endpoints": [ /* method+path+description+auth */ ]
+  "endpoints": [ /* … */ ]
 }
 ```
 
@@ -41,131 +39,110 @@ Response:
 
 `POST /api/analyze-link`
 
-Body:
-```json
-{ "url": "https://x.com/example/status/123" }
+The only x402-paid endpoint. Inputs:
+
+```
+{ "url":   "https://…" }      # one of these is required
+{ "query": "free text" }
 ```
 
-or
+Optional: `mode` (`"discover"` default, or `"hedge"`), `maxMarkets`.
 
-```json
-{ "query": "Iran oil sanctions" }
-```
+### 402 envelope
 
-Headers when paid:
-- `X-Payment: <base64 EIP-3009 authorization>`
+The 402 response carries the v2 payload in BOTH:
 
-Response on success:
+1. A base64-encoded `PAYMENT-REQUIRED` response header — the canonical
+   x402 v2 transport. CDP Bazaar reads from here.
+2. The JSON body (same shape) for v1 clients still reading
+   `body.x402.accepts`.
+
 ```json
 {
-  "predictions":       [/* Polymarket */],
-  "perps":             [/* Hyperliquid */],
-  "options":           [/* Deribit */],
-  "recommendedTrades": [/* short list */],
-  "extracted": {
-    "summary":     "…",
-    "keywords":    ["…"],
-    "entities":    ["…"],
-    "tickers":     ["NVDA","BTC"],
-    "categories":  ["ai","crypto"]
-  },
-  "searchId": "uuid"
-}
-```
-
-Response on payment required:
-```json
-{
+  "x402Version": 2,
   "error": "Payment Required",
-  "prices_version": "<short hex>",
-  "x402": { "version": 1, "accepts": [ /* assets */ ] }
-}
-```
-
-## Feed
-
-`GET /api/feed?interests=crypto,ai,tech`
-
-Auth required (skill key or Privy JWT). Default interests if omitted:
-`crypto,ai,tech`.
-
-Response:
-```json
-{
-  "items": [
+  "resource": { "url": "https://app.capacitr.xyz/api/analyze-link",
+                "mimeType": "application/json" },
+  "accepts": [
     {
-      "title":   "…",
-      "source":  "REDDIT" | "HACKER NEWS" | "GOOGLE NEWS",
-      "url":     "https://…",
-      "summary": "…",
-      "publishedAt": "ISO-8601",
-      "predictions": [/* with Quotient fields */],
-      "perps":       [/* matched HL perps */],
-      "options":     [/* matched Deribit */]
+      "scheme": "exact",
+      "network": "eip155:8453",
+      "amount": "50000",
+      "maxAmountRequired": "50000",
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "payTo": "0x6503fB61705EB6B3C57EE1ab88a1a75A6eE01869",
+      "maxTimeoutSeconds": 300,
+      "extra": { "assetTransferMethod": "eip3009", "symbol": "usdc",
+                 "name": "USD Coin", "version": "2", "product": "Capacitr" }
+    },
+    {
+      "scheme": "exact",
+      "network": "eip155:8453",
+      "amount": "1000000000000000",
+      "maxAmountRequired": "1000000000000000",
+      "asset": "0x65F8152809Dd1fC0D5d8A345c9008d37B95f9ba3",
+      "payTo": "0x6503fB61705EB6B3C57EE1ab88a1a75A6eE01869",
+      "maxTimeoutSeconds": 300,
+      "extra": { "assetTransferMethod": "permit2", "symbol": "capacitr",
+                 "name": "CAPACITR", "version": "1", "product": "Capacitr" }
     }
-  ]
+  ],
+  "extensions": {
+    "bazaar": { "info": { "input": {}, "output": {} }, "schema": {} }
+  }
 }
 ```
 
-Quotient fields on predictions when present: `quotientOdds` (fair
-probability), `spread` (Q − market price), `spreadDirection`
-(`"q_higher"` or `"q_lower"`), `bluf` (one-sentence thesis),
-`signalCount` (analyst signals), `isQuotientSource`.
+### 200 success
 
-## Interests
-
-`GET /api/interests` — `{ interests: string[] }`
-
-`POST /api/interests` — body `{ interests: string[] (≤100, each ≤64 chars) }`. Returns `{ ok: true, count: number }`.
-
-## Risk profile
-
-`GET /api/risk-profile` — `{ profile: { tier, scores, completed_at } | null }`
-
-`POST /api/risk-profile` — body `{ tier: string (≤32), scores: number[] }`. Returns `{ ok: true, tier }`.
-
-## User
-
-`GET /api/user` — `{ user: { id, privy_id, display_name, twitter_handle, farcaster_fid, created_at, interests: string[] } }`
-
-## Chat (streaming)
-
-`POST /api/chat`
-
-Body:
 ```json
 {
-  "messages": [
-    { "role": "user", "content": "What's mispriced on Polymarket today?" }
-  ]
+  "mode": "discover",
+  "content": {
+    "summary": "…",
+    "keywords": ["…"],
+    "entities": ["…"],
+    "tickers":  ["…"]
+  },
+  "predictions": [
+    {
+      "question":         "Will Crude Oil hit $200 by June?",
+      "slug":             "cl-hit-jun-2026",
+      "yesPrice":         0.0145,
+      "noPrice":          0.9855,
+      "volume":           3841735,
+      "quotientOdds":     0.085,
+      "spread":           0.07,
+      "spreadDirection":  "q_higher",
+      "bluf":             "…"
+    }
+  ],
+  "perps":   [{ "asset": "OIL-PERP", "markPrice": 64.20, "recommendation": "…" }],
+  "options": [],
+  "recommendedTrades": [{ "marketType": "polymarket", "venue": "…", "recommendation": "…" }],
+  "searchId": "<uuid>"
 }
 ```
 
-Validation: 1 ≤ `messages.length` ≤ 50, content ≤ 20k chars per message.
+Per-prediction `spreadDirection`: `"q_higher"` = YES is underpriced
+(BUY YES); `"q_lower"` = YES is overpriced (BUY NO).
 
-Returns a Vercel AI SDK SSE stream. Read line-by-line; tool calls
-(`searchMarkets`, `getIntelligence`, `refreshFeed`) appear as JSON
-deltas in the stream.
+### Status codes
 
-## Skill key management (JWT only)
+| Status | When |
+|---|---|
+| 200 | Settlement verified, response delivered. |
+| 400 | URL or query missing from body. |
+| 402 | No payment / wrong asset / underpaid / wrong payee / signature mismatch. |
+| 502 | Facilitator unreachable (verify timeout, 5xx, or operator misconfig). |
+| 500 | Downstream pipeline error (Quotient, Jina, etc.). |
 
-`POST /api/skill-keys` — body `{ label?: string }`. Returns:
-```json
-{
-  "key":        "csk_live_<48 hex>",
-  "id":         "uuid",
-  "prefix":     "csk_live_<8 hex>",
-  "label":      "optional label",
-  "created_at": "ISO-8601",
-  "warning":    "Plaintext key shown once. Store it now; we cannot recover it."
-}
+### Snapshot URL
+
+The `searchId` from a successful response unlocks a public snapshot:
+
+```
+https://app.capacitr.xyz/markets/search/<searchId>
 ```
 
-`GET /api/skill-keys` — `{ keys: [{ id, prefix, label, last_used_at, created_at, revoked_at }] }`
-
-`DELETE /api/skill-keys` — body `{ id: "<uuid>" }`. Soft-deletes by
-setting `revoked_at`.
-
-Every skill-key endpoint rejects requests that present an
-`X-Capacitr-Skill-Key` header with `403` — skill keys cannot manage
-other skill keys.
+Share with a human reviewer.
