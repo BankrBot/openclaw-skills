@@ -11,7 +11,7 @@ Unlike the async prompt endpoint, these endpoints are **synchronous** and return
 | `POST /wallet/sign` | Sign messages, typed data, or transactions | Signature |
 | `POST /wallet/submit` | Submit raw transactions to chain | Transaction hash |
 
-> **Deprecation notice**: The old `/agent/sign` and `/agent/submit` endpoints still work but are deprecated. Use `/wallet/sign` and `/wallet/submit` instead.
+> **Note**: The legacy `/agent/sign` and `/agent/submit` endpoints have been removed. Use `/wallet/sign` and `/wallet/submit`.
 
 Both write endpoints require an API key with `walletApiEnabled` and will be rejected if the key is `readOnly`. IP allowlist is enforced.
 
@@ -282,7 +282,7 @@ Submit transactions built by external tools:
 
 ```javascript
 const tx = await buildSwapTransaction();
-await fetch('https://api.bankr.bot/agent/submit', {
+await fetch('https://api.bankr.bot/wallet/submit', {
   method: 'POST',
   headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
   body: JSON.stringify({ transaction: tx })

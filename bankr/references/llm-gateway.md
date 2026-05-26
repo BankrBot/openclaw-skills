@@ -47,6 +47,7 @@ bankr config get llmKey
 | `claude-sonnet-4.5` | Anthropic | Previous generation Sonnet |
 | `claude-haiku-4.5` | Anthropic | Fast, cost-effective |
 | `gemini-3-pro` | Google | Long context (2M tokens) |
+| `gemini-3.5-flash` | Google | Latest Flash, 1M context |
 | `gemini-3-flash` | Google | High throughput |
 | `gemini-2.5-pro` | Google | Long context, multimodal |
 | `gemini-2.5-flash` | Google | Speed, high throughput |

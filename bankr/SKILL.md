@@ -256,12 +256,12 @@ The legacy aliases `/public/resolve-recipient` and `/public/search-users` still 
 |----------|--------|-------------|
 | `/token-launches` | GET | List recent token launches (cached, public) |
 
-#### Deprecated endpoints
+#### Removed legacy endpoints
 
-The following `/agent/*` endpoints still work but are deprecated in favor of `/wallet/*`:
+The following `/agent/*` endpoints have been removed. Use the `/wallet/*` equivalents:
 
-| Deprecated | Use Instead |
-|-----------|-------------|
+| Removed | Use Instead |
+|---------|-------------|
 | `GET /agent/me` | `GET /wallet/me` |
 | `GET /agent/balances` | `GET /wallet/portfolio` |
 | `POST /agent/sign` | `POST /wallet/sign` |
