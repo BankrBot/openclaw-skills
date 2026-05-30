@@ -1,6 +1,6 @@
 ---
 name: bankr
-description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, check portfolio balances (with PnL and NFTs), view token prices, search tokens, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, call or deploy x402 paid API endpoints, browse the web, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet. Supports Base, Ethereum, Polygon, Solana, and Unichain.
+description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, check portfolio balances (with PnL and NFTs), view token prices, search tokens, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, call or deploy x402 paid API endpoints, browse the web, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet. Supports Base, Ethereum, Polygon, Solana, Unichain, World Chain, Arbitrum, and BNB Chain.
 metadata:
   {
     "clawdbot":
@@ -482,7 +482,7 @@ bankr agent cancel job_abc123
 
 ## LLM Gateway
 
-The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unified API for Claude, Gemini, GPT, and other models — multi-provider access, cost tracking, automatic failover, and SDK compatibility through a single endpoint.
+The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unified API for Claude, Gemini, GPT, Grok, DeepSeek, Qwen, Kimi, MiniMax, GLM, and other models — multi-provider access, cost tracking, automatic failover, and SDK compatibility through a single endpoint.
 
 **Base URL:** `https://llm.bankr.bot` | **Dashboard:** [bankr.bot/llm](https://bankr.bot/llm) | **API Keys:** [bankr.bot/api](https://bankr.bot/api)
 
@@ -494,6 +494,7 @@ The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unifie
 - Check credits: `bankr llm credits` | Top up: `bankr llm credits add <amount>` | Auto top-up: `bankr llm credits auto --enable --amount 25 --tokens USDC`
 - In OpenClaw config, prefix model IDs with `bankr/` (e.g. `bankr/claude-sonnet-4.6`). In direct API calls, use bare IDs (e.g. `claude-sonnet-4.6`)
 - **Per-model discounts** available for Bankr Club members and partners — applied automatically at billing time
+- **BNB Chain promo**: top up $5+ via BNB Chain and receive a $5 bonus credit (one-time per wallet)
 
 ### Quick Commands
 
