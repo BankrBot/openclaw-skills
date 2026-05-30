@@ -14,7 +14,7 @@ metadata:
 
 # Gem Miner Staking
 
-Stake $GEM on Base to earn yield and unlock Gem Miner's in-game earn + cashout system. The staking gate requires **25,000,000 GEM** staked to access earning and cashout.
+Stake $GEM on Base to earn yield and unlock Gem Miner's in-game earn + cashout system. The staking gate requires **25,000,000 GEM** staked. No burn NFT required to stake.
 
 ## Contracts (Base mainnet)
 
@@ -26,73 +26,61 @@ Stake $GEM on Base to earn yield and unlock Gem Miner's in-game earn + cashout s
 ## Key Parameters
 
 - **Unbond period:** 7 days (`requestUnstake` → wait → `withdraw`)
-- **Early exit fee:** 10% of staked amount (fee folds back into the reward pool)
+- **Early exit fee:** 10% folded back into the reward pool
 - **Earn/cashout gate:** 25,000,000 GEM staked
-- **Rewards:** distributed proportionally from ForgeUpgrade fees (10% of every forge burn routes to stakers)
+- **Rewards:** from ForgeUpgrade fees — 10% of every forge burn routes to stakers
 
-## Usage via Bankr
-
-### Check GEM balance
+## Check staking position
 
 ```
-bankr "what is my GEM balance on Base? token 0xD3776969966B340d72d75731eF890A3Bc9F21bA3"
+bankr "on Base, call balanceOf(address), earned(address), and pendingOf(address) on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A with my wallet"
 ```
 
-### Check staking position
+Returns: `staked`, `earned` (claimable rewards), `pending` (unbonding amount + unlock timestamp).
+
+## Check GEM balance
 
 ```
-bankr "call balanceOf(address) on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A on Base with my address"
+bankr "what is my GEM balance on Base for token 0xD3776969966B340d72d75731eF890A3Bc9F21bA3"
 ```
 
-Or check rewards and pending unstake:
+## Stake GEM
+
+Approve then stake in one shot:
 
 ```
-bankr "call earned(address) and pendingOf(address) on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A on Base"
+bankr "on Base, approve 0xff293DEc665949a3a1a80fBA6a602da3be702C1A to spend [AMOUNT_WEI] of token 0xD3776969966B340d72d75731eF890A3Bc9F21bA3, then call stake(uint256) on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A with [AMOUNT_WEI]"
 ```
 
-### Stake GEM
+> Raw wei: 25M GEM = `25000000000000000000000000` (25 followed by 24 zeros)
 
-First approve the staking contract to spend your GEM, then stake:
-
-```
-bankr "approve 0xff293DEc665949a3a1a80fBA6a602da3be702C1A to spend 50000000 GEM (0xD3776969966B340d72d75731eF890A3Bc9F21bA3) on Base, then call stake(uint256) with 50000000000000000000000000"
-```
-
-> Amount is in raw wei (18 decimals). 50,000,000 GEM = `50000000000000000000000000`.
-
-### Request unstake (start 7-day unbond)
+## Request unstake (start 7-day unbond)
 
 ```
-bankr "call requestUnstake(uint256) on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A on Base with amount 50000000000000000000000000"
+bankr "on Base, call requestUnstake(uint256) on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A with [AMOUNT_WEI]"
 ```
 
-### Withdraw after unbond period
+## Withdraw after 7 days
 
 ```
-bankr "call withdraw() on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A on Base"
+bankr "on Base, call withdraw() on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A"
 ```
 
-### Early withdraw (10% fee)
+## Early withdraw (pays 10% fee)
 
 ```
-bankr "call earlyWithdraw() on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A on Base"
+bankr "on Base, call earlyWithdraw() on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A"
 ```
 
-### Claim staking rewards
+## Claim staking rewards
 
 ```
-bankr "call getReward() on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A on Base"
+bankr "on Base, call getReward() on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A"
 ```
 
-### Check if gate is met
+## Common amounts (raw wei)
 
-```
-bankr "call balanceOf(address) on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A on Base — do I have at least 25000000000000000000000000 staked?"
-```
-
-## Common Amounts (raw wei)
-
-| GEM | Raw wei |
+| GEM amount | Raw wei |
 |---|---|
 | 25,000,000 (gate minimum) | `25000000000000000000000000` |
 | 50,000,000 | `50000000000000000000000000` |
@@ -100,7 +88,8 @@ bankr "call balanceOf(address) on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A on 
 
 ## Notes
 
-- Staking and withdrawal are user-callable directly — no backend required.
-- Rewards accrue continuously. You can call `getReward()` at any time without unstaking.
-- If you need your GEM back urgently, `earlyWithdraw()` burns 10% — the fee goes back to all remaining stakers.
-- The 7-day unbond clock starts when you call `requestUnstake`. You cannot re-stake the pending amount; request a full or partial amount.
+- No burn NFT required — anyone with GEM can stake
+- Rewards accrue continuously; claim anytime without unstaking
+- Early withdraw burns 10% — redistributed to remaining stakers
+- The 7-day clock starts on `requestUnstake`; you cannot re-stake the pending amount
+- Once staked past 25M, you unlock earn events and GEM cashout in-game at gemminer.app
