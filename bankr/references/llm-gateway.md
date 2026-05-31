@@ -40,26 +40,45 @@ bankr config get llmKey
 
 | Model | Provider | Best For |
 |-------|----------|----------|
-| `claude-opus-4.7` | Anthropic | Latest, most capable reasoning |
-| `claude-opus-4.6` | Anthropic | Advanced reasoning |
-| `claude-opus-4.5` | Anthropic | Complex reasoning, architecture |
-| `claude-sonnet-4.6` | Anthropic | Balanced speed and quality |
-| `claude-sonnet-4.5` | Anthropic | Previous generation Sonnet |
-| `claude-haiku-4.5` | Anthropic | Fast, cost-effective |
-| `gemini-3-pro` | Google | Long context (2M tokens) |
+| `claude-opus-4.8` | Anthropic | Latest, most capable reasoning (1M context) |
+| `claude-opus-4.7` | Anthropic | Advanced reasoning (1M context) |
+| `claude-opus-4.6` | Anthropic | Advanced reasoning (1M context) |
+| `claude-opus-4.5` | Anthropic | Complex reasoning (200K context) |
+| `claude-sonnet-4.6` | Anthropic | Balanced speed and quality (1M context) |
+| `claude-sonnet-4.5` | Anthropic | Previous generation Sonnet (1M context) |
+| `claude-haiku-4.5` | Anthropic | Fast, cost-effective (200K context) |
 | `gemini-3.5-flash` | Google | Latest Flash, 1M context |
-| `gemini-3-flash` | Google | High throughput |
+| `gemini-3.1-pro` | Google | Long context, reasoning (1M) |
+| `gemini-3.1-flash-lite` | Google | Ultra-fast, lowest cost (1M) |
+| `gemini-3-flash` | Google | High throughput (1M) |
 | `gemini-2.5-pro` | Google | Long context, multimodal |
 | `gemini-2.5-flash` | Google | Speed, high throughput |
-| `gpt-5.2` | OpenAI | Advanced reasoning |
-| `gpt-5.2-codex` | OpenAI | Code generation |
+| `gemma-4-31b-it` | Google | Multimodal, cost-effective (262K) |
+| `gemma-4-26b-a4b-it` | Google | MoE, cost-effective (262K) |
+| `gpt-5.5` | OpenAI | Latest, most capable (1M context, image input) |
+| `gpt-5.4` | OpenAI | Advanced reasoning (1M context, image input) |
 | `gpt-5.4-mini` | OpenAI | Fast, economical (400K context, image input) |
 | `gpt-5.4-nano` | OpenAI | Ultra-fast, lowest cost (400K context, image input) |
-| `minimax-m2.7` | MiniMax | Balanced performance (204.8K context) |
-| `kimi-k2.5` | Moonshot AI | Long-context reasoning |
-| `qwen3-coder` | Alibaba | Code generation, debugging |
-| `glm-5` | Z.ai | General purpose reasoning |
-| `glm-5-turbo` | Z.ai | Fast, cost-effective |
+| `gpt-5.2` | OpenAI | Advanced reasoning (400K context) |
+| `gpt-5.2-codex` | OpenAI | Code generation (400K context) |
+| `gpt-5-mini` | OpenAI | Previous gen, economical (400K) |
+| `gpt-5-nano` | OpenAI | Previous gen, ultra-fast (400K) |
+| `grok-4.20` | xAI | Latest, deep reasoning (2M context) |
+| `grok-4.3` | xAI | Balanced performance (1M context) |
+| `deepseek-v4-pro` | DeepSeek | Long context reasoning (1M, 384K output) |
+| `deepseek-v4-flash` | DeepSeek | High throughput, cost-effective (1M) |
+| `deepseek-v3.2` | DeepSeek | Cost-effective (164K context) |
+| `qwen3.5-plus` | Alibaba | Long-context reasoning (1M) |
+| `qwen3.5-flash` | Alibaba | Fast, economical (1M) |
+| `qwen3-coder` | Alibaba | Code generation, debugging (262K) |
+| `kimi-k2.6` | Moonshot AI | Latest, long-context (262K) |
+| `kimi-k2.5` | Moonshot AI | Long-context reasoning (262K) |
+| `minimax-m2.7` | MiniMax | Balanced performance (204.8K) |
+| `minimax-m2.7-highspeed` | MiniMax | Faster variant, double throughput (204.8K) |
+| `minimax-m2.5` | MiniMax | Cost-effective (204.8K) |
+| `glm-5.1` | Z.ai | Advanced reasoning (202K) |
+| `glm-5` | Z.ai | General purpose reasoning (202K) |
+| `glm-5-turbo` | Z.ai | Fast, cost-effective (202K) |
 
 ```bash
 # Fetch live model list from the gateway
@@ -102,6 +121,16 @@ bankr llm credits auto --disable
 ```
 
 When credits are exhausted, gateway requests will fail with HTTP 402.
+
+### BNB Chain Promotion
+
+Top up LLM credits via BNB Chain ($5+ minimum) and receive a **$5 bonus credit** — one-time per wallet. Check eligibility at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) or via the CLI:
+
+```bash
+bankr llm credits add 5 --token USDT   # BNB Chain auto-selected if it holds the most USDT
+```
+
+Bonus credits appear in your credit history alongside regular top-ups.
 
 ### Agent Credit Top-Up
 
@@ -194,10 +223,12 @@ This writes the following provider config (with your key and all available model
         "apiKey": "your_key_here",
         "api": "openai-completions",
         "models": [
+          { "id": "claude-opus-4.8", "name": "Claude Opus 4.8", "api": "anthropic-messages" },
           { "id": "claude-sonnet-4.6", "name": "Claude Sonnet 4.6", "api": "anthropic-messages" },
           { "id": "claude-haiku-4.5", "name": "Claude Haiku 4.5", "api": "anthropic-messages" },
-          { "id": "gemini-3-flash", "name": "Gemini 3 Flash" },
-          { "id": "gpt-5.2", "name": "GPT 5.2" }
+          { "id": "gemini-3.5-flash", "name": "Gemini 3.5 Flash" },
+          { "id": "gpt-5.5", "name": "GPT 5.5" },
+          { "id": "deepseek-v4-pro", "name": "DeepSeek V4 Pro" }
         ]
       }
     }
