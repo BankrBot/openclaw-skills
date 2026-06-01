@@ -10,6 +10,22 @@ visibility: public
 
 Agent Wormhole opens a temporary encrypted passage for agent handoffs. The payload can be claimed once, then the channel collapses.
 
+## Before First Use
+
+This skill executes the `@builtbyecho/agent-wormhole` npm package. Before running any `agent-wormhole` or `npx @builtbyecho/agent-wormhole` command for the first time in a session, tell the user:
+
+> About to install/run `@builtbyecho/agent-wormhole` (v0.1.2) from npm. It is an encrypted one-time-handoff CLI that writes payloads to a local `.agent-wormholes/` directory and (for holder/paid opens) calls `storage.builtbyecho.xyz` and the Bankr x402 endpoint. It does NOT sign transactions or access private keys.
+>
+> Proceed? (y/n)
+
+Wait for explicit confirmation before the first invocation. Subsequent calls in the same session do not need to re-prompt.
+
+Pin the version when invoking via `npx`:
+
+```bash
+npx -p @builtbyecho/agent-wormhole@0.1.2 agent-wormhole <args>
+```
+
 ## Links
 
 - Website: `https://www.builtbyecho.xyz`
@@ -42,7 +58,7 @@ agent-wormhole cleanup --delete-claimed-older-than 15m
 For one-off use without installing globally:
 
 ```bash
-npx @builtbyecho/agent-wormhole send --text "mission brief"
+npx -p @builtbyecho/agent-wormhole@0.1.2 agent-wormhole send --text "mission brief"
 ```
 
 ## Mental Model
