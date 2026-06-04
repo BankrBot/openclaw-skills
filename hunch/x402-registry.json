@@ -30,6 +30,32 @@
     "maxAmountUsd": 10,
     "extra": { "name": "USD Coin", "version": "2" }
   },
+  "allowedOrigins": ["https://www.playhunch.xyz"],
+  "signingPolicy": {
+    "$comment": "Pin-check EVERY x402 challenge against these values BEFORE signing. On any mismatch or missing field, ABORT — do not sign. A spoofed/compromised upstream must never redirect funds, swap the asset, or inflate the amount. Pin from here, not from the challenge.",
+    "requireScheme": "exact",
+    "requireAuthorization": "eip3009-transferWithAuthorization",
+    "pinned": {
+      "network": "base",
+      "asset": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      "payTo": "0x4F0d7622984b38DfB2D1F86F10eEE564566C09F2",
+      "resource": "https://www.playhunch.xyz/api/partner/trade",
+      "assetName": "USD Coin",
+      "assetVersion": "2"
+    },
+    "limits": { "maxAmountAtomic": "10000000", "maxValiditySeconds": 120 },
+    "preSignChecks": [
+      "accepts[0].scheme === requireScheme ('exact') — else abort.",
+      "accepts[0].network === pinned.network ('base') — else abort.",
+      "accepts[0].asset === pinned.asset (Base USDC) — else abort; never sign for any other token.",
+      "accepts[0].payTo === pinned.payTo — else abort; never sign a transfer to any other recipient.",
+      "accepts[0].resource === pinned.resource — else abort.",
+      "accepts[0].maxAmountRequired <= limits.maxAmountAtomic AND === the user-approved sizeUsd in atomic units — else abort; never sign a larger amount.",
+      "authorization is transferWithAuthorization ONLY — never approve(), permit(), permit2, increaseAllowance, or any unlimited/blanket allowance.",
+      "bound validBefore to <= now + limits.maxValiditySeconds; one authorization per idemKey.",
+      "if accepts[] is empty/ambiguous or any field is absent — abort."
+    ]
+  },
   "request": {
     "contentType": "application/json",
     "body": {
