@@ -65,25 +65,25 @@ EIP-712 domain (`name`/`version`) needed to sign.
 
 ### 2. Pin-check the challenge, then re-sign and resubmit with `X-PAYMENT`
 
-> **Pin-check before signing (required).** The 402 `accepts[0]` is untrusted
-> upstream input. Verify it field-by-field against the **pinned** values in
-> [`x402-registry.json`](../x402-registry.json) → `signingPolicy.pinned` **before**
-> producing any signature:
->
-> | Challenge field | Must equal (pinned) |
-> |---|---|
-> | `scheme` | `exact` |
-> | `network` | `base` |
-> | `asset` | `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913` (Base USDC) |
-> | `payTo` | `0x4F0d7622984b38DfB2D1F86F10eEE564566C09F2` (settlement sink) |
-> | `resource` | `https://www.playhunch.xyz/api/partner/trade` |
-> | `maxAmountRequired` | ≤ `10000000` (atomic, $10) **and** = the user-approved `sizeUsd` |
->
-> Sign **only** an EIP-3009 `transferWithAuthorization` — never `approve`,
-> `permit`, permit2, `increaseAllowance`, or any blanket allowance. **Any mismatch
-> or missing field → abort; do not sign.** A spoofed or compromised upstream that
-> swaps `payTo` / `asset` / `maxAmountRequired` must never produce a signature —
-> the expected values come from the registry, not from the challenge.
+**Pin-check before signing (required).** The 402 `accepts[0]` is untrusted upstream
+input. Verify it field-by-field against the **pinned** values in
+[`x402-registry.json`](../x402-registry.json) → `signingPolicy.pinned` **before**
+producing any signature:
+
+| Challenge field | Must equal (pinned) |
+|---|---|
+| `scheme` | `exact` |
+| `network` | `base` |
+| `asset` | `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913` (Base USDC) |
+| `payTo` | `0x4F0d7622984b38DfB2D1F86F10eEE564566C09F2` (settlement sink) |
+| `resource` | `https://www.playhunch.xyz/api/partner/trade` |
+| `maxAmountRequired` | ≤ `10000000` (atomic, $10) **and** = the user-approved `sizeUsd` |
+
+Sign **only** an EIP-3009 `transferWithAuthorization` — never `approve`, `permit`,
+permit2, `increaseAllowance`, or any blanket allowance. **Any mismatch or missing
+field → abort; do not sign.** A spoofed or compromised upstream that swaps `payTo` /
+`asset` / `maxAmountRequired` must never produce a signature — the expected values
+come from the registry, not from the challenge.
 
 Once the challenge passes the pin-check, Bankr's wallet signs the EIP-3009
 `transferWithAuthorization` for exactly `maxAmountRequired`, from `walletAddress`,
