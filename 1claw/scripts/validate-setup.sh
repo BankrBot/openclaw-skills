@@ -1,9 +1,31 @@
 #!/usr/bin/env bash
 # validate-setup.sh — Smoke-test 1Claw API reachability and optional agent credentials.
+#
 # Usage:
-#   ./1claw/scripts/validate-setup.sh           # health only
-#   ONECLAW_AGENT_API_KEY=ocv_... ./1claw/scripts/validate-setup.sh  # + token exchange
+#   ./1claw/scripts/validate-setup.sh                                    # health only (default host)
+#   ONECLAW_AGENT_API_KEY=ocv_... ./1claw/scripts/validate-setup.sh      # + token exchange
+#   ONECLAW_BASE_URL=https://custom.example.com ./1claw/scripts/validate-setup.sh --allow-custom-base-url
+#
+# Security:
+#   - Only HTTPS URLs are accepted (HTTP is rejected).
+#   - Only known trusted 1Claw hosts are allowed by default:
+#       https://api.1claw.xyz
+#       https://shroud.1claw.xyz
+#   - Custom hosts require the explicit --allow-custom-base-url flag.
+#   - This prevents accidental credential leakage to untrusted endpoints.
 set -euo pipefail
+
+TRUSTED_HOSTS=(
+  "https://api.1claw.xyz"
+  "https://shroud.1claw.xyz"
+)
+
+ALLOW_CUSTOM=false
+for arg in "$@"; do
+  case "$arg" in
+    --allow-custom-base-url) ALLOW_CUSTOM=true ;;
+  esac
+done
 
 BASE_URL="${ONECLAW_BASE_URL:-https://api.1claw.xyz}"
 API_KEY="${ONECLAW_AGENT_API_KEY:-}"
@@ -11,6 +33,36 @@ API_KEY="${ONECLAW_AGENT_API_KEY:-}"
 pass() { printf 'OK   %s\n' "$1"; }
 fail() { printf 'FAIL %s\n' "$1" >&2; exit 1; }
 warn() { printf 'WARN %s\n' "$1"; }
+
+# --- URL safety checks ---
+if [[ "${BASE_URL}" != https://* ]]; then
+  fail "ONECLAW_BASE_URL must use HTTPS (got: ${BASE_URL}). HTTP is not allowed — credentials would be sent in cleartext."
+fi
+
+if [[ "${BASE_URL}" == *localhost* ]] || [[ "${BASE_URL}" == *127.0.0.1* ]] || [[ "${BASE_URL}" == *0.0.0.0* ]]; then
+  if [[ "${ALLOW_CUSTOM}" != true ]]; then
+    fail "ONECLAW_BASE_URL points to localhost (${BASE_URL}). If this is intentional for local development, re-run with --allow-custom-base-url."
+  fi
+fi
+
+is_trusted=false
+for trusted in "${TRUSTED_HOSTS[@]}"; do
+  base_normalized="${BASE_URL%/}"
+  if [[ "${base_normalized}" == "${trusted}" ]]; then
+    is_trusted=true
+    break
+  fi
+done
+
+if [[ "${is_trusted}" != true ]]; then
+  if [[ "${ALLOW_CUSTOM}" != true ]]; then
+    fail "ONECLAW_BASE_URL (${BASE_URL}) is not a known trusted 1Claw host. Trusted hosts: ${TRUSTED_HOSTS[*]}. If you are using a self-hosted or development instance, re-run with --allow-custom-base-url. WARNING: This will send your API key to that URL."
+  else
+    warn "Using custom base URL: ${BASE_URL}"
+    warn "Your API key will be sent to this host. Ensure you trust it."
+    echo ""
+  fi
+fi
 
 if ! command -v curl >/dev/null 2>&1; then
   fail "curl is required"
