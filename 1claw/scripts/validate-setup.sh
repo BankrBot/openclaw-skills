@@ -68,14 +68,17 @@ if ! command -v curl >/dev/null 2>&1; then
   fail "curl is required"
 fi
 
+TMPDIR_VALIDATE=$(mktemp -d)
+trap 'rm -rf "${TMPDIR_VALIDATE}"' EXIT
+
 # --- API health (public) ---
-health_code=$(curl -s -o /tmp/1claw-health.json -w '%{http_code}' "${BASE_URL}/v1/health" || true)
+health_code=$(curl -s -o "${TMPDIR_VALIDATE}/health.json" -w '%{http_code}' "${BASE_URL}/v1/health" || true)
 if [[ "${health_code}" != "200" ]]; then
   fail "GET ${BASE_URL}/v1/health returned HTTP ${health_code}"
 fi
 pass "API health (${BASE_URL}/v1/health)"
 
-if command -v jq >/dev/null 2>&1 && jq -e . >/dev/null 2>&1 </tmp/1claw-health.json; then
+if command -v jq >/dev/null 2>&1 && jq -e . >/dev/null 2>&1 <"${TMPDIR_VALIDATE}/health.json"; then
   pass "Health response is valid JSON"
 else
   warn "jq missing or health body not JSON — skipping parse"
@@ -122,11 +125,11 @@ if command -v jq >/dev/null 2>&1; then
   fi
 
   # Optional: list vaults with JWT
-  list_code=$(curl -s -o /tmp/1claw-vaults.json -w '%{http_code}' \
+  list_code=$(curl -s -o "${TMPDIR_VALIDATE}/vaults.json" -w '%{http_code}' \
     -H "Authorization: Bearer ${access}" \
     "${BASE_URL}/v1/vaults" || true)
   if [[ "${list_code}" == "200" ]]; then
-    count=$(jq -r '.vaults | length' /tmp/1claw-vaults.json 2>/dev/null || echo "?")
+    count=$(jq -r '.vaults | length' "${TMPDIR_VALIDATE}/vaults.json" 2>/dev/null || echo "?")
     pass "GET /v1/vaults (${count} vault(s))"
   else
     warn "GET /v1/vaults returned HTTP ${list_code} (may be policy-limited)"
