@@ -177,21 +177,34 @@ See `references/mcp-and-api.md` for the full tool list and REST auth flows.
 
 When the org has `BANKR_PARTNER_KEY` configured on Vault, lease scoped TTL-bound keys instead of storing long-lived `bk_` secrets.
 
+**Privileged — deny-by-default:** Agents need an explicit policy on the `__agent-keys` vault:
+
+```json
+{
+  "principal_type": "agent",
+  "principal_id": "<agent-uuid>",
+  "secret_path_pattern": "agents/<agent-uuid>/bankr/*",
+  "permissions": ["write"]
+}
+```
+
+Re-exchange the agent token after the human grants (or approves) the policy. For production, use `request_approval` with `action: "policy_change"` instead of granting directly.
+
 **MCP (`lease_bankr_key`):**
 ```json
 {
-  "ttl_seconds": 3600,
+  "ttl_seconds": 600,
   "llm_gateway_enabled": true,
   "agent_api_enabled": false,
   "read_only": true
 }
 ```
 
-Returns `{ lease_id, api_key, wallet_id, expires_at }`. The `bk_usr_` key is for runtime use only — never echo it in chat.
+Returns lease metadata only (`lease_id`, `wallet_id`, `expires_at`) — **not** the `bk_usr_` key. Use Shroud (`X-Shroud-Provider: bankr`) for LLM traffic; revoke the lease when done.
 
 **CLI (human or CI):**
 ```bash
-1claw agent bankr-key lease <agent-id> --ttl 3600
+1claw agent bankr-key lease <agent-id> --ttl 600
 1claw agent bankr-key list <agent-id>
 1claw agent bankr-key revoke <agent-id> <lease-id>
 ```
@@ -199,9 +212,10 @@ Returns `{ lease_id, api_key, wallet_id, expires_at }`. The `bk_usr_` key is for
 **SDK:**
 ```typescript
 const { data: lease } = await client.agents.leaseBankrKey(agentId, {
-  ttl_seconds: 3600,
-  permissions: { llm_gateway_enabled: true },
+  ttl_seconds: 600,
+  permissions: { llm_gateway_enabled: true, agent_api_enabled: false, read_only: true },
 });
+// Agent JWT: lease.api_key is omitted — use Shroud
 ```
 
 **Shroud:** With an active lease, `X-Shroud-Provider: bankr` auto-resolves the leased key — no `get_secret` needed for LLM traffic.
@@ -343,7 +357,7 @@ curl -s -X PUT "https://api.1claw.xyz/v1/vaults/${VAULT_ID}/secrets/keys/bankr-a
 
 | Tool | Description |
 | --- | --- |
-| `lease_bankr_key` | Issue short-lived `bk_usr_` key from org partner key (`BANKR_PARTNER_KEY` on Vault). TTL default 1h, max 24h. Auto-revoked on agent delete/deactivate. |
+| `lease_bankr_key` | **Privileged** — policy-gated on `agents/{id}/bankr/*`. Issues scoped `bk_usr_` key (stored for Shroud; **not returned** in tool output). Recommend TTL 5–15 min; max 24h. Revoke after task. |
 
 ### Platform API (for app builders)
 
