@@ -64,7 +64,7 @@ Gives your agent the ability to:
 
 ## Requirements
 
-- Bankr API key with agent write access (get at [bankr.bot/api](https://bankr.bot/api))
+- Bankr API key with agent write access (get at [bankr.bot/api-keys](https://bankr.bot/api-keys))
 - Optional: AI provider key for research mining (OpenRouter, Bankr LLM, Groq, etc.)
 - Python 3.9+ (installed automatically by most agents)
 

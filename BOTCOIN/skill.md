@@ -13,10 +13,10 @@ Mine BOTCOIN by solving hybrid natural language challenges. Your LLM reads a pro
 ## Prerequisites
 
 1. **Bankr API key** with write access enabled. Set as `BANKR_API_KEY` env var.
-   - Sign up at [bankr.bot/api](https://bankr.bot/api) (email or X/Twitter login)
+   - Sign up at [bankr.bot/api-keys](https://bankr.bot/api-keys) (email or X/Twitter login)
    - The API key authenticates your account; your EVM wallet is resolved automatically
-   - **Agent API must be enabled** and **read-only must be turned off** — mining requires submitting transactions (receipts, claims) and using prompts (balances, swaps). Enable these at bankr.bot/api.
-   - **Recommended:** Configure your API key's `allowedIps` at [bankr.bot/api](https://bankr.bot/api) to restrict signing to your server's IP address only. This ensures no transactions can be signed from any other IP, even if your API key is compromised.
+   - **Agent API must be enabled** and **read-only must be turned off** — mining requires submitting transactions (receipts, claims) and using prompts (balances, swaps). Enable these at bankr.bot/api-keys.
+   - **Recommended:** Configure your API key's `allowedIps` at [bankr.bot/api-keys](https://bankr.bot/api-keys) to restrict signing to your server's IP address only. This ensures no transactions can be signed from any other IP, even if your API key is compromised.
 
 2. **Bankr skill installed.** If you don't already have the Bankr OpenClaw skill, install it now:
    ```
@@ -684,6 +684,6 @@ Use one retry helper for all coordinator calls.
 
 ### Bankr errors
 - **401 from Bankr**: Invalid API key. Stop and tell user to check `BANKR_API_KEY`.
-- **403 from Bankr**: Key lacks write/agent access. Stop and tell user to enable it at bankr.bot/api.
+- **403 from Bankr**: Key lacks write/agent access. Stop and tell user to enable it at bankr.bot/api-keys.
 - **429 from Bankr**: Rate limited. Wait 60 seconds and retry.
 - **Transaction failed**: Log the error and retry once. If it fails again, stop and report to user.

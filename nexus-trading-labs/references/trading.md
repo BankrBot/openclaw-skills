@@ -7,7 +7,7 @@ Trigger when `/trade` returns `{ error: "wallet_not_registered" }`.
 (Full URL: `POST https://og.nexustradinglabs.com/trade`) `{ error: "wallet_not_registered" }`.
 
 **Step R1 — Ask for Bankr API key**
-> "Your wallet `<walletAddress>` isn't linked to a Nexus account yet. I need your Bankr API key for one-time setup — find it at bankr.bot/api (enable 'Wallet & Agent API'). It's used only for registration and never stored."
+> "Your wallet `<walletAddress>` isn't linked to a Nexus account yet. I need your Bankr API key for one-time setup — find it at bankr.bot/api-keys (enable 'Wallet & Agent API'). It's used only for registration and never stored."
 
 **Step R2 — Register**
 ```
@@ -21,7 +21,7 @@ POST https://og.nexustradinglabs.com/proxy/bankr-register
 Server: checks Orderly account → EIP-712 registers if needed → derives ed25519 key → stores in KV.
 
 If R2 returns EIP-712 blocked error:
-> "Your Bankr API key has 'allowed recipients' restrictions blocking EIP-712 signing. Generate a new key at bankr.bot/api without that restriction."
+> "Your Bankr API key has 'allowed recipients' restrictions blocking EIP-712 signing. Generate a new key at bankr.bot/api-keys without that restriction."
 
 **Step R3 — Retry the original trade immediately.** No user action needed.
 

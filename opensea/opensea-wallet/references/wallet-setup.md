@@ -235,7 +235,7 @@ Bankr is an HTTP signing service for agent wallets. The adapter calls Bankr's AP
 
 ### 1. Provision an API Key with appropriate scope flags
 
-Sign up at [bankr.bot](https://bankr.bot) and create a key at [bankr.bot/api](https://bankr.bot/api). Configure the key's scope flags as part of the happy path, not optional hardening:
+Sign up at [bankr.bot](https://bankr.bot) and create a key at [bankr.bot/api-keys](https://bankr.bot/api-keys). Configure the key's scope flags as part of the happy path, not optional hardening:
 
 - **For monitoring-only agents:** enable `readOnly`. The agent can call read endpoints (prices, balances, analytics) but `/wallet/sign` and `/wallet/submit` will return 403.
 - **For signing agents:** set the following on the key —
@@ -259,7 +259,7 @@ export BANKR_API_KEY="your-bankr-api-key"
 opensea wallet info
 ```
 
-Confirms the key reaches Bankr and prints the wallet address. The output will include the static reminder to re-verify scope flags at bankr.bot/api — this is by design, not a bug.
+Confirms the key reaches Bankr and prints the wallet address. The output will include the static reminder to re-verify scope flags at bankr.bot/api-keys — this is by design, not a bug.
 
 ### 4. Execute a Swap
 

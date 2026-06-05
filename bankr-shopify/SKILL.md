@@ -32,7 +32,7 @@ The REST Admin API is legacy since 2024-04 and only receives security fixes. **U
    - `SHOPIFY_ACCESS_TOKEN` — admin token (starts with `shpat_`)
    - `SHOPIFY_STORE_DOMAIN` — `my-store.myshopify.com` (the permanent myshopify domain, not your custom one)
    - `SHOPIFY_API_VERSION` — default `2026-01`
-   - `BANKR_API_KEY` — for the Bankr bridge sections; generate at https://bankr.bot/api
+   - `BANKR_API_KEY` — for the Bankr bridge sections; generate at https://bankr.bot/api-keys
 
 > **Heads up:** As of January 1, 2026, new "legacy custom apps" created in the Shopify admin are gone. New setups should use the **Dev Dashboard** (`shopify.dev/docs/apps/build/dev-dashboard`). Existing admin-created apps keep working. If the user's shop has no existing custom app and it's after 2026-01-01, direct them to Dev Dashboard instead of the admin flow.
 

@@ -289,7 +289,7 @@ done
 }
 ```
 
-**Resolution**: Check API key, ensure "Wallet & Agent API" access is enabled at https://bankr.bot/api
+**Resolution**: Check API key, ensure "Wallet & Agent API" access is enabled at https://bankr.bot/api-keys
 
 ### Forbidden (403)
 ```json
@@ -299,7 +299,7 @@ done
 }
 ```
 
-**Resolution**: Visit https://bankr.bot/api and enable Wallet & Agent API access on your key
+**Resolution**: Visit https://bankr.bot/api-keys and enable Wallet & Agent API access on your key
 
 ### Rate Limiting (429)
 ```json
@@ -387,7 +387,7 @@ done
 - Use environment variables or config.json
 - Rotate periodically
 - Monitor usage
-- Revoke immediately if leaked at https://bankr.bot/api
+- Revoke immediately if leaked at https://bankr.bot/api-keys
 
 ### Validation
 - Validate user input

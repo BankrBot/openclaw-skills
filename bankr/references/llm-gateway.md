@@ -16,7 +16,7 @@ The gateway uses your **LLM key** for authentication. The key resolution order:
 
 Most users only need a single key for both the agent API and the LLM gateway. Set a separate LLM key only if your keys have different permissions or rate limits.
 
-**Dashboard:** Manage usage, credits, and auto top-up at [bankr.bot/llm](https://bankr.bot/llm). Top up credits at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits). Generate and configure API keys at [bankr.bot/api](https://bankr.bot/api).
+**Dashboard:** Manage usage, credits, and auto top-up at [bankr.bot/llm](https://bankr.bot/llm). Top up credits at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits). Generate and configure API keys at [bankr.bot/api-keys](https://bankr.bot/api-keys).
 
 ### Setting the LLM Key
 
@@ -152,7 +152,7 @@ If the user already has a Bankr account, they just need to configure the gateway
 ### Have Bankr Account
 
 1. Get an API key with **LLM Gateway** enabled:
-   - **Have a key?** Enable LLM Gateway at [bankr.bot/api](https://bankr.bot/api)
+   - **Have a key?** Enable LLM Gateway at [bankr.bot/api-keys](https://bankr.bot/api-keys)
    - **Need a key?** Generate via CLI: `bankr login email user@example.com` → `bankr login email user@example.com --code OTP --accept-terms --key-name "My Agent" --llm`
 2. Run: `bankr llm setup openclaw --install`
 3. Set default model in `~/.openclaw/openclaw.json`:
@@ -166,7 +166,7 @@ If the user already has a Bankr account, they just need to configure the gateway
 
 1. Send OTP: `bankr login email user@example.com`
 2. Complete setup: `bankr login email user@example.com --code OTP --accept-terms --key-name "My Agent" --llm`
-   - Can also create/configure keys at [bankr.bot/api](https://bankr.bot/api)
+   - Can also create/configure keys at [bankr.bot/api-keys](https://bankr.bot/api-keys)
 3. **Top up credits:** `bankr llm credits add 25` or at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) — new wallets start with $0
 4. Verify: `bankr llm credits` (must show > $0)
 5. Run: `bankr llm setup openclaw --install`
@@ -190,7 +190,7 @@ Key resolution: `BANKR_LLM_KEY` env var → `llmKey` in config → falls back to
 
 ### Key Permissions
 
-Manage at [bankr.bot/api](https://bankr.bot/api):
+Manage at [bankr.bot/api-keys](https://bankr.bot/api-keys):
 
 | Toggle | Controls |
 |--------|----------|

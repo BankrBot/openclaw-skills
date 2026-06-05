@@ -95,9 +95,9 @@ Reference: [Fireblocks TAP overview](https://developers.fireblocks.com/docs/set-
 
 ## Bankr
 
-Bankr key scope flags (`readOnly`, `walletApiEnabled`, `agentApiEnabled`, `allowedRecipients`, `allowedIps`, daily limits) are configured at [bankr.bot/api](https://bankr.bot/api) — there is no API to modify them programmatically, by design. To re-scope a key:
+Bankr key scope flags (`readOnly`, `walletApiEnabled`, `agentApiEnabled`, `allowedRecipients`, `allowedIps`, daily limits) are configured at [bankr.bot/api-keys](https://bankr.bot/api-keys) — there is no API to modify them programmatically, by design. To re-scope a key:
 
-1. Log in to bankr.bot/api on your operator machine.
+1. Log in to bankr.bot/api-keys on your operator machine.
 2. Edit the relevant key's flags. For an agent-signing key, set `allowedRecipients` to the EVM/Solana address allowlist the agent should be permitted to send to, set `allowedIps` to your deploy CIDR, set a daily message limit.
 3. If the agent is currently running, it will continue to use cached credentials until the next restart; rotate the key if you need an immediate cut-over.
 

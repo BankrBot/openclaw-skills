@@ -25,7 +25,7 @@ pip install litcoin
 from litcoin import Agent
 
 agent = Agent(
-    bankr_key="bk_YOUR_KEY",        # Bankr API key (get one at bankr.bot/api)
+    bankr_key="bk_YOUR_KEY",        # Bankr API key (get one at bankr.bot/api-keys)
     ai_key="sk-YOUR_KEY",           # AI provider key (enables relay mining)
     ai_url="https://api.openai.com/v1",  # Any OpenAI-compatible provider
     model="gpt-4o-mini",
@@ -70,7 +70,7 @@ Requirements: Python 3.9+, `requests` library. The miner auto-installs `websocke
 
 You need two things to mine:
 
-1. A Bankr wallet — create at https://bankr.bot, get an API key at https://bankr.bot/api, fund with some ETH on Base for gas.
+1. A Bankr wallet — create at https://bankr.bot, get an API key at https://bankr.bot/api-keys, fund with some ETH on Base for gas.
 2. An AI provider API key (optional but recommended for relay mining). Any OpenAI-compatible provider works: Bankr LLM Gateway (80% off for BNKR stakers), OpenAI, Groq (free tier), Together AI, Venice (venice.ai), or local Ollama.
 
 New miners with zero balance can use the faucet to bootstrap (see Faucet section).

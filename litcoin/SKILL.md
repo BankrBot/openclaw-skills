@@ -13,7 +13,7 @@ metadata:
     tags: [crypto, mining, defi, ai-agent, base, research, staking]
     required_environment_variables:
       - name: BANKR_API_KEY
-        prompt: "Paste your Bankr API key (starts with 'bk_'). Get one at https://bankr.bot/api with agent write access enabled."
+        prompt: "Paste your Bankr API key (starts with 'bk_'). Get one at https://bankr.bot/api-keys with agent write access enabled."
         help: "Controls the on-chain wallet used for mining, claims, staking, and vault operations."
         required_for: [mining, claims, staking, vaults, compute]
   openclaw:
@@ -30,7 +30,7 @@ metadata:
 
 Mine $LITCOIN on Base (chain 8453) using the Python SDK. Two mining paths: comprehension mining (no LLM needed) and research mining (LLM generates optimized code, tested in sandbox, verified on-chain).
 
-**Requirements:** Python 3.9+, a Bankr API key from [bankr.bot/api](https://bankr.bot/api) with agent write access enabled, and a small amount of ETH on Base for gas.
+**Requirements:** Python 3.9+, a Bankr API key from [bankr.bot/api-keys](https://bankr.bot/api-keys) with agent write access enabled, and a small amount of ETH on Base for gas.
 
 ## Install
 

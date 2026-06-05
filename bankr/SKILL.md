@@ -43,7 +43,7 @@ This creates a wallet, accepts terms, and generates an API key — no browser ne
 
 **Option B: Bankr Terminal**
 
-1. Visit [bankr.bot/api](https://bankr.bot/api)
+1. Visit [bankr.bot/api-keys](https://bankr.bot/api-keys)
 2. **Sign up / Sign in** — Enter your email and the one-time passcode (OTP) sent to it
 3. **Generate an API key** — Create a key with **Wallet & Agent API** access enabled (the key starts with `bk_...`)
 
@@ -484,7 +484,7 @@ bankr agent cancel job_abc123
 
 The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unified API for Claude, Gemini, GPT, Grok, DeepSeek, Qwen, Kimi, MiniMax, GLM, and other models — multi-provider access, cost tracking, automatic failover, and SDK compatibility through a single endpoint.
 
-**Base URL:** `https://llm.bankr.bot` | **Dashboard:** [bankr.bot/llm](https://bankr.bot/llm) | **API Keys:** [bankr.bot/api](https://bankr.bot/api)
+**Base URL:** `https://llm.bankr.bot` | **Dashboard:** [bankr.bot/llm](https://bankr.bot/llm) | **API Keys:** [bankr.bot/api-keys](https://bankr.bot/api-keys)
 
 ### Key Concepts
 
@@ -692,9 +692,9 @@ User-controlled settings that apply to every surface — chat, agent, API, CLI. 
 
 If USD pricing is unavailable and a limit is enabled, the transaction is **rejected** (fail-closed) rather than waved through. Your own wallet addresses are always implicitly allowed as recipients.
 
-### API-Key Level Controls (bankr.bot/api)
+### API-Key Level Controls (bankr.bot/api-keys)
 
-Per-key settings configured at [bankr.bot/api](https://bankr.bot/api):
+Per-key settings configured at [bankr.bot/api-keys](https://bankr.bot/api-keys):
 
 **API Key Types**: Bankr uses a single key format (`bk_...`) with capability flags (`walletApiEnabled`, `agentApiEnabled`, `tokenLaunchApiEnabled`, `llmGatewayEnabled`). You can optionally configure a separate LLM Gateway key via `bankr config set llmKey` or `BANKR_LLM_KEY` — useful when you want independent revocation or different permissions for agent vs LLM access.
 
@@ -709,7 +709,7 @@ Per-key settings configured at [bankr.bot/api](https://bankr.bot/api):
 If you suspect a key is compromised:
 
 1. **Pause** the wallet at [bankr.bot](https://bankr.bot) → Security — halts every outbound transaction immediately
-2. **Revoke** the key at [bankr.bot/api](https://bankr.bot/api)
+2. **Revoke** the key at [bankr.bot/api-keys](https://bankr.bot/api-keys)
 3. **Rotate** — generate a new key and update deployments
 4. **Audit** — review recent transactions and agent job history before unpausing
 
@@ -724,7 +724,7 @@ If you suspect a key is compromised:
 - Add `~/.bankr/` and `.env` to `.gitignore` — the CLI stores credentials in `~/.bankr/config.json`
 - Test with small amounts on low-cost chains (Base, Polygon) before production use
 - Use `waitForConfirmation: true` with `/wallet/submit` — transactions execute immediately with no confirmation prompt
-- Rotate keys periodically via the dashboard or API key rotation endpoint, and revoke immediately if compromised at [bankr.bot/api](https://bankr.bot/api)
+- Rotate keys periodically via the dashboard or API key rotation endpoint, and revoke immediately if compromised at [bankr.bot/api-keys](https://bankr.bot/api-keys)
 
 **Reference**: [references/safety.md](references/safety.md)
 
@@ -1058,7 +1058,7 @@ curl -X POST "https://api.bankr.bot/wallet/submit" \
 
 - **Documentation**: https://docs.bankr.bot
 - **LLM Gateway Docs**: https://docs.bankr.bot/llm-gateway/overview
-- **API Key Management**: https://bankr.bot/api
+- **API Key Management**: https://bankr.bot/api-keys
 - **Terminal**: https://bankr.bot/terminal
 - **CLI Package**: https://www.npmjs.com/package/@bankr/cli
 - **Twitter**: @bankr_bot

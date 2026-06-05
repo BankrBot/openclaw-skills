@@ -21,9 +21,9 @@ Returns `{ ok: true, amount, accountId, approveTxHash, depositTxHash }`. Funds l
 
 **Requirements:** Wallet & Agent API enabled on bankrApiKey, wallet has USDC on Arbitrum, wallet has ~0.00001 ETH for LayerZero fee.
 
-**allowedRecipients blocker:** If the key has `allowedRecipients` set, server returns 403. Fix: go to bankr.bot/api, clear the allowedRecipients list, retry.
+**allowedRecipients blocker:** If the key has `allowedRecipients` set, server returns 403. Fix: go to bankr.bot/api-keys, clear the allowedRecipients list, retry.
 
-**When to ask for Bankr API key:** "I need your Bankr API key to submit the deposit. Find it at bankr.bot/api — same key used for trading."
+**When to ask for Bankr API key:** "I need your Bankr API key to submit the deposit. Find it at bankr.bot/api-keys — same key used for trading."
 
 ### Prepare-only path (returns calldata for manual signing)
 
@@ -79,7 +79,7 @@ POST https://og.nexustradinglabs.com/proxy/bankr-withdraw
 }
 ```
 
-**`bankrApiKey` is MANDATORY.** Omitting it returns 401. Always ask the user for it before withdrawal: "I need your Bankr API key to sign the withdrawal. Find it at bankr.bot/api — Wallet & Agent API must be enabled."
+**`bankrApiKey` is MANDATORY.** Omitting it returns 401. Always ask the user for it before withdrawal: "I need your Bankr API key to sign the withdrawal. Find it at bankr.bot/api-keys — Wallet & Agent API must be enabled."
 
 Server: derives ed25519 key → fetches withdrawal nonce → builds EIP-712 Withdraw message → signs via Bankr eth_signTypedData_v4 → submits to Orderly /v1/withdraw_request. Funds arrive on Arbitrum, no user signature required.
 

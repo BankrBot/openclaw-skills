@@ -36,7 +36,7 @@ metrics and copy top performers. No self-reported results.
 1. **Create account** at [bankr.bot](https://bankr.bot) - provide email, get OTP, done.
    Creating an account automatically provisions EVM wallets (Base, Ethereum, Polygon, Unichain) and a Solana wallet.
 
-2. **Get API key** at [bankr.bot/api](https://bankr.bot/api) - create a key with **Agent API** access enabled. Key starts with `bk_`.
+2. **Get API key** at [bankr.bot/api-keys](https://bankr.bot/api-keys) - create a key with **Agent API** access enabled. Key starts with `bk_`.
 
 3. **Save config:**
 ```bash

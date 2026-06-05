@@ -52,7 +52,7 @@ bankr login email user@example.com --code 123456 --accept-terms --key-name "Agen
 
 **Option B: Web login**
 
-1. Visit [bankr.bot/api](https://bankr.bot/api)
+1. Visit [bankr.bot/api-keys](https://bankr.bot/api-keys)
 2. Sign in with email + OTP
 3. Generate an API key with **Wallet API** write access enabled
 

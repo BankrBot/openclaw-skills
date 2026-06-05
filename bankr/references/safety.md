@@ -2,7 +2,7 @@
 
 Comprehensive safety guidance for building agents and integrations with the Bankr API and CLI. Covers wallet-level security settings, API key access controls, wallet separation, rate limits, and operational best practices.
 
-Bankr has two independent layers of safety controls: **wallet-level** (configured at [bankr.bot](https://bankr.bot) → Security; applies to every surface) and **per-API-key** (configured at [bankr.bot/api](https://bankr.bot/api); applies to one key). Both run independently — a transaction must satisfy both to broadcast.
+Bankr has two independent layers of safety controls: **wallet-level** (configured at [bankr.bot](https://bankr.bot) → Security; applies to every surface) and **per-API-key** (configured at [bankr.bot/api-keys](https://bankr.bot/api-keys); applies to one key). Both run independently — a transaction must satisfy both to broadcast.
 
 ## Wallet-Level Security Settings
 
@@ -44,7 +44,7 @@ The wallet-level permitted-recipients list is independent from the API-key `allo
 If you suspect a key is compromised:
 
 1. **Pause** the wallet at [bankr.bot](https://bankr.bot) → Security. Halts every outbound transaction immediately, including in-flight broadcasts. Revoking the key alone does not stop transactions already past auth.
-2. **Revoke** the key at [bankr.bot/api](https://bankr.bot/api).
+2. **Revoke** the key at [bankr.bot/api-keys](https://bankr.bot/api-keys).
 3. **Rotate** — generate a new key with the same access profile and update deployments.
 4. **Audit** — review recent transactions and agent job history before unpausing.
 
@@ -54,7 +54,7 @@ Bankr uses a single key format (`bk_...`) with **capability flags** that control
 
 ### Capability Flags
 
-Each API key has independent toggles managed at [bankr.bot/api](https://bankr.bot/api):
+Each API key has independent toggles managed at [bankr.bot/api-keys](https://bankr.bot/api-keys):
 
 | Flag | Controls Access To | Default |
 |------|-------------------|---------|
@@ -91,7 +91,7 @@ For full LLM Gateway setup details, see [llm-gateway.md](llm-gateway.md).
 
 ## API Key Access Control
 
-Bankr API keys support granular access control configured at [bankr.bot/api](https://bankr.bot/api). Two key security features: **read-only mode** and **IP whitelisting**.
+Bankr API keys support granular access control configured at [bankr.bot/api-keys](https://bankr.bot/api-keys). Two key security features: **read-only mode** and **IP whitelisting**.
 
 ### Read-Only API Keys
 
@@ -113,7 +113,7 @@ For `/agent/sign`:
 ```json
 {
   "error": "Read-only API key",
-  "message": "This API key has read-only access and cannot sign messages or transactions. Update your API key permissions at https://bankr.bot/api"
+  "message": "This API key has read-only access and cannot sign messages or transactions. Update your API key permissions at https://bankr.bot/api-keys"
 }
 ```
 
@@ -121,7 +121,7 @@ For `/agent/submit`:
 ```json
 {
   "error": "Read-only API key",
-  "message": "This API key has read-only access and cannot submit transactions. Update your API key permissions at https://bankr.bot/api"
+  "message": "This API key has read-only access and cannot submit transactions. Update your API key permissions at https://bankr.bot/api-keys"
 }
 ```
 
@@ -161,7 +161,7 @@ API keys support an `allowedIps` whitelist with both individual IPs and CIDR ran
 
 ### Configuring Access Control
 
-Manage API key settings at [bankr.bot/api](https://bankr.bot/api):
+Manage API key settings at [bankr.bot/api-keys](https://bankr.bot/api-keys):
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -235,7 +235,7 @@ When building autonomous agents that execute transactions, use a **separate Bank
 
 ### Setup Steps
 
-1. **Create a new Bankr account** — Sign up at [bankr.bot/api](https://bankr.bot/api) with a different email. This provisions fresh EVM and Solana wallets automatically.
+1. **Create a new Bankr account** — Sign up at [bankr.bot/api-keys](https://bankr.bot/api-keys) with a different email. This provisions fresh EVM and Solana wallets automatically.
 2. **Generate an API key** — Enable **Agent API** access for the key
 3. **Configure access controls** — Set `readOnly`, `allowedIps`, or both as appropriate for your use case
 4. **Fund with limited amounts** — Transfer only what the agent needs for its operations
@@ -321,7 +321,7 @@ Blockchain transactions are **irreversible** once confirmed. Key safety rules:
 
 ### Rotation & Revocation
 
-- **Rotate periodically** — Rotate keys via the dashboard at [bankr.bot/api](https://bankr.bot/api) or programmatically via the API key rotation endpoint. Rotation atomically generates a new key and deactivates the old one. After rotating, update both env vars and CLI config (`bankr login --api-key NEW_KEY`)
+- **Rotate periodically** — Rotate keys via the dashboard at [bankr.bot/api-keys](https://bankr.bot/api-keys) or programmatically via the API key rotation endpoint. Rotation atomically generates a new key and deactivates the old one. After rotating, update both env vars and CLI config (`bankr login --api-key NEW_KEY`)
 - **Revoke immediately** — If any key (API or LLM) is leaked, deactivate it immediately at the dashboard
 - **One key per purpose** — Use separate keys for different agents, environments, and services (Agent API vs LLM Gateway) so you can revoke individually without disrupting unrelated systems
 
