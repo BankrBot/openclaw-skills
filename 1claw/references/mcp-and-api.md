@@ -106,11 +106,27 @@ Treasury mode: body includes `treasury_id` and `mode: "treasury"` with active **
 
 Supported chains: `ethereum`, `bitcoin`, `solana`, `xrp`, `cardano`, `tron`.
 
+## Bankr Dynamic Key Vending
+
+Partner-key secret engine for short-lived Bankr wallet API keys. Requires `BANKR_PARTNER_KEY` on Vault (server-side; never stored in agent vault paths).
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /v1/agents/{id}/bankr-keys/lease` | Issue scoped `bk_usr_` key (default TTL 1h, max 24h) |
+| `GET /v1/agents/{id}/bankr-keys` | List active leases |
+| `DELETE /v1/agents/{id}/bankr-keys/{lease_id}` | Revoke lease (calls Bankr API) |
+
+MCP: `lease_bankr_key`. CLI: `1claw agent bankr-key lease|list|revoke`. Shroud auto-resolves leased keys when `X-Shroud-Provider: bankr`.
+
+Legacy fallback: static key at `providers/bankr/api-key` or `keys/bankr-api-key`.
+
+Guide: https://docs.1claw.xyz/docs/guides/bankr-key-vending
+
 ## Packages
 
 | Package | Purpose |
 | --- | --- |
-| `@1claw/mcp` | MCP server (stdio / httpStream), 35 tools |
+| `@1claw/mcp` | MCP server (stdio / httpStream), 36 tools |
 | `@1claw/sdk` | TypeScript API client (zero deps) |
 | `@1claw/cli` | CLI (`1claw` command) — device flow + email/password auth |
 | `@1claw/openapi-spec` | OpenAPI 3.1 source of truth (generate clients in any language) |
