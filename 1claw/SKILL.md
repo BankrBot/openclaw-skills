@@ -109,7 +109,7 @@ For Cursor, Claude Desktop, Codex, and other local MCP clients, use the **stdio*
   "mcpServers": {
     "1claw": {
       "command": "npx",
-      "args": ["-y", "@1claw/mcp@0.32.1"],
+      "args": ["-y", "@1claw/mcp@0.32.2"],
       "env": {
         "ONECLAW_AGENT_API_KEY": "ocv_your_key_here"
       }
@@ -118,7 +118,7 @@ For Cursor, Claude Desktop, Codex, and other local MCP clients, use the **stdio*
 }
 ```
 
-> **Supply-chain safety:** Always pin to a known-good version (e.g. `@1claw/mcp@0.32.1`). Running `npx -y @1claw/mcp` without a version tag risks executing compromised code if the package is ever hijacked. Verify the latest trusted version at [npmjs.com/package/@1claw/mcp](https://www.npmjs.com/package/@1claw/mcp) before updating the pin.
+> **Supply-chain safety:** Always pin to a known-good version (e.g. `@1claw/mcp@0.32.2`). Running `npx -y @1claw/mcp` without a version tag risks executing compromised code if the package is ever hijacked. Verify the latest trusted version at [npmjs.com/package/@1claw/mcp](https://www.npmjs.com/package/@1claw/mcp) before updating the pin.
 
 Optional overrides:
 
@@ -142,7 +142,7 @@ Run the MCP server with `ONECLAW_LOCAL_ONLY=true` to get the `inspect_content` t
   "mcpServers": {
     "1claw-security": {
       "command": "npx",
-      "args": ["-y", "@1claw/mcp@0.32.1"],
+      "args": ["-y", "@1claw/mcp@0.32.2"],
       "env": {
         "ONECLAW_LOCAL_ONLY": "true"
       }
@@ -502,14 +502,14 @@ The agent MUST NOT proceed without explicit "yes" (or equivalent affirmative) fr
 ## CLI and SDK (optional)
 
 ```bash
-npm install -g @1claw/cli@0.32.0
+npm install -g @1claw/cli@0.32.1
 1claw login   # device flow or email/password
 1claw agent enroll my-agent --email human@example.com
 1claw secret put keys/example --value-from-stdin
 1claw secret rotate --generate keys/webhook-secret -l 64 -c hex
 ```
 
-> **Pin CLI version:** Always install a specific version (`@1claw/cli@0.32.0`). Running `npm install -g @1claw/cli` without a version risks supply-chain attacks in environments with wallet or secrets access.
+> **Pin CLI version:** Always install a specific version (`@1claw/cli@0.32.1`). Running `npm install -g @1claw/cli` without a version risks supply-chain attacks in environments with wallet or secrets access.
 
 TypeScript SDK (`@1claw/sdk`):
 ```typescript
