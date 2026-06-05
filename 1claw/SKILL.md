@@ -386,7 +386,7 @@ Agents call `https://shroud.1claw.xyz` directly with headers:
 - `X-Shroud-Agent-Key: ocv_...` (or `Authorization: Bearer <jwt>`)
 - `X-Shroud-Provider: openai` (required — specifies upstream LLM provider)
 
-Enable **Shroud LLM Proxy** on the agent in the dashboard; re-exchange the agent token after config changes so JWT carries `shroud_config`. Supports: OpenAI, Anthropic, Google (Gemini), Mistral, Cohere, OpenRouter, Venice AI, Stripe AI Gateway.
+Enable **Shroud LLM Proxy** on the agent in the dashboard; re-exchange the agent token after config changes so JWT carries `shroud_config`. Supports: OpenAI, Anthropic, Google (Gemini), Mistral, Cohere, OpenRouter, Darkbloom, Venice AI, Bankr LLM Gateway (`X-Shroud-Provider: bankr`), Stripe AI Gateway.
 
 ---
 
