@@ -3,9 +3,11 @@ name: 1claw
 description: >
   HSM-backed secret management for AI agents. Store API keys (including Bankr `bk_` keys), passwords,
   and credentials in an encrypted vault; retrieve them at runtime via MCP without keeping secrets in
-  chat context. Policy-based access control, secret rotation, sharing, EVM transaction intents
-  (sign/simulate/broadcast), multi-chain signing keys, treasury multisig proposals, OIDC federation
-  for external service auth, built-in prompt injection detection, and optional Shroud TEE LLM proxy.
+  chat context. Bankr Dynamic Key Vending issues short-lived scoped `bk_usr_` keys from a partner key
+  (`bk_ptr_`) without manual rotation. Policy-based access control, secret rotation, sharing, EVM
+  transaction intents (sign/simulate/broadcast), multi-chain signing keys, treasury multisig proposals,
+  OIDC federation for external service auth, built-in prompt injection detection, and optional Shroud
+  TEE LLM proxy.
   Use when the agent needs secure credential storage, just-in-time secret access, guarded on-chain
   signing, or security scanning — not for Bankr trading prompts, portfolio checks, or x402 calls
   (use the bankr skill instead).
@@ -39,7 +41,7 @@ metadata:
 
 - **HSM envelope encryption** — AES-256-GCM DEKs wrapped by Google Cloud KMS (HSM-backed) KEKs
 - **Policy-based access control** — agents get zero access until a human explicitly grants path-level policies
-- **35 MCP tools** — secrets CRUD, signing, transactions, treasury proposals, platform bootstrap, approvals, security inspection
+- **36 MCP tools** — secrets CRUD, signing, transactions, Bankr key leasing, treasury proposals, platform bootstrap, approvals, security inspection
 - **Multi-chain signing keys** — Ethereum, Bitcoin, Solana, XRP, Cardano, Tron (private keys never leave the vault)
 - **Transaction guardrails** — per-agent chain allowlists, address allowlists, per-tx caps, daily spend limits
 - **OIDC federation** — 1claw is a JWKS-published issuer; agents can get RS256 tokens for external services (Anthropic WIF, GCP STS, AWS STS) without static keys
@@ -53,7 +55,9 @@ metadata:
 - **Secret versioning and rotation** — every write creates a new version; server-generated rotation with configurable charset
 - **Webhooks** — subscribe to wallet, proposal, transaction, policy, and signing key events
 
-**Pair with Bankr:** Store your Bankr API key at a vault path (e.g. `keys/bankr-api-key`) via `put_secret`, then `get_secret` when calling Bankr endpoints. Never paste `bk_...` or `ocv_...` keys into chat.
+**Pair with Bankr (recommended — Dynamic Key Vending):** Org admins configure `BANKR_PARTNER_KEY` on Vault. Agents lease short-lived, scoped `bk_usr_` keys via `lease_bankr_key` (MCP), `1claw agent bankr-key lease`, or the dashboard — no manual `put_secret` / rotation. Shroud auto-resolves leased keys for `X-Shroud-Provider: bankr`. See [Bankr Key Vending guide](https://docs.1claw.xyz/docs/guides/bankr-key-vending).
+
+**Legacy static path:** Store a long-lived Bankr key at `keys/bankr-api-key` or `providers/bankr/api-key` via `put_secret`, then `get_secret` when calling Bankr endpoints. Manual rotation when the key expires. Never paste `bk_...` or `ocv_...` keys into chat.
 
 ---
 
@@ -68,6 +72,7 @@ metadata:
 - Get OIDC federation tokens for external services (no static API keys on the relying party)
 - Scan arbitrary text for prompt injection, command injection, and social engineering (free, local-only)
 - Request human approval for sensitive actions
+- Lease a short-lived Bankr wallet API key for LLM Gateway or agent API access (dynamic key vending)
 
 ## When NOT to use
 
@@ -104,7 +109,7 @@ For Cursor, Claude Desktop, Codex, and other local MCP clients, use the **stdio*
   "mcpServers": {
     "1claw": {
       "command": "npx",
-      "args": ["-y", "@1claw/mcp@0.31.1"],
+      "args": ["-y", "@1claw/mcp@0.32.2"],
       "env": {
         "ONECLAW_AGENT_API_KEY": "ocv_your_key_here"
       }
@@ -113,7 +118,7 @@ For Cursor, Claude Desktop, Codex, and other local MCP clients, use the **stdio*
 }
 ```
 
-> **Supply-chain safety:** Always pin to a known-good version (e.g. `@1claw/mcp@0.31.1`). Running `npx -y @1claw/mcp` without a version tag risks executing compromised code if the package is ever hijacked. Verify the latest trusted version at [npmjs.com/package/@1claw/mcp](https://www.npmjs.com/package/@1claw/mcp) before updating the pin.
+> **Supply-chain safety:** Always pin to a known-good version (e.g. `@1claw/mcp@0.32.2`). Running `npx -y @1claw/mcp` without a version tag risks executing compromised code if the package is ever hijacked. Verify the latest trusted version at [npmjs.com/package/@1claw/mcp](https://www.npmjs.com/package/@1claw/mcp) before updating the pin.
 
 Optional overrides:
 
@@ -137,7 +142,7 @@ Run the MCP server with `ONECLAW_LOCAL_ONLY=true` to get the `inspect_content` t
   "mcpServers": {
     "1claw-security": {
       "command": "npx",
-      "args": ["-y", "@1claw/mcp@0.31.1"],
+      "args": ["-y", "@1claw/mcp@0.32.2"],
       "env": {
         "ONECLAW_LOCAL_ONLY": "true"
       }
@@ -168,7 +173,56 @@ See `references/mcp-and-api.md` for the full tool list and REST auth flows.
 
 ## Examples
 
-### Store a Bankr API key
+### Bankr Dynamic Key Vending (preferred)
+
+When the org has `BANKR_PARTNER_KEY` configured on Vault, lease scoped TTL-bound keys instead of storing long-lived `bk_` secrets.
+
+**Privileged — deny-by-default:** Agents need an explicit policy on the `__agent-keys` vault:
+
+```json
+{
+  "principal_type": "agent",
+  "principal_id": "<agent-uuid>",
+  "secret_path_pattern": "agents/<agent-uuid>/bankr/*",
+  "permissions": ["write"]
+}
+```
+
+Re-exchange the agent token after the human grants (or approves) the policy. For production, use `request_approval` with `action: "policy_change"` instead of granting directly.
+
+**MCP (`lease_bankr_key`):**
+```json
+{
+  "ttl_seconds": 600,
+  "llm_gateway_enabled": true,
+  "agent_api_enabled": false,
+  "read_only": true
+}
+```
+
+Returns lease metadata only (`lease_id`, `wallet_id`, `expires_at`) — **not** the `bk_usr_` key. Use Shroud (`X-Shroud-Provider: bankr`) for LLM traffic; revoke the lease when done.
+
+**CLI (human or CI):**
+```bash
+1claw agent bankr-key lease <agent-id> --ttl 600
+1claw agent bankr-key list <agent-id>
+1claw agent bankr-key revoke <agent-id> <lease-id>
+```
+
+**SDK:**
+```typescript
+const { data: lease } = await client.agents.leaseBankrKey(agentId, {
+  ttl_seconds: 600,
+  permissions: { llm_gateway_enabled: true, agent_api_enabled: false, read_only: true },
+});
+// Agent JWT: lease.api_key is omitted — use Shroud
+```
+
+**Shroud:** With an active lease, `X-Shroud-Provider: bankr` auto-resolves the leased key — no `get_secret` needed for LLM traffic.
+
+Full guide: https://docs.1claw.xyz/docs/guides/bankr-key-vending
+
+### Store a Bankr API key (legacy static path)
 
 After your human grants **write** on path `keys/*`:
 
@@ -254,7 +308,7 @@ curl -s -X PUT "https://api.1claw.xyz/v1/vaults/${VAULT_ID}/secrets/keys/bankr-a
 
 ---
 
-## MCP tools (35 total)
+## MCP tools (36 total)
 
 ### Secrets
 
@@ -298,6 +352,12 @@ curl -s -X PUT "https://api.1claw.xyz/v1/vaults/${VAULT_ID}/secrets/keys/bankr-a
 | `list_signing_keys` | List all signing keys across all chains |
 | `sign_message` | EIP-191 personal_sign (requires `message_signing_enabled`) |
 | `sign_typed_data` | EIP-712 typed data (deny-by-default; requires domain allowlist) |
+
+### Bankr key vending
+
+| Tool | Description |
+| --- | --- |
+| `lease_bankr_key` | **Privileged** — policy-gated on `agents/{id}/bankr/*`. Issues scoped `bk_usr_` key (stored for Shroud; **not returned** in tool output). Recommend TTL 5–15 min; max 24h. Revoke after task. |
 
 ### Platform API (for app builders)
 
@@ -386,7 +446,9 @@ Agents call `https://shroud.1claw.xyz` directly with headers:
 - `X-Shroud-Agent-Key: ocv_...` (or `Authorization: Bearer <jwt>`)
 - `X-Shroud-Provider: openai` (required — specifies upstream LLM provider)
 
-Enable **Shroud LLM Proxy** on the agent in the dashboard; re-exchange the agent token after config changes so JWT carries `shroud_config`. Supports: OpenAI, Anthropic, Google (Gemini), Mistral, Cohere, OpenRouter, Venice AI, Stripe AI Gateway.
+Enable **Shroud LLM Proxy** on the agent in the dashboard; re-exchange the agent token after config changes so JWT carries `shroud_config`. Supports: OpenAI, Anthropic, Google (Gemini), Mistral, Cohere, OpenRouter, Darkbloom, Venice AI, Bankr LLM Gateway (`X-Shroud-Provider: bankr`), Stripe AI Gateway.
+
+For Bankr, Shroud resolves credentials in order: (1) latest active **leased** key, (2) static `providers/bankr/api-key`, (3) `X-Shroud-Api-Key` header. Prefer leasing via `lease_bankr_key` so agents never need `get_secret` for Bankr LLM traffic.
 
 ---
 
@@ -440,14 +502,14 @@ The agent MUST NOT proceed without explicit "yes" (or equivalent affirmative) fr
 ## CLI and SDK (optional)
 
 ```bash
-npm install -g @1claw/cli@0.31.0
+npm install -g @1claw/cli@0.32.1
 1claw login   # device flow or email/password
 1claw agent enroll my-agent --email human@example.com
 1claw secret put keys/example --value-from-stdin
 1claw secret rotate --generate keys/webhook-secret -l 64 -c hex
 ```
 
-> **Pin CLI version:** Always install a specific version (`@1claw/cli@0.31.0`). Running `npm install -g @1claw/cli` without a version risks supply-chain attacks in environments with wallet or secrets access.
+> **Pin CLI version:** Always install a specific version (`@1claw/cli@0.32.1`). Running `npm install -g @1claw/cli` without a version risks supply-chain attacks in environments with wallet or secrets access.
 
 TypeScript SDK (`@1claw/sdk`):
 ```typescript
