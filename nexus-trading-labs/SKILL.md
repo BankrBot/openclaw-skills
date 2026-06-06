@@ -76,9 +76,16 @@ explicit user confirmation.
 POST https://og.nexustradinglabs.com/agent/<walletAddress>/bankr/activate
 {
   "mode": "PAPER",                 // PAPER | ASSISTED | AUTONOMOUS  (default PAPER)
-  "config": { "symbols": ["PERP_BTC_USDC"], "capitalPerTrade": 30, "leverage": 5,
-              "tpPercent": 1.5, "slPercent": 0.75, "maxHoldHours": 4,
-              "maxTradesPerDay": 10, "maxDailyLossUsdc": 5, "fundingThreshold": 0.01 },
+  "config": {
+    "signalMode": "CONFLUENCE",    // CONFLUENCE(default) | FUNDING_ONLY | OI_ONLY | MOMENTUM* | MEAN_REVERSION*  (*=PRO)
+    "symbols": ["PERP_BTC_USDC"],
+    "capitalPerTrade": 30, "leverage": 5,
+    "tpPercent": 1.5, "slPercent": 0.75, "maxHoldHours": 4,
+    "maxTradesPerDay": 10, "maxDailyLossUsdc": 5,
+    "fundingThreshold": 0.01,      // % — signal sensitivity
+    "oiChangeThreshold": 0,        // % min OI move to count
+    "priceChangeThreshold": 0.5    // % move for MOMENTUM / MEAN_REVERSION
+  },
   "walletSig": "<required for ASSISTED/AUTONOMOUS>",
   "confirm": "GO LIVE"             // REQUIRED only when mode is AUTONOMOUS
 }
@@ -86,6 +93,9 @@ POST https://og.nexustradinglabs.com/agent/<walletAddress>/bankr/activate
 
 - **PAPER** needs no walletSig (simulated). **ASSISTED / AUTONOMOUS** derive the
   order-only key from `walletSig` — pass the session signature.
+- **Strategy:** the user picks `signalMode`. `MOMENTUM` / `MEAN_REVERSION` require
+  **Nexus PRO** — if the user isn't PRO, say so and default to `CONFLUENCE`. The free
+  strategies are `CONFLUENCE`, `FUNDING_ONLY`, `OI_ONLY`. All thresholds are user-tunable.
 - AUTONOMOUS without `confirm:"GO LIVE"` → `409 confirm_required`. Confirm with the
   user FIRST, then resend with `confirm:"GO LIVE"`.
 - Change mode later: `POST /agent/<wallet>/bankr/mode { "mode", "walletSig"?, "confirm"? }`

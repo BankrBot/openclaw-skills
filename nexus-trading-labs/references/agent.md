@@ -19,6 +19,41 @@ flip it live when you trust it."
 - **AUTONOMOUS** also needs `confirm: "GO LIVE"` — ALWAYS get an explicit yes from
   the user before sending it.
 
+## Config — the full control surface (all of this is user-set)
+
+Pass any of these in the `config` object on `activate`; omitted fields use the
+default. Everything is tunable later via the same call or `/bankr/mode`.
+
+**Strategy — `signalMode`** (how funding + OI combine):
+| Mode | Behavior | Tier |
+|---|---|---|
+| `CONFLUENCE` *(default)* | funding extreme **AND** OI-divergence must agree — strictest, best trades | free |
+| `FUNDING_ONLY` | fade funding extremes only | free |
+| `OI_ONLY` | OI-divergence only | free |
+| `MOMENTUM` | trade **with** a price move > threshold (trend-follow) | **PRO** |
+| `MEAN_REVERSION` | **fade** a price move > threshold (buy dip / sell rip) | **PRO** |
+
+> `MOMENTUM` / `MEAN_REVERSION` require **Nexus PRO**. If the user isn't PRO, tell
+> them those are PRO strategies and default to `CONFLUENCE`. Don't push a PRO mode
+> as if it's free.
+
+**Signal sensitivity:** `fundingThreshold` (%, default 0.01), `oiChangeThreshold`
+(% min OI move to count, default 0), `priceChangeThreshold` (% move for
+MOMENTUM/MEAN_REVERSION, default 0.5).
+
+**Risk & execution:** `symbols` (watchlist, e.g. `["PERP_BTC_USDC","PERP_ETH_USDC"]`),
+`leverage`, `capitalPerTrade` (margin per trade), `tpPercent`, `slPercent`,
+`maxHoldHours`, `maxTradesPerDay`, `maxDailyLossUsdc`.
+
+**Example prompts → config:**
+- "run my agent in mean-reversion mode on ETH, $40/trade at 3x" →
+  `{signalMode:"MEAN_REVERSION", symbols:["PERP_ETH_USDC"], capitalPerTrade:40, leverage:3}` *(PRO)*
+- "deploy paper, confluence, BTC + SOL, tighter funding threshold 0.02%" →
+  `{signalMode:"CONFLUENCE", symbols:["PERP_BTC_USDC","PERP_SOL_USDC"], fundingThreshold:0.02}`
+- "make it funding-only and cap me at 5 trades a day" →
+  `{signalMode:"FUNDING_ONLY", maxTradesPerDay:5}`
+- "switch my agent to momentum" → PRO check first, else CONFLUENCE.
+
 ## Intents → calls
 
 | User says | Call |
