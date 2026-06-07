@@ -73,6 +73,7 @@ bankr config get llmKey
 | `qwen3-coder` | Alibaba | Code generation, debugging (262K) |
 | `kimi-k2.6` | Moonshot AI | Latest, long-context (262K) |
 | `kimi-k2.5` | Moonshot AI | Long-context reasoning (262K) |
+| `minimax-m3` | MiniMax | Flagship multimodal reasoning (512K context) |
 | `minimax-m2.7` | MiniMax | Balanced performance (204.8K) |
 | `minimax-m2.7-highspeed` | MiniMax | Faster variant, double throughput (204.8K) |
 | `minimax-m2.5` | MiniMax | Cost-effective (204.8K) |

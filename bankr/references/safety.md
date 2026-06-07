@@ -58,7 +58,7 @@ Each API key has independent toggles managed at [bankr.bot/api-keys](https://ban
 
 | Flag | Controls Access To | Default |
 |------|-------------------|---------|
-| `walletApiEnabled` | `/wallet/*` write endpoints (transfer, sign, submit) | true |
+| `walletApiEnabled` | `/wallet/*` endpoints: swap, swap-quote, transfer, sign, submit | true |
 | `agentApiEnabled` | `/agent/*` AI endpoints (prompt, job status, profile) | false |
 | `tokenLaunchApiEnabled` | Token deployment (`/token-launches/deploy`) and agent deploy tool | true |
 | `llmGatewayEnabled` | LLM Gateway at `llm.bankr.bot` (chat completions, model access) | false |

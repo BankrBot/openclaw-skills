@@ -225,12 +225,15 @@ Omit `threadId` to start a new conversation. CLI equivalent: `bankr agent prompt
 |----------|--------|------|-------------|
 | `/wallet/me` | GET | Read | Wallet info (address, chains) |
 | `/wallet/portfolio` | GET | Read | Portfolio balances, supports `?include=pnl,nfts` for progressive loading |
+| `/wallet/swap-quote` | POST | Read | Quote a same-chain EVM swap without executing |
+| `/wallet/swap` | POST | Write | Execute a same-chain EVM swap (output returns to your wallet) |
 | `/wallet/transfer` | POST | Write | Transfer tokens (multi-chain, supports `allowedRecipients` enforcement) |
 | `/wallet/sign` | POST | Write | Sign messages, typed data, or transactions |
 | `/wallet/submit` | POST | Write | Submit raw transactions to chain |
 
 - **Read endpoints** (`/wallet/me`, `/wallet/portfolio`) — any valid API key with a wallet
-- **Write endpoints** (`/wallet/transfer`, `/wallet/sign`, `/wallet/submit`) — require `walletApiEnabled`, `readOnly` check, and `allowedRecipients` enforcement
+- **Swap quote** (`/wallet/swap-quote`) — a quote is a read, so read-only API keys are allowed; API-key callers still need `walletApiEnabled`
+- **Write endpoints** (`/wallet/swap`, `/wallet/transfer`, `/wallet/sign`, `/wallet/submit`) — require `walletApiEnabled` and reject read-only keys. `/wallet/transfer` also enforces `allowedRecipients`; `/wallet/swap` does not (output returns to your own wallet)
 - IP allowlist enforced on all endpoints
 
 #### Recipient & user lookup helpers (public, no auth)
@@ -240,7 +243,7 @@ Omit `threadId` to start a new conversation. CLI equivalent: `bankr agent prompt
 | `/addresses/resolve?value=<recipient>&type=<address\|ens\|twitter\|farcaster>` | GET | Resolve a recipient (0x address, ENS-style name `.eth`/`.base.eth`/`.cb.id`, or social handle) to a 0x address. Used by `bankr wallet transfer --to` to support ENS input. |
 | `/users/search?...` | GET | Search Bankr users by Twitter or Farcaster username. |
 
-The legacy aliases `/public/resolve-recipient` and `/public/search-users` still work but are marked deprecated (Sunset: 2026-06-03) — migrate callers to the structured `/addresses/*` and `/users/*` namespaces.
+The legacy aliases `/public/resolve-recipient` and `/public/search-users` still respond but are deprecated (they return `Deprecation`/`Sunset` headers) and slated for removal — migrate callers to the structured `/addresses/*` and `/users/*` namespaces.
 
 #### Agent API (`/agent/*`) — AI-powered endpoints (async)
 
@@ -288,6 +291,8 @@ For full API details (request/response schemas, job states, rich data, polling s
 | `bankr wallet portfolio --json` | Output raw JSON |
 | `bankr wallet transfer --to <recipient> --token <symbol> --amount <amount>` | Transfer tokens; `--to` accepts a 0x address or ENS-style name (`.eth`, `.base.eth`, `.cb.id`), `--token` resolves symbols to contracts. Social handles work via the AI agent only. |
 | `bankr wallet transfer --to vitalik.eth --token USDC --amount 50 --chain base` | ENS recipient with explicit chain |
+| `bankr wallet swap --from <symbol/addr> --to <symbol/addr> --amount <amount>` | Swap tokens on a single EVM chain (same-chain). Resolves symbols to contracts; `--from`/`--to`/`--amount` required; `--chain` defaults to `base`. Solana is not supported. |
+| `bankr wallet swap --from ETH --to USDC --amount 0.1 --chain base --quote-only` | Print the swap quote (you pay / you receive / min received) without executing |
 | `bankr wallet sign` | Sign messages/typed data/transactions |
 | `bankr wallet submit` | Submit raw transactions |
 
@@ -698,7 +703,7 @@ Per-key settings configured at [bankr.bot/api-keys](https://bankr.bot/api-keys):
 
 **API Key Types**: Bankr uses a single key format (`bk_...`) with capability flags (`walletApiEnabled`, `agentApiEnabled`, `tokenLaunchApiEnabled`, `llmGatewayEnabled`). You can optionally configure a separate LLM Gateway key via `bankr config set llmKey` or `BANKR_LLM_KEY` — useful when you want independent revocation or different permissions for agent vs LLM access.
 
-**Read-Only API Keys**: New keys default to `readOnly: true`. This filters all write tools (swaps, transfers, staking, token launches, etc.) from agent sessions. The `/wallet/sign`, `/wallet/submit`, and `/wallet/transfer` write endpoints return 403. Use `--read-write` during login or toggle in the web settings to disable. Ideal for monitoring bots and research agents.
+**Read-Only API Keys**: New keys default to `readOnly: true`. This filters all write tools (swaps, transfers, staking, token launches, etc.) from agent sessions. The `/wallet/swap`, `/wallet/sign`, `/wallet/submit`, and `/wallet/transfer` write endpoints return 403 (the `/wallet/swap-quote` read endpoint still works). Use `--read-write` during login or toggle in the web settings to disable. Ideal for monitoring bots and research agents.
 
 **IP Whitelisting**: Set `allowedIps` on your API key to restrict usage to specific IPs or CIDR ranges (e.g., `10.0.0.0/24`). Requests from non-whitelisted IPs are rejected with 403 at the auth layer.
 
@@ -1012,6 +1017,32 @@ curl -X POST "https://api.bankr.bot/wallet/transfer" \
   -H "Content-Type: application/json" \
   -d '{"to": "vitalik.eth", "token": "USDC", "amount": "50", "chain": "base"}'
 ```
+
+### Swap (Direct)
+
+Swap tokens on a single EVM chain (same-chain) via CLI or Wallet API without AI processing. Both legs must be on the same EVM chain — Solana and cross-chain routes go through the AI agent. The CLI resolves token symbols to contracts and uses the quote's `minBuyAmount` as slippage protection when executing.
+
+```bash
+# CLI — quote only (no execution)
+bankr wallet swap --from ETH --to USDC --amount 0.1 --chain base --quote-only
+
+# CLI — quote then execute
+bankr wallet swap --from ETH --to USDC --amount 0.1 --chain base
+
+# REST API — quote (read; read-only keys allowed)
+curl -X POST "https://api.bankr.bot/wallet/swap-quote" \
+  -H "X-API-Key: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"fromChain": "base", "fromToken": "0x...", "toChain": "base", "toToken": "0x...", "amount": "0.1"}'
+
+# REST API — execute (write; pass the quote's minBuyAmount for slippage protection)
+curl -X POST "https://api.bankr.bot/wallet/swap" \
+  -H "X-API-Key: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"fromChain": "base", "fromToken": "0x...", "toChain": "base", "toToken": "0x...", "amount": "0.1", "minBuyAmount": "..."}'
+```
+
+The `/wallet/swap*` endpoints take token **contract addresses** (use the zero address for the chain's native token); the CLI resolves symbols for you. Swap output is always returned to your own wallet, so `allowedRecipients` does not apply.
 
 ### Sign API (Synchronous)
 
