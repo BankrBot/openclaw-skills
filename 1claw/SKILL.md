@@ -55,7 +55,7 @@ metadata:
 - **Secret versioning and rotation** — every write creates a new version; server-generated rotation with configurable charset
 - **Webhooks** — subscribe to wallet, proposal, transaction, policy, and signing key events
 
-**Pair with Bankr (recommended — Dynamic Key Vending):** Org admins configure `BANKR_PARTNER_KEY` on Vault. Agents lease short-lived, scoped `bk_usr_` keys via `lease_bankr_key` (MCP), `1claw agent bankr-key lease`, or the dashboard — no manual `put_secret` / rotation. Shroud auto-resolves leased keys for `X-Shroud-Provider: bankr`. See [Bankr Key Vending guide](https://docs.1claw.xyz/docs/guides/bankr-key-vending).
+**Pair with Bankr (recommended — Dynamic Key Vending):** Org owners/admins add their `bk_ptr_` partner key under **Settings → Bankr** (`PUT /v1/org/bankr-config`). Agents lease short-lived, scoped `bk_usr_` keys via `lease_bankr_key` (MCP), `1claw agent bankr-key lease`, or the dashboard — no manual `put_secret` / rotation. Shroud auto-resolves leased keys for `X-Shroud-Provider: bankr`. See [Bankr Key Vending guide](https://docs.1claw.xyz/docs/guides/bankr-key-vending).
 
 **Legacy static path:** Store a long-lived Bankr key at `keys/bankr-api-key` or `providers/bankr/api-key` via `put_secret`, then `get_secret` when calling Bankr endpoints. Manual rotation when the key expires. Never paste `bk_...` or `ocv_...` keys into chat.
 
