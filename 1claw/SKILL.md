@@ -175,7 +175,7 @@ See `references/mcp-and-api.md` for the full tool list and REST auth flows.
 
 ### Bankr Dynamic Key Vending (preferred)
 
-When the org has `BANKR_PARTNER_KEY` configured on Vault, lease scoped TTL-bound keys instead of storing long-lived `bk_` secrets.
+When the org has configured Bankr BYOK (partner key + default wallet under **Settings → Bankr** or `PUT /v1/org/bankr-config`), lease scoped TTL-bound keys instead of storing long-lived `bk_` secrets. Self-hosted operators may use deployment-level `BANKR_PARTNER_KEY` as a fallback when org BYOK is unset.
 
 **Privileged — deny-by-default:** Agents need an explicit policy on the `__agent-keys` vault:
 
