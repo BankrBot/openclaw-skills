@@ -41,6 +41,14 @@ default. Everything is tunable later via the same call or `/bankr/mode`.
 (% min OI move to count, default 0), `priceChangeThreshold` (% move for
 MOMENTUM/MEAN_REVERSION, default 0.5).
 
+**Market regime filter — `respectRegime`** (boolean, default `false`, opt-in): when
+`true`, the agent skips NEW entries that fight a strong market tape — it won't go
+**LONG in a broad RISK-OFF** regime or **SHORT in a broad RISK-ON** regime. It never
+flips direction or touches an open position; it only suppresses a fresh entry. Good
+for users who don't want to fade a strong trend. Set via config, e.g.
+`{respectRegime:true}`. Suggest testing in PAPER first.
+> Example: "only trade with the market, skip counter-trend entries" → `{respectRegime:true}`.
+
 **Risk & execution:** `symbols` (watchlist, e.g. `["PERP_BTC_USDC","PERP_ETH_USDC"]`),
 `leverage`, `capitalPerTrade` (margin per trade), `tpPercent`, `slPercent`,
 `maxHoldHours`, `maxTradesPerDay`, `maxDailyLossUsdc`.
@@ -53,6 +61,26 @@ MOMENTUM/MEAN_REVERSION, default 0.5).
 - "make it funding-only and cap me at 5 trades a day" →
   `{signalMode:"FUNDING_ONLY", maxTradesPerDay:5}`
 - "switch my agent to momentum" → PRO check first, else CONFLUENCE.
+- "only trade with the regime" → `{respectRegime:true}`.
+
+## Strategy presets (one-line deploys)
+
+Curated configs the user can name directly. Apply the preset's `config` on
+`activate`/`mode`, keeping the user's chosen mode (default PAPER — presets do NOT set
+mode). PRO presets need Nexus PRO (PRO-check first; else suggest a free preset).
+Scale `capitalPerTrade` down if free collateral is low (capital guardrail below).
+
+| Preset | `config` | Tier |
+|---|---|---|
+| **Funding Harvester** *(conservative)* | `{signalMode:"CONFLUENCE", symbols:["PERP_BTC_USDC"], leverage:3, capitalPerTrade:30, tpPercent:1.2, slPercent:0.6, maxHoldHours:6, maxTradesPerDay:6, maxDailyLossUsdc:10, fundingThreshold:0.015}` | free |
+| **Blue-Chip Confluence** *(balanced)* | `{signalMode:"CONFLUENCE", symbols:["PERP_BTC_USDC","PERP_ETH_USDC"], leverage:5, capitalPerTrade:40, tpPercent:1.5, slPercent:0.75, maxHoldHours:4, maxTradesPerDay:8, maxDailyLossUsdc:12}` | free |
+| **OI Divergence Hunter** *(balanced)* | `{signalMode:"OI_ONLY", symbols:["PERP_BTC_USDC","PERP_ETH_USDC"], leverage:5, capitalPerTrade:40, tpPercent:1.5, slPercent:0.8, maxHoldHours:4, maxTradesPerDay:8, maxDailyLossUsdc:12, oiChangeThreshold:0.5}` | free |
+| **Funding Scalper** *(aggressive)* | `{signalMode:"FUNDING_ONLY", symbols:["PERP_BTC_USDC","PERP_ETH_USDC","PERP_SOL_USDC"], leverage:8, capitalPerTrade:30, tpPercent:0.8, slPercent:0.5, maxHoldHours:2, maxTradesPerDay:14, maxDailyLossUsdc:12, fundingThreshold:0.008}` | free |
+| **Momentum Rider** *(PRO · trend)* | `{signalMode:"MOMENTUM", symbols:["PERP_BTC_USDC","PERP_ETH_USDC","PERP_SOL_USDC"], leverage:8, capitalPerTrade:40, tpPercent:2, slPercent:1, maxHoldHours:4, maxTradesPerDay:10, maxDailyLossUsdc:15, priceChangeThreshold:0.6}` | **PRO** |
+| **Mean Reversion Fade** *(PRO · fade)* | `{signalMode:"MEAN_REVERSION", symbols:["PERP_BTC_USDC","PERP_ETH_USDC"], leverage:6, capitalPerTrade:30, tpPercent:1.5, slPercent:1, maxHoldHours:3, maxTradesPerDay:10, maxDailyLossUsdc:12, priceChangeThreshold:0.7}` | **PRO** |
+
+> "deploy the Funding Scalper preset in paper" → `activate {mode:"PAPER", config:{…Funding Scalper…}}`.
+> "load Mean Reversion Fade and go live" → PRO-check → confirm GO LIVE → `mode {mode:"AUTONOMOUS", confirm:"GO LIVE", walletSig, …}` after applying the preset config. Combine a preset with `respectRegime:true` for a trend-aware version.
 
 ## Intents → calls
 
@@ -64,6 +92,8 @@ MOMENTUM/MEAN_REVERSION, default 0.5).
 | "Pause my agent" | `POST /agent/{addr}/bankr/mode` `{mode:"ASSISTED"}` |
 | "Set it back to paper" | `POST /agent/{addr}/bankr/mode` `{mode:"PAPER"}` |
 | "Change to $20/trade at 3x" | `POST /agent/{addr}/bankr/activate` `{mode:<current>, config:{capitalPerTrade:20,leverage:3}, walletSig?}` |
+| "Deploy the Blue-Chip Confluence preset (paper)" | `POST /agent/{addr}/bankr/activate` `{mode:"PAPER", config:{…preset…}}` (see Strategy presets) |
+| "Turn on the market regime filter" | `POST /agent/{addr}/bankr/activate` `{mode:<current>, config:{respectRegime:true}, walletSig?}` |
 | "How's my agent?" | `GET /agent/{addr}` → format `state` |
 | "Fund my agent $50" | `POST /deposit/prepare` `{wallet, amount:50, accountId}` → sign+submit, then suggest capital (below) |
 | "Stop my agent" | `DELETE /agent/{addr}` (⚠️ warn: leaves an open position unmanaged — offer KILL) |
