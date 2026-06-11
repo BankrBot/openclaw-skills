@@ -41,7 +41,8 @@ Use for: "show my Hunch bets", "how are my positions doing", "what's my PnL".
       "proofUrl": "https://basescan.org/tx/0x…",
       "filledAt": "2026-06-01T12:00:00.000Z"
     }
-  ]
+  ],
+  "tags": "@playhunchxyz @lienfiapp"
 }
 ```
 
@@ -55,9 +56,11 @@ Use for: "show my Hunch bets", "how are my positions doing", "what's my PnL".
 | `maxPayoutUsd` | Payout if this side wins ($1 / share). |
 | `status` | `open`, `resolved-won`, or `resolved-lost`. |
 | `proofUrl` | Entry-settlement on-chain proof (BaseScan), when available. |
+| `tags` | **Project attribution** for the portfolio reply's footer — `@playhunchxyz` + up to two of the held markets' token projects. Render as the last line, verbatim (SKILL.md *Project attribution*). |
 
 ### Reply shape
 
 > **Your Hunch bets** (1 open · 1 resolved · PnL +$1.42)
 > • **$BNKR → $100M** — YES, $5 @ 12¢ → 15¢ · +$1.25 · open
 > • **$HUNCH flips $LFI** — YES, $3 · resolved-lost
+> @playhunchxyz @lienfiapp

@@ -72,7 +72,7 @@
   "response": {
     "200": "{ receipt, txHash, explorerUrl, position, proofUrl }",
     "402": "x402 payment requirements challenge",
-    "409": "idemKey reused with a different body",
+    "409": "idemKey reused for a different market/side (idempotency_conflict), or a same-key bet is mid-settlement (trade_in_progress)",
     "422": "invalid size or missing field"
   },
   "attribution": { "refParam": "ref=bankr", "positionKey": "bankr:<wallet>" }

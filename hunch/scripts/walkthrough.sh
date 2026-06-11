@@ -26,9 +26,11 @@ say() { printf '\n\033[1;35m== %s ==\033[0m\n' "$1"; }
 say "1. discover ${TOKEN}"
 # URL-encode the token ($ → %24) for the query string.
 Q=$(printf '%s' "$TOKEN" | jq -sRr @uri)
-# Each match nests the market under .market; odds/stats are siblings.
+# Each match nests the market under .market; odds/stats/headline are siblings.
+# `headline` is the screenshot-ready line (title · odds · social proof · close)
+# the bot renders verbatim.
 DISCOVER=$(curl -fsS "${BASE}/api/partner/discover?q=${Q}")
-echo "$DISCOVER" | jq '{count, matches: [.matches[] | {id: .market.id, question: .market.question, odds, matchKind}]}'
+echo "$DISCOVER" | jq '{count, matches: [.matches[] | {id: .market.id, headline, matchKind}]}'
 
 MARKET_ID=$(echo "$DISCOVER" | jq -r '.matches[0].market.id // empty')
 if [ -z "$MARKET_ID" ]; then

@@ -35,21 +35,25 @@ Feature-flagged behind `HUNCH_PARTNER_API` (404 when off); CORS-open; cached ~60
         "links": { "app": "…", "quote": "…", "trade": "…" }
       },
       "odds": { "yesPriceCents": 62, "noPriceCents": 38 },
-      "stats": { "totalBets": 142, "totalPoolUsd": 1240, "yesPoolUsd": 150, "noPoolUsd": 1090, "feeUsd": 24.8 }
+      "stats": { "totalBets": 142, "totalPoolUsd": 1240, "yesPoolUsd": 150, "noPoolUsd": 1090, "feeUsd": 24.8 },
+      "headline": "$BNKR → $100M · YES 62¢ / NO 38¢ · 142 bets · $1.2k pool · closes Jun 30 · @playhunchxyz"
     }
   ],
   "digest": {
     "title": "🔮 Trending on Hunch",
     "lines": ["1. $BNKR → $100M — YES 62¢ · 142 bets · closes Jun 30"],
-    "text": "🔮 Trending on Hunch\n1. $BNKR → $100M — YES 62¢ · 142 bets · closes Jun 30\n\nTag @bankrbot to bet in-thread — settles in USDC on Base."
+    "text": "🔮 Trending on Hunch\n1. $BNKR → $100M — YES 62¢ · 142 bets · closes Jun 30\n\nTag @bankrbot to bet in-thread — settles in USDC on Base. @playhunchxyz"
   }
 }
 ```
 
 Each `trending[]` entry: `rank` (1-based), `heat` (score), `closesInHours`,
 `market` (the full shared [market ref](./market-ref.md), abbreviated above),
-`odds`, and `stats` (same shapes as `discovery.md`). `count` is the number of
-entries; the top-level `generatedAt` mirrors `meta.generatedAt`.
+`odds`, `stats` (same shapes as `discovery.md`), and a **`headline`** — the same
+screenshot-ready one-liner a discover match carries (`title · odds · social proof
+· close`), so surfacing a trending market unprompted reads identically to a
+discovered one. `count` is the number of entries; the top-level `generatedAt`
+mirrors `meta.generatedAt`.
 
 ## Ranking
 
@@ -61,8 +65,9 @@ markets. The id comes from the deterministic ranker; the model never picks it.
 
 ## Using it
 
-- **Daily post:** post `digest.text` verbatim (it already names `@bankrbot` and
-  the Base USDC settlement).
+- **Daily post:** post `digest.text` verbatim (it already names `@bankrbot`, the
+  Base USDC settlement, and tags `@playhunchxyz`). Each entry's `headline` also
+  ends with the project @tags — keep them when rendering a single entry.
 - **Custom card:** iterate `trending[]` and render each entry's `market` + `odds`
   with the standard `Take YES / Take NO` reply shape.
 - Always include the market's category disclosure line (from `catalogue`) before
