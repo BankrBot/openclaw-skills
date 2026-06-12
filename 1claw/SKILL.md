@@ -55,7 +55,19 @@ metadata:
 - **Secret versioning and rotation** — every write creates a new version; server-generated rotation with configurable charset
 - **Webhooks** — subscribe to wallet, proposal, transaction, policy, and signing key events
 
-**Pair with Bankr (recommended — Dynamic Key Vending):** Org admins configure `BANKR_PARTNER_KEY` on Vault. Agents lease short-lived, scoped `bk_usr_` keys via `lease_bankr_key` (MCP), `1claw agent bankr-key lease`, or the dashboard — no manual `put_secret` / rotation. Shroud auto-resolves leased keys for `X-Shroud-Provider: bankr`. See [Bankr Key Vending guide](https://docs.1claw.xyz/docs/guides/bankr-key-vending).
+**Pair with Bankr (recommended — Dynamic Key Vending):** Org owners/admins add their `bk_ptr_` partner key under **Settings → Bankr** (`PUT /v1/org/bankr-config`). Agents lease short-lived, scoped `bk_usr_` keys via `lease_bankr_key` (MCP), `1claw agent bankr-key lease`, or the dashboard — no manual `put_secret` / rotation. Shroud auto-resolves leased keys for `X-Shroud-Provider: bankr`. See [Bankr Key Vending guide](https://docs.1claw.xyz/docs/guides/bankr-key-vending).
+
+**Deployment fallback (operators only — tenant isolation):**
+
+| Environment | Guidance |
+| --- | --- |
+| **Multi-tenant SaaS** (`api.1claw.xyz`) | Do **not** set `BANKR_PARTNER_KEY`. Every org must configure BYOK. Fallback is off by default. |
+| **Self-hosted** | `BANKR_PARTNER_KEY` is optional — only when all orgs intentionally share one Bankr partner account. |
+
+- **Precedence:** Org BYOK always wins when configured (`org_byok`); deployment key is used only when an org has no BYOK (`platform_fallback`).
+- **Opt-in:** Treat deployment fallback as an explicit operator choice — not for shared multi-tenant deployments.
+- **Audit:** Each `bankr_key.leased` event records `credential_source` (`org_byok` or `platform_fallback`).
+- **Alerting:** Production Vault emits a warning log when `platform_fallback` is used — monitor for unexpected fallback in prod.
 
 **Legacy static path:** Store a long-lived Bankr key at `keys/bankr-api-key` or `providers/bankr/api-key` via `put_secret`, then `get_secret` when calling Bankr endpoints. Manual rotation when the key expires. Never paste `bk_...` or `ocv_...` keys into chat.
 
@@ -175,7 +187,7 @@ See `references/mcp-and-api.md` for the full tool list and REST auth flows.
 
 ### Bankr Dynamic Key Vending (preferred)
 
-When the org has `BANKR_PARTNER_KEY` configured on Vault, lease scoped TTL-bound keys instead of storing long-lived `bk_` secrets.
+When the org has configured Bankr BYOK (partner key + default wallet under **Settings → Bankr** or `PUT /v1/org/bankr-config`), lease scoped TTL-bound keys instead of storing long-lived `bk_` secrets. Do not rely on deployment-level `BANKR_PARTNER_KEY` in multi-tenant environments — see **Deployment fallback** above.
 
 **Privileged — deny-by-default:** Agents need an explicit policy on the `__agent-keys` vault:
 

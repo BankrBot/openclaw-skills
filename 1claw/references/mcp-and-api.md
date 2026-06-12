@@ -108,7 +108,16 @@ Supported chains: `ethereum`, `bitcoin`, `solana`, `xrp`, `cardano`, `tron`.
 
 ## Bankr Dynamic Key Vending
 
-Partner-key secret engine for short-lived Bankr wallet API keys. Requires `BANKR_PARTNER_KEY` on Vault (server-side; never stored in agent vault paths).
+Partner-key secret engine for short-lived Bankr wallet API keys. Each org stores its own encrypted `bk_ptr_` via `PUT /v1/org/bankr-config` (Dashboard **Settings → Bankr**). Partner keys never enter agent vault paths.
+
+**Credential resolution (tenant isolation):**
+
+| Source | When used | `credential_source` in audit |
+| --- | --- | --- |
+| Org BYOK | Org has configured `PUT /v1/org/bankr-config` | `org_byok` (always takes precedence) |
+| Platform fallback | Self-hosted only; org has no BYOK and `BANKR_PARTNER_KEY` is set | `platform_fallback` |
+
+Multi-tenant SaaS should leave `BANKR_PARTNER_KEY` unset. Production Vault warns when `platform_fallback` is used.
 
 | Endpoint | Purpose |
 | --- | --- |
