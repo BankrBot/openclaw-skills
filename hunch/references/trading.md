@@ -174,8 +174,10 @@ settlement receipt `{ success, transaction, network, payer }`.
 | `422` | `invalid_wallet` / `invalid_side` | Bad wallet or side. |
 | `422` | `invalid_payment` | `X-PAYMENT` couldn't be decoded. |
 | `422` | `payer_mismatch` / `recipient_mismatch` / `amount_mismatch` | The signed authorization doesn't match the wallet / sink / bet size. |
+| `422` | `insufficient_balance` | The wallet doesn't hold enough Base USDC (often it staked its whole cent-rounded balance). **Lower `sizeUsd`** (leave a margin) and retry with the same `idemKey` (safe — a `422` records nothing, so the same key can't raise `idempotency_conflict`), or fund the wallet — swap another token → USDC on Base **only with the user's explicit, per-swap permission (ask which token first; never auto-swap)**, or have them deposit USDC. **Never blindly retry the same amount.** See SKILL.md → "Funding a bet". |
 | `409` | `market_closed` | The market isn't open or its deadline has passed. Re-discover. |
-| `409` | `idempotency_conflict` | The `idemKey` was reused with a **different** body. Mint a fresh key per distinct bet. |
+| `409` | `idempotency_conflict` | The `idemKey` was already used for a **different market or side** (the key is checked on market + side, **not** size). Use a fresh key only for a genuinely different bet. Changing only `sizeUsd` — e.g. lowering after `insufficient_balance` — does **not** conflict; reuse the same key. |
+| `409` | `trade_in_progress` | A same-key bet is mid-settlement (a concurrent or just-prior attempt). Retry the **same** `idemKey` shortly to fetch the receipt — never re-sign. |
 | `404` | `market_not_found` | Unknown market id. Re-run `discover`; never hand-craft an id. |
 | `404` | `partner_api_disabled` | Endpoint is off. |
 | `503` | `settlement_unavailable` | The sink/store isn't configured. Transient — retry. |

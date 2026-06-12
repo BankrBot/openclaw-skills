@@ -44,13 +44,21 @@ the pricing call between `discover` and `trade`. Read-only, CORS-open, cached
     "netUsd": 4.9,
     "shares": 40.83,
     "feeRecipient": "Hunch market treasury"
-  }
+  },
+  "tags": "@playhunchxyz"
 }
 ```
 
 - `market` — the shared [market ref](./market-ref.md).
 - `odds` — live `{ yesPriceCents, noPriceCents }` (50/50 fallback if unreadable).
 - `stats` — bet activity (same shape as discover; see `discovery.md`).
+- `tags` — **project attribution**, `@playhunchxyz` + the token project when
+  verified (e.g. a `$LFI` quote returns `"@playhunchxyz @lienfiapp"`). Always
+  present. **Render attribution exactly once.** If the reply leads with the discover
+  `headline`, that string **already ends with these same tags** (identical builder) —
+  render the headline verbatim and **do NOT also append this line.** Use `tags` as
+  the last line only when the reply has **no** headline (a bare quote). Treat it like
+  the disclosure — never strip it, never duplicate it (SKILL.md *Project attribution*).
 - `quote` — the cost breakdown for `side` at `sizeUsd`:
 
 | Field | Meaning |
@@ -108,7 +116,8 @@ added:
   },
   "tokenSnapshot": null,
   "quote": { "side": "63m-67m", "priceCents": 35, "grossUsd": 5, "feeUsd": 0.1,
-             "netUsd": 4.9, "shares": 14, "feeRecipient": "Hunch market treasury" }
+             "netUsd": 4.9, "shares": 14, "feeRecipient": "Hunch market treasury" },
+  "tags": "@playhunchxyz"
 }
 ```
 
@@ -125,13 +134,27 @@ added:
 
 ### Reply shape
 
-> **{question}**
-> YES {yesPriceCents}¢ · NO {noPriceCents}¢ · closes {deadlineLabel}
-> _{category disclosure}_
-> [Take YES] [Take NO]
+By quote time you have the discover `headline` **and** the live `tokenSnapshot`,
+so add the distance hook and sized actions:
 
-For a ladder, list rungs with `impliedPct` and let the user pick one; mark the
-`isCurrent` rung.
+> **{discover `headline`}**
+> {distance hook}
+> _{category disclosure}_
+> [Take YES] [Take NO] · size [$1] [$5] [$10]
+
+- **Distance hook** (market-cap markets): `"📈 $52M now · +92% to $100M"`, from
+  `tokenSnapshot.currentMarketCapUsd` / `distanceToTargetPct` /
+  `targetMarketCapUsd` (`reachedTarget: true` → "already past $100M ✅"). It turns
+  a price answer into a reason to bet. `tokenSnapshot` is `null` for every
+  non-market-cap market — just omit the line.
+- **Size chips** — `[$1] [$5] [$10]` (band $1–$10) with `defaultTicketUsd`
+  pre-selected; accept any custom $1–$10. Don't make the user type a number.
+- **Ladder** — list rungs with their `impliedPct`, mark the `isCurrent` rung, and
+  let the user pick one + a size (no YES/NO on an N-way market).
+- **Attribution (tag once)** — the reply above leads with the discover `headline`,
+  which already ends with the project tags, so it carries the attribution — **don't
+  also append the `tags` line** (that double-tags). The separate `tags` field is for
+  a quote reply that does *not* render the headline.
 
 ### Errors
 

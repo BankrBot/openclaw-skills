@@ -73,7 +73,8 @@ else stays lexical; the raw sentence is a last-resort fallback only.
       "matchedTerms": ["$bnkr"],
       "reason": "cashtag $bnkr matches market token",
       "odds": { "yesPriceCents": 12, "noPriceCents": 88 },
-      "stats": { "totalBets": 142, "totalPoolUsd": 1240, "yesPoolUsd": 150, "noPoolUsd": 1090, "feeUsd": 24.8 }
+      "stats": { "totalBets": 142, "totalPoolUsd": 1240, "yesPoolUsd": 150, "noPoolUsd": 1090, "feeUsd": 24.8 },
+      "headline": "$BNKR → $100M · YES 12¢ / NO 88¢ · 142 bets · $1.2k pool · closes Jun 30 · @playhunchxyz"
     }
   ]
 }
@@ -95,6 +96,7 @@ else stays lexical; the raw sentence is a last-resort fallback only.
 | `reason` | Human explanation of why it matched — useful for debugging, not for the reply. |
 | `odds` | Live `{ yesPriceCents, noPriceCents }` (falls back to `50/50` if the book can't be read). For ladder markets odds are returned by `quote`, not here. |
 | `stats` | Live bet activity — see below. |
+| `headline` | **Screenshot-ready one-liner**, built server-side: `title · odds · social proof (bets + pool) · close · @tags`. Render it verbatim under the question — the numbers **and the project @tags** are formatted for you. It **ends with the attribution** (`@playhunchxyz` + the token project, e.g. `… · @playhunchxyz @lienfiapp`) — keep those tags, they credit the project (see SKILL.md *Project attribution*). N-way markets read `N outcomes` instead of YES/NO; markets with no bets yet read `be the first to bet`. This is the line that makes a reply travel — lead with it instead of bare odds. |
 
 #### `stats` (bet activity)
 
@@ -105,7 +107,9 @@ else stays lexical; the raw sentence is a last-resort fallback only.
 | `yesPoolUsd` / `noPoolUsd` | USD pooled per side (both `0` for ladder markets — per-rung backing is on the quote's `ladder`). |
 | `feeUsd` | Fees accrued so far, USD. |
 
-Surface real depth ("142 bets · $1,240 pooled") instead of bare odds when it helps.
+The `headline` already folds this depth in (`142 bets · $1.2k pool`) — render it
+verbatim and the social proof comes for free, no assembly. Reach into the raw
+`stats` fields only when you want a custom layout.
 
 ### Response — `post` mode (claim-LLM)
 
