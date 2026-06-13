@@ -4,13 +4,17 @@ import os from "os";
 import path from "path";
 import { ethers } from "ethers";
 
-const BANKR_API = (process.env.BANKR_API_URL || "https://api.bankr.bot").replace(/\/$/, "");
-const BASE_RPC_URL = process.env.BASE_RPC_URL || "https://mainnet.base.org";
+const BANKR_API = "https://api.bankr.bot";
+
+const UNSAFE_DEV_MODE = process.env.PMFI_UNSAFE_DEV_MODE === "1";
+const BASE_RPC_URL =
+  UNSAFE_DEV_MODE && process.env.BASE_RPC_URL
+    ? process.env.BASE_RPC_URL
+    : "https://mainnet.base.org";
 
 const CHAIN_ID = 8453;
-const VAULT = (process.env.PMFI_PARBITRAGE_VAULT || "0xd1ccbc2aa6e2f41817b62448089d4125e62df4fb").toLowerCase();
-const USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-const MIN_DEPOSIT_USDC = Number(process.env.PMFI_MIN_DEPOSIT_USDC || "10");
+const VAULT = ethers.getAddress("0xd1ccbc2aa6e2f41817b62448089d4125e62df4fb");
+const USDC = ethers.getAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913");
 
 const ABI = [
   "function requestDeposit(uint256 assets,address receiver) returns (uint256 requestId)",
@@ -26,7 +30,12 @@ const ABI = [
   "function getVaultState() view returns (uint256 officialPPS,uint256 circulatingSupply,uint256 idleBal,uint256 lastReportedBacking,uint256 highWaterMarkAssets,uint256 pendingDepositAssets,uint256 claimableRedeemAssets,uint256 pendingRedeemShares,uint256 lastReportTimestamp,uint256 lastReportNonce,bool paused,bool shutdown)",
   "function balanceOf(address account) view returns (uint256)",
   "function effectiveDepositPPS() view returns (uint256)",
-  "function performanceFeesEnabled() view returns (bool)"
+  "function performanceFeesEnabled() view returns (bool)",
+  "function MIN_DEPOSIT_USDC() view returns (uint256)",
+  "function maxTotalDeposits() view returns (uint256)",
+  "function previewDeposit(uint256 assets) view returns (uint256 shares)",
+  "function previewRedeem(uint256 shares) view returns (uint256 assets)",
+  "function usdc() view returns (address)"
 ];
 
 const USDC_ABI = [
@@ -37,7 +46,11 @@ const USDC_ABI = [
 
 const iface = new ethers.Interface(ABI);
 const usdcIface = new ethers.Interface(USDC_ABI);
-const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
+const provider = new ethers.JsonRpcProvider(
+  BASE_RPC_URL,
+  CHAIN_ID,
+  { staticNetwork: true }
+);
 const vault = new ethers.Contract(VAULT, ABI, provider);
 const usdc = new ethers.Contract(USDC, USDC_ABI, provider);
 
@@ -79,8 +92,27 @@ function loadBankrKey() {
   return key;
 }
 
+const ALLOWED_BANKR_ENDPOINTS = new Set([
+  "/wallet/me",
+  "/wallet/submit"
+]);
+
 async function bankr(method, endpoint, body = undefined) {
-  const res = await fetch(`${BANKR_API}${endpoint}`, {
+  if (!ALLOWED_BANKR_ENDPOINTS.has(endpoint)) {
+    die(`Blocked unexpected Bankr API endpoint: ${endpoint}`);
+  }
+
+  const requestUrl = new URL(endpoint, `${BANKR_API}/`);
+
+  if (
+    requestUrl.protocol !== "https:" ||
+    requestUrl.origin !== BANKR_API ||
+    requestUrl.pathname !== endpoint
+  ) {
+    die(`Blocked untrusted Bankr API URL: ${requestUrl.toString()}`);
+  }
+
+  const res = await fetch(requestUrl, {
     method,
     headers: {
       "X-API-Key": loadBankrKey(),
@@ -92,7 +124,11 @@ async function bankr(method, endpoint, body = undefined) {
 
   const text = await res.text();
   let data = {};
-  try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { raw: text };
+  }
 
   if (!res.ok) {
     die(`Bankr API error ${res.status}: ${JSON.stringify(data).slice(0, 800)}`);
@@ -112,10 +148,45 @@ async function bankrWallet() {
   return ethers.getAddress(a);
 }
 
+function assertAllowedTransaction(to, data) {
+  const target = ethers.getAddress(to);
+  const selector = String(data).slice(0, 10).toLowerCase();
+
+  const approveSelector =
+    usdcIface.getFunction("approve").selector.toLowerCase();
+
+  const depositSelector =
+    iface.getFunction("requestDeposit").selector.toLowerCase();
+
+  const redeemSelector =
+    iface.getFunction("requestRedeem").selector.toLowerCase();
+
+  if (
+    target.toLowerCase() === USDC.toLowerCase() &&
+    selector === approveSelector
+  ) {
+    return;
+  }
+
+  if (
+    target.toLowerCase() === VAULT.toLowerCase() &&
+    (selector === depositSelector || selector === redeemSelector)
+  ) {
+    return;
+  }
+
+  die(
+    `Blocked unreviewed transaction target or selector: ` +
+    `target=${target}, selector=${selector}`
+  );
+}
+
 async function submit(to, data, description) {
+  assertAllowedTransaction(to, data);
+
   const result = await bankr("POST", "/wallet/submit", {
     transaction: {
-      to,
+      to: ethers.getAddress(to),
       chainId: CHAIN_ID,
       value: "0",
       data
@@ -124,8 +195,14 @@ async function submit(to, data, description) {
     waitForConfirmation: true
   });
 
-  const hash = result.transactionHash || result.txHash || result.hash;
-  if (!hash) die(`No tx hash returned: ${JSON.stringify(result).slice(0, 800)}`);
+  const hash =
+    result.transactionHash ||
+    result.txHash ||
+    result.hash;
+
+  if (!hash) {
+    die(`No tx hash returned: ${JSON.stringify(result).slice(0, 800)}`);
+  }
 
   console.log(description);
   console.log(`tx: https://basescan.org/tx/${hash}`);
@@ -140,6 +217,154 @@ function fmtUSDC(x) {
 
 function fmtPARB(x) {
   return ethers.formatUnits(x, 18);
+}
+
+function printRiskNotice() {
+  console.log("");
+  console.log("Risk notice:");
+  console.log("- Deposits and withdrawals are asynchronous.");
+  console.log("- Withdrawal timing depends on available vault liquidity.");
+  console.log("- The vault is admin-controlled and can be paused or shut down.");
+  console.log("- The contract includes administrative emergency-withdrawal functionality.");
+  console.log("- Smart-contract, custody, operational, and strategy risks apply.");
+  console.log("- No third-party audit is included or referenced by this skill.");
+  console.log("- Previewed output is an estimate and may change before processing.");
+  console.log("");
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function rpcRead(label, read, attempts = 4) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await read();
+    } catch (e) {
+      lastError = e;
+
+      if (attempt < attempts) {
+        console.log(
+          `warning: ${label} RPC read failed ` +
+          `(attempt ${attempt}/${attempts}); retrying`
+        );
+
+        await sleep(400 * attempt);
+      }
+    }
+  }
+
+  const reason =
+    lastError?.shortMessage ||
+    lastError?.message ||
+    String(lastError);
+
+  die(
+    `${label} RPC read failed after ${attempts} attempts: ` +
+    reason
+  );
+}
+
+async function readVaultPreflight() {
+  const network = await rpcRead(
+    "Base network",
+    () => provider.getNetwork()
+  );
+
+  if (network.chainId !== BigInt(CHAIN_ID)) {
+    die(
+      `wrong network: expected Base ${CHAIN_ID}, ` +
+      `received ${network.chainId.toString()}`
+    );
+  }
+
+  const code = await rpcRead(
+    "vault bytecode",
+    () => provider.getCode(VAULT)
+  );
+
+  if (!code || code === "0x") {
+    die(`reviewed vault has no contract code on Base: ${VAULT}`);
+  }
+
+  const state = await rpcRead(
+    "getVaultState",
+    () => vault.getVaultState()
+  );
+
+  await sleep(150);
+
+  const onchainMinimum = await rpcRead(
+    "MIN_DEPOSIT_USDC",
+    () => vault.MIN_DEPOSIT_USDC()
+  );
+
+  await sleep(150);
+
+  const cap = await rpcRead(
+    "maxTotalDeposits",
+    () => vault.maxTotalDeposits()
+  );
+
+  await sleep(150);
+
+  const configuredAsset = await rpcRead(
+    "vault USDC asset",
+    () => vault.usdc()
+  );
+
+  if (
+    ethers.getAddress(configuredAsset).toLowerCase() !==
+    USDC.toLowerCase()
+  ) {
+    die(
+      `vault asset mismatch: expected ${USDC}, ` +
+      `received ${configuredAsset}`
+    );
+  }
+
+  return {
+    state,
+    onchainMinimum,
+    cap
+  };
+}
+
+function getCapUsage(state) {
+  return state.lastReportedBacking + state.pendingDepositAssets;
+}
+
+function printVaultState(state) {
+  console.log(`reviewed vault: ${VAULT}`);
+  console.log(`paused: ${state.paused}`);
+  console.log(`shutdown: ${state.shutdown}`);
+  console.log(`idle USDC: ${fmtUSDC(state.idleBal)}`);
+  console.log(
+    `pending deposit USDC: ${fmtUSDC(state.pendingDepositAssets)}`
+  );
+  console.log(
+    `pending redeem pARB: ${fmtPARB(state.pendingRedeemShares)}`
+  );
+  console.log(
+    `last report nonce: ${state.lastReportNonce.toString()}`
+  );
+}
+
+async function simulateVaultCall(from, data, label) {
+  try {
+    await provider.call({
+      from,
+      to: VAULT,
+      data
+    });
+  } catch (e) {
+    die(
+      `${label} simulation failed: ` +
+      `${e.shortMessage || e.message}`
+    );
+  }
 }
 
 async function inspect() {
@@ -277,91 +502,334 @@ async function requests() {
 
 async function deposit(args) {
   const dry = args.includes("--dry-run");
-  args = args.filter(x => x !== "--dry-run");
-  if (args.length !== 1) die("usage: deposit <USDC_amount> [--dry-run]");
+  const riskConfirmed = args.includes("--confirm-risk");
 
-  const amountNum = Number(args[0]);
-  if (!Number.isFinite(amountNum) || amountNum <= 0) die("invalid USDC amount");
-  if (amountNum < MIN_DEPOSIT_USDC) die(`minimum deposit is ${MIN_DEPOSIT_USDC} USDC`);
+  args = args.filter(
+    x => x !== "--dry-run" && x !== "--confirm-risk"
+  );
 
-  const w = await bankrWallet();
-  const raw = ethers.parseUnits(args[0], 6);
-
-  let usdcBalance = null;
-  try {
-    usdcBalance = await usdc.balanceOf(w);
-  } catch (e) {
-    console.log(`warning: could not read USDC balance: ${e.message}`);
+  if (args.length !== 1) {
+    die(
+      "usage: deposit <USDC_amount> " +
+      "[--dry-run] [--confirm-risk]"
+    );
   }
 
-  const approveData = usdcIface.encodeFunctionData("approve", [VAULT, raw]);
-  const requestData = iface.encodeFunctionData("requestDeposit", [raw, w]);
+  let raw;
 
-  console.log(`Deposit request: ${args[0]} USDC -> PMFI pARBITRAGE`);
-  console.log(`wallet: ${w}`);
-  if (usdcBalance !== null) console.log(`Base USDC balance: ${fmtUSDC(usdcBalance)}`);
-  console.log("PMFI will process this deposit after the next vault report. The user receives pARB after PMFI processing.");
+  try {
+    raw = ethers.parseUnits(args[0], 6);
+  } catch {
+    die("invalid USDC amount");
+  }
+
+  if (raw <= 0n) die("invalid USDC amount");
+
+  const w = await bankrWallet();
+  const {
+    state,
+    onchainMinimum,
+    cap
+  } = await readVaultPreflight();
+
+  if (state.paused) {
+    die("vault is paused; deposit blocked");
+  }
+
+  if (state.shutdown) {
+    die("vault is shut down; deposit blocked");
+  }
+
+  if (raw < onchainMinimum) {
+    die(
+      `minimum deposit is ${fmtUSDC(onchainMinimum)} USDC`
+    );
+  }
+
+  const capUsage = getCapUsage(state);
+  const projectedCapUsage = capUsage + raw;
+
+  if (projectedCapUsage > cap) {
+    const remaining =
+      cap > capUsage
+        ? cap - capUsage
+        : 0n;
+
+    die(
+      `deposit exceeds vault cap. ` +
+      `Remaining capacity: ${fmtUSDC(remaining)} USDC`
+    );
+  }
+
+  const usdcBalance = await rpcRead(
+    "Base USDC balance",
+    () => usdc.balanceOf(w)
+  );
+
+  await sleep(150);
+
+  const expectedShares = await rpcRead(
+    "previewDeposit",
+    () => vault.previewDeposit(raw)
+  );
+
+  if (expectedShares <= 0n) {
+    die("previewDeposit returned zero shares");
+  }
+
+  const approveData =
+    usdcIface.encodeFunctionData("approve", [VAULT, raw]);
+
+  const requestData =
+    iface.encodeFunctionData("requestDeposit", [raw, w]);
+
+  console.log(
+    `Deposit request: ${fmtUSDC(raw)} USDC -> PMFI pARBITRAGE`
+  );
+  console.log(`wallet/receiver: ${w}`);
+  printVaultState(state);
+  console.log(
+    `on-chain minimum: ${fmtUSDC(onchainMinimum)} USDC`
+  );
+  console.log(`vault cap: ${fmtUSDC(cap)} USDC`);
+  console.log(
+    `current cap usage: ${fmtUSDC(capUsage)} USDC`
+  );
+  console.log(`expected pARB: ${fmtPARB(expectedShares)}`);
+  console.log(
+    `Base USDC balance: ${fmtUSDC(usdcBalance)}`
+  );
+
+  printRiskNotice();
 
   if (dry) {
-    if (usdcBalance !== null && usdcBalance < raw) {
-      console.log(`warning: wallet does not currently have enough Base USDC for this deposit`);
+    if (usdcBalance < raw) {
+      console.log(
+        "warning: insufficient Base USDC for execution"
+      );
     }
+
     console.log(JSON.stringify({
-      approve: { to: USDC, chainId: CHAIN_ID, value: "0", data: approveData },
-      requestDeposit: { to: VAULT, chainId: CHAIN_ID, value: "0", data: requestData }
+      approve: {
+        to: USDC,
+        spender: VAULT,
+        chainId: CHAIN_ID,
+        value: "0",
+        data: approveData
+      },
+      requestDeposit: {
+        to: VAULT,
+        receiver: w,
+        chainId: CHAIN_ID,
+        value: "0",
+        data: requestData
+      },
+      preview: {
+        inputUSDC: fmtUSDC(raw),
+        expectedPARB: fmtPARB(expectedShares),
+        paused: state.paused,
+        shutdown: state.shutdown,
+        onchainMinimumUSDC: fmtUSDC(onchainMinimum),
+        vaultCapUSDC: fmtUSDC(cap)
+      }
     }, null, 2));
+
     return;
   }
 
-  if (usdcBalance !== null && usdcBalance < raw) {
-    die(`insufficient Base USDC. Wallet has ${fmtUSDC(usdcBalance)} USDC, needs ${args[0]} USDC. Send Base USDC to ${w}`);
+  if (!riskConfirmed) {
+    die(
+      "execution requires direct user confirmation after " +
+      "reviewing the preflight and risk notice. " +
+      "Run the same command with --confirm-risk only after confirmation."
+    );
   }
 
-  const allowance = await usdc.allowance(w, VAULT);
+  if (usdcBalance < raw) {
+    die(
+      `insufficient Base USDC. ` +
+      `Wallet has ${fmtUSDC(usdcBalance)} USDC, ` +
+      `needs ${fmtUSDC(raw)} USDC`
+    );
+  }
+
+  const allowance = await rpcRead(
+    "Base USDC allowance",
+    () => usdc.allowance(w, VAULT)
+  );
+
   if (allowance < raw) {
-    await submit(USDC, approveData, `Approve ${args[0]} USDC for PMFI pARBITRAGE`);
+    await submit(
+      USDC,
+      approveData,
+      `Approve ${fmtUSDC(raw)} USDC for PMFI pARBITRAGE`
+    );
   } else {
     console.log("USDC allowance already sufficient.");
   }
 
-  await submit(VAULT, requestData, `Request deposit of ${args[0]} USDC into PMFI pARBITRAGE`);
-  console.log("Run later: node scripts/pmfi_parbitrage.mjs requests");
+  // State may change while the approval confirms.
+  const latest = await readVaultPreflight();
+
+  if (latest.state.paused) {
+    die("vault became paused before deposit submission");
+  }
+
+  if (latest.state.shutdown) {
+    die("vault entered shutdown before deposit submission");
+  }
+
+  const latestCapUsage = getCapUsage(latest.state);
+
+  if (latestCapUsage + raw > latest.cap) {
+    die("vault cap changed before submission; deposit blocked");
+  }
+
+  await simulateVaultCall(
+    w,
+    requestData,
+    "requestDeposit"
+  );
+
+  await submit(
+    VAULT,
+    requestData,
+    `Request deposit of ${fmtUSDC(raw)} USDC into PMFI pARBITRAGE`
+  );
 }
 
 async function withdraw(args) {
   const dry = args.includes("--dry-run");
-  args = args.filter(x => x !== "--dry-run");
-  if (args.length !== 1) die("usage: withdraw <pARB_amount> [--dry-run]");
+  const riskConfirmed = args.includes("--confirm-risk");
 
-  const amountNum = Number(args[0]);
-  if (!Number.isFinite(amountNum) || amountNum <= 0) die("invalid pARB amount");
+  args = args.filter(
+    x => x !== "--dry-run" && x !== "--confirm-risk"
+  );
+
+  if (args.length !== 1) {
+    die(
+      "usage: withdraw <pARB_amount> " +
+      "[--dry-run] [--confirm-risk]"
+    );
+  }
+
+  let raw;
+
+  try {
+    raw = ethers.parseUnits(args[0], 18);
+  } catch {
+    die("invalid pARB amount");
+  }
+
+  if (raw <= 0n) die("invalid pARB amount");
 
   const w = await bankrWallet();
-  const raw = ethers.parseUnits(args[0], 18);
-  const requestData = iface.encodeFunctionData("requestRedeem", [raw, w]);
+  const { state } = await readVaultPreflight();
 
-  console.log(`Withdraw request: ${args[0]} pARB -> USDC`);
-  console.log(`wallet: ${w}`);
-  console.log("PMFI will process this withdrawal after the next vault report and available liquidity. The user receives USDC after PMFI processing.");
+  if (state.paused) {
+    die("vault is paused; withdrawal request blocked");
+  }
+
+  const balance = await rpcRead(
+    "pARB balance",
+    () => vault.balanceOf(w)
+  );
+
+  await sleep(150);
+
+  const expectedAssets = await rpcRead(
+    "previewRedeem",
+    () => vault.previewRedeem(raw)
+  );
+
+  if (expectedAssets <= 0n) {
+    die("previewRedeem returned zero assets");
+  }
+
+  const requestData =
+    iface.encodeFunctionData("requestRedeem", [raw, w]);
+
+  console.log(
+    `Withdraw request: ${fmtPARB(raw)} pARB -> USDC`
+  );
+  console.log(`wallet/receiver: ${w}`);
+  printVaultState(state);
+  console.log(`pARB balance: ${fmtPARB(balance)}`);
+  console.log(
+    `expected USDC: ${fmtUSDC(expectedAssets)}`
+  );
+  console.log(
+    "Idle USDC is informational only. Processing remains " +
+    "dependent on vault reports and available liquidity."
+  );
+
+  if (state.shutdown) {
+    console.log(
+      "warning: vault shutdown is active; the exact withdrawal " +
+      "call must pass simulation before submission."
+    );
+  }
+
+  printRiskNotice();
 
   if (dry) {
+    let simulation = "skipped: insufficient pARB";
+
+    if (balance >= raw) {
+      await simulateVaultCall(
+        w,
+        requestData,
+        "requestRedeem"
+      );
+      simulation = "passed";
+    }
+
     console.log(JSON.stringify({
-      requestRedeem: { to: VAULT, chainId: CHAIN_ID, value: "0", data: requestData }
+      requestRedeem: {
+        to: VAULT,
+        receiver: w,
+        chainId: CHAIN_ID,
+        value: "0",
+        data: requestData
+      },
+      preview: {
+        inputPARB: fmtPARB(raw),
+        expectedUSDC: fmtUSDC(expectedAssets),
+        paused: state.paused,
+        shutdown: state.shutdown,
+        idleUSDC: fmtUSDC(state.idleBal),
+        simulation
+      }
     }, null, 2));
+
     return;
   }
 
-  let bal;
-  try {
-    bal = await vault.balanceOf(w);
-  } catch (e) {
-    die(`could not read pARB balance. Retry or use a stronger BASE_RPC_URL. ${e.message}`);
+  if (!riskConfirmed) {
+    die(
+      "execution requires direct user confirmation after " +
+      "reviewing the preflight and risk notice. " +
+      "Run the same command with --confirm-risk only after confirmation."
+    );
   }
 
-  if (bal < raw) die(`insufficient pARB. balance: ${fmtPARB(bal)}`);
+  if (balance < raw) {
+    die(
+      `insufficient pARB. Balance: ${fmtPARB(balance)}`
+    );
+  }
 
-  await submit(VAULT, requestData, `Request redeem of ${args[0]} pARB from PMFI pARBITRAGE`);
-  console.log("Run later: node scripts/pmfi_parbitrage.mjs requests");
+  await simulateVaultCall(
+    w,
+    requestData,
+    "requestRedeem"
+  );
+
+  await submit(
+    VAULT,
+    requestData,
+    `Request redeem of ${fmtPARB(raw)} pARB from PMFI pARBITRAGE`
+  );
 }
 
 async function claimDeposit(args) {
