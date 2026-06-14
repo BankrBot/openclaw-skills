@@ -331,6 +331,8 @@ Manage Bankr Club subscription from the CLI (status, signup, cancel). Pay with U
 
 Pricing is $20/mo or $198/yr USD-equivalent. Actual on-chain amount depends on the chosen token's price at quote time. The `--token` flag was added in CLI 0.3.4; older versions only support USDC.
 
+**Monthly → yearly upgrade**: active monthly members can upgrade to yearly by asking the agent (e.g. "upgrade me to yearly"). The full yearly price is charged and the new 365-day term stacks on top of any remaining monthly time, so no paid time is lost. Yearly → monthly downgrades and yearly resubscribes are not supported.
+
 ### Auth & Config Commands
 
 | Command | Description |
@@ -499,7 +501,7 @@ The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unifie
 - Check credits: `bankr llm credits` | Top up: `bankr llm credits add <amount>` | Auto top-up: `bankr llm credits auto --enable --amount 25 --tokens USDC`
 - In OpenClaw config, prefix model IDs with `bankr/` (e.g. `bankr/claude-sonnet-4.6`). In direct API calls, use bare IDs (e.g. `claude-sonnet-4.6`)
 - **Per-model discounts** available for Bankr Club members and partners — applied automatically at billing time
-- **BNB Chain promo**: top up $5+ via BNB Chain and receive a $5 bonus credit (one-time per wallet)
+- **Expiring credit grants**: promotional or developer grants may carry an expiry date. Your spendable balance is your permanent (purchased) credits plus any unexpired grants — grants are spent first (soonest-expiring first) and drop off automatically at expiry
 
 ### Quick Commands
 
@@ -575,6 +577,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - Send to 0x addresses, ENS-style names (`.eth`, `.base.eth`, `.cb.id`), or social handles
 - CLI direct (`bankr wallet transfer`) accepts 0x addresses + ENS only — social handles go through the AI agent
 - Multi-chain support
+- **Bulk / multi-recipient** sends via the agent — same-chain ERC-20 transfers to many recipients batch into a single on-chain transaction (one set of gas)
 - Flexible amount formats
 - Social handle resolution (Twitter, Farcaster, Telegram) via the agent
 
@@ -635,12 +638,13 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 ### x402 Paid API Calls
 
-The agent can discover, call, and deploy x402-protected API endpoints, automatically handling USDC payments on Base:
+The agent can discover, call, and deploy x402-protected API endpoints, automatically handling token payments on Base:
 
 - **Discover** endpoints in the Bankr registry or via web search
 - **Inspect** endpoint pricing, methods, and input/output schemas
-- **Call** endpoints with automatic payment signing (max $10/request)
+- **Call** endpoints with automatic payment signing in the endpoint's required token — USDC or any supported ERC-20 (max $10/request)
 - **Deploy** new x402 endpoints directly through the agent (write handler code, set pricing, deploy)
+- **Price** your own endpoints in USDC or any supported ERC-20; revenue settles on-chain and is accounted in USD at settlement time
 - Works with any x402-compatible endpoint (Bankr-hosted or external)
 
 **Reference**: [references/x402-cloud.md](references/x402-cloud.md)
@@ -926,6 +930,7 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Send 0.1 ETH to vitalik.eth"
 - "Transfer $20 USDC to @friend"
 - "Send 50 USDC to 0x123..."
+- "Send 5 USDC to each of these addresses: 0x..., 0x..., 0x..." (bulk — batched into one transaction)
 
 ### NFTs
 

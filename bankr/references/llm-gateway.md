@@ -40,6 +40,7 @@ bankr config get llmKey
 
 | Model | Provider | Best For |
 |-------|----------|----------|
+| `claude-fable-5` | Anthropic | Latest generation, agentic + multimodal (1M context, image input) |
 | `claude-opus-4.8` | Anthropic | Latest, most capable reasoning (1M context) |
 | `claude-opus-4.7` | Anthropic | Advanced reasoning (1M context) |
 | `claude-opus-4.6` | Anthropic | Advanced reasoning (1M context) |
@@ -123,15 +124,16 @@ bankr llm credits auto --disable
 
 When credits are exhausted, gateway requests will fail with HTTP 402.
 
-### BNB Chain Promotion
+### Expiring Credit Grants
 
-Top up LLM credits via BNB Chain ($5+ minimum) and receive a **$5 bonus credit** — one-time per wallet. Check eligibility at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) or via the CLI:
+Beyond purchased credits, your account may receive **time-limited grant credits** (for example promotional or developer grants). Your spendable balance is your permanent pool (purchases and regular top-ups) plus the remaining amount of any unexpired grants:
 
-```bash
-bankr llm credits add 5 --token USDT   # BNB Chain auto-selected if it holds the most USDT
+```
+spendable = permanent pool + Σ (remaining of each grant where expiry > now)
+spend order = expiring grants first (soonest-expiring), then the permanent pool
 ```
 
-Bonus credits appear in your credit history alongside regular top-ups.
+Expired grants drop off automatically — there is no manual cleanup. The Credits page and `/llm/usage` show a breakdown of your permanent pool vs. each grant and its expiry, and your credit history labels grant rows.
 
 ### Agent Credit Top-Up
 

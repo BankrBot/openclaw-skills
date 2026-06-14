@@ -49,6 +49,15 @@ curl "https://api.bankr.bot/addresses/resolve?value=vitalik.eth&type=ens"
   - ERC20 tokens: USDC, USDT, WETH, etc.
 - **Solana**: SOL and SPL tokens (via AI agent — the CLI's `bankr wallet transfer` is EVM-only)
 
+## Bulk / Multi-Recipient Transfers
+
+Through the AI agent you can send to many recipients in one request (e.g. an airdrop or payroll run). Same-chain ERC-20 transfers to multiple recipients are batched into a **single on-chain transaction** (one set of gas) rather than one transaction per recipient; native-token sends are submitted individually. Each recipient's outcome is reported back so you can see exactly which legs succeeded.
+
+```bash
+bankr agent prompt "Send 5 USDC to 0xAAA..., 0xBBB..., and 0xCCC... on Base"
+bankr agent prompt "Airdrop 10 USDC each to @alice, @bob, and @carol"
+```
+
 ## Recipient Formats
 
 Pass the bare username for social handles (no `.eth` suffix even if the user's display name has one) — the resolver only matches by exact Farcaster/Twitter username.
@@ -90,6 +99,10 @@ Pass the bare username for social handles (no `.eth` suffix even if the user's d
 - "Send $20 of ETH to @friend on Twitter"
 - "Transfer 0.1 ETH to @user on Farcaster"
 - "Send 50 USDC to @buddy on Telegram"
+
+**Bulk / multi-recipient:**
+- "Send 5 USDC to 0xAAA..., 0xBBB..., and 0xCCC..."
+- "Airdrop 10 USDC each to @alice, @bob, and @carol"
 
 **With chain specified:**
 - "Send ETH on Base to vitalik.eth"
