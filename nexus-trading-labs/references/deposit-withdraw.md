@@ -4,6 +4,16 @@
 
 All collateral lives in the Orderly Network vault on Arbitrum — non-custodial, withdraw anytime.
 
+**⚠️ State the destination clearly when depositing.** A deposit goes into the user's **Nexus
+trading balance** (perpetual collateral — spendable immediately, withdrawable on demand, NO lockup).
+This is NOT a yield or managed vault. Always confirm it back, e.g.:
+
+> "Depositing 14.58 USDC into your **Nexus trading balance** (perp collateral on Arbitrum —
+> withdraw anytime, no lockup). This is not a yield/managed vault."
+
+This preempts confusion with OmniVault (a separate managed-fund product with a redemption window —
+see the OmniVault section below). The skill can ONLY deposit to the trading balance.
+
 ### Automated path (recommended)
 
 ```
@@ -112,7 +122,16 @@ Returns `{ ok: true, hint: "Wait ~5s then retry withdrawal with free_collateral 
 
 ---
 
-## OmniVault
+## OmniVault — different product, NOT reachable via the skill
 
-Not currently supported via the skill. Direct users to https://app.orderly.network/vaults to deposit directly.
+OmniVault is Orderly's **managed-fund** product, distinct from the trading balance:
+
+- **Trading balance** (what this skill deposits to): perp collateral, withdraw on demand, no lockup.
+- **OmniVault**: a managed fund with a **redemption/withdrawal window** (funds are not instantly
+  liquid — the manager unwinds positions first).
+
+External brokers cannot deposit into OmniVault, so the skill **cannot** route funds there — every
+skill deposit goes to the trading balance. If a user specifically wants OmniVault or a community
+vault, direct them to the web app: https://app.orderly.network/vaults (or the Vaults page at
+https://trade.nexustradinglabs.com). Do NOT imply the skill can manage vault deposits/redemptions.
 
