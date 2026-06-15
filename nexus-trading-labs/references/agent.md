@@ -11,13 +11,14 @@ it can trade but never withdraw your funds.** Starts in risk-free PAPER mode; yo
 flip it live when you trust it."
 
 ## Auth model
-- **PAPER** activation needs nothing but the wallet address — it's simulated, no key.
-- **ASSISTED / AUTONOMOUS** (live) need `walletSig` from
-  `sign_message('nexus-trading-key-v1')` (the existing skill step) — that signature
-  IS the auth and derives the order-only key. The wallet must already be registered
-  (`/proxy/bankr-register`); if not, register first then retry.
-- **AUTONOMOUS** also needs `confirm: "GO LIVE"` — ALWAYS get an explicit yes from
-  the user before sending it.
+- **Every mutation requires `walletSig`** from `sign_message('nexus-trading-key-v1')` — including PAPER.
+  Agent control (activate, mode, config, deactivate, kill) changes account state, so the server ecrecovers
+  the signature and requires it to resolve to the agent's own wallet; otherwise `401 walletSig_required`.
+  Pass it in the JSON body, never a query string. Only `GET /agent/{addr}` is public (read-only).
+- **ASSISTED / AUTONOMOUS** (live) use that same `walletSig` to ALSO derive the order-only key. The wallet
+  must already be registered (`/proxy/bankr-register`); if not, register first then retry.
+- **AUTONOMOUS** also needs `confirm: "GO LIVE"` — ALWAYS get an explicit yes from the user before sending it.
+- The signature is deterministic; reuse the session sig you already hold rather than re-prompting per call.
 
 ## Config — the full control surface (all of this is user-set)
 
@@ -84,20 +85,25 @@ Scale `capitalPerTrade` down if free collateral is low (capital guardrail below)
 
 ## Intents → calls
 
+**⚠️ AUTH: every agent MUTATION below requires `walletSig` = `sign_message('nexus-trading-key-v1')` in the
+JSON body** — including PAPER activate/mode and config changes. The server ecrecovers it and rejects
+(`401 walletSig_required`) unless it resolves to the agent's own wallet. NEVER pass it in a query string. Only
+`GET /agent/{addr}` is public. Reuse the session signature you already hold.
+
 | User says | Call |
 |---|---|
-| "Deploy my agent (paper) on BTC, $30/trade 5x" | `POST /agent/{addr}/bankr/activate` `{mode:"PAPER", config:{symbols:["PERP_BTC_USDC"],capitalPerTrade:30,leverage:5}}` |
+| "Deploy my agent (paper) on BTC, $30/trade 5x" | `POST /agent/{addr}/bankr/activate` `{mode:"PAPER", config:{symbols:["PERP_BTC_USDC"],capitalPerTrade:30,leverage:5}, walletSig}` |
 | "Arm it in assisted mode" | `POST /agent/{addr}/bankr/activate` `{mode:"ASSISTED", walletSig}` |
 | "Make it live / go autonomous" | confirm first → `POST /agent/{addr}/bankr/mode` `{mode:"AUTONOMOUS", confirm:"GO LIVE", walletSig}` |
-| "Pause my agent" | `POST /agent/{addr}/bankr/mode` `{mode:"ASSISTED"}` |
-| "Set it back to paper" | `POST /agent/{addr}/bankr/mode` `{mode:"PAPER"}` |
-| "Change to $20/trade at 3x" | `POST /agent/{addr}/bankr/activate` `{mode:<current>, config:{capitalPerTrade:20,leverage:3}, walletSig?}` |
-| "Deploy the Blue-Chip Confluence preset (paper)" | `POST /agent/{addr}/bankr/activate` `{mode:"PAPER", config:{…preset…}}` (see Strategy presets) |
-| "Turn on the market regime filter" | `POST /agent/{addr}/bankr/activate` `{mode:<current>, config:{respectRegime:true}, walletSig?}` |
-| "How's my agent?" | `GET /agent/{addr}` → format `state` |
+| "Pause my agent" | `POST /agent/{addr}/bankr/mode` `{mode:"ASSISTED", walletSig}` |
+| "Set it back to paper" | `POST /agent/{addr}/bankr/mode` `{mode:"PAPER", walletSig}` |
+| "Change to $20/trade at 3x" | `POST /agent/{addr}/bankr/activate` `{mode:<current>, config:{capitalPerTrade:20,leverage:3}, walletSig}` |
+| "Deploy the Blue-Chip Confluence preset (paper)" | `POST /agent/{addr}/bankr/activate` `{mode:"PAPER", config:{…preset…}, walletSig}` (see Strategy presets) |
+| "Turn on the market regime filter" | `POST /agent/{addr}/bankr/activate` `{mode:<current>, config:{respectRegime:true}, walletSig}` |
+| "How's my agent?" | `GET /agent/{addr}` → format `state` (public read, no sig) |
 | "Fund my agent $50" | `POST /deposit/prepare` `{wallet, amount:50, accountId}` → sign+submit, then suggest capital (below) |
-| "Stop my agent" | `DELETE /agent/{addr}` (⚠️ warn: leaves an open position unmanaged — offer KILL) |
-| "Kill it / close everything" | `POST /agent/{addr}/kill` |
+| "Stop my agent" | `DELETE /agent/{addr}` `{walletSig}` (⚠️ warn: leaves an open position unmanaged — offer KILL) |
+| "Kill it / close everything" | `POST /agent/{addr}/kill` `{walletSig}` |
 | "Top Nexus agents" | `GET /agents/leaderboard` |
 | "Is the record real?" | `GET /agents/ledger` (SHA-256 root + on-chain anchor) |
 
@@ -106,7 +112,8 @@ Scale `capitalPerTrade` down if free collateral is low (capital guardrail below)
 ```
 suggestedCapital = floor(freeCollateral * 0.6)
 ```
-Read balance via `GET /balance?wallet=&sig=`. Never set `capitalPerTrade` above
+Read balance via `POST /balance` `{walletAddress, walletSig}` (never put the signature in a query string — it's
+a replayable credential that can leak into logs/proxies). Never set `capitalPerTrade` above
 ~60% of free collateral, or live entries will margin-reject. State it:
 "With $52 free, I'd run ~$30/trade so margin keeps a buffer."
 

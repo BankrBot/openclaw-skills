@@ -98,10 +98,15 @@ POST https://og.nexustradinglabs.com/agent/<walletAddress>/bankr/activate
   strategies are `CONFLUENCE`, `FUNDING_ONLY`, `OI_ONLY`. All thresholds are user-tunable.
 - AUTONOMOUS without `confirm:"GO LIVE"` → `409 confirm_required`. Confirm with the
   user FIRST, then resend with `confirm:"GO LIVE"`.
-- Change mode later: `POST /agent/<wallet>/bankr/mode { "mode", "walletSig"?, "confirm"? }`
+- Change mode later: `POST /agent/<wallet>/bankr/mode { "mode", "walletSig", "confirm"? }`
 - Pause new entries: mode → `ASSISTED` (still manages an open position). Back to sim: mode → `PAPER`.
-- Status: `GET /agent/<wallet>`. Stop: `DELETE /agent/<wallet>` (⚠️ leaves an open position
+- Status: `GET /agent/<wallet>` (public read). Stop: `DELETE /agent/<wallet>` (⚠️ leaves an open position
   unmanaged — offer KILL instead if a position is open). Kill (close + stop): `POST /agent/<wallet>/kill`.
+- **⚠️ AUTH — every agent MUTATION requires `walletSig`** (`sign_message('nexus-trading-key-v1')`): activate
+  (ALL modes, incl. PAPER), mode change, config update, deactivate, and kill. These are account-control
+  actions — the server ecrecovers the sig and rejects (`401 walletSig_required`) unless it resolves to the
+  agent's own wallet. Pass `walletSig` in the JSON body (NEVER a query string). Only `GET /agent/<wallet>` is
+  public. Reuse the session signature you already hold — no need to re-sign per call.
 - **Capital guardrail:** keep `capitalPerTrade` ≤ ~60% of free collateral, or live entries
   margin-reject (Orderly -1101). Read balance first and suggest a safe size.
 - Always tell the user: the agent's key is **order-only — it cannot withdraw funds.**
@@ -130,11 +135,12 @@ See references/agent.md for the full intent map, status formatting, and safety r
 | Settle PnL | `POST https://og.nexustradinglabs.com/settle-pnl` | walletSig |
 | Register wallet | `POST https://og.nexustradinglabs.com/proxy/bankr-register` | Bankr API key |
 | Publish thesis on-chain | `POST https://og.nexustradinglabs.com/proxy/thesis-register` | Bankr API key |
-| **Deploy / arm agent** | `POST https://og.nexustradinglabs.com/agent/:wallet/bankr/activate` | walletSig (live modes) |
-| **Change agent mode** | `POST https://og.nexustradinglabs.com/agent/:wallet/bankr/mode` | walletSig (live flip) |
+| **Deploy / arm agent** | `POST https://og.nexustradinglabs.com/agent/:wallet/bankr/activate` | walletSig (all modes) |
+| **Change agent mode** | `POST https://og.nexustradinglabs.com/agent/:wallet/bankr/mode` | walletSig |
+| **Update agent config** | `PUT https://og.nexustradinglabs.com/agent/:wallet/config` | walletSig |
 | **Agent status** | `GET https://og.nexustradinglabs.com/agent/:wallet` | public read |
-| **Deactivate agent** | `DELETE https://og.nexustradinglabs.com/agent/:wallet` | — |
-| **Kill agent (close + stop)** | `POST https://og.nexustradinglabs.com/agent/:wallet/kill` | — |
+| **Deactivate agent** | `DELETE https://og.nexustradinglabs.com/agent/:wallet` | walletSig (in body) |
+| **Kill agent (close + stop)** | `POST https://og.nexustradinglabs.com/agent/:wallet/kill` | walletSig (in body) |
 | **Top agents** | `GET https://og.nexustradinglabs.com/agents/leaderboard` | public |
 | **Agent ledger (proof)** | `GET https://og.nexustradinglabs.com/agents/ledger` | public |
 | Mark price | `GET https://og.nexustradinglabs.com/mark-price?symbol=BTC` | public |
