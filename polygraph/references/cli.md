@@ -26,22 +26,22 @@ polygraphso --version
 polygraphso --help
 ```
 
-Example output (published grades are live):
+Grades are live. Example output (the list rows are **illustrative** — a grade is point-in-time
+evidence, so the live set at `polygraphso list` / polygraph.so is the source of truth):
 
 ```
 $ polygraphso check npm/@modelcontextprotocol/server-filesystem
 → polygraph: A · litmus-v2 · 2026-06-11
 → details → polygraph.so/#checks
 
-$ polygraphso list
+$ polygraphso list                              # every graded server + its grade
 npm/@modelcontextprotocol/server-filesystem    A
-npm/@upstash/context7-mcp                      D
-npm/@playwright/mcp                            F
+npm/@scope/example-search-mcp                   D
+npm/@scope/example-browser-mcp                  F
 
 $ polygraphso list --json | jq -r '.servers[] | "\(.polygraph)  \(.server_ref)"'
 A  npm/@modelcontextprotocol/server-filesystem
-D  npm/@upstash/context7-mcp
-F  npm/@playwright/mcp
+…
 ```
 
 A tracked-but-ungraded server reports `not available yet` with a
@@ -95,9 +95,11 @@ fingerprint.
 
 - **Node ≥ 18.**
 - **Docker optional** — without it the egress probe (C-02) is skipped and the grade is capped
-  at **B**. With `LITMUS_STDIO_ISOLATION=docker`, isolation is mandatory.
-- **Exit codes:** non-zero on a failing grade (**D/F**), zero on **A/B/C** — drop `litmus` into
-  CI to gate a dependency on its behavioral grade.
+  at **B**. A **remote/HTTP target also caps at B**, since it can't be sandboxed for egress —
+  that's a property of the measurement, not a knock against the server. With
+  `LITMUS_STDIO_ISOLATION=docker`, isolation is mandatory.
+- **Exit codes:** non-zero on a failing grade (**D/F**), zero on a passing grade (**A/B**) —
+  drop `litmus` into CI to gate a dependency on its behavioral grade.
 
 ### Human output
 

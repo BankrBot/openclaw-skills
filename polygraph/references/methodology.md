@@ -33,8 +33,11 @@ Does the server do more than it declares?
 - **Unexpected egress (2.2):** run the server inside a hardened **default-deny Docker sandbox**
   with a network sinkhole; any outbound attempt is a finding.
 - **Fail:** any HIGH-severity finding in 2.1, or any finding in 2.2.
-- **Skipped** (not failed) only when 2.1 passes and 2.2 could not run because no Docker sandbox
-  was available — which caps the grade at **B**.
+- **Skipped** (not failed) only when 2.1 passes and 2.2 could not run — because no Docker
+  sandbox was available, or because the target is a **remote/HTTP server** that can't be
+  sandboxed for egress. Either way the grade caps at **B**. This is a property of the
+  measurement, not a knock against the server: a remote B is not "worse than" a local A, since
+  egress was never observed on the remote one.
 
 ### C-03 — Sensitive-data handling
 Does the server leak secrets it was exposed to?
