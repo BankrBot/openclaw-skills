@@ -148,8 +148,8 @@ polygraphso-litmus litmus ./path/to/local-mcp-server --json
 - **Exit codes are CI-friendly:** non-zero on a failing grade (D/F), zero on A/B — drop it into
   a pipeline to gate dependencies.
 
-Flags, env vars, `--json` output, and the `check` / `challenge` / `list` subcommands are all
-in [`references/cli.md`](references/cli.md).
+Flags, env vars, `--json` output, and the `check` / `list` subcommands are all in
+[`references/cli.md`](references/cli.md).
 
 ---
 

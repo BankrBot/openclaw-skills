@@ -64,14 +64,13 @@ npx -y -p @polygraphso/litmus polygraphso-litmus litmus <ref>
 
 ```bash
 polygraphso-litmus litmus <ref | https-url | local-path>   # grade a server end-to-end
-polygraphso-litmus check   <ref[@version]>                 # look up a published grade
-polygraphso-litmus challenge <attestation-uid> <ref>       # dispute a grade by re-running it
+polygraphso-litmus check  <ref>                            # look up a published grade
 polygraphso-litmus list                                    # list published grades
 polygraphso-litmus --version | --help
 ```
 
-`challenge` is the teeth behind reproducibility: re-run the harness against a server that
-carries a grade and, if your result disagrees, you have a falsification anchored to the same
+Reproducibility is the teeth: re-run `litmus` against a server that already carries a grade
+and, if your result disagrees, that's a falsification anchored to the same tool-surface
 fingerprint.
 
 ### Flags (`litmus`)
