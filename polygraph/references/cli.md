@@ -21,20 +21,32 @@ npx polygraphso check npm/@modelcontextprotocol/server-filesystem   # sub-second
 npm i -g polygraphso                                                # or install globally
 
 polygraphso check <registry>/<owner>/<name>     # latest published grade
-polygraphso list [--json]                       # every tracked server + adoption tier + status
+polygraphso list [--json]                       # every graded server + its grade
 polygraphso --version
 polygraphso --help
 ```
 
-Example output:
+Example output (published grades are live):
 
 ```
-→ tracked · top 10 adoption
-→ polygraph: A · version 0.1.0 · https://base.easscan.org/attestation/view/<uid>
+$ polygraphso check npm/@modelcontextprotocol/server-filesystem
+→ polygraph: A · litmus-v2 · 2026-06-11
+→ details → polygraph.so/#checks
+
+$ polygraphso list
+npm/@modelcontextprotocol/server-filesystem    A
+npm/@upstash/context7-mcp                      D
+npm/@playwright/mcp                            F
+
+$ polygraphso list --json | jq -r '.servers[] | "\(.polygraph)  \(.server_ref)"'
+A  npm/@modelcontextprotocol/server-filesystem
+D  npm/@upstash/context7-mcp
+F  npm/@playwright/mcp
 ```
 
-Tracked-but-ungraded servers report `polygraph: not yet available` with a notify link;
-behavioral grades are rolling out as the harness grades each server.
+A tracked-but-ungraded server reports `not available yet` with a
+`polygraph.so/notify?for=<ref>` link; its grade lands as the litmus harness covers more of the
+ecosystem.
 
 Config: `POLYGRAPH_API_URL` overrides the lookup endpoint (useful for local testing).
 

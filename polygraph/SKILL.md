@@ -61,23 +61,25 @@ A sub-second lookup against published grades — **one command before your agent
 anything:**
 
 ```bash
-npx polygraphso check npm/@modelcontextprotocol/server-filesystem
+$ npx polygraphso check npm/@modelcontextprotocol/server-filesystem
+→ polygraph: A · litmus-v2 · 2026-06-11
+→ details → polygraph.so/#checks
 ```
 
-Refs are **registry-prefixed** (the prefix disambiguates — `redis` exists on npm, PyPI, and
-GitHub with different content):
+Published grades are **live** and span the full range. Browse the graded set with
+`polygraphso list`:
 
 ```bash
-polygraphso check npm/@modelcontextprotocol/server-filesystem
-polygraphso check pypi/mcp-server-git
-polygraphso check github/anthropic/mcp-server-foo
-polygraphso list            # every tracked server + adoption tier + status
-polygraphso list --json | jq '.servers[] | select(.adoption_tier == "top10")'
+$ polygraphso list
+npm/@modelcontextprotocol/server-filesystem    A
+npm/@upstash/context7-mcp                      D
+npm/@playwright/mcp                            F
 ```
 
-Behavioral grades are rolling out — tracked-but-ungraded servers report
-`polygraph: not yet available` with a `notify` link, and the result lands once the litmus
-harness has graded them. Full CLI reference: [`references/cli.md`](references/cli.md).
+Refs are **registry-prefixed** — the prefix disambiguates (`redis` exists on npm, PyPI, and
+GitHub with different content): `npm/…`, `pypi/…`, `github/…`. A tracked-but-ungraded server
+reports `not available yet` with a notify link, and its grade lands as the litmus harness
+covers more of the ecosystem. Full CLI reference: [`references/cli.md`](references/cli.md).
 
 ---
 
