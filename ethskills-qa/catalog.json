@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-qa",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "qa-checklist.md",
+    "language": "bash",
+    "code": "# Ship-blockers — do not deploy without these\n# ☐ Wallet connects → shows button, not text\n# ☐ Four-state flow: Connect → Network → Approve → Action\n# ☐ Approve button disabled + spinner through block confirm\n# ☐ Contracts verified on block explorer\n# ☐ SE2 footer / tab title / README branding removed\n\n# Should-fix before launch\n# ☐ All addresses shown with <Address/> component\n# ☐ USD values displayed next to every token amount\n# ☐ pollingInterval: 3000 set in wagmi config\n# ☐ OG image uses absolute production URL"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/qa/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/qa/SKILL.md and audit this dApp\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/qa/SKILL.md",
+    "reference": "https://ethskills.com/qa/SKILL.md"
+  }
+}

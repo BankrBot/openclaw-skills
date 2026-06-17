@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "bankr-token-scam-analysis",
+  "provider": "BankrBot",
+  "providerUrl": "https://bankr.bot/",
+  "logo": null,
+  "demo": {
+    "title": "scam-analysis.sh",
+    "language": "bash",
+    "code": "# Analyze a token for scam / rug-pull risk\nbankr prompt \"Analyze 0xAbC...123 on Base for scam risk\"\n\n# Compare old vs new contracts in a migration\nbankr prompt \"Compare these two tokens for migration scam: 0xOLD 0xNEW\"\n\n# Cross-reference a project's Twitter claims vs on-chain reality\nbankr prompt \"Is @SomeProject a rug? Check deployer and holders\""
+  },
+  "setup": [
+    "Install: `npx skills add bankr-token-scam-analysis`",
+    "Optionally set `BASE_RPC_URL` env var for faster reads (public RPC used by default)",
+    "Provide a token address and chain to start an analysis",
+    "Reports saved to `/reports/<token>_scam_analysis.md`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "bankr-token-scam-analysis",
+    "command": "install the bankr-token-scam-analysis skill from https://github.com/BankrBot/skills/tree/main/bankr-token-scam-analysis"
+  }
+}

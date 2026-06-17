@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "base-minikit",
+  "provider": "Base",
+  "providerUrl": "https://base.org",
+  "logo": "base-account.png",
+  "demo": {
+    "title": "migrate.tsx",
+    "language": "tsx",
+    "code": "// Before (MiniKit / OnchainKit)\nimport { useMiniKit } from '@coinbase/onchainkit/minikit';\nconst { context } = useMiniKit(); // sync access\nconsole.log(context.user.fid);\n\n// After (Farcaster SDK v0.2.0+)\nimport sdk from '@farcaster/miniapp-sdk';\nimport { useEffect, useState } from 'react';\n\nfunction App() {\n  const [context, setContext] = useState(null);\n\n  useEffect(() => {\n    // sdk.context is now a Promise — must await\n    sdk.context.then(setContext);\n    return () => { /* cleanup prevents stale state */ };\n  }, []);\n\n  // Replace FrameProvider, update manifest.json\n  // setPrimaryButton no longer accepts onClick callback\n}"
+  },
+  "setup": [
+    "Ensure Node.js >= 22.11.0 is installed",
+    "Update: `npm install @farcaster/miniapp-sdk`",
+    "Replace `@coinbase/onchainkit/minikit` imports throughout",
+    "Update manifest.json with Farcaster frame configuration"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Base",
+    "command": "npx skills add base/base-skills",
+    "reference": null
+  }
+}

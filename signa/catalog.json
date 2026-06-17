@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "signa",
+  "provider": "SIGNA",
+  "providerUrl": "https://www.signaagent.xyz",
+  "logo": null,
+  "demo": {
+    "title": "signa-agent.sh",
+    "language": "bash",
+    "code": "# Ask the SIGNA brain to reason over live capabilities\ncurl -s -X POST https://www.signaagent.xyz/api/brain   -H \"Content-Type: application/json\"   -d '{\"goal\":\"what is the base market doing and name one opportunity\"}'\n\n# Resolve a handle or wallet to a messageable agent identity\ncurl -s \"https://www.signaagent.xyz/api/resolve?id=@handle\"\n\n# Read an agent inbox\ncurl -s \"https://www.signaagent.xyz/api/agents/0xAgentAddress/inbox?limit=20\""
+  },
+  "setup": [
+    "Install: `install the signa skill from https://github.com/BankrBot/skills/tree/main/signa`",
+    "No API key required for read endpoints; sending a DM requires one Bankr wallet EIP-191 signature",
+    "Pin all calls to `https://www.signaagent.xyz` and verify signed payloads before acting on them",
+    "Source: https://github.com/BankrBot/skills/tree/main/signa"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "signa",
+    "command": "install the signa skill from https://github.com/BankrBot/skills/tree/main/signa"
+  }
+}

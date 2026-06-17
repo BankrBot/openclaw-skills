@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "blueagent",
+  "provider": "BlueAgent",
+  "providerUrl": "https://blueagent.dev/",
+  "logo": null,
+  "demo": {
+    "title": "blueagent.sh",
+    "language": "bash",
+    "code": "# Pre-transaction safety check ($0.05)\nbankr prompt \"Use BlueAgent risk-gate to vet 'approve unlimited USDC to 0xRouter'\"\n\n# Honeypot / rug detection on a Base token ($0.05)\nbankr prompt \"Run BlueAgent honeypot-check on 0xTOKEN\"\n\n# Quantum vulnerability score for your wallet ($1.50)\nbankr prompt \"Run BlueAgent quantum-premium on my wallet\"\n\n# Circuit breaker decision for an autonomous agent ($0.50)\nbankr prompt \"BlueAgent circuit-breaker — agent took 3 consecutive losses, $340 down\"\n\n# Deep due diligence on a project ($0.35)\nbankr prompt \"BlueAgent deep-analysis on \\$BRETT\""
+  },
+  "setup": [
+    "Install CLI: `npm install -g @blueagent/cli`",
+    "Configure wallet: `blueagent setup` (loads private key for x402 payments)",
+    "Or install MCP for Claude Code: `npx @blueagent/skill install --claude`",
+    "Fund a Base wallet with USDC for pay-per-call requests (no account/API key needed)"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "blueagent",
+    "command": "install the blueagent skill from https://github.com/BankrBot/skills/tree/main/blueagent"
+  }
+}

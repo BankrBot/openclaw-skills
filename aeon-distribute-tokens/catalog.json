@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-distribute-tokens",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "distribute-tokens.sh",
+    "language": "bash",
+    "code": "# Dry-run — resolves handles, prints the plan, makes zero transfers\naeon-distribute-tokens list=contributors mode=dry-run\n\n# Live execution with idempotency\naeon-distribute-tokens list=contributors mode=execute\n\n# Recover from a partial run (skips already-completed rows for the day)\naeon-distribute-tokens list=contributors mode=execute"
+  },
+  "setup": [
+    "Install: `install the aeon-distribute-tokens skill from https://github.com/BankrBot/skills/tree/main/aeon-distribute-tokens`",
+    "Set `BANKR_API_KEY` with read-write scope; the skill preflights the scope before any transfer",
+    "Configure recipients + amounts in the list YAML",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-distribute-tokens"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-distribute-tokens",
+    "command": "install the aeon-distribute-tokens skill from https://github.com/BankrBot/skills/tree/main/aeon-distribute-tokens"
+  }
+}

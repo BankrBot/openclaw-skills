@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "opensea",
+  "provider": "OpenSea",
+  "providerUrl": "https://opensea.io/",
+  "logo": null,
+  "demo": {
+    "title": "opensea.sh",
+    "language": "bash",
+    "code": "# Read-only: top trending collections on Base\nbankr prompt \"Use opensea-api to get trending collections on Base\"\n\n# Buy an NFT — fulfills a listing on Seaport via Bankr wallet\nbankr prompt \"Use opensea-marketplace to buy NFT 0xCollection #1234 on Base\"\n\n# ERC20 → ERC20 cross-chain swap\nbankr prompt \"Use opensea-swaps to swap 100 USDC on Base for ETH on Arbitrum\"\n\n# Configure wallet signing for write operations\n./opensea/opensea-wallet/scripts/configure.sh --provider bankr\n\n# Register a paid AI-callable tool gated by x402 USDC\n./opensea/opensea-tool-sdk/scripts/register-tool.sh --price 0.05"
+  },
+  "setup": [
+    "Get a free instant API key: https://docs.opensea.io/reference/api-keys#instant-api-key-for-agents",
+    "Set `OPENSEA_API_KEY` in your environment (required for all read/write operations)",
+    "For write ops (marketplace, swaps), configure a wallet provider per `opensea-wallet/SKILL.md` — Bankr, Privy, Turnkey, Fireblocks, or local `PRIVATE_KEY`",
+    "Install: `npx skills add opensea` — read each sub-skill's `SKILL.md` before executing",
+    "Source: https://github.com/ProjectOpenSea/opensea-skill"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "opensea",
+    "command": "install the opensea skill from https://github.com/BankrBot/skills/tree/main/opensea"
+  }
+}

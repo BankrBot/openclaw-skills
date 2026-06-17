@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-skill-evals",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "skill-evals.sh",
+    "language": "bash",
+    "code": "# Evaluate the latest output of a skill against its manifest\naeon-skill-evals target=aeon-token-movers\n\n# Bootstrap a manifest from the last N successful runs\naeon-skill-evals target=aeon-token-movers mode=bootstrap"
+  },
+  "setup": [
+    "Install: `install the aeon-skill-evals skill from https://github.com/BankrBot/skills/tree/main/aeon-skill-evals`",
+    "Define assertions per skill in `aeon-skill-evals/manifests/`",
+    "Run as a post-step after the skill it evaluates",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-skill-evals"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-skill-evals",
+    "command": "install the aeon-skill-evals skill from https://github.com/BankrBot/skills/tree/main/aeon-skill-evals"
+  }
+}

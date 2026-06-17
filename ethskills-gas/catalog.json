@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-gas",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "gas-costs.sh",
+    "language": "bash",
+    "code": "# Real costs on Base (Feb 2026, ~0.05 gwei base fee)\n# ETH transfer:      $0.001\n# ERC-20 transfer:   $0.002\n# Uniswap swap:      $0.008\n# Contract deploy:   $0.05\n\n# Get live gas price\ncast gas-price --rpc-url https://mainnet.base.org\n\n# Estimate a specific tx\ncast estimate 0xTOKEN   \"transfer(address,uint256)\" $TO $AMOUNT   --rpc-url https://mainnet.base.org"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/gas/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/gas/SKILL.md for current gas costs\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/gas/SKILL.md",
+    "reference": "https://ethskills.com/gas/SKILL.md"
+  }
+}

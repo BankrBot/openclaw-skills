@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-vuln-scanner",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "vuln-scanner.sh",
+    "language": "bash",
+    "code": "# Scan one repo\naeon-vuln-scanner var=owner/repo\n\n# Auto-pick from upstream trending feed\naeon-vuln-scanner"
+  },
+  "setup": [
+    "Install: `install the aeon-vuln-scanner skill from https://github.com/BankrBot/skills/tree/main/aeon-vuln-scanner`",
+    "Install scanner deps locally: `semgrep`, `trufflehog`, `osv-scanner`, `slither`",
+    "Set `GITHUB_TOKEN` with scope sufficient for Private Vulnerability Reports on targets you maintain",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-vuln-scanner"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-vuln-scanner",
+    "command": "install the aeon-vuln-scanner skill from https://github.com/BankrBot/skills/tree/main/aeon-vuln-scanner"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-security",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "ReentrancyGuard.sol",
+    "language": "solidity",
+    "code": "// Checks-Effects-Interactions + ReentrancyGuard\nfunction withdraw(uint amount) external nonReentrant {\n    // 1. Check\n    require(balances[msg.sender] >= amount, \"Insufficient\");\n    // 2. Effect (update state BEFORE external call)\n    balances[msg.sender] -= amount;\n    // 3. Interact\n    (bool ok,) = msg.sender.call{value: amount}(\"\");\n    require(ok, \"Transfer failed\");\n}"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/security/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/security/SKILL.md before auditing\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/security/SKILL.md",
+    "reference": "https://ethskills.com/security/SKILL.md"
+  }
+}

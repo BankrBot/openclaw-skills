@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-huggingface-trending",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "hf-trending.sh",
+    "language": "bash",
+    "code": "# Daily filtered trending scan across models / datasets / spaces\naeon-huggingface-trending\n\n# Output: three sections + a \"Quantizations\" tail for derivative work"
+  },
+  "setup": [
+    "Install: `install the aeon-huggingface-trending skill from https://github.com/BankrBot/skills/tree/main/aeon-huggingface-trending`",
+    "No API key required (uses public HF API endpoints)",
+    "Schedule daily",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-huggingface-trending"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-huggingface-trending",
+    "command": "install the aeon-huggingface-trending skill from https://github.com/BankrBot/skills/tree/main/aeon-huggingface-trending"
+  }
+}

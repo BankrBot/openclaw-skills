@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "symbiosis",
+  "provider": "Symbiosis Finance",
+  "providerUrl": "https://symbiosis.finance",
+  "logo": null,
+  "demo": {
+    "title": "symbiosis-swap.sh",
+    "language": "bash",
+    "code": "# Get a cross-chain quote (no execution)\n# Args: src_chain_id src_token src_decimals amount dst_chain_id dst_token dst_decimals\npython3 scripts/symbiosis-quote.py \\\n  8453 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 6 10 \\\n  137 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359 6\n\n# Execute: bridge 2 USDC from Base to Polygon\npython3 scripts/symbiosis-swap.py \\\n  8453 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 6 2 \\\n  137 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359 6\n\n# Use native tokens with zero address\n# ETH on Base → POL on Polygon\npython3 scripts/symbiosis-swap.py \\\n  8453 0x0000000000000000000000000000000000000000 18 0.1 \\\n  137 0x0000000000000000000000000000000000000000 18"
+  },
+  "setup": [
+    "Set `BANKR_API_KEY` env var — Symbiosis uses Bankr to submit transactions",
+    "Install Python 3 and the scripts from the symbiosis skill directory",
+    "Run quote script to preview output amount and fees before swapping",
+    "Run swap script — outputs tx hash and block explorer link"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "symbiosis",
+    "command": "install the symbiosis skill from https://github.com/BankrBot/skills/tree/main/symbiosis"
+  }
+}

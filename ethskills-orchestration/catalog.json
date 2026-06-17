@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-orchestration",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "build-phases.sh",
+    "language": "bash",
+    "code": "# Phase 1 — Local fork (contracts + UI on localhost)\nyarn fork --network base && yarn start\n\n# Phase 2 — Live testnet\nyarn deploy --network baseSepolia && yarn start\n\n# Phase 3 — Production\nyarn build && yarn ipfs-deploy\n\n# Secret safety protocol — NEVER commit:\n# .env  |  private keys  |  RPC keys  |  API keys\n# Bots scrape GitHub in real-time and exploit within seconds"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/orchestration/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/orchestration/SKILL.md before scaffolding\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/orchestration/SKILL.md",
+    "reference": "https://ethskills.com/orchestration/SKILL.md"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-deep-research",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "deep-research.sh",
+    "language": "bash",
+    "code": "# Full memo on a topic\naeon-deep-research topic=\"L2 sequencer decentralization in 2026\"\n\n# Top 5 findings only\naeon-deep-research topic=\"EigenLayer restaking risks\" mode=brief\n\n# Bias toward dissent\naeon-deep-research topic=\"Polymarket vs Kalshi\" mode=contrarian"
+  },
+  "setup": [
+    "Install: `install the aeon-deep-research skill from https://github.com/BankrBot/skills/tree/main/aeon-deep-research`",
+    "Configure LLM + search provider keys in the agent runtime",
+    "Pick a mode: `research` (default), `brief`, or `contrarian`",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-deep-research"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-deep-research",
+    "command": "install the aeon-deep-research skill from https://github.com/BankrBot/skills/tree/main/aeon-deep-research"
+  }
+}

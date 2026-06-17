@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "hunch",
+  "provider": "Hunch",
+  "providerUrl": "https://www.playhunch.xyz",
+  "logo": null,
+  "demo": {
+    "title": "hunch-bet.sh",
+    "language": "bash",
+    "code": "# Discover markets from a token or phrase\ncurl -s \"https://www.playhunch.xyz/api/partner/discover?q=$BNKR\"\n\n# Quote a side and size before betting\ncurl -s \"https://www.playhunch.xyz/api/partner/quote?marketId=bankr-100m-mcap-2026-06-30&side=yes&sizeUsd=5\"\n\n# Place a bet (x402 flow: initial 402 challenge, then resubmit with X-PAYMENT)\ncurl -s -X POST \"https://www.playhunch.xyz/api/partner/trade\"   -H \"Content-Type: application/json\"   -d '{\"marketId\":\"bankr-100m-mcap-2026-06-30\",\"side\":\"yes\",\"sizeUsd\":5,\"walletAddress\":\"0xYourWallet\",\"idemKey\":\"<uuid>\"}'"
+  },
+  "setup": [
+    "Install: `install the hunch skill from https://github.com/BankrBot/skills/tree/main/hunch`",
+    "Use Base wallet + USDC; bets are constrained to `$1-$10` per trade",
+    "Discover first: `GET /api/partner/discover`, then quote with `GET /api/partner/quote`",
+    "Trade with idempotency key and x402 payment header via `POST /api/partner/trade`",
+    "Source: https://github.com/BankrBot/skills/tree/main/hunch"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "hunch",
+    "command": "install the hunch skill from https://github.com/BankrBot/skills/tree/main/hunch"
+  }
+}

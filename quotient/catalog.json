@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "quotient",
+  "provider": "Quotient",
+  "providerUrl": "https://quotient.social",
+  "logo": null,
+  "demo": {
+    "title": "quotient-markets.ts",
+    "language": "typescript",
+    "code": "import { x402Client, wrapFetchWithPayment } from \"@x402/fetch\";\nimport { ExactEvmScheme } from \"@x402/evm/exact/client\";\nimport { privateKeyToAccount } from \"viem/accounts\";\n\nconst BASE_URL = \"https://q-api.quotient.social\";\nconst signer = privateKeyToAccount(process.env.EVM_PRIVATE_KEY as `0x${string}`);\n\nconst client = new x402Client();\nclient.register(\"eip155:*\", new ExactEvmScheme(signer));\nconst fetchWithPayment = wrapFetchWithPayment(fetch, client);\n\n// Find mispriced markets (Quotient odds vs. market odds)\nconst res = await fetchWithPayment(`${BASE_URL}/api/v1/markets/mispriced`);\nconst { markets } = await res.json();\n\n// Or use an API key directly (no x402 needed)\nconst intel = await fetch(`${BASE_URL}/api/v1/markets/${slug}/intelligence`, {\n  headers: { \"x-quotient-api-key\": process.env.QUOTIENT_API_KEY! }\n});"
+  },
+  "setup": [
+    "Sign up at dev.quotient.social — new accounts include free credits",
+    "Get API key from the Quotient account/developer area",
+    "Set `QUOTIENT_API_KEY` env var for direct API key auth",
+    "Or use x402 flow: set `EVM_PRIVATE_KEY` and install `@x402/fetch` + `@x402/evm`",
+    "Prefer Bankr wallet signing (`/agent/sign`) when available — set `BANKR_API_KEY`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "quotient",
+    "command": "install the quotient skill from https://github.com/BankrBot/skills/tree/main/quotient"
+  }
+}

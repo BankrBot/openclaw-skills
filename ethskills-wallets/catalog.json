@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-wallets",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "tx-safety.ts",
+    "language": "typescript",
+    "code": "// Always validate address + estimate cost before sending\nconst safe = ethers.getAddress(raw); // throws on invalid checksum\nconst fee  = await provider.getFeeData();\nconst gas  = await provider.estimateGas(tx);\nconst cost = (fee.maxFeePerGas! * gas * 120n) / 100n; // +20% buffer\n\nif (cost > APPROVAL_THRESHOLD) throw new Error('Human approval required');\n\nconst receipt = await signer.sendTransaction(tx);\nawait receipt.wait(1); // confirm 1 block"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/wallets/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/wallets/SKILL.md before building\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/wallets/SKILL.md",
+    "reference": "https://ethskills.com/wallets/SKILL.md"
+  }
+}

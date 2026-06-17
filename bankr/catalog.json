@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "bankr",
+  "provider": "BankrBot",
+  "providerUrl": "https://bankr.bot/",
+  "logo": null,
+  "demo": {
+    "title": "bankr-cli.sh",
+    "language": "bash",
+    "code": "# Launch a token on Base for free\nbankr launch\n\n# Track and claim your trading fee revenue\nbankr fees\nbankr fees claim 0xYourToken\n\n# Fund your agent's intelligence\nbankr llm setup\nbankr prompt \"What tokens are trending on Base?\""
+  },
+  "setup": [
+    "Install CLI: `npm install -g @bankr/cli`",
+    "Login: `bankr login email you@example.com`",
+    "Verify: `bankr whoami`",
+    "Trade: `bankr prompt \"Buy $50 of ETH on Base\"`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "bankr",
+    "command": "install the bankr skill from https://github.com/BankrBot/skills/tree/main/bankr"
+  }
+}

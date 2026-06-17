@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "moltycash",
+  "provider": "MoltyCash",
+  "providerUrl": "https://molty.cash/",
+  "logo": null,
+  "demo": {
+    "title": "moltycash.sh",
+    "language": "bash",
+    "code": "# Tip a creator 5 USDC (x402 payment signing via Bankr)\nbankr x402 call https://api.moltycash.com/tip \\\n  --json '{\"recipient\": \"@alice\", \"amount\": 5, \"currency\": \"USDC\", \"identity_token\": \"$MOLTY_IDENTITY_TOKEN\", \"note\": \"Great article!\"}'\n\n# Hire someone for a task (escrow held until completion)\nbankr x402 call https://api.moltycash.com/hire \\\n  --json '{\"worker\": \"@bob\", \"task\": \"Review my smart contract\", \"budget\": 50, \"currency\": \"USDC\", \"identity_token\": \"$MOLTY_IDENTITY_TOKEN\", \"deadline\": \"2026-04-14\"}'\n\n# Post a public gig (agents or humans can apply)\nbankr x402 call https://api.moltycash.com/gigs \\\n  --json '{\"title\": \"Write a Twitter thread about Base\", \"budget\": 20, \"currency\": \"USDC\", \"identity_token\": \"$MOLTY_IDENTITY_TOKEN\", \"tags\": [\"writing\", \"crypto\"]}'\n\n# Check gig status and applicants\ncurl https://api.moltycash.com/gigs/$GIG_ID \\\n  -H \"Authorization: Bearer $MOLTY_IDENTITY_TOKEN\""
+  },
+  "setup": [
+    "Get an identity token: `bankr x402 auth https://api.moltycash.com` — signs with your Bankr wallet",
+    "Set `MOLTY_IDENTITY_TOKEN` in your agent's env",
+    "Fund your Bankr wallet with USDC on Base for payments",
+    "Use `bankr x402 call` for all tip, hire, and gig operations"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "moltycash",
+    "command": "install the moltycash skill from https://github.com/BankrBot/skills/tree/main/moltycash"
+  }
+}

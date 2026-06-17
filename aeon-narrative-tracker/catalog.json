@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-narrative-tracker",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "narrative-tracker.sh",
+    "language": "bash",
+    "code": "# Today's narrative map with phase transitions vs yesterday\naeon-narrative-tracker\n\n# Output drops anything graded IGNORE"
+  },
+  "setup": [
+    "Install: `install the aeon-narrative-tracker skill from https://github.com/BankrBot/skills/tree/main/aeon-narrative-tracker`",
+    "Configure social-source credentials (X read, Reddit) if you want authenticated reads",
+    "Schedule daily",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-narrative-tracker"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-narrative-tracker",
+    "command": "install the aeon-narrative-tracker skill from https://github.com/BankrBot/skills/tree/main/aeon-narrative-tracker"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-token-pick",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "token-pick.sh",
+    "language": "bash",
+    "code": "# At most one token pick + one prediction-market pick\naeon-token-pick\n\n# Each pick: thesis / entry / kill / sizing / horizon\n# Empty days emit a SKIP with reasoning"
+  },
+  "setup": [
+    "Install: `install the aeon-token-pick skill from https://github.com/BankrBot/skills/tree/main/aeon-token-pick`",
+    "Chain after `aeon-token-movers` and `aeon-monitor-polymarket` so the pick has fresh candidates",
+    "Tune sizing buckets to your stack in the config",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-token-pick"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-token-pick",
+    "command": "install the aeon-token-pick skill from https://github.com/BankrBot/skills/tree/main/aeon-token-pick"
+  }
+}

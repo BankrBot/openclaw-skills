@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "BOTCOIN",
+  "provider": "botcoinmoney",
+  "providerUrl": "https://agentmoney.net",
+  "logo": null,
+  "demo": {
+    "title": "botcoin-mine.sh",
+    "language": "bash",
+    "code": "# Resolve your mining wallet\ncurl -s https://api.bankr.bot/agent/me \\\n  -H \"X-API-Key: $BANKR_API_KEY\"\n\n# Check BOTCOIN balance (poll jobId until completed)\ncurl -s -X POST https://api.bankr.bot/agent/prompt \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-API-Key: $BANKR_API_KEY\" \\\n  -d '{\"prompt\": \"what are my balances on base?\"}'\n\n# Stake 25M BOTCOIN (approve then stake)\ncurl -s \"https://coordinator.agentmoney.net/v1/stake-approve-calldata?amount=25000000000000000000000000\"\n# Submit the returned transaction via POST https://api.bankr.bot/agent/submit\n\n# Request a mining challenge\ncurl -s -X POST https://coordinator.agentmoney.net/v1/challenge \\\n  -H \"Authorization: Bearer $TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"miner\": \"0xYourAddress\"}'"
+  },
+  "setup": [
+    "Set `BANKR_API_KEY` env var — get one at bankr.bot/api (enable write access, disable read-only)",
+    "Buy 25M+ BOTCOIN on Base: `\"swap $10 of ETH to 0xA601877977340862Ca67f816eb079958E5bd0BA3 on base\"` via Bankr",
+    "Stake BOTCOIN: call `/v1/stake-approve-calldata` then `/v1/stake-calldata` on the coordinator and submit each tx via Bankr",
+    "Auth handshake: get nonce from `/v1/auth/nonce`, sign via Bankr `/agent/sign`, verify at `/v1/auth/verify` to get bearer token"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "BOTCOIN",
+    "command": "install the BOTCOIN skill from https://github.com/BankrBot/skills/tree/main/BOTCOIN"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-addresses",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "verified-addresses.ts",
+    "language": "typescript",
+    "code": "// NEVER hallucinate contract addresses — wrong address = lost funds\n// Source: ethskills.com/addresses/SKILL.md (verified Feb 16, 2026)\n\nconst ADDRESSES = {\n  // Base Mainnet\n  UniswapV4PoolManager: '0x498581fF718922c3f8e6F2C962D34E490e87C31A',\n  Permit2:              '0x000000000022D473030F116dDEE9F6B43aC78BA3', // all chains\n  USDC_Base:            '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',\n  WETH_Base:            '0x4200000000000000000000000000000000000006',\n  Aerodrome_Router:     '0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43',\n};"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/addresses/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/addresses/SKILL.md before using addresses\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/addresses/SKILL.md",
+    "reference": "https://ethskills.com/addresses/SKILL.md"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "megapot",
+  "provider": "Megapot",
+  "providerUrl": "https://megapot.io/",
+  "logo": null,
+  "demo": {
+    "title": "megapot.sh",
+    "language": "bash",
+    "code": "# Read the live drawing state\nbankr prompt \"Using the megapot skill, what's the jackpot at?\"\n\n# Buy 5 random (\"quick-pick\") tickets\nbankr prompt \"Using the megapot skill, buy 5 random megapot tickets\"\n\n# Buy a custom-number ticket (validated client-side before submission)\nbankr prompt \"Using the megapot skill, buy a ticket with numbers 1 6 16 22 25 bonus 4\"\n\n# Subscribe to one ticket per day\nbankr prompt \"Using the megapot skill, buy me a megapot ticket every day\"\n\n# Discover and claim any unclaimed winnings\nbankr prompt \"Using the megapot skill, did I win anything? If so, claim them.\""
+  },
+  "setup": [
+    "Install: `npx skills add megapot`",
+    "Requires the [bankr skill](https://github.com/BankrBot/skills/tree/main/bankr) for wallet signing and submission on Base (chain ID `8453`)",
+    "Fund the wallet with USDC for tickets plus a small amount of ETH for gas",
+    "Source: https://github.com/BankrBot/skills/tree/main/megapot"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "megapot",
+    "command": "install the megapot skill from https://github.com/BankrBot/skills/tree/main/megapot"
+  }
+}
