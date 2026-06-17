@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "slug": "alchemy",
+  "provider": "Alchemy",
+  "providerUrl": "https://alchemy.com",
+  "logo": "alchemy.svg",
+  "demo": {
+    "title": "alchemy-agent.ts",
+    "language": "typescript",
+    "code": "import { Network, Alchemy } from 'alchemy-sdk';\n\n// API key access — set ALCHEMY_API_KEY env var\nconst alchemy = new Alchemy({\n  apiKey: process.env.ALCHEMY_API_KEY,\n  network: Network.ETH_MAINNET,\n});\n\n// Node API — latest block and token balances\nconst block = await alchemy.core.getBlockNumber();\nconst balances = await alchemy.core.getTokenBalances('0xYourAddress');\nconsole.log(`Block: ${block}`, balances.tokenBalances);\n\n// Webhooks — stream mined transactions to your agent\nconst hook = await alchemy.notify.createWebhook(\n  'https://your-agent.com/webhook',\n  WebhookType.MINED_TRANSACTION,\n  { addresses: ['0xYourAddress'] },\n);\n\n// x402 micropayment access (pay-per-request, no API key needed)\nimport { wrapFetchWithPayment } from '@x402/fetch';\nimport { createWalletClient, http } from 'viem';\n\nconst client = createWalletClient({ transport: http() });\nconst fetchWithPayment = wrapFetchWithPayment(fetch, client);\n\nconst res = await fetchWithPayment('https://eth-mainnet.g.alchemy.com/v2/x402', {\n  method: 'POST',\n  body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 1 }),\n});\nconst { result } = await res.json();\nconsole.log('Latest block (x402):', parseInt(result, 16));"
+  },
+  "setup": [
+    "Sign up at dashboard.alchemy.com and create an app to get an API key",
+    "Install SDK: `npm install alchemy-sdk`",
+    "Set `ALCHEMY_API_KEY` env var for direct API key auth",
+    "For x402 flow: install `@x402/fetch` + `@x402/evm`, set `EVM_PRIVATE_KEY` with ETH for payment",
+    "Prefer Bankr wallet signing (`/agent/sign`) over raw private key when using x402",
+    "For MPP gateway: set `MPP_GATEWAY_URL` and configure metered proxy credentials"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "alchemy",
+    "command": "install the alchemy skill from https://github.com/BankrBot/skills/tree/main/alchemy"
+  }
+}

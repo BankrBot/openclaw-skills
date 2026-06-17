@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-testing",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "VaultTest.t.sol",
+    "language": "solidity",
+    "code": "// Fuzz test — Foundry runs 256 random inputs by default\nfunction testFuzz_deposit(uint256 amount) public {\n    // bound() keeps values in a useful range (no vm.assume needed)\n    amount = bound(amount, 1, type(uint96).max);\n\n    token.mint(user, amount);\n    vm.prank(user);\n    vault.deposit(amount, user);\n\n    assertEq(vault.balanceOf(user), amount);\n    assertEq(token.balanceOf(address(vault)), amount);\n}"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/testing/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/testing/SKILL.md before writing tests\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/testing/SKILL.md",
+    "reference": "https://ethskills.com/testing/SKILL.md"
+  }
+}

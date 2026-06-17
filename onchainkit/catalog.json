@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "onchainkit",
+  "provider": "Coinbase",
+  "providerUrl": "https://www.base.org/build/onchainkit",
+  "logo": null,
+  "demo": {
+    "title": "onchain-app.tsx",
+    "language": "tsx",
+    "code": "import { Swap, SwapAmountInput, SwapButton }\n  from '@coinbase/onchainkit/swap';\nimport { Wallet, ConnectWallet }\n  from '@coinbase/onchainkit/wallet';\nimport { Identity, Avatar, Name }\n  from '@coinbase/onchainkit/identity';\n\n// Composable on-chain components\n<Wallet><ConnectWallet /></Wallet>\n\n<Identity address={addr}>\n  <Avatar /><Name />\n</Identity>\n\n<Swap>\n  <SwapAmountInput label=\"Sell\" type=\"from\" />\n  <SwapAmountInput label=\"Buy\" type=\"to\" />\n  <SwapButton />\n</Swap>"
+  },
+  "setup": [
+    "Install: `npm install @coinbase/onchainkit`",
+    "Wrap your app with `<OnchainKitProvider>`",
+    "Configure Coinbase API key for identity features",
+    "Import and use components in your React app"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "onchainkit",
+    "command": "install the onchainkit skill from https://github.com/BankrBot/skills/tree/main/onchainkit"
+  }
+}

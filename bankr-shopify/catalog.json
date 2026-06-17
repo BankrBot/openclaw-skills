@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "bankr-shopify",
+  "provider": "Shopify",
+  "providerUrl": "https://shopify.dev/docs/api/admin-graphql",
+  "logo": null,
+  "demo": {
+    "title": "shopify-graphql.sh",
+    "language": "bash",
+    "code": "shop_gql() {\n  local query=\"$1\"\n  local variables=\"${2:-{}}\"\n  curl -sS -X POST \\\n    \"https://${SHOPIFY_STORE_DOMAIN}/admin/api/${SHOPIFY_API_VERSION:-2026-01}/graphql.json\" \\\n    -H \"Content-Type: application/json\" \\\n    -H \"X-Shopify-Access-Token: ${SHOPIFY_ACCESS_TOKEN}\" \\\n    --data \"$(jq -nc --arg q \"$query\" --argjson v \"$variables\" '{query: $q, variables: $v}')\"\n}\n\n# List active products\nshop_gql '{ products(first: 20, query: \"status:active\") { edges { node { id title handle } } } }' | jq\n\n# Fetch paid orders\nshop_gql '{ orders(first: 20, reverse: true, query: \"financial_status:paid\") { edges { node { id name createdAt } } } }' | jq"
+  },
+  "setup": [
+    "Install: `install the bankr-shopify skill from https://github.com/BankrBot/skills/tree/main/bankr-shopify`",
+    "Create a Shopify app with only the Admin API scopes needed for the task",
+    "Set `SHOPIFY_ACCESS_TOKEN`, `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_API_VERSION`, and `BANKR_API_KEY` for Bankr bridge flows",
+    "Source: https://github.com/BankrBot/skills/tree/main/bankr-shopify"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "bankr-shopify",
+    "command": "install the bankr-shopify skill from https://github.com/BankrBot/skills/tree/main/bankr-shopify"
+  }
+}

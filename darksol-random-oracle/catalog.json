@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "darksol-random-oracle",
+  "provider": "DARKSOL",
+  "providerUrl": "https://darksol.net/",
+  "logo": null,
+  "demo": {
+    "title": "darksol-oracle.sh",
+    "language": "bash",
+    "code": "# Coin flip — $0.05 USDC or free for DARKSOL holders\ncurl \"https://acp.darksol.net/oracle/random/coin\"\n\n# Roll 3d20\ncurl \"https://acp.darksol.net/oracle/random/dice?sides=20&count=3\"\n\n# Random integer in range\ncurl \"https://acp.darksol.net/oracle/random/number?min=1&max=100\"\n\n# Pick a raffle winner from a list\nbankr prompt \"Use DARKSOL oracle to pick 1 winner from these 50 wallets: …\"\n\n# Health + pricing + free-access details\ncurl \"https://acp.darksol.net/oracle/health\""
+  },
+  "setup": [
+    "No install required — every endpoint is plain HTTP",
+    "Free access: hold ≥10,000,000 DARKSOL on Base, sign the access message, send `x-darksol-wallet` and `x-darksol-signature` headers",
+    "Paid access: any x402 client with USDC on Base — pay at HTTP 402 challenge and retry",
+    "Verify any roll: oracle contract `0x4d2f471ae67b129bAda9cfC6224f0343c5C8fB5D` on Base 8453"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "darksol-random-oracle",
+    "command": "install the darksol-random-oracle skill from https://github.com/BankrBot/skills/tree/main/darksol-random-oracle"
+  }
+}

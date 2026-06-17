@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-unlock-monitor",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "unlock-monitor.sh",
+    "language": "bash",
+    "code": "# Upcoming unlocks ranked by Absorption Ratio\naeon-unlock-monitor\n\n# Sample tier:\n#   ratio > 2.4× → strain liquidity (Keyrock empirical)\n#   ratio < 0.5× → market yawns"
+  },
+  "setup": [
+    "Install: `install the aeon-unlock-monitor skill from https://github.com/BankrBot/skills/tree/main/aeon-unlock-monitor`",
+    "No paid credentials required for public unlock calendars",
+    "Schedule weekly, pre-market on the operator's active timezone",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-unlock-monitor"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-unlock-monitor",
+    "command": "install the aeon-unlock-monitor skill from https://github.com/BankrBot/skills/tree/main/aeon-unlock-monitor"
+  }
+}

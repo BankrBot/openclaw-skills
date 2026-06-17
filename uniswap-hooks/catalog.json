@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "uniswap-hooks",
+  "provider": "Uniswap",
+  "providerUrl": "https://uniswap.org",
+  "logo": "uniswap.svg",
+  "demo": {
+    "title": "CustomFeeHook.sol",
+    "language": "solidity",
+    "code": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.24;\n\nimport {BaseHook} from \"v4-periphery/src/base/hooks/BaseHook.sol\";\nimport {Hooks} from \"v4-core/src/libraries/Hooks.sol\";\nimport {IPoolManager} from \"v4-core/src/interfaces/IPoolManager.sol\";\nimport {PoolKey} from \"v4-core/src/types/PoolKey.sol\";\nimport {BeforeSwapDelta} from \"v4-core/src/types/BeforeSwapDelta.sol\";\n\ncontract CustomFeeHook is BaseHook {\n    function getHookPermissions()\n        public pure override returns (Hooks.Permissions memory)\n    {\n        return Hooks.Permissions({\n            beforeSwap: true,        // ✓ needed\n            afterSwap: false,        // ✗ minimize flags\n            beforeSwapReturnDelta: false, // ✗ avoid unless necessary\n            // ... all other flags false\n        });\n    }\n\n    function beforeSwap(address, PoolKey calldata key,\n        IPoolManager.SwapParams calldata, bytes calldata)\n        external override returns (bytes4, BeforeSwapDelta, uint24)\n    {\n        // Access-control: only PoolManager can call\n        return (BaseHook.beforeSwap.selector, toBeforeSwapDelta(0, 0), 3000);\n    }\n}"
+  },
+  "setup": [
+    "Install plugin: `/plugin install uniswap-hooks`",
+    "Start with security foundations: `/v4-security-foundations`",
+    "Ask: \"What are the risks of beforeSwapReturnDelta?\"",
+    "Review the 14-flag permission matrix before deploying"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Uniswap",
+    "command": "npx skills add Uniswap/uniswap-ai",
+    "reference": null
+  }
+}

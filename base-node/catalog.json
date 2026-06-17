@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "base-node",
+  "provider": "Base",
+  "providerUrl": "https://base.org",
+  "logo": "base-account.png",
+  "demo": {
+    "title": "node-setup.sh",
+    "language": "bash",
+    "code": "# Hardware: 8-core CPU, 16 GB RAM, NVMe SSD\n# Storage: (2 × chain_size) + snapshot_size + 20% buffer\n\n# Required firewall ports\nufw allow 9222/udp  # Reth Discovery v5 (critical)\nufw allow 30303/tcp # P2P Discovery & RLPx\nufw deny 8545       # Block RPC from public internet\nufw deny 8546       # Block WebSocket from public internet\n\n# Start Reth (Base)\nreth node \\\n  --chain base \\\n  --http --http.addr 127.0.0.1 \\\n  --ws --ws.addr 127.0.0.1 \\\n  --datadir /data/reth-base\n\n# Check sync status\ncast block-number --rpc-url http://127.0.0.1:8545"
+  },
+  "setup": [
+    "Provision server: 8-core CPU, 16 GB RAM, NVMe SSD",
+    "Open ports 9222 (UDP) and 30303 (TCP) in firewall",
+    "Block ports 8545 and 8546 from public internet",
+    "Download bootstrap snapshot to accelerate initial sync"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Base",
+    "command": "npx skills add base/base-skills",
+    "reference": null
+  }
+}

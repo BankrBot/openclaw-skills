@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-indexing",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "subgraph-query.graphql",
+    "language": "graphql",
+    "code": "# The Graph — query recent swaps from a Uniswap V3 pool\n{\n  swaps(\n    first: 10\n    orderBy: timestamp\n    orderDirection: desc\n    where: { pool: \"0x...\" }\n  ) {\n    amount0\n    amount1\n    amountUSD\n    timestamp\n    transaction { id }\n  }\n}"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/indexing/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/indexing/SKILL.md before querying chain data\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/indexing/SKILL.md",
+    "reference": "https://ethskills.com/indexing/SKILL.md"
+  }
+}

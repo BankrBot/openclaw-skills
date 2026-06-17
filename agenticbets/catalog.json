@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "agenticbets",
+  "provider": "AgenticBets",
+  "providerUrl": "https://agenticbets.dev/",
+  "logo": null,
+  "demo": {
+    "title": "agenticbets.sh",
+    "language": "bash",
+    "code": "# List open prediction markets\nscripts/agenticbets.py list open\n\n# Check odds on a market\nscripts/agenticbets.py odds AGBETS\n\n# Place a $5 UP bet on AGBETS\nscripts/agenticbets.py bet AGBETS up 5\n\n# Claim winnings from a settled round\nscripts/agenticbets.py claim AGBETS 42"
+  },
+  "setup": [
+    "Install Bankr CLI: `npm install -g @bankr/cli`",
+    "Login: `bankr login email you@example.com` — generate a read-write API key",
+    "Fund your Bankr wallet with USDC on Base: `bankr wallet portfolio`",
+    "Run: `scripts/agenticbets.py list` to see open markets"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "agenticbets",
+    "command": "install the agenticbets skill from https://github.com/BankrBot/skills/tree/main/agenticbets"
+  }
+}

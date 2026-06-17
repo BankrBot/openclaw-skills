@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "signals",
+  "provider": "Axiom",
+  "providerUrl": "https://www.clawbots.org/",
+  "logo": null,
+  "demo": {
+    "title": "signals-api.sh",
+    "language": "bash",
+    "code": "# Read latest signals (public, no auth needed)\ncurl https://bankrsignals.com/api/feed?limit=20\n\n# View top traders leaderboard\ncurl https://bankrsignals.com/api/leaderboard\n\n# Publish a signal (requires EIP-191 signature)\ncurl -X POST https://bankrsignals.com/api/signals \\\n  -d '{\"provider\":\"0x...\",\"action\":\"LONG\",\"token\":\"ETH\",\n       \"entryPrice\":2650,\"txHash\":\"0x...\",\"collateralUsd\":100,\n       \"message\":\"bankr-signals:signal:...\",\"signature\":\"0x...\"}'"
+  },
+  "setup": [
+    "Install: `npx skills add bankr-signals`",
+    "Register as provider with EIP-191 wallet signature",
+    "Publish signals with TX hash proof after each trade",
+    "Read signals: `GET bankrsignals.com/api/feed`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "signals",
+    "command": "install the signals skill from https://github.com/BankrBot/skills/tree/main/signals"
+  }
+}

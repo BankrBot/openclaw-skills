@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-skill-repair",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "skill-repair.sh",
+    "language": "bash",
+    "code": "# Diagnose and repair a failing skill\naeon-skill-repair target=aeon-token-movers\n\n# Diagnose only (no edits)\naeon-skill-repair target=aeon-token-movers mode=diagnose"
+  },
+  "setup": [
+    "Install: `install the aeon-skill-repair skill from https://github.com/BankrBot/skills/tree/main/aeon-skill-repair`",
+    "Run against a target that is currently failing",
+    "Inspect the verification recipe before re-enabling the skill",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-skill-repair"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-skill-repair",
+    "command": "install the aeon-skill-repair skill from https://github.com/BankrBot/skills/tree/main/aeon-skill-repair"
+  }
+}

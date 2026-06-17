@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "checkr",
+  "provider": "checkr",
+  "providerUrl": "https://www.checkr.social/",
+  "logo": null,
+  "demo": {
+    "title": "checkr.sh",
+    "language": "bash",
+    "code": "# What's spiking on Base right now? ($0.05)\nbankr prompt \"Use checkr /v1/spikes to show tokens with velocity > 3\"\n\n# Top tokens by attention share ($0.02)\nbankr prompt \"Get checkr leaderboard, top 10 by ATT_pct\"\n\n# Deep dive on a single token ($0.50)\nbankr prompt \"Run checkr /v1/token/BNKR — give me ATT deltas, divergence, narrative\"\n\n# Bankr agent ecosystem leaderboard ($0.02)\nbankr prompt \"Pull checkr /v1/bankr and show the top 5 agent tokens\""
+  },
+  "setup": [
+    "No install required — every endpoint is plain HTTP behind x402",
+    "Python: `pip install x402` — TypeScript: `npm install x402-axios`",
+    "Fund a Base wallet with USDC plus ~$0.01 ETH for gas",
+    "Read the response: check `data_age_minutes` before acting on any signal"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "checkr",
+    "command": "install the checkr skill from https://github.com/BankrBot/skills/tree/main/checkr"
+  }
+}

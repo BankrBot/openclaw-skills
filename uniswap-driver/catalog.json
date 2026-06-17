@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "uniswap-driver",
+  "provider": "Uniswap",
+  "providerUrl": "https://uniswap.org",
+  "logo": "uniswap.svg",
+  "demo": {
+    "title": "swap-planner.sh",
+    "language": "bash",
+    "code": "# Plan a swap — AI researches tokens and builds the link\n\"Swap 1 ETH for USDC on Base\"\n# ✓ Verified WETH: 0x4200...0006 (Base, official)\n# ✓ Verified USDC: 0x8335...a02913 (Base, Circle)\n# ✓ Current rate: ~3,240 USDC per ETH\n# → https://app.uniswap.org/swap?inputCurrency=...\n\n# Plan a liquidity position\n\"Provide $500 of ETH/USDC liquidity on Base V3\"\n# ✓ Pool: 0.05% fee tier, TVL $12.4M\n# ✓ Current price: 3,240 USDC/ETH\n# ✓ Suggested range: 2,800–3,700 USDC\n# → https://app.uniswap.org/add/..."
+  },
+  "setup": [
+    "Install plugin: `/plugin install uniswap-driver`",
+    "Trigger with: \"Swap ETH for USDC on Base\" or \"Add liquidity\"",
+    "Review the generated deep link before clicking",
+    "Execute through the Uniswap web interface — no autonomous transactions"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Uniswap",
+    "command": "npx skills add Uniswap/uniswap-ai",
+    "reference": null
+  }
+}

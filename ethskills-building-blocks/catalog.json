@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-building-blocks",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "flash-loan.ts",
+    "language": "typescript",
+    "code": "// Uniswap V3 flash loan — must repay amount + fee in callback\nconst flashParams = {\n  recipient: address,\n  token0: WETH,\n  token1: USDC,\n  amount0: parseEther('10'),\n  amount1: 0n,\n  data: encodeAbiParameters(\n    [{ type: 'address' }],\n    [arbitrageTarget]\n  ),\n};\n\nawait pool.write.flash([address, flashParams]);\n// Repay inside uniswapV3FlashCallback or tx reverts"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/building-blocks/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/building-blocks/SKILL.md before building DeFi\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/building-blocks/SKILL.md",
+    "reference": "https://ethskills.com/building-blocks/SKILL.md"
+  }
+}

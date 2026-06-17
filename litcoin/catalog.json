@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "litcoin",
+  "provider": "tekkaadan",
+  "providerUrl": "https://litcoin.app",
+  "logo": null,
+  "demo": {
+    "title": "litcoin-mine.py",
+    "language": "python",
+    "code": "from litcoin import Agent\n\n# pip install litcoin\nagent = Agent(bankr_key=\"bk_YOUR_KEY\")\n\n# One-time faucet — 5M LITCOIN to get started\nagent.faucet()\n\n# Comprehension mining (no LLM needed)\nagent.mine(rounds=10)\nagent.claim()\n\n# Research mining (LLM generates + tests code, submits if it beats baseline)\nagent = Agent(\n    bankr_key=\"bk_YOUR_KEY\",\n    ai_key=\"bk_YOUR_KEY\",           # Bankr LLM key doubles as AI key\n    ai_url=\"https://llm.bankr.bot/v1\",\n)\nresult = agent.research_mine()\n\n# Iterate on a specific task for maximum rewards\nagent.research_loop(task_id=\"sort-benchmark-001\", rounds=50, delay=30)"
+  },
+  "setup": [
+    "Get Bankr API key at bankr.bot/api (enable write access)",
+    "Install SDK: `pip install litcoin`",
+    "Bootstrap: `agent.faucet()` for 5M free LITCOIN",
+    "Start mining: `agent.mine(rounds=10)` then `agent.claim()`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "litcoin",
+    "command": "install the litcoin skill from https://github.com/BankrBot/skills/tree/main/litcoin"
+  }
+}

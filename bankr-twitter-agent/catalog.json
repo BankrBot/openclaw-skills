@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "bankr-twitter-agent",
+  "provider": "BankrBot",
+  "providerUrl": "https://bankr.bot/",
+  "logo": "bankr-twitter-agent.png",
+  "demo": {
+    "title": "twitter-agent.sh",
+    "language": "bash",
+    "code": "# Build your agent's personality interactively\nbankr prompt \"using the twitter-agent skill, help me build my personality\"\n\n# Post a new tweet in character\nbankr prompt \"using the twitter-agent skill, draft a tweet and post it\"\n\n# Check mentions and reply in character\nbankr prompt \"using the twitter-agent skill, check mentions and reply\"\n\n# Set up automated daily posting\nbankr prompt \"using the twitter-agent skill, set up a morning post automation\""
+  },
+  "setup": [
+    "Install: `npx skills add bankr-twitter-agent`",
+    "Set `X_API_KEY`, `X_API_KEY_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET` env vars from the [X Developer Portal](https://developer.x.com)",
+    "Link Telegram to Bankr for approval routing on guarded drafts",
+    "Run the skill manually 5–10 times before enabling automations"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "bankr-twitter-agent",
+    "command": "install the bankr-twitter-agent skill from https://github.com/BankrBot/skills/tree/main/bankr-twitter-agent"
+  }
+}

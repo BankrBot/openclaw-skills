@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "siwa",
+  "provider": "Builder's Garden",
+  "providerUrl": "https://builders.garden/",
+  "logo": null,
+  "demo": {
+    "title": "siwa-auth.ts",
+    "language": "typescript",
+    "code": "import { createBankrSiwaSigner } from '@buildersgarden/siwa/signer';\nimport { signSIWAMessage } from '@buildersgarden/siwa';\n\n// Agent: initialize signer from Bankr API key\nconst signer = await createBankrSiwaSigner({ apiKey: process.env.BANKR_API_KEY });\n\n// Step 1 — fetch a nonce from your server\nconst { nonce } = await fetch('https://yourapp.com/api/siwa/nonce').then(r => r.json());\n\n// Step 2 — sign the SIWA message with the agent's onchain identity\nconst { message, signature } = await signSIWAMessage({\n  signer,\n  domain: 'yourapp.com',\n  uri: 'https://yourapp.com',\n  nonce,\n});\n\n// Step 3 — verify and receive a session receipt\nconst { receipt } = await fetch('https://yourapp.com/api/siwa/verify', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ message, signature }),\n}).then(r => r.json());"
+  },
+  "setup": [
+    "Install: `npm install @buildersgarden/siwa viem`",
+    "Set `BANKR_API_KEY` and `RECEIPT_SECRET` (min 32 chars) env vars",
+    "Add `/api/siwa/nonce` and `/api/siwa/verify` endpoints to your server",
+    "Protect routes with ERC-8128 middleware: `withSIWA(handler, { receiptSecret })`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "siwa",
+    "command": "install the siwa skill from https://github.com/BankrBot/skills/tree/main/siwa"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "codegrid",
+  "provider": "CodeGrid",
+  "providerUrl": "https://codegrid.app",
+  "logo": null,
+  "demo": {
+    "title": "codegrid.sh",
+    "language": "bash",
+    "code": "# Inside a CodeGrid pane — discover siblings and hand off work\nlist_agents()\nread_pane(<session_id>)\nmessage_agent(<session_id>, \"[from claude] propose only, do not edit files: review auth.ts\")\n\n# Outside CodeGrid — drive the canvas over the local control socket\nSOCK=\"$(cat ~/.codegrid/socket-path 2>/dev/null || echo ~/.codegrid/socket)\"\nprintf '%s\\n' '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"agent_list\"}' | nc -U \"$SOCK\"\n\n# Deep-link the installed app\nopen \"codegrid://open?path=/abs/path/to/repo&type=codex\""
+  },
+  "setup": [
+    "Install: `install the codegrid skill from https://github.com/BankrBot/skills/tree/main/codegrid`",
+    "Download the macOS app and full docs at https://codegrid.app",
+    "Address other agents by `session_id` (stable), never by pane number (shifts)",
+    "Source: https://github.com/BankrBot/skills/tree/main/codegrid"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "codegrid",
+    "command": "install the codegrid skill from https://github.com/BankrBot/skills/tree/main/codegrid"
+  }
+}

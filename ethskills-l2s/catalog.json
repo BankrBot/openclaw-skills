@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-l2s",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "chain-selection.ts",
+    "language": "typescript",
+    "code": "// Pick the right L2 for your use case\nconst chains = {\n  base:     { cost: '$0.001', dex: 'Aerodrome',   id: 8453  },\n  arbitrum: { cost: '$0.002', dex: 'GMX / Pendle', id: 42161 },\n  optimism: { cost: '$0.002', dex: 'Velodrome',    id: 10    },\n  mainnet:  { cost: '$0.50',  dex: 'Uniswap V4',   id: 1     },\n};\n// Cheapest:          Base\n// Most DeFi depth:   Arbitrum\n// Agent distribution: Base (Farcaster / MiniKit ecosystem)"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/l2s/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/l2s/SKILL.md for L2 landscape\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/l2s/SKILL.md",
+    "reference": "https://ethskills.com/l2s/SKILL.md"
+  }
+}

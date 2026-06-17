@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "veil",
+  "provider": "Veil Cash",
+  "providerUrl": "https://www.veil.cash/",
+  "logo": null,
+  "demo": {
+    "title": "veil-privacy.sh",
+    "language": "bash",
+    "code": "# Deposit ETH into privacy pool via Bankr\nscripts/veil-deposit-via-bankr.sh 0.011 \\\n  --address 0xYourBankrAddress\n\n# Private withdrawal with ZK proof\nscripts/veil-withdraw.sh 0.007 0xNewAddress\n\n# Check all balances (public + private + queue)\nscripts/veil-balance.sh --address 0xYourAddress"
+  },
+  "setup": [
+    "Install SDK: `npm install -g @veil-cash/sdk`",
+    "Install skill: `npx skills add veil`",
+    "Generate keypair: `scripts/veil-keypair.sh`",
+    "Configure RPC in `~/.clawdbot/skills/veil/.env`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "veil",
+    "command": "install the veil skill from https://github.com/BankrBot/skills/tree/main/veil"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "pmfi-parbitrage",
+  "provider": "PMFI",
+  "providerUrl": "https://pmfi.cc",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "pmfi-parbitrage",
+    "command": "install the pmfi-parbitrage skill from https://github.com/BankrBot/skills/tree/main/pmfi-parbitrage"
+  }
+}

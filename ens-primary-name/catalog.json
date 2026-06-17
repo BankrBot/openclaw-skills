@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "ens-primary-name",
+  "provider": "ENS",
+  "providerUrl": "https://ens.domains",
+  "logo": null,
+  "demo": {
+    "title": "set-primary.sh",
+    "language": "bash",
+    "code": "# Set primary ENS name on Base\n./scripts/set-primary.sh myname.eth\n\n# Set on any supported L2\n./scripts/set-primary.sh myname.eth arbitrum\n\n# Verify it worked\n./scripts/verify-primary.sh 0xYourAddr base\n\n# Set avatar (L1 only, supports HTTPS/IPFS/NFT)\n./scripts/set-avatar.sh myname.eth ipfs://QmHash"
+  },
+  "setup": [
+    "Install: `npx skills add ens-primary-name`",
+    "Requires Bankr CLI: `npm install -g @bankr/cli`",
+    "Ensure wallet owns the target ENS name",
+    "Fund wallet with ETH for gas on target chain"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "ens-primary-name",
+    "command": "install the ens-primary-name skill from https://github.com/BankrBot/skills/tree/main/ens-primary-name"
+  }
+}

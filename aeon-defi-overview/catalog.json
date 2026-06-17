@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-defi-overview",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "defi-overview.sh",
+    "language": "bash",
+    "code": "# Daily regime + movers + yield decomposition\naeon-defi-overview\n\n# Pipe into the morning brief as one input\naeon-defi-overview | aeon-digest --include defi"
+  },
+  "setup": [
+    "Install: `install the aeon-defi-overview skill from https://github.com/BankrBot/skills/tree/main/aeon-defi-overview`",
+    "No API key required — uses DefiLlama, public endpoints",
+    "Schedule daily; output is one-page",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-defi-overview"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-defi-overview",
+    "command": "install the aeon-defi-overview skill from https://github.com/BankrBot/skills/tree/main/aeon-defi-overview"
+  }
+}

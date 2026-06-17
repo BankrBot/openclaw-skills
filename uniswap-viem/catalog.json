@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "uniswap-viem",
+  "provider": "Uniswap",
+  "providerUrl": "https://uniswap.org",
+  "logo": "uniswap.svg",
+  "demo": {
+    "title": "viem-setup.ts",
+    "language": "typescript",
+    "code": "import { createPublicClient, createWalletClient, http, webSocket }\n  from 'viem';\nimport { privateKeyToAccount } from 'viem/accounts';\nimport { base } from 'viem/chains';\n\n// Read data\nconst publicClient = createPublicClient({\n  chain: base,\n  transport: http('https://mainnet.base.org'),\n});\n\nconst balance = await publicClient.getBalance({ address: '0x...' });\nconst result = await publicClient.readContract({\n  address: '0x...', abi, functionName: 'totalSupply',\n});\n\n// Watch events in real-time\npublicClient.watchContractEvent({\n  address: '0x...', abi, eventName: 'Transfer',\n  onLogs: (logs) => console.log(logs),\n});"
+  },
+  "setup": [
+    "Install plugin: `/plugin install uniswap-viem`",
+    "Install viem: `npm install viem`",
+    "Trigger with: \"Help me read a contract with viem\"",
+    "For React frontends, also install wagmi: `npm install wagmi`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Uniswap",
+    "command": "npx skills add Uniswap/uniswap-ai",
+    "reference": null
+  }
+}

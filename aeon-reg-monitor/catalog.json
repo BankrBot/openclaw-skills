@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-reg-monitor",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "reg-monitor.sh",
+    "language": "bash",
+    "code": "# Daily regulatory scan across crypto, AI, prediction-markets\naeon-reg-monitor\n\n# Sources: Federal Register, CFTC, SEC, FinCEN, EU OJ, ESMA, state AGs, court dockets"
+  },
+  "setup": [
+    "Install: `install the aeon-reg-monitor skill from https://github.com/BankrBot/skills/tree/main/aeon-reg-monitor`",
+    "No paid credentials required for primary sources",
+    "Schedule daily",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-reg-monitor"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-reg-monitor",
+    "command": "install the aeon-reg-monitor skill from https://github.com/BankrBot/skills/tree/main/aeon-reg-monitor"
+  }
+}

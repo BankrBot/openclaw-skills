@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-last30",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "last30.sh",
+    "language": "bash",
+    "code": "# Full 30-day cross-platform scan\naeon-last30 topic=\"restaking yields\"\n\n# Top 3 per source\naeon-last30 topic=\"agentic payments\" mode=quick\n\n# Bias toward dissent\naeon-last30 topic=\"Polymarket vs Kalshi\" mode=contrarian"
+  },
+  "setup": [
+    "Install: `install the aeon-last30 skill from https://github.com/BankrBot/skills/tree/main/aeon-last30`",
+    "Configure per-source credentials if you want authenticated access (Reddit, X)",
+    "Pick a mode: `research` / `quick` / `contrarian`",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-last30"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-last30",
+    "command": "install the aeon-last30 skill from https://github.com/BankrBot/skills/tree/main/aeon-last30"
+  }
+}

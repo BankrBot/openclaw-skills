@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "berry-juicer",
+  "provider": "Berry Finance",
+  "providerUrl": "https://berryfi.org",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "berry-juicer",
+    "command": "install the berry-juicer skill from https://github.com/BankrBot/skills/tree/main/berry-juicer"
+  }
+}
