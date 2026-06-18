@@ -77,7 +77,9 @@ Events: `ThesisRegistered(thesisId, trader, symbol)`, `ThesisClosed(thesisId, tr
 
 ## Copy Trading Flow
 
-> ⚠️ **Copying is NOT auto-trading.** This flow saves a *thesis* (a plan) to the user's lab — it does **not** place an order. NEVER chain a copied thesis straight into `/trade`/`/agent` without an explicit user confirmation for that specific position. The feed's Rep Score and leaderboard rank are interpretive signals that can be gamed (wash trading, coordinated publishing) — for any programmatic gating prefer the per-trader `getTraderStats()` history over the headline Rep Score, and always require operator sign-off before risking capital on a third party's call.
+> ⚠️ **Copying is NOT auto-trading.** This flow saves a *thesis* (a plan) to the user's lab — it does **not** place an order. NEVER chain a copied thesis straight into `/trade`/`/agent` without an explicit user confirmation for that specific position.
+>
+> **On reputation signals:** the VERIFIED-CALLERS leaderboard (`/theses/leaderboard`) grades outcomes **objectively against public Orderly price** (first-touch TP-vs-SL on public OHLC, recomputable by anyone) — not self-reported PnL, which is the strongest signal here. Even so, treat ANY single metric — Rep Score, leaderboard rank, or `getTraderStats()` — as a **cross-check only, never the sole automated gate** before risking capital: rankings can still be influenced by wash trading or coordinated publishing. Always require operator sign-off before opening a position derived from a third party's call.
 
 1. `GET https://og.nexustradinglabs.com/feed` → find thesis by trader/symbol/direction
 2. Prompt user: account size (USDC), risk % (e.g. 2%), optional max loss cap

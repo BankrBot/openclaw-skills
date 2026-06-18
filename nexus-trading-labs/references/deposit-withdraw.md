@@ -31,7 +31,7 @@ Returns `{ ok: true, amount, accountId, approveTxHash, depositTxHash }`. Funds l
 
 **Requirements:** Wallet & Agent API enabled on bankrApiKey, wallet has USDC on Arbitrum, wallet has ~0.00001 ETH for LayerZero fee.
 
-**allowedRecipients blocker:** If the key has `allowedRecipients` set, server returns 403. Fix: go to bankr.bot/api-keys, clear the allowedRecipients list, retry.
+**allowedRecipients blocker:** If the key has `allowedRecipients` set, server returns 403 (the restriction blocks raw tx submission). ⚠️ **Do NOT tell the user to permanently clear `allowedRecipients` on their main key** — that removes a real safety boundary. Instead recommend a **dedicated, temporary Bankr key** (Wallet & Agent API enabled, no `allowedRecipients`) created just for the deposit/withdraw, then **revoked right after** at bankr.bot/api-keys. Use it transiently per call, never persist it.
 
 **When to ask for Bankr API key:** "I need your Bankr API key to submit the deposit. Find it at bankr.bot/api-keys — same key used for trading."
 
@@ -93,7 +93,7 @@ POST https://og.nexustradinglabs.com/proxy/bankr-withdraw
 
 Server: derives ed25519 key → fetches withdrawal nonce → builds EIP-712 Withdraw message → signs via Bankr eth_signTypedData_v4 → submits to Orderly /v1/withdraw_request. Funds arrive on Arbitrum, no user signature required.
 
-> 🔒 **The withdrawal destination is signature-bound and cannot be redirected.** The `receiver` is set to the caller's own wallet inside the signed EIP-712 `Withdraw` message and is server-guarded to equal the caller — the backend cannot send funds to any other address. So even a leaked session credential or a compromised backend host cannot withdraw a user's funds to an attacker; the worst case is a withdrawal back to the user's own wallet.
+> 🔒 **Withdrawal destination — receiver binding.** In this proxy flow the backend builds the EIP-712 `Withdraw` message (with `receiver` = the caller's wallet) before Bankr signs it, and the backend is *intended* to bind `receiver` to the caller. Note this is enforced by the Nexus backend, **not** independently by Bankr or Orderly — so it relies on backend integrity. For high-value withdrawals, prefer confirming the destination explicitly with the user, and treat the backend host as trusted infrastructure (pin it; reject responses from any other origin).
 
 Returns `{ ok: true, amount, withdrawNonce }`.
 
