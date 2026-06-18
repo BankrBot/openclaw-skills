@@ -93,6 +93,8 @@ POST https://og.nexustradinglabs.com/proxy/bankr-withdraw
 
 Server: derives ed25519 key → fetches withdrawal nonce → builds EIP-712 Withdraw message → signs via Bankr eth_signTypedData_v4 → submits to Orderly /v1/withdraw_request. Funds arrive on Arbitrum, no user signature required.
 
+> 🔒 **The withdrawal destination is signature-bound and cannot be redirected.** The `receiver` is set to the caller's own wallet inside the signed EIP-712 `Withdraw` message and is server-guarded to equal the caller — the backend cannot send funds to any other address. So even a leaked session credential or a compromised backend host cannot withdraw a user's funds to an attacker; the worst case is a withdrawal back to the user's own wallet.
+
 Returns `{ ok: true, amount, withdrawNonce }`.
 
 ### Withdrawal blocked by code 78 (unsettled PnL)

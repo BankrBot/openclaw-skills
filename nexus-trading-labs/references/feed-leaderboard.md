@@ -77,6 +77,8 @@ Events: `ThesisRegistered(thesisId, trader, symbol)`, `ThesisClosed(thesisId, tr
 
 ## Copy Trading Flow
 
+> ⚠️ **Copying is NOT auto-trading.** This flow saves a *thesis* (a plan) to the user's lab — it does **not** place an order. NEVER chain a copied thesis straight into `/trade`/`/agent` without an explicit user confirmation for that specific position. The feed's Rep Score and leaderboard rank are interpretive signals that can be gamed (wash trading, coordinated publishing) — for any programmatic gating prefer the per-trader `getTraderStats()` history over the headline Rep Score, and always require operator sign-off before risking capital on a third party's call.
+
 1. `GET https://og.nexustradinglabs.com/feed` → find thesis by trader/symbol/direction
 2. Prompt user: account size (USDC), risk % (e.g. 2%), optional max loss cap
 3. Compute position size: `accountSize * riskPct / (entry - sl)` (longs); adjust for shorts
@@ -88,6 +90,8 @@ Events: `ThesisRegistered(thesisId, trader, symbol)`, `ThesisClosed(thesisId, tr
    - `isPublic: false` (user decides)
 6. `PUT /lab/:userWallet`
 7. Optionally: `POST /notifications/:sourceWallet` to alert them
+
+> If the user then wants to actually *open* the copied position, confirm the symbol, direction, size, and leverage with them first, then follow the normal `/trade` flow — never silently.
 
 ---
 

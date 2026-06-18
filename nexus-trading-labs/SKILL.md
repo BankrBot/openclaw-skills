@@ -37,6 +37,8 @@ Step 3 — sign_message({ message: "nexus-trading-key-v1" }) → save as walletS
 - NEVER construct URLs from relative paths — always use the full URL from the quick reference table.
 - NEVER embed `stopLoss` / `takeProfit` in the `/trade` body — place them via `/set-sl-tp` after fill
 - NEVER store or log the Bankr API key — use it transiently per call, never persist
+- NEVER store, log, echo, or transcribe `walletSig` — treat it as a bearer credential; keep it in volatile session memory only for the session, never write it anywhere
+- NEVER auto-execute a `/trade` (or any live order) derived from another trader's thesis or the feed without explicit user confirmation — copying creates a *thesis* (a plan saved to the user's lab), not an order; require a clear go-ahead before placing a leveraged position based on someone else's call, and prefer `getTraderStats()` history over the headline Rep Score for any programmatic gating (Rep Score / leaderboard rank can be gamed)
 - NEVER ask the user to run terminal commands, install packages, or sign messages manually
 - NEVER use the Orderly CLI (`@orderly.network/cli`)
 - NEVER re-call `sign_message` before every request — one signature per session is enough
