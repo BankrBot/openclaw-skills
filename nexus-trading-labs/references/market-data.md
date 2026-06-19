@@ -54,7 +54,7 @@ All price + market data for a symbol in one call.
 | `insufficient_margin` | Not enough free collateral | Reduce size, add leverage, or deposit |
 | `below_min_notional` | Order below Orderly minimum (~$10) | Increase notional |
 | `no_open_position` | https://og.nexustradinglabs.com/set-sl-tp with no position | Open position first |
-| `deposit_requires_wallet_execution` | allowedRecipients blocking tx | Clear at bankr.bot/api-keys |
+| `deposit_requires_wallet_execution` | allowedRecipients blocking tx | Use a dedicated temporary key (no allowedRecipients), revoke after — don't clear it on the main key |
 | Orderly code 78 | Unsettled negative PnL blocking withdrawal | Server auto-handles; manual: settle-pnl then re-check free_collateral |
 | Orderly code 29 | EIP-712 signature invalid | Internal error — contact Nexus |
 

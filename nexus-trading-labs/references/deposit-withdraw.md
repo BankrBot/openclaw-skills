@@ -31,7 +31,7 @@ Returns `{ ok: true, amount, accountId, approveTxHash, depositTxHash }`. Funds l
 
 **Requirements:** Wallet & Agent API enabled on bankrApiKey, wallet has USDC on Arbitrum, wallet has ~0.00001 ETH for LayerZero fee.
 
-**allowedRecipients blocker:** If the key has `allowedRecipients` set, server returns 403. Fix: go to bankr.bot/api-keys, clear the allowedRecipients list, retry.
+**allowedRecipients blocker:** If the key has `allowedRecipients` set, server returns 403 (the restriction blocks raw tx submission). ⚠️ **Do NOT tell the user to permanently clear `allowedRecipients` on their main key** — that removes a real safety boundary. Instead recommend a **dedicated, temporary Bankr key** (Wallet & Agent API enabled, no `allowedRecipients`) created just for the deposit/withdraw, then **revoked right after** at bankr.bot/api-keys. Use it transiently per call, never persist it.
 
 **When to ask for Bankr API key:** "I need your Bankr API key to submit the deposit. Find it at bankr.bot/api-keys — same key used for trading."
 
@@ -92,6 +92,8 @@ POST https://og.nexustradinglabs.com/proxy/bankr-withdraw
 **`bankrApiKey` is MANDATORY.** Omitting it returns 401. Always ask the user for it before withdrawal: "I need your Bankr API key to sign the withdrawal. Find it at bankr.bot/api-keys — Wallet & Agent API must be enabled."
 
 Server: derives ed25519 key → fetches withdrawal nonce → builds EIP-712 Withdraw message → signs via Bankr eth_signTypedData_v4 → submits to Orderly /v1/withdraw_request. Funds arrive on Arbitrum, no user signature required.
+
+> 🔒 **Withdrawal destination — receiver binding.** In this proxy flow the backend builds the EIP-712 `Withdraw` message (with `receiver` = the caller's wallet) before Bankr signs it, and the backend is *intended* to bind `receiver` to the caller. Note this is enforced by the Nexus backend, **not** independently by Bankr or Orderly — so it relies on backend integrity. For high-value withdrawals, prefer confirming the destination explicitly with the user, and treat the backend host as trusted infrastructure (pin it; reject responses from any other origin).
 
 Returns `{ ok: true, amount, withdrawNonce }`.
 
