@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "orlix",
+  "provider": "Orlix AI",
+  "providerUrl": "https://orlixai.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "orlix-demo.sh",
+    "language": "bash",
+    "code": "# Analyze any Base token with AI risk verdict\nbankr prompt \"Use Orlix to analyze 0x799c28BAC95B3E0B26534D1e9A586511895EcBA3 on Base\"\n\n# Multi-model AI chat — switch between 19 models\nbankr prompt \"Ask Orlix: compare Claude vs GPT-4o for this task\"\n\n# Token discovery — find what's trending on Base\nbankr prompt \"Use Orlix to show me top tokens by volume on Base today\""
+  },
+  "setup": [
+    "Visit orlixai.xyz — free to use, no account required to start",
+    "For Token Analyzer: paste any Base contract address and get AI risk verdict instantly",
+    "For AI Chat: choose from 19 models including Claude, GPT-4o, Grok, Gemini, DeepSeek, and more",
+    "For Telegram: message @orlixai_bot for full Orlix access inside Telegram",
+    "Hold $ORLIX on Base for ecosystem access: 0x799c28BAC95B3E0B26534D1e9A586511895EcBA3"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "orlix",
+    "command": "install the orlix skill from https://github.com/BankrBot/skills/tree/main/orlix"
+  }
+}
