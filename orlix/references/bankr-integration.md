@@ -1,6 +1,6 @@
 # Orlix + Bankr Integration Guide
 
-Orlix provides the **intelligence layer** — multi-model AI chat and real-time token analysis on Base — while Bankr provides **execution** — trades, agent wallets, and onchain actions.
+Orlix provides the **intelligence layer** — multi-model AI chat, real-time token analysis, and B20 token deployment on Base — while Bankr provides **execution** — trades, agent wallets, and onchain actions.
 
 Together they form a complete research-to-execution pipeline for Base.
 
@@ -13,11 +13,12 @@ User prompt
     ↓
 Bankr Agent (receives intent)
     ↓
-Orlix Skill (research + analysis)
+Orlix Skill (research + analysis + deployment)
     ├── Token analysis via /api/analyze
-    └── AI reasoning via /api/chat
+    ├── AI reasoning via /api/chat
+    └── B20 deployment via /api/b20-skill
     ↓
-Bankr Execution (trade, swap, order)
+Bankr Execution (trade, swap, sign tx, broadcast)
 ```
 
 ---
@@ -57,18 +58,53 @@ bankr prompt "Ask Orlix (GPT-4o): what's the risk of holding $ORLIX given curren
 Screen any token for scam/rug risk before executing a trade.
 
 ```bash
-# Screen before buying
 bankr prompt "Use Orlix to check if 0xABC...123 on Base is a rug — only proceed if verdict is SAFE"
 ```
 
 ---
 
-### 4. Portfolio Monitoring + AI Commentary
+### 4. B20 Token Deployment
+
+Deploy a B20 token on Base via Bankr — no Solidity, no ABIs.
+
+```bash
+# Check gas before deploying
+bankr prompt "Use Orlix B20 to get current gas prices on Base"
+
+# Check wallet balance
+bankr prompt "Use Orlix B20 to check ETH balance of 0xYOUR_WALLET"
+
+# Validate config + live balance check
+bankr prompt "Use Orlix B20 to validate: name='My Token', symbol='MTK', decimals=18, admin=0xYOUR_WALLET"
+
+# Build full deployment tx (real gas + nonce from Base)
+bankr prompt "Use Orlix B20 to prepare a B20 asset token: name='My Token', symbol='MTK', 1B supply cap, admin=0xYOUR_WALLET, blocklist policy"
+
+# Check receipt after broadcasting
+bankr prompt "Use Orlix B20 to check receipt of 0xTX_HASH on Base"
+```
+
+---
+
+### 5. Read Any ERC-20 on Base
+
+Use Orlix to fetch live token data from Base before making decisions.
+
+```bash
+# Get token info
+bankr prompt "Use Orlix B20 to get token info for 0x799c28BAC95B3E0B26534D1e9A586511895EcBA3"
+
+# Check a wallet's token balance
+bankr prompt "Use Orlix B20 to get token info for 0xTOKEN with holder 0xWALLET"
+```
+
+---
+
+### 6. Portfolio Monitoring + AI Commentary
 
 Use Orlix AI to explain what's happening with your Base positions.
 
 ```bash
-# Get AI commentary on a token movement
 bankr prompt "Use Orlix to explain why $ORLIX moved +15% in the last 24h based on onchain data"
 ```
 
@@ -90,12 +126,16 @@ bankr prompt "Use Orlix to explain why $ORLIX moved +15% in the last 24h based o
 | Live price + liquidity | Swap routing |
 | AI model reasoning | Agent decision layer |
 | Buy/sell pressure data | Stop-loss / take-profit |
+| B20 deployment tx | Sign + broadcast |
+| Gas + nonce from Base RPC | Transaction management |
 
 ---
 
 ## Links
 
 - Orlix App: https://orlixai.xyz
+- B20 Studio: https://orlixai.xyz/b20
+- B20 API: https://orlixai.xyz/api/b20-skill?action=info
 - Token Page: https://orlixai.xyz/token
 - Telegram Bot: https://t.me/orlixai_bot
 - Twitter: https://x.com/orlixai
