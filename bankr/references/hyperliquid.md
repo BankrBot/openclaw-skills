@@ -24,7 +24,7 @@ Perps trading requires USDC in the perps account. Bankr auto-transfers from spot
 | Category | Examples | Max Leverage |
 |----------|----------|-------------|
 | Crypto | BTC, ETH, SOL, HYPE, 100+ more | Varies per asset (up to 50x) |
-| Stocks | TSLA, AAPL, NVDA, GOOGL (via HIP-3) | Varies per asset |
+| Stocks | TSLA, AAPL, NVDA, GOOGL, SPCX (via HIP-3) | Varies per asset |
 | Spot | HYPE, PURR, and other HL-native tokens | N/A (no leverage) |
 
 ## Prompt Examples
@@ -160,6 +160,7 @@ Hyperliquid supports equities and real-world assets via HIP-3 builder-deployed d
 - Trade stocks like TSLA, AAPL, NVDA as perpetual futures
 - Same tools and workflow as crypto perps
 - Dex abstraction is enabled automatically on first trade
+- Company names resolve to their HIP-3 ticker — e.g. "spacex" maps to **SPCX**, so "Long spacex on hyperliquid" works without knowing the symbol
 - Search with: "Search for TSLA on hyperliquid" or "What stocks can I trade on hyperliquid?"
 
 ## Trading Flow

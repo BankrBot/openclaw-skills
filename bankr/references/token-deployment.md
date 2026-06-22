@@ -1,14 +1,15 @@
 # Token Deployment Reference
 
-Deploy and manage tokens on EVM chains (via Clanker) and Solana (via Raydium LaunchLab).
+Deploy and manage tokens on Base (via Doppler / Uniswap V4) and Solana (via Raydium LaunchLab). Older tokens launched through Clanker remain fully claimable; fee claims auto-detect Doppler vs Clanker.
 
 ## Supported Chains
 
 | Chain | Protocol | Token Standard | Best For |
 |-------|----------|----------------|----------|
-| **Base** | Clanker | ERC20 | Memecoins, social tokens |
-| **Unichain** | Clanker | ERC20 | Lower fees, newer ecosystem |
+| **Base** (default) | Doppler (Uniswap V4) | ERC20 | Memecoins, social/agent tokens |
 | **Solana** | Raydium LaunchLab | SPL | High-speed trading, bonding curves |
+
+> **Builder exits:** selling a token you earn creator fees on through Bankr's ordinary swap/limit/stop/DCA/TWAP tools is intentionally restricted (buying and transferring still work). To take profit, builders use a **Glidepath** — a capped, AI-paced gradual sell managed from the token page at [bankr.bot](https://bankr.bot). Glidepath is a web feature, not a CLI/API action. Details: https://docs.bankr.bot/token-launching/glidepath
 
 ---
 
@@ -185,21 +186,33 @@ Users can launch additional tokens beyond sponsored limits by paying ~0.01 SOL g
 
 ---
 
-## EVM Token Launches (Clanker)
+## EVM Token Launches (Base, via Doppler)
 
-Deploy ERC20 tokens on Base and Unichain using Clanker.
+Launch ERC20 tokens on Base. New launches create a Uniswap V4 pool via Doppler with a fixed supply and a single swap-fee tier shared between you and the protocol. Tokens deploy to Base by default.
+
+### Token Economics
+
+| Property | Value |
+|----------|-------|
+| **Supply** | Fixed 100 billion (not mintable after deployment) |
+| **Pool** | Uniswap V4 |
+| **Swap fee** | 0.7% per trade |
+| **Fee split** | 95% creator / 5% protocol (Doppler) |
+
+Fees accumulate in your token and WETH and can be claimed anytime.
 
 ### Deployment Parameters
 
 | Parameter | Required | Description | Example |
 |-----------|----------|-------------|---------|
 | **Name** | Yes | Full token name | "My Token" |
-| **Symbol** | Yes | Ticker, 3-5 chars | "MTK" |
+| **Symbol** | No | Ticker; defaults to name if omitted | "MTK" |
 | **Description** | No | Token description | "A community token" |
 | **Image** | No | Logo URL or upload | URL or file |
 | **Website** | No | Project website | "myproject.com" |
-| **Twitter** | No | Twitter/X handle | "@myproject" |
+| **Twitter** | No | Associated tweet / X handle for social proof | "@myproject" |
 | **Telegram** | No | Telegram group | "@mytoken" |
+| **Fee Recipient** | No | Route creator fees to a wallet, ENS, or social handle | "@partner" |
 
 ### Prompt Examples
 
@@ -208,12 +221,12 @@ Deploy ERC20 tokens on Base and Unichain using Clanker.
 - "Create a memecoin: name=DogeKiller, symbol=DOGEK"
 - "Deploy token with website myproject.com and Twitter @myproject"
 - "Create a token on Base"
-- "Launch new token on Unichain"
+- "Launch a token called CoolBot and route fees to @partner"
 
 **Claim fees:**
 - "Claim fees for my token MTK"
-- "Check my Clanker fees"
-- "Claim legacy Clanker fees"
+- "How much can I claim for MyToken?"
+- "Claim legacy Clanker fees" (older tokens — claims auto-detect Doppler vs Clanker)
 
 **Update metadata:**
 - "Update description for MyToken"
@@ -222,36 +235,28 @@ Deploy ERC20 tokens on Base and Unichain using Clanker.
 
 ### Rate Limits
 
-| User Type | Daily Limit |
-|-----------|-------------|
-| Standard Users | 1 token/day |
-| Bankr Club Members | 10 tokens/day |
+| User Type | Daily Limit | Gas |
+|-----------|-------------|-----|
+| Standard Users | 50 tokens/day | Sponsored within limit |
+| Bankr Club Members | 100 tokens/day | Sponsored within limit |
+
+High-volume or bot-like deploy patterns can trigger automated spam protections and temporary or permanent restrictions. For legitimate programmatic deploy use cases, open a support ticket before scaling up.
 
 ### Fee Structure
 
-- Small fee on each trade, accumulated for token creator
-- Claimable anytime via "Claim fees for my token"
-- Legacy fees (older Clanker versions) claimed separately
-
-### Chain Selection
-
-**Base (Recommended):**
-- Primary Clanker support
-- Low deployment cost
-- Growing ecosystem
-- Easy liquidity provision
-
-**Unichain:**
-- Secondary option
-- Low cost
-- Newer ecosystem
-- Less liquidity
+- 0.7% swap fee on every trade, split 95% creator / 5% protocol
+- Fees accrue in your token and WETH; claimable anytime via "Claim fees for my token"
+- Older tokens launched via Clanker are still claimable — the claim path auto-detects the protocol
 
 ### Deployment Process
 
-1. **Specify Parameters**: Name, symbol (required); description, social links (optional)
-2. **Contract Deployment**: Clanker deploys audited ERC20 contract with automatic liquidity
-3. **Verification**: Get contract address, view on block explorer
+1. **Specify Parameters**: Name (required); symbol, description, social links, fee recipient (optional)
+2. **Contract Deployment**: Doppler deploys the ERC20 and creates the Uniswap V4 pool with automatic liquidity
+3. **Verification**: Get the token address and pool metadata, view on a block explorer
+
+### Taking Profit (Glidepath)
+
+Selling a token you earn creator fees on through Bankr's swap/limit/stop/DCA/TWAP tools is restricted (buying and transferring are unaffected). To take profit, builders use a **Glidepath** — a capped, AI-paced gradual sell that feeds a committed slice of your tokens back into the pool over time instead of dumping. Glidepath is managed from the token page at [bankr.bot](https://bankr.bot) (a web feature, not a CLI/API action). Details: https://docs.bankr.bot/token-launching/glidepath
 
 ---
 
@@ -295,11 +300,11 @@ Deploy ERC20 tokens on Base and Unichain using Clanker.
 - Permanent fee arrangements are immutable
 - Shared fee claims use atomic transactions (claim+transfer)
 
-### EVM (Clanker)
-- Uses audited contracts
-- Standard ERC20 implementation
+### EVM (Base / Doppler)
+- Standard ERC20 with a fixed, non-mintable 100B supply
+- Liquidity lives in a Uniswap V4 pool
 - Verifiable on block explorer
-- Creator controls metadata
+- Creator controls metadata and fee routing
 
 ## Legal Considerations
 

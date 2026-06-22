@@ -69,15 +69,19 @@ bankr config get llmKey
 | `deepseek-v4-pro` | DeepSeek | Long context reasoning (1M, 384K output) |
 | `deepseek-v4-flash` | DeepSeek | High throughput, cost-effective (1M) |
 | `deepseek-v3.2` | DeepSeek | Cost-effective (164K context) |
+| `qwen3.7-plus` | Alibaba | Latest, long-context reasoning (1M) |
+| `qwen3.6-flash` | Alibaba | Latest fast, economical (1M) |
 | `qwen3.5-plus` | Alibaba | Long-context reasoning (1M) |
 | `qwen3.5-flash` | Alibaba | Fast, economical (1M) |
 | `qwen3-coder` | Alibaba | Code generation, debugging (262K) |
-| `kimi-k2.6` | Moonshot AI | Latest, long-context (262K) |
+| `kimi-k2.7-code` | Moonshot AI | Latest, code-focused long-context (262K) |
+| `kimi-k2.6` | Moonshot AI | Long-context (262K) |
 | `kimi-k2.5` | Moonshot AI | Long-context reasoning (262K) |
 | `minimax-m3` | MiniMax | Flagship multimodal reasoning (512K context) |
 | `minimax-m2.7` | MiniMax | Balanced performance (204.8K) |
 | `minimax-m2.7-highspeed` | MiniMax | Faster variant, double throughput (204.8K) |
 | `minimax-m2.5` | MiniMax | Cost-effective (204.8K) |
+| `glm-5.2` | Z.ai | Latest, long-context reasoning (1M) |
 | `glm-5.1` | Z.ai | Advanced reasoning (202K) |
 | `glm-5` | Z.ai | General purpose reasoning (202K) |
 | `glm-5-turbo` | Z.ai | Fast, cost-effective (202K) |
@@ -86,6 +90,30 @@ bankr config get llmKey
 # Fetch live model list from the gateway
 bankr llm models
 ```
+
+The table above is a curated snapshot; the gateway adds and retires models over time. Run `bankr llm models` (or `GET /v1/models`) for the authoritative live list, current pricing, and per-model capability flags.
+
+### Private (Confidential) Inference
+
+Some models can be routed to a confidential, TEE-backed provider for private inference. Opt in per request by appending `:private` to the model ID:
+
+```bash
+curl -X POST "https://llm.bankr.bot/v1/chat/completions" \
+  -H "Authorization: Bearer $BANKR_LLM_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "glm-5.2:private", "messages": [{"role": "user", "content": "Hello"}]}'
+```
+
+List which models currently support private (TEE) compute:
+
+```bash
+bankr llm models --private        # only models that support :private
+bankr llm models                  # full list; private-capable models are flagged
+```
+
+- Confidentiality is a hard routing constraint — a `:private` request is only served by a private-capable provider, never silently downgraded to a standard one.
+- Only models that expose a private slot support it. `bankr llm models` flags which models are private-capable, and `bankr llm models --private` lists only those (driven live by the gateway's `private` flag on `GET /v1/models`). Sending `:private` to a model without one is rejected rather than falling back.
+- Only a trailing, lowercase `:private` is treated as the opt-in. Anything else in the model string is left untouched.
 
 ### Per-Model Discounts
 

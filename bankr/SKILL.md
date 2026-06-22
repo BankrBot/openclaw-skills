@@ -614,17 +614,19 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 ### Token Deployment
 
-- **EVM (Base)**: Deploy ERC20 tokens via Clanker with customizable metadata and social links
+- **EVM (Base, default)**: Launch ERC20 tokens via Doppler on a Uniswap V4 pool with customizable metadata and social links. Fixed **100 billion** supply, **0.7%** swap fee split **95% creator / 5% protocol**. Tokens deploy to Base by default. Legacy Clanker tokens remain claimable (claims auto-detect Doppler vs Clanker).
 - **Solana**: Launch SPL tokens via Raydium LaunchLab with bonding curve and auto-migration to CPMM
 - Creator fee claiming on both chains
 - Fee Key NFTs for Solana (50% LP trading fees post-migration)
 - Optional fee recipient designation with 99.9%/0.1% split (Solana)
 - Both creator AND fee recipient can claim bonding curve fees (gas sponsored)
 - Optional vesting parameters (Solana)
-- Rate limits: 1/day standard, 10/day Bankr Club (gas sponsored within limits)
+- Base launch limits: 50/day standard, 100/day Bankr Club (gas sponsored within limits)
 - Tokens deployed through Bankr are always visible in your portfolio, even without market price data
 
 **Reference**: [references/token-deployment.md](references/token-deployment.md)
+
+> **Selling your own creator-fee token:** Bankr blocks selling a token you earn fees on through the ordinary swap/limit/stop/DCA/TWAP tools (buying and transferring are unaffected). Builders take profit gradually instead via **Glidepath** — an AI-paced gradual exit managed from the token page at [bankr.bot](https://bankr.bot). Glidepath is a web feature; it isn't a CLI/API action. Details: https://docs.bankr.bot/token-launching/glidepath
 
 ### Automation
 
@@ -950,6 +952,8 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Short ETH with 5x on hyperliquid"
 - "Open 5x long on ETH with $100"
 - "Short BTC 10x with stop loss at $45k"
+- "Long TSLA with 5x on hyperliquid" (stocks via HIP-3)
+- "Long spacex on hyperliquid" (company names resolve to their HIP-3 ticker, e.g. SPCX)
 - "Show my hyperliquid positions"
 - "Show my Avantis positions"
 
