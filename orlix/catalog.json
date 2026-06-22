@@ -7,14 +7,14 @@
   "demo": {
     "title": "orlix-demo.sh",
     "language": "bash",
-    "code": "# Analyze any Base token with AI risk verdict\nbankr prompt \"Use Orlix to analyze 0x799c28BAC95B3E0B26534D1e9A586511895EcBA3 on Base\"\n\n# Multi-model AI chat — switch between 19 models\nbankr prompt \"Ask Orlix: compare Claude vs GPT-4o for this task\"\n\n# Token discovery — find what's trending on Base\nbankr prompt \"Use Orlix to show me top tokens by volume on Base today\""
+    "code": "# Analyze any Base token — live price, risk verdict, liquidity\nbankr prompt \"Use Orlix to analyze 0x799c28BAC95B3E0B26534D1e9A586511895EcBA3 on Base\"\n\n# Compare 2 AI models on the same question\nbankr prompt \"Ask Orlix: use Claude and GPT-4o to compare — what are the risks of this DeFi protocol?\"\n\n# Get live Base gas prices\nbankr prompt \"Use Orlix B20 to get current chain info and gas on Base\"\n\n# Prepare a B20 token deployment (real gas + nonce from Base RPC)\nbankr prompt \"Use Orlix B20 to prepare a B20 asset token: name='My Token', symbol='MTK', 10M supply cap, admin=0xYOUR_WALLET\"\n\n# Check wallet ETH balance on Base\nbankr prompt \"Use Orlix B20 to check the ETH balance of 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045\"\n\n# Read any ERC-20 on Base\nbankr prompt \"Use Orlix B20 to get token info for 0x799c28BAC95B3E0B26534D1e9A586511895EcBA3\""
   },
   "setup": [
-    "Visit orlixai.xyz — free to use, no account required to start",
-    "For Token Analyzer: paste any Base contract address and get AI risk verdict instantly",
-    "For AI Chat: choose from 19 models including Claude, GPT-4o, Grok, Gemini, DeepSeek, and more",
-    "For Telegram: message @orlixai_bot for full Orlix access inside Telegram",
-    "Hold $ORLIX on Base for ecosystem access: 0x799c28BAC95B3E0B26534D1e9A586511895EcBA3"
+    "No authentication required — the platform and B20 API are fully open",
+    "Install: `install the orlix skill from https://github.com/BankrBot/skills/tree/main/orlix`",
+    "For AI chat and token analysis: visit https://orlixai.xyz or message @orlixai_bot on Telegram",
+    "For B20 tokens: POST to https://orlixai.xyz/api/b20-skill — all actions fetch live data from Base RPC",
+    "For visual B20 configuration: use the B20 Studio at https://orlixai.xyz/b20"
   ],
   "install": {
     "type": "bankr",
