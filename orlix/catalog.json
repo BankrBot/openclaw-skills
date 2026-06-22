@@ -3,7 +3,7 @@
   "slug": "orlix",
   "provider": "Orlix AI",
   "providerUrl": "https://orlixai.xyz",
-  "logo": "logo.svg",
+  "logo": "logo.png",
   "demo": {
     "title": "orlix-demo.sh",
     "language": "bash",
