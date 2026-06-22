@@ -30,12 +30,14 @@ Bankr Execution (trade, swap, sign tx, broadcast)
 Analyze a token with Orlix before Bankr executes the swap.
 
 ```bash
-# Step 1: Analyze with Orlix
-bankr prompt "Use Orlix to analyze 0x799c28BAC95B3E0B26534D1e9A586511895EcBA3 on Base — is it safe to buy?"
+# Step 1: Get risk data from Orlix (advisory only)
+bankr prompt "Use Orlix to analyze 0x799c28BAC95B3E0B26534D1e9A586511895EcBA3 on Base and show me the full risk report"
 
-# Step 2: If verdict is SAFE, execute with Bankr
+# Step 2: User reviews the report, then explicitly confirms before Bankr executes
 bankr prompt "Buy $50 of 0x799c28BAC95B3E0B26534D1e9A586511895EcBA3 on Base"
 ```
+
+> **Note:** The Orlix risk report is advisory only. Bankr must not automatically execute trades based on an Orlix verdict. The user must explicitly confirm every buy, sell, or deployment action.
 
 ---
 
@@ -58,8 +60,10 @@ bankr prompt "Ask Orlix (GPT-4o): what's the risk of holding $ORLIX given curren
 Screen any token for scam/rug risk before executing a trade.
 
 ```bash
-bankr prompt "Use Orlix to check if 0xABC...123 on Base is a rug — only proceed if verdict is SAFE"
+bankr prompt "Use Orlix to check the liquidity ratio and buy/sell pressure for 0xABC...123 on Base"
 ```
+
+> **Note:** Orlix verdict is informational. The user must decide whether to proceed — Bankr must not execute automatically based on the verdict.
 
 ---
 
