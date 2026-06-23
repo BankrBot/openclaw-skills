@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "hermesone",
+  "provider": "Hermes One",
+  "providerUrl": "https://hermesone.org",
+  "logo": "hermesone.svg",
+  "demo": {
+    "title": "hermesone-setup.ts",
+    "language": "typescript",
+    "code": "import { install, update, getInstalledVersion } from 'hermesone';\n\n// Install the latest Hermes One for the current OS/arch\nawait install();\n\n// Later: update only if a newer release exists (no-op when up to date)\nawait update();\n\n// Check what's installed (reads the app on disk, falls back to ~/.hermesone/state.json)\nconst current = await getInstalledVersion();\nconsole.log(current ? `Hermes One ${current}` : 'Not installed');"
+  },
+  "setup": [
+    "Requires Node.js 18+ (uses built-in fetch) and a desktop session for the GUI installer",
+    "One-shot install: `npm install hermesone` (postinstall detects OS/arch, downloads, and launches the installer)",
+    "Reusable CLI: `npm install -g hermesone`, then `hermesone install | update | version | help`",
+    "CI / headless / Docker: set `HERMESONE_SKIP_INSTALL=1` to skip the postinstall, then call `install()` where a GUI session exists",
+    "Installed version is tracked in `~/.hermesone/state.json`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "hermesone",
+    "command": "install the hermesone skill from https://github.com/BankrBot/skills/tree/main/hermesone"
+  }
+}
