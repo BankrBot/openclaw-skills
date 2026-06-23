@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "slug": "hermesone",
+  "provider": "Hermes One",
+  "providerUrl": "https://hermesone.org",
+  "logo": "hermesone.svg",
+  "demo": {
+    "title": "hermesone-setup.ts",
+    "language": "typescript",
+    "code": "import { plan, install } from 'hermesone';\n\n// 1) Preview the exact release — show this to the user for approval.\nconst p = await plan();\nconsole.log(`Would install ${p.asset} (${p.tag}), sha512 ${p.sha512 ? 'published' : 'MISSING'}`);\n\n// 2) After the user approves, install. The package verifies sha512 before\n//    installing (refuses if unverified); on macOS the signed app goes\n//    straight into /Applications. Subscribe to progress if you want.\nawait install({ onProgress: (e) => console.log(e.phase) });"
+  },
+  "setup": [
+    "Heads up: install/update download a native build from `fathah/hermes-desktop` and run it on the host. The package verifies sha512 (fail-closed) and prompts interactively — but require explicit user approval; never auto-install from an agent workflow",
+    "Requires Node.js 18+ (built-in fetch). The interactive UI needs a TTY; non-interactive contexts print plain output",
+    "Install the CLI (no app install yet): `npm install -g hermesone@0.2.0`",
+    "Preview then install: `hermesone plan` to show the release/asset/size/sha512, then `hermesone install` after the user confirms (add `--yes` for non-interactive)",
+    "Pin a release with `hermesone install <tag>` or `HERMESONE_VERSION=<tag>`; `npm install` does not auto-install the app unless `HERMESONE_AUTO_INSTALL=1`",
+    "Installed version is tracked in `~/.hermesone/state.json`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "hermesone",
+    "command": "install the hermesone skill from https://github.com/BankrBot/skills/tree/main/hermesone"
+  }
+}
