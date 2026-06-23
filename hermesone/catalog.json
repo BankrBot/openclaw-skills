@@ -7,13 +7,14 @@
   "demo": {
     "title": "hermesone-setup.ts",
     "language": "typescript",
-    "code": "import { install, update, getInstalledVersion } from 'hermesone';\n\n// Install the latest Hermes One for the current OS/arch\nawait install();\n\n// Later: update only if a newer release exists (no-op when up to date)\nawait update();\n\n// Check what's installed (reads the app on disk, falls back to ~/.hermesone/state.json)\nconst current = await getInstalledVersion();\nconsole.log(current ? `Hermes One ${current}` : 'Not installed');"
+    "code": "import { plan, install } from 'hermesone';\n\n// 1) Preview the exact release — show this to the user for approval.\nconst p = await plan();\nconsole.log(`Would install ${p.asset} (${p.tag}), sha512 ${p.sha512 ? 'published' : 'MISSING'}`);\n\n// 2) After the user approves, install. The package verifies sha512 before\n//    installing (refuses if unverified); on macOS the signed app goes\n//    straight into /Applications. Subscribe to progress if you want.\nawait install({ onProgress: (e) => console.log(e.phase) });"
   },
   "setup": [
-    "Requires Node.js 18+ (uses built-in fetch) and a desktop session for the GUI installer",
-    "One-shot install: `npm install hermesone` (postinstall detects OS/arch, downloads, and launches the installer)",
-    "Reusable CLI: `npm install -g hermesone`, then `hermesone install | update | version | help`",
-    "CI / headless / Docker: set `HERMESONE_SKIP_INSTALL=1` to skip the postinstall, then call `install()` where a GUI session exists",
+    "Heads up: install/update download a native build from `fathah/hermes-desktop` and run it on the host. The package verifies sha512 (fail-closed) and prompts interactively — but require explicit user approval; never auto-install from an agent workflow",
+    "Requires Node.js 18+ (built-in fetch). The interactive UI needs a TTY; non-interactive contexts print plain output",
+    "Install the CLI (no app install yet): `npm install -g hermesone@0.2.0`",
+    "Preview then install: `hermesone plan` to show the release/asset/size/sha512, then `hermesone install` after the user confirms (add `--yes` for non-interactive)",
+    "Pin a release with `hermesone install <tag>` or `HERMESONE_VERSION=<tag>`; `npm install` does not auto-install the app unless `HERMESONE_AUTO_INSTALL=1`",
     "Installed version is tracked in `~/.hermesone/state.json`"
   ],
   "install": {

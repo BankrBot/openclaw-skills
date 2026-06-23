@@ -1,123 +1,151 @@
 ---
 name: hermesone
-description: Install, update, and manage the Hermes One desktop app via the `hermesone` npm package. Use when a user wants to set up Hermes One, install or upgrade it from the command line, check the installed version, automate installation in a script or postinstall hook, or call the installer programmatically from Node. Triggers on mentions of hermesone, Hermes One, Hermes Desktop (the former name), or installing/updating the Hermes app.
+description: Install, update, and manage the Hermes One desktop app via the `hermesone` npm package. Use when a user wants to set up Hermes One, install or upgrade it from the command line, check the installed version, preview a release before installing, pin a specific version, or drive the installer programmatically from Node. Triggers on mentions of hermesone, Hermes One, Hermes Desktop (the former name), or installing/updating the Hermes app.
 license: ISC
-compatibility: Requires Node.js (built-in `fetch`, so Node 18+) and network access to GitHub. Cross-platform — macOS (.dmg, arm64/x64), Windows (setup.exe), and Linux (.AppImage). Works in Claude Code and any environment with a shell and npm.
+compatibility: Requires Node.js 18+ (built-in fetch) and network access to GitHub. Cross-platform — macOS (signed app, arm64/x64), Windows (setup.exe), Linux (.AppImage). The interactive UI needs a TTY; in non-interactive contexts it falls back to plain output. Works in Claude Code and any environment with a shell and npm.
 metadata:
   author: fathah
-  version: "0.0.4"
+  version: "0.2.0"
 ---
 
 # Hermesone: Install & Update Hermes One
 
-`hermesone` is an npm package that installs and updates the **Hermes One** desktop app. Installing the package detects the host OS and CPU architecture, downloads the matching release asset from GitHub, and launches the native installer. It also ships a CLI and a programmatic API for scripted or repeat use.
+`hermesone` (v0.2.0) is the npm package that installs and updates the **Hermes One** desktop app. It detects the host OS/arch, downloads the matching GitHub release, **verifies its sha512 checksum**, and installs it — on macOS the signed app goes straight into `/Applications`, ready to launch (no drag step). It ships a CLI and a programmatic API.
+
+> ⚠️ **This installs and runs third-party native code on the user's machine.** The package mitigates this — it verifies every download against the publisher's sha512 manifest (and refuses to run an unverified build), and in an interactive terminal it asks for confirmation first — but installing software is still a host-level action. See [Safety & approval](#safety--approval).
 
 - **Homepage:** https://hermesone.org
 - **Package repository:** https://github.com/hermesonehq/hermesonejs
-- **App releases pulled from:** [`fathah/hermes-desktop`](https://github.com/fathah/hermes-desktop) (GitHub latest release)
+- **App releases pulled from:** [`fathah/hermes-desktop`](https://github.com/fathah/hermes-desktop) (GitHub releases)
 
-> **Naming:** the app is **Hermes One** (formerly "Hermes Desktop"). The GitHub repo it's released from is still named `fathah/hermes-desktop`, and the installed macOS bundle is `Hermes One.app` — so you'll see both names. Use "Hermes One" when talking to users; the `hermes-desktop` repo slug is just where the release assets live.
+> **Naming:** the app is **Hermes One** (formerly "Hermes Desktop"). The GitHub repo it's released from is still named `fathah/hermes-desktop`, and the installed macOS bundle is `Hermes One.app` — so you'll see both names. Use "Hermes One" with users; the `hermes-desktop` slug is just where the release assets live.
 
-> **Why this lives in Bankr Skills.** Hermes One is building toward an agent economy, with [Bankr](https://bankr.bot) as the primary transaction layer for agent payments. This skill is the entry point: it teaches an agent to install and keep Hermes One up to date so it can participate. **Today** the package does exactly that — install/update/version, no accounts or keys. Bankr-settled transactions and agent-economy hooks are **on the roadmap** and will be documented here as they ship; this skill does not yet perform any onchain or payment actions.
+> **Why this lives in Bankr Skills.** Hermes One is building toward an agent economy, with [Bankr](https://bankr.bot) as the primary transaction layer for agent payments. This skill is the entry point: it gets Hermes One installed and current on the host so an agent can participate. **Today** the package does install/update/version only — no accounts, keys, or onchain actions. Bankr-settled transactions and agent-economy hooks are **on the roadmap** and will be documented here as they ship.
 
-## Decide the install path first
+## Safety & approval
 
-Pick the path that matches what the user wants, then follow that section:
+Installing or updating Hermes One modifies the host. The package enforces two guardrails for you: it **verifies sha512** before installing (fail-closed — it refuses if no published checksum is found), and on an interactive terminal it shows a confirmation prompt with the release, size, and checksum status. Still follow these rules:
 
-1. **Just install the app once** → [Quick install](#quick-install) (`npm install hermesone`). The postinstall hook does everything.
-2. **Reusable `hermesone` command** (install, then update later, check version) → [Global install](#global-install) (`npm install -g hermesone`).
-3. **Install/update from inside their own Node app or build script** → [Programmatic API](#programmatic-api).
-4. **CI, Docker, or any place that must NOT pop an installer** → set `HERMESONE_SKIP_INSTALL=1`. See [Controlling the postinstall hook](#controlling-the-postinstall-hook).
+- **Require explicit user approval before any install or update.** Never trigger one as a silent side effect of another task or an autonomous workflow.
+- **In non-interactive/agent contexts the confirm prompt is skipped** (and `--yes` does the same). There, *you* are the approval gate: run [`hermesone plan`](#preview-a-release) first, show the user the resolved release/asset/size/sha512, get a yes, then run `install`.
+- **Don't override verification.** Only set `HERMESONE_ALLOW_UNVERIFIED=1` if the user explicitly accepts installing a build with no published checksum.
+- **Pin what you install** (`@0.2.0` for the package; a release tag for the app) when reproducibility matters — see [Pinning](#pin-a-specific-release).
 
-The installer launches a GUI installer (opens the `.dmg`, runs `setup.exe`, or executes the `.AppImage`). It needs a desktop session — it is not meant for headless servers. In headless/CI contexts, skip the postinstall and call the API or CLI deliberately.
+## Recommended flow
 
-## Quick install
-
-```bash
-npm install hermesone
-```
-
-On install the postinstall step will:
-
-- Detect the platform (`darwin`, `win32`, `linux`) and architecture (`arm64`, `x64`).
-- Fetch the latest Hermes One release from GitHub.
-- Download the matching asset — `.dmg` on macOS (arm64 or x64), `setup.exe` on Windows, `.AppImage` on Linux.
-- Launch the installer and record the version in `~/.hermesone/state.json`.
-
-If no asset matches the platform/arch, the install logs a warning and skips rather than failing the whole `npm install`.
-
-## Global install
-
-Installing globally puts a `hermesone` command on the user's `PATH`:
+Installing the npm package no longer installs the app as a side effect (see [Postinstall behavior](#postinstall-behavior)). The clean path is: install the CLI, preview, then install on confirmation.
 
 ```bash
-npm install -g hermesone
+# 1. Install the CLI (no host change — the app is not installed yet).
+npm install -g hermesone@0.2.0
+
+# 2. Preview the exact release that would be installed.
+hermesone plan
+
+# 3. Install. Interactive terminals show a confirmation prompt + live progress;
+#    non-interactive contexts proceed (add --yes to be explicit) and print plain lines.
+hermesone install
 ```
 
-Then from any directory:
+`hermesone update` is safe to run repeatedly — it no-ops when already current and only downloads when a newer release exists.
+
+## Preview a release
+
+`hermesone plan [tag]` resolves and prints what *would* be installed — release tag, asset, size, and the expected sha512 — **without downloading or installing anything**. Use it to show the user before asking them to approve an install.
+
+## CLI reference
+
+```
+hermesone <command> [tag]
+```
+
+| Command          | Description                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| `install [tag]`  | Download, verify (sha512), and install Hermes One — latest, or a pinned release tag. |
+| `update [tag]`   | Update Hermes One if a newer release is available (no-op when current).              |
+| `plan [tag]`     | Show what would be downloaded (tag, asset, size, expected checksum). No changes.     |
+| `version`        | Print the installed Hermes One version, or a "not installed" message.                |
+| `help`           | Show usage.                                                                          |
+
+| Flag / Env                     | Effect                                                                       |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| `-y`, `--yes`                  | Skip the confirmation prompt (for non-interactive/scripted installs).        |
+| `HERMESONE_VERSION=<tag>`      | Pin the release tag (same as the `[tag]` argument).                          |
+| `HERMESONE_ALLOW_UNVERIFIED=1` | Proceed even if no published checksum is found. Not recommended.            |
+
+In an interactive terminal, `install` renders a confirmation box, a live download progress bar, and per-step status (resolve → download → verify → install). In a non-interactive context it prints plain status lines and never blocks. Color honors `NO_COLOR`.
+
+## What gets installed per OS
+
+| OS      | Artifact             | Behavior                                                                                          |
+| ------- | -------------------- | ------------------------------------------------------------------------------------------------- |
+| macOS   | `*-mac.zip` (signed) | Verified, unzipped, installed into `/Applications` (or `~/Applications`), then launched — no drag. Updates replace in place. |
+| Windows | `*-setup.exe`        | Verified, then the installer is launched.                                                         |
+| Linux   | `*.AppImage`         | Verified, marked executable, then launched.                                                       |
+
+## Pin a specific release
+
+`install`/`update` use the **latest** release by default. To install a known build, pass a tag or set the env var:
 
 ```bash
-hermesone install     # Download and install the latest Hermes One
-hermesone update      # Update only if a newer release exists (no-op if up to date)
-hermesone version     # Print the installed version, or a "not installed" message
-hermesone help        # Show usage
+hermesone install v0.6.35
+HERMESONE_VERSION=v0.6.35 hermesone install
 ```
 
-`update` is safe to run repeatedly: it compares the installed version (detected from the app on disk, falling back to `~/.hermesone/state.json`) against the latest release and only downloads when the latest is strictly newer.
+## Checksum verification (built in)
 
-## Controlling the postinstall hook
-
-| Goal                                                                           | What to do                                                                                                 |
-| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| Install the package but **not** launch the GUI installer (CI, Docker, servers) | Set `HERMESONE_SKIP_INSTALL=1` before `npm install`, e.g. `HERMESONE_SKIP_INSTALL=1 npm install hermesone` |
-| Install in a script, then trigger the install yourself later                   | Skip the hook as above, then run `npx hermesone install` (or call the API) at the right moment             |
-
-The postinstall hook is also automatically skipped when running inside the package's own source checkout (development), so contributors don't trigger an install on `npm install`.
+Each download is verified against the base64 sha512 published in the release's electron-builder manifest (`latest-mac.yml` / `latest.yml` / `latest-linux.yml`). On mismatch the file is deleted and nothing is installed. If a release publishes no checksum for the asset, `install` refuses unless `HERMESONE_ALLOW_UNVERIFIED=1` is set. You do not need to verify manually — surface the result from `plan` to the user and let the package enforce it.
 
 ## Programmatic API
 
 ```ts
-import { install, update, getInstalledVersion } from "hermesone";
+import { plan, install, update, getInstalledVersion } from "hermesone";
 
-await install(); // install the latest release now
-await update(); // update only if newer; no-op otherwise
-const current = await getInstalledVersion(); // e.g. "1.4.0", or null if not installed
+// Preview without downloading — show this to the user for approval.
+const p = await plan();                       // { tag, asset, url, size, sha512 }
+
+// Install (verifies sha512 before installing). Optionally pin a tag, and/or
+// subscribe to progress events to render your own UI.
+await install({
+  tag: "v0.6.35",
+  onProgress: (e) => console.log(e.phase),    // resolve|download|verify|extract|launch|installed...
+});
+
+await update();                                // no-op if already current
+const current = await getInstalledVersion();   // e.g. "0.6.35", or null
 ```
 
-Lower-level helpers are also exported for custom flows (e.g. checking for an update without downloading):
+Also exported: `fetchRelease`, `parseChecksums`, `selectAsset`, `getTarget`, `isNewer`, and types `Release`, `ReleaseAsset`, `State`, `Target`, `InstallOptions`, `InstallPlan`, `ProgressEvent`. The library prints nothing on its own — all output is driven by your `onProgress` handler.
 
-```ts
-import { fetchLatestRelease, selectAsset, getTarget, isNewer } from "hermesone";
+## Version tracking
 
-const target = getTarget(); // { platform, arch }
-const release = await fetchLatestRelease();
-const asset = selectAsset(release.assets, target); // the asset that would be downloaded
-const current = await getInstalledVersion();
-if (current && isNewer(release.tag_name, current)) {
-  console.log(`Update available: ${current} -> ${release.tag_name}`);
-}
-```
-
-Exported types: `Release`, `ReleaseAsset`, `State`, `Target`.
-
-## How version tracking works
-
-- The installed version is detected from the app on disk first. On macOS this reads `CFBundleShortVersionString` from `Hermes One.app/Contents/Info.plist` (checking `/Applications` and `~/Applications`), so a manual install is recognized too.
-- If nothing is found on disk, it falls back to `~/.hermesone/state.json`, which records `{ version, installedAt }` after each install/update done through this tool.
+- The installed version is detected from the app on disk first. On macOS this reads `CFBundleShortVersionString` from `Hermes One.app/Contents/Info.plist` (`/Applications` and `~/Applications`), so manual installs are recognized too.
+- Otherwise it falls back to `~/.hermesone/state.json`, written after each install/update done through this tool.
 - `version` returns `null` (CLI prints "Hermes One is not installed.") when neither source yields a version.
+
+## Postinstall behavior
+
+`npm install hermesone` **does not** download or launch the app — running an installer as a silent side effect of `npm install` is surprising, so it's opt-in. After installing the package it prints the next step (`npx hermesone install`). Controls:
+
+| Env (set before `npm install`) | Effect                                                            |
+| ------------------------------ | ---------------------------------------------------------------- |
+| _(none)_                       | Prints guidance; does not install the app.                       |
+| `HERMESONE_AUTO_INSTALL=1`     | Runs the install automatically during postinstall.               |
+| `HERMESONE_SKIP_INSTALL=1`     | Silences the postinstall notice entirely.                        |
 
 ## Troubleshooting
 
-| Symptom                                                   | Cause / fix                                                                                                                                                       |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Failed to fetch latest release: 403`                     | GitHub API rate limit (unauthenticated). Wait and retry, or run from a network with a higher limit.                                                               |
-| `No Hermes Desktop build available for <platform>/<arch>` | The latest release has no asset for this OS/arch (e.g. Linux arm). Check the [releases page](https://github.com/fathah/hermes-desktop/releases).                  |
-| `npm install` finished but nothing happened               | The postinstall may have been skipped — check for `HERMESONE_SKIP_INSTALL`, a headless environment, or a source-checkout. Run `npx hermesone install` explicitly. |
-| Installer downloaded but didn't open                      | The GUI installer needs a desktop session. On Linux ensure the `.AppImage` is executable and FUSE is available.                                                   |
-| `version` says not installed after a manual install       | Only macOS auto-detects from disk. On Windows/Linux, install once via this tool so `~/.hermesone/state.json` is written.                                          |
+| Symptom                                                | Cause / fix                                                                                                                                |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `No published checksum found for <asset>`              | The release has no sha512 manifest entry for this asset. Prefer a release that does; only override with `HERMESONE_ALLOW_UNVERIFIED=1` if the user accepts it. |
+| `Checksum mismatch for <asset>`                        | The download didn't match the published sha512 — the file was deleted and nothing installed. Retry; if it persists, the release/asset may be compromised or corrupted. |
+| `Failed to fetch release ...: 403`                     | GitHub API rate limit (unauthenticated). Wait and retry.                                                                                   |
+| `No Hermes One build available for <platform>/<arch>`  | The release has no asset for this OS/arch. Check the [releases page](https://github.com/fathah/hermes-desktop/releases).                   |
+| Prompt didn't appear / it just proceeded               | Not a TTY (CI, pipe, agent). That's expected — it runs non-interactively. Use `plan` first to gate, or `--yes` to be explicit.            |
+| `version` says not installed after a manual install    | Only macOS auto-detects from disk. On Windows/Linux, install once via this tool so `~/.hermesone/state.json` is written.                   |
 
 ## Notes & guardrails
 
-- This tool downloads and launches an executable installer from GitHub releases. Only run it when the user actually wants to install Hermes One, and prefer pinning to the official repo (`fathah/hermes-desktop`).
-- It does not require any API key, account, or credentials.
-- For headless/automated environments, never rely on the postinstall hook — set `HERMESONE_SKIP_INSTALL=1` and call `install()`/`update()` explicitly where a GUI session exists.
+- **Host-level code execution.** Install/update download a native build from `fathah/hermes-desktop` and run it. The package verifies sha512 and (interactively) prompts, but only run it on explicit user intent — never automatically from an agent workflow.
+- **Preview, then install.** Use `plan` to show the release/asset/size/sha512; in non-interactive contexts that preview is your approval gate.
+- **No credentials.** The tool needs no API key or account and performs no onchain or payment actions.
