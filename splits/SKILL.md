@@ -39,15 +39,15 @@ A Bankr agent gets execution power on an account one of two ways — full walkth
 - **Signer** (steps below): the agent generates a dedicated Splits EOA (`splits auth create-key --register`), then a human adds that EOA as a signer — on a new subaccount (step 4a) or an existing account (step 4b). The key is separate from the Bankr wallet; every action is a proposal, and the threshold sets the approval path.
 - **Module** (see [the alternative at the end of Setup](#alternative-module-based-execution-direct)): enable the Bankr wallet itself as a module on a bounded subaccount for direct execution — no separate key. Full, unilateral access; bounded subaccounts only, never the Treasury.
 
-The Splits **CLI is the primary programmatic path** (`@splits/splits-cli`, also ships a built-in MCP server exposing the same surface). Install or invoke:
+The Splits **CLI is the primary programmatic path** (`@splits/splits-cli`, also ships a built-in MCP server exposing the same surface). For an agent that calls it repeatedly, **install once globally** — the package is tiny but pulls in `viem` (~24 MB), so a one-time install avoids re-downloading that on every `npx` call:
 
 ```bash
-npm install -g @splits/splits-cli
-# or
+npm install -g @splits/splits-cli       # recommended for agents — one-time, then instant
+# quick one-off without installing (downloads deps on first run):
 npx -y @splits/splits-cli@latest --help
 ```
 
-A full command reference is available with `npx -y @splits/splits-cli@latest --llms-full`.
+After a global install, get the full command reference with `splits --llms-full`.
 
 **1. Human creates a Splits API key** (browser-only; requires a Splits team; free):
 `https://teams.splits.org/settings/team/api-keys/`. The agent should ask the user for the key or read an injected `SPLITS_API_KEY`. Never paste it into shell history.

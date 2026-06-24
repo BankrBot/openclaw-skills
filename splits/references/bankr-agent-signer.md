@@ -25,10 +25,11 @@ Changing this later is a threshold or signer update.
 
 Prerequisites: Node, and the agent able to run shell commands.
 
-**1. Install the CLI** (or invoke with `npx -y @splits/splits-cli@latest`):
+**1. Install the CLI** — install globally for repeated calls. The package is tiny but pulls in `viem` (~24 MB), so install once rather than paying that download on every `npx` invocation:
 
 ```bash
 npm install -g @splits/splits-cli
+# one-off without installing: npx -y @splits/splits-cli@latest
 ```
 
 **2. Get a Splits API key** — human step (requires a Splits team; free):
