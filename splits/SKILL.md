@@ -19,7 +19,7 @@ Splits is a self-custodied onchain treasury platform: multisig accounts with con
 
 Division of labor with Bankr: Bankr handles market/trading reasoning and fast small-value moves from its own wallet; Splits holds the treasury, enforces the approval policy, and executes governed payments and revenue operations. Keep day-to-day spending in Bankr and larger balances (revenue, reserves, payroll) in Splits; the agent moves funds between the two as needed.
 
-Using Splits and Bankr together: a Bankr agent operates Splits through the CLI using a dedicated Splits signer key it generates — a separate EOA, not the Bankr wallet — once a human adds it as a signer on an account. The account's multisig threshold determines whether the agent acts on its own or requires human co-approval. See [references/bankr-agent-signer.md](references/bankr-agent-signer.md) for setup.
+Using Splits and Bankr together: a Bankr agent operates Splits through the CLI, and gets execution power on an account one of two ways. As a multisig **signer** — a dedicated Splits EOA the agent generates (separate from the Bankr wallet); every action is a proposal, and the account threshold sets whether the agent acts alone or needs human co-approval. Or as a **module** — the Bankr wallet itself, enabled on a bounded subaccount to execute directly with no per-action proposal (full, unilateral access; bounded subaccounts only, never the Treasury). Both setups are in [references/bankr-agent-signer.md](references/bankr-agent-signer.md).
 
 ## When to use Splits
 
@@ -34,7 +34,10 @@ Simple one-off Bankr trades, market research, or actions that only need the Bank
 
 ## Setup
 
-To make a Bankr agent a signer on a Splits treasury: the agent generates a dedicated Splits EOA (`splits auth create-key --register`), then a human adds that EOA as a signer — either on a new subaccount created for the agent (step 4a) or on an existing account (step 4b). This key is separate from the Bankr wallet. Steps below; full walkthrough in [references/bankr-agent-signer.md](references/bankr-agent-signer.md).
+A Bankr agent gets execution power on an account one of two ways — full walkthrough for both in [references/bankr-agent-signer.md](references/bankr-agent-signer.md):
+
+- **Signer** (steps below): the agent generates a dedicated Splits EOA (`splits auth create-key --register`), then a human adds that EOA as a signer — on a new subaccount (step 4a) or an existing account (step 4b). The key is separate from the Bankr wallet; every action is a proposal, and the threshold sets the approval path.
+- **Module** (see [the alternative at the end of Setup](#alternative-module-based-execution-direct)): enable the Bankr wallet itself as a module on a bounded subaccount for direct execution — no separate key. Full, unilateral access; bounded subaccounts only, never the Treasury.
 
 The Splits **CLI is the primary programmatic path** (`@splits/splits-cli`, also ships a built-in MCP server exposing the same surface). Install or invoke:
 
@@ -84,6 +87,10 @@ splits transactions get <TRANSACTION_ID>   # CREATED -> EXECUTED
 ```
 
 Note: `members signers` lists **passkeys** (human); `auth signers` lists the agent's registered **EOA** signer ids. Passkeys require a biometric second factor agents cannot provide, so agents always sign with their local EOA.
+
+### Alternative: module-based execution (direct)
+
+Beyond being a signer, an agent can be enabled as a **module** on a subaccount: the account `enableModule(<eoa>)`s the agent, after which it calls `executeFromModule` to run transactions **directly from the subaccount** — no proposal/threshold per action, with `msg.sender` = the subaccount (so it satisfies `msg.sender`-gated calls like fee-locker claims). For Bankr this reuses the **Bankr wallet itself** — enable its address as a module, then execute via Bankr's raw-transaction `submit`, no separate Splits key. A module has **full, unilateral access**, so use a dedicated, bounded subaccount — **never the Treasury** — and enabling is human-approved and revocable (`disableModule`). The only human input needed is the subaccount address. Full flow in [references/bankr-agent-signer.md](references/bankr-agent-signer.md).
 
 ## Core workflows
 

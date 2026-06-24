@@ -1,6 +1,9 @@
-# Use a Bankr agent as a Splits signer
+# Wire a Bankr agent into Splits execution
 
-Lets the agent that runs a Bankr wallet also propose and sign transactions on a Splits account.
+Two ways to give a Bankr agent execution power on a Splits account:
+
+- **Signer** (default, below) — register a dedicated agent key as a multisig signer. Every action is a Splits proposal; supports human-in-the-loop via the threshold.
+- **Module** (see [the module section](#alternative-enable-the-bankr-wallet-as-a-module)) — enable the **Bankr wallet itself** as a module on a bounded subaccount for direct execution, no separate key. Full, unilateral access — bounded subaccounts only.
 
 ## How it works
 
@@ -91,6 +94,69 @@ splits transactions create transfer --account <TREASURY> --chainId 8453 \
 ```
 
 Find the Bankr wallet address with `bankr wallet` (CLI) or `GET /wallet/me` (API).
+
+## Alternative: enable the Bankr wallet as a module
+
+Instead of a separate signer key, you can enable the **Bankr wallet itself** as a *module* on a subaccount. An enabled module calls `executeFromModule` to run transactions **directly from the subaccount** — no proposal, sign, or threshold step per action — and the inner call executes with `msg.sender` = the subaccount, so it satisfies contracts that gate on the account (e.g. LP-fee or fee-locker claims). This reuses the Bankr wallet directly: enabling needs only its address, and execution uses Bankr's own `submit` (raw transaction). See Splits' [`ModuleManager.sol`](https://github.com/0xSplits/splits-contracts-monorepo/blob/main/packages/smart-vaults/src/utils/ModuleManager.sol).
+
+**Trade-off:** a module has **full, unilateral access** to the subaccount — the multisig threshold does **not** gate its executions. Use a **dedicated, bounded operating subaccount — never the Treasury.** Enabling is approved once by the account's signers (human), and is revocable.
+
+The only input required from the human is the **subaccount address** — the agent reads its own Bankr wallet address and builds the rest.
+
+### Enable (agent builds it; human approves)
+
+```bash
+# the module = the Bankr wallet address (agent reads it itself)
+#   bankr wallet   (CLI)   or   GET https://api.bankr.bot/wallet/me  -> address
+BANKR_EOA=<bankr wallet address>
+
+# encode the enableModule(address) self-call (any encoder; signature is real)
+DATA=$(cast calldata "enableModule(address)" "$BANKR_EOA")    # foundry; or viem encodeFunctionData
+
+# create the self-call proposal ON the subaccount (account == call target)
+splits transactions create custom \
+  --account <SUBACCOUNT> --chainId 8453 \
+  --calls "[{\"to\":\"<SUBACCOUNT>\",\"data\":\"$DATA\",\"value\":\"0\"}]" \
+  --memo "Enable Bankr executor module"
+```
+
+This returns a proposal — give the human its `signUrl` (the web approval link, same step as adding a signer), then poll:
+
+```bash
+splits transactions get <TRANSACTION_ID>   # CREATED -> EXECUTED
+```
+
+Once executed, the Bankr wallet is an enabled module on the subaccount.
+
+### Execute (Bankr wallet, directly)
+
+The Bankr wallet now runs transactions from the subaccount by calling `executeFromModule` on it. The `Call` is `{ target, value, data }` — the inner call you want the subaccount to make:
+
+```bash
+# encode executeFromModule((address,uint256,bytes)) with the inner call
+CALL=$(cast calldata "executeFromModule((address,uint256,bytes))" "(<TARGET>,<VALUE_WEI>,<INNER_CALLDATA>)")
+
+# Bankr submits it as a normal tx to the subaccount (Bankr pays gas — keep a little ETH on Base)
+#   bankr wallet submit ...   or   POST https://api.bankr.bot/wallet/submit
+#   { transaction: { to: <SUBACCOUNT>, chainId: 8453, value: "0", data: <CALL> } }
+```
+
+The inner call runs with `msg.sender` = the subaccount. A batch form exists too: `executeFromModule((address,uint256,bytes)[])`.
+
+### Revoke
+
+Disable the module the same way you enabled it — a `disableModule(address)` self-call:
+
+```bash
+DATA=$(cast calldata "disableModule(address)" "$BANKR_EOA")
+splits transactions create custom --account <SUBACCOUNT> --chainId 8453 \
+  --calls "[{\"to\":\"<SUBACCOUNT>\",\"data\":\"$DATA\",\"value\":\"0\"}]" --memo "Disable Bankr module"
+```
+
+### Signer vs module — which to use
+
+- **Signer** — every action is a Splits proposal; supports human-in-the-loop via threshold. Default for treasury and anything needing per-action approval.
+- **Module** — direct, unilateral execution from a bounded subaccount; best for autonomous/high-frequency ops and `msg.sender`-gated claims. Full access — keep funds bounded and never enable on the Treasury.
 
 ## Troubleshooting
 

@@ -84,6 +84,18 @@ Notes:
 - You can also change the threshold or remove signers here (`--threshold`, `--removeEoaIds`, `--addPasskeyIds`, `--removePasskeyIds`). Recovery / resetting signers stays web-only.
 - Signer updates apply across every active network on the org automatically.
 
+## Direct execution via modules
+
+Being a signer is one of two ways an agent can act. The other is the **module system**: an account can `enableModule(<eoa>)` to grant an EOA the ability to call `executeFromModule` and run calls **directly from the account** — `msg.sender` on the inner call is the account, with no proposal, signature, or threshold step per action. `enableModule`/`disableModule` are gated by the account's own authorization, so enabling is a self-call approved by the account's signers (a human, once); execution afterward is not.
+
+| | Signer | Module |
+|---|---|---|
+| Execution | propose → sign → threshold (userOp) | direct `executeFromModule` |
+| Per-action human gate | yes, if threshold ≥ 2 | **none** — full access |
+| Enable / revoke | `update-signers` / remove signer | `enableModule` / `disableModule` self-call |
+
+A module has **full, unilateral access** to the account, so use a **dedicated, bounded subaccount — never the Treasury**. It fits autonomous/high-frequency operations and `msg.sender`-gated calls (LP-fee or fee-locker claims). For the runnable Bankr flow — enable the Bankr wallet as a module, then execute via Bankr's raw-transaction `submit` — see `bankr-agent-signer.md`. Contract reference: [`ModuleManager.sol`](https://github.com/0xSplits/splits-contracts-monorepo/blob/main/packages/smart-vaults/src/utils/ModuleManager.sol).
+
 ## Passkeys vs EOAs
 
 |                     | Human                                                      | Agent                          |
