@@ -153,6 +153,27 @@ Flags, env vars, `--json` output, and the `check` / `list` subcommands are all i
 
 ---
 
+## Gate your CI on grades
+
+Turn the grade into a build check: the **polygraph CI gate** fails a build when an MCP server or an
+Agent Skill grades D/F. Add the GitHub Action to a repo —
+
+```yaml
+- uses: polygraphso/litmus@v1
+  with:
+    servers: |
+      npm/@modelcontextprotocol/server-filesystem
+    skills: |
+      ./my-skill
+```
+
+— or run it anywhere with `npx @polygraphso/litmus ci`. It auto-discovers MCP servers
+(`.mcp.json` / `.vscode` / `.cursor`) and skills (`SKILL.md` dirs), grades each, and fails on D/F;
+un-gradeable targets warn unless `strict`. Full setup, inputs, and the run-anywhere command:
+[`references/ci-gate.md`](references/ci-gate.md).
+
+---
+
 ## Why a server got grade X
 
 Every run prints the methodology, the per-category verdict, the tool-surface fingerprint, and
@@ -194,4 +215,4 @@ and finding kind to its cause.
 - **Lookup CLI:** `npx polygraphso check <registry>/<owner>/<name>` · https://www.npmjs.com/package/polygraphso
 - **Grading harness:** `@polygraphso/litmus` (open source — see polygraph.so for the repo)
 - **Onchain proof:** EAS attestations on Base
-- **References:** [`methodology.md`](references/methodology.md) · [`cli.md`](references/cli.md) · [`bankr-integration.md`](references/bankr-integration.md)
+- **References:** [`methodology.md`](references/methodology.md) · [`cli.md`](references/cli.md) · [`bankr-integration.md`](references/bankr-integration.md) · [`ci-gate.md`](references/ci-gate.md)
