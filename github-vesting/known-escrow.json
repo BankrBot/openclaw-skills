@@ -1,0 +1,19 @@
+{
+  "escrowAddress": "0x76dd4C6ea986684CDf822eC0832e142A2D5C8165",
+  "chain": "base",
+  "chainId": 8453,
+  "anyErc20OnBase": true,
+  "tokenPolicy": "NO ALLOWLIST. Any ERC-20 on Base can be locked via GitHub vesting. The supportedTokens map below is ONLY for streaming-lock detection (Space → lockAllowance). Never tell users a token is unsupported without calling POST /api/agent/lock.",
+  "supportedTokens": {
+    "Space": {
+      "symbol": "Space",
+      "address": "0xef703b860a6d422fa00cc67bbbb2662297cb6ba3",
+      "streaming": true
+    }
+  },
+  "setupPath": "/create",
+  "explorePath": "/",
+  "lockPathTemplate": "/lock/{owner}/{repoName}",
+  "devProfilePathTemplate": "/dev/{username}",
+  "legacyStatusPathTemplate": "/vesting/status?repo={ownerSlashRepo}"
+}
