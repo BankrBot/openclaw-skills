@@ -1,6 +1,6 @@
 ---
 name: polygraph
-description: Behavioral trust grades (A–F) for MCP servers. Use when an agent needs to check whether an MCP server is safe before using it, verify an onchain attestation before trusting or paying a server, look up a server's published grade, get a project graded, or understand why a server received a grade. Polygraph connects to an MCP server the way an agent would, fingerprints its exact tool surface, and runs behavioral probes — prompt-injection (C-01), permission/egress overreach (C-02), and sensitive-data leak (C-03) — then publishes a reproducible grade as an onchain EAS attestation on Base. Triggers on mentions of MCP server safety, is this MCP server safe, tool poisoning, prompt injection, data leak, permission overreach, unexpected egress, trust grade, attestation, verify before paying, polygraph, litmus, grade my MCP server.
+description: Behavioral trust grades (A–F) for MCP servers. Use when an agent needs to check whether an MCP server is safe before using it, verify an onchain attestation before trusting or paying a server, look up a server's published grade, get a project graded, or understand why a server received a grade. Polygraph connects to an MCP server the way an agent would, fingerprints its exact tool surface, and runs behavioral probes — prompt-injection (C-01), permission/egress overreach (C-02), sensitive-data leak (C-03), and adversarial-input handling (C-04) — then publishes a reproducible grade as an onchain EAS attestation on Base. Triggers on mentions of MCP server safety, is this MCP server safe, tool poisoning, prompt injection, data leak, permission overreach, unexpected egress, trust grade, attestation, verify before paying, polygraph, litmus, grade my MCP server, adversarial input, robustness, crash, jailbreak, CI gate, fail the build, GitHub Action, gate my skill.
 emoji: 🧪
 tags: [security, mcp, trust, grade, attestation, base, prompt-injection, agent-safety]
 visibility: public
@@ -26,7 +26,7 @@ anyone can re-run it and disprove a bad grade. That falsifiability is the whole 
 
 Polygraph connects to a server the way an agent would — **stdio** for local packages,
 **Streamable HTTP** for remote URLs — fingerprints its exact tool surface
-(`tools/list` → canonical JSON → sha256 → `bytes32`), then runs three probe categories:
+(`tools/list` → canonical JSON → sha256 → `bytes32`), then runs four probe categories:
 
 - **C-01 — Tool-output injection.** Does the server try to hijack the agent? Static scan of
   tool names/descriptions/schemas for injection-shaped content (invisible unicode,
@@ -38,14 +38,21 @@ Polygraph connects to a server the way an agent would — **stdio** for local pa
 - **C-03 — Sensitive-data handling.** Does the server leak secrets? Plants canary values in
   the environment and working directory, exercises the tools, and scans both tool outputs and
   egress for any canary that surfaces.
+- **C-04 — Adversarial-input handling.** Does the server stay robust under hostile input? Runs
+  two probes on non-state-changing tools, with no Docker required: stress-tests each tool with
+  malformed and oversized inputs (fails if the server crashes, hangs, or leaks an uncaught
+  stack trace — a clean validation error or benign result passes); and feeds jailbreak-pattern
+  strings and scans the server's **outputs** with the C-01 injection scanners, failing only if
+  the server emits injection-shaped content it did not merely reflect from the input (a verbatim
+  echo is excluded). A C-04 failure caps the overall grade at D.
 
 ### Grade scale
 
 | Grade | Meaning |
 |-------|---------|
-| **A** | Passed all three categories. No injection, no unexpected egress, no data leak. |
+| **A** | Passed all four categories. No injection, no unexpected egress, no data leak, no adversarial-input failure. |
 | **B** | Injection and data-leak checks passed; **egress was not verified.** The ceiling for any run without a local Docker sandbox — including every remote (HTTP) server, which can't be sandboxed. |
-| **D** | Unexpected egress / permission overreach, but no injection or leak. Serious, but not proven exfiltration → capped at D. |
+| **D** | Unexpected egress / permission overreach (C-02) **or** an adversarial-input robustness failure (C-04: crash, internals-leak, or amplification). No injection or leak → capped at D. |
 | **F** | Disqualifying: active tool-output injection (C-01) or a sensitive-data leak (C-03) — a server that would harm an agent that trusts it. |
 
 **Reading a B.** Under the current methodology, egress can only be observed by running the
@@ -67,7 +74,7 @@ anything:**
 
 ```bash
 $ npx polygraphso check npm/@modelcontextprotocol/server-filesystem
-→ polygraph: A · litmus-v2 · 2026-06-11
+→ polygraph: A · litmus-v9 · 2026-06-24
 → details → polygraph.so/#checks
 ```
 
@@ -182,10 +189,10 @@ the grade with a one-paragraph rationale:
 ```
 → litmus · npm/@modelcontextprotocol/server-filesystem
 → version 0.1.0
-→ C-01 pass · C-02 pass · C-03 pass
+→ C-01 pass · C-02 pass · C-03 pass · C-04 pass
 → fingerprint 0x1a2b3c4d…5e6f7890
 → grade: A
-   All three categories passed. No injection, no unexpected egress, no data leak.
+   All four categories passed. No injection, no unexpected egress, no data leak.
 ```
 
 On a failure the report surfaces the top HIGH-severity findings (tool name, finding kind, the

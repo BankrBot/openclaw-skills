@@ -1,7 +1,7 @@
 # Polygraph Methodology — how a server gets its grade
 
 Polygraph runs the **litmus** harness: connect to an MCP server the way an agent would,
-fingerprint its exact tool surface, run three behavioral probe categories, and assign an
+fingerprint its exact tool surface, run four behavioral probe categories, and assign an
 **A–F** grade with a deterministic, content-addressed evidence bundle. The harness is open
 source and the run is reproducible — that is what makes a grade trustworthy.
 
@@ -15,7 +15,7 @@ source and the run is reproducible — that is what makes a grade trustworthy.
   its tools, the fingerprint no longer matches and any verifier should refuse (see
   [`bankr-integration.md`](bankr-integration.md)).
 
-## The three probe categories
+## The four probe categories
 
 ### C-01 — Tool-output injection
 Does the server try to hijack the agent that calls it?
@@ -47,18 +47,33 @@ Does the server leak secrets it was exposed to?
   `partial` without a sandbox; never silently dropped.
 - **Fail:** any canary surfacing in either probe.
 
+### C-04 — Adversarial-input handling
+Does the server stay robust under hostile input? Both probes run only on non-state-changing
+tools and require no Docker sandbox.
+- **Malformed/oversized (3.1):** stress each tool with malformed and oversized inputs. **Fail**
+  if the server crashes, hangs, or leaks an uncaught stack trace; a clean validation error or a
+  benign result passes.
+- **Jailbreak amplification (3.2):** feed jailbreak-pattern strings and scan the server's
+  **outputs** with the C-01 injection scanners. **Fail only** if the server emits
+  injection-shaped content it did not merely reflect from the input — a verbatim echo is
+  excluded, so an honest echo/summarize tool is not penalized.
+- **Fail:** any finding in 3.1 or any amplification finding in 3.2.
+- A C-04 failure **caps the overall grade at D** (a robustness failure, not proven injection or
+  exfiltration).
+
 ### Finding kinds
 `invisible-unicode`, `instruction-mimicry`, `markdown-trick` (C-01) · `permission-mislabel`,
-`egress` (C-02) · `canary` (C-03). Each finding carries a severity and a snippet.
+`egress` (C-02) · `canary` (C-03) · `crash`, `internals-leak`, `amplification` (C-04).
+Each finding carries a severity and a snippet.
 
 ## Grade decision logic
 
 | Grade | Condition |
 |-------|-----------|
-| **A** | C-01 pass · C-02 pass · C-03 pass. |
+| **A** | C-01 pass · C-02 pass · C-03 pass · C-04 pass. |
 | **B** | C-01 pass · C-02 **skipped** (no sandbox / remote target) · C-03 pass. Injection passed; egress unverified. |
 | **C** | Reserved — not assigned by the current logic. |
-| **D** | C-02 **fail** (unexpected egress / overreach) while C-01 and C-03 pass. Egress is serious but not proven exfiltration, so the grade caps at D. |
+| **D** | C-02 **fail** (unexpected egress / overreach) **or** C-04 **fail** (crash / internals-leak / amplification) while C-01 and C-03 pass. A robustness or overreach failure is serious but not proven injection or exfiltration, so the grade caps at D. |
 | **F** | C-01 **fail** (injection) **or** C-03 **fail** (data leak). Active injection or a leak harms an agent that trusts the server. |
 
 A grade is always paired with a rationale string explaining *why* — the harness never emits a
@@ -83,7 +98,7 @@ fingerprint.
 The harness **grades and hands off**; it does not mint. Publishing a grade means recording it
 as an **EAS (Ethereum Attestation Service) attestation on Base**, which binds:
 
-`serverRef` · `toolDefsFingerprint` · overall grade · per-category verdicts (C-01/C-02/C-03) ·
+`serverRef` · `toolDefsFingerprint` · overall grade · per-category verdicts (C-01/C-02/C-03/C-04) ·
 evidence CID (the bundle, pinned to IPFS) · methodology version · run timestamp · resolved
 version.
 

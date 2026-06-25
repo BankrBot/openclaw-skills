@@ -31,7 +31,7 @@ evidence, so the live set at `polygraphso list` / polygraph.so is the source of 
 
 ```
 $ polygraphso check npm/@modelcontextprotocol/server-filesystem
-→ polygraph: A · litmus-v2 · 2026-06-11
+→ polygraph: A · litmus-v9 · 2026-06-24
 → details → polygraph.so/#checks
 
 $ polygraphso list                              # every graded server + its grade
@@ -63,11 +63,14 @@ npx -y -p @polygraphso/litmus polygraphso-litmus litmus <ref>
 ### Commands
 
 ```bash
-polygraphso-litmus litmus <ref | https-url | local-path>   # grade a server end-to-end
-polygraphso-litmus check  <ref>                            # look up a published grade
-polygraphso-litmus list                                    # list published grades
+polygraphso-litmus litmus <ref | https-url | local-path>                              # grade a server end-to-end
+polygraphso-litmus check  <ref>                                                       # look up a published grade
+polygraphso-litmus list                                                               # list published grades
+polygraphso-litmus ci [--server <ref>] [--skill <dir>] [--min-grade <A|B|C|D>] [--strict]   # gate a build on D/F (servers + skills)
 polygraphso-litmus --version | --help
 ```
+
+The `ci` command gates a build on the grades of a repo's MCP servers and skills — see [`ci-gate.md`](ci-gate.md).
 
 Reproducibility is the teeth: re-run `litmus` against a server that already carries a grade
 and, if your result disagrees, that's a falsification anchored to the same tool-surface
@@ -105,10 +108,10 @@ fingerprint.
 ```
 → litmus · npm/@modelcontextprotocol/server-filesystem
 → version 0.1.0
-→ C-01 pass · C-02 pass · C-03 pass
+→ C-01 pass · C-02 pass · C-03 pass · C-04 pass
 → fingerprint 0x1a2b3c4d…5e6f7890
 → grade: A
-   All three categories passed. No injection, no unexpected egress, no data leak.
+   All four categories passed. No injection, no unexpected egress, no data leak.
 ```
 
 On failure the summary lists the top HIGH-severity findings (tool name, finding kind,
