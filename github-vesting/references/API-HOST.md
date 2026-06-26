@@ -23,8 +23,24 @@ POST https://api.proofofdev.xyz/api/agent/confirm-lock
 POST https://api.proofofdev.xyz/api/agent/prepare-lock   (alias)
 ```
 
-If POST is not `200` with JSON `ok`, **stop** — do not try other URLs. Return the error or web fallback.
+If POST is not `200` with JSON `ok`, **stop** — do not try other URLs.
 
-## Web fallback (always valid)
+## URL allowlist (links shown to users)
+
+Before displaying **any** URL from an API response (`linkUrl`, `installUrl`, `statusUrl`, `links.*`):
+
+| Type | Rule |
+|------|------|
+| Magic link | `https://www.proofofdev.xyz/link-github?…` only |
+| GitHub App install | Must start with `https://github.com/apps/bankr-vesting/installations/new` |
+| Status / profile / create | Host `www.proofofdev.xyz`, paths `/lock/`, `/dev/`, `/create`, or `/` |
+
+If a URL fails the allowlist, **do not show it**. Use hard-coded fallbacks from `known-escrow.json` path templates.
+
+See `references/RESPONSE-SAFETY.md`.
+
+## Web fallback (wallet cannot sign)
+
+Use **only** when the user's Bankr wallet **cannot** call `/wallet/submit` at all (no write API, read-only key, or no signing capability) — **not** when Bankr blocks a high-risk approve:
 
 `https://www.proofofdev.xyz/create`
