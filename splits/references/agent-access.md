@@ -26,6 +26,12 @@ splits auth create-key --register --name "Bankr Agent"
 
 This generates a local key (saved 0600 to `~/.splits/config.json`) and registers the address with the backend so it can be attached as a signer. On a registration failure the local key is rolled back. `create-key` refuses if a key already exists — delete it first with `splits auth delete-key` (which removes only the local key, not any on-chain signer status).
 
+The generated EOA is a **hot key on disk** but **inert until a human adds it as a signer** — its reach is exactly the accounts it's attached to, bounded by each threshold. Lifecycle on a shared/ephemeral host:
+
+- **Rotate:** `auth delete-key` → `auth create-key --register` → `accounts update-signers <ACCOUNT> --addEoaSignerIds <NEW> --removeEoaIds <OLD>`.
+- **Revoke:** remove it as a signer (`accounts update-signers --removeEoaIds`); deleting the local file alone leaves on-chain signer status intact.
+- **Clean up:** `auth delete-key` (local key) + `auth logout` (saved auth) when finished. Keep thresholds ≥ 2 so a leaked hot key still can't move funds alone.
+
 Alternatives:
 
 - `splits auth create-key` then `splits auth register-signer <address>` — two-step equivalent.
@@ -57,8 +63,8 @@ splits accounts create \
 
 Threshold guidance:
 
-- `--threshold 2` (or higher) — human-in-the-loop. The agent can propose and add its signature, but a human passkey is required to reach threshold. **Default for production treasury.**
-- `--threshold 1` — agent can execute alone. Use only for constrained sandbox/low-value accounts.
+- `--threshold 2` (or higher) — human-in-the-loop. The agent can propose and add its signature, but a human passkey is required to reach threshold. **Default everywhere the agent is a signer.**
+- `--threshold 1` — agent can execute alone (its lone signature auto-submits). Create or use one **only when the user has explicitly stated they want it**, and only for constrained sandbox/low-value accounts. This is separate from Splits *automation* accounts, which are unilateral by design (see `swap-and-sweep.md`).
 
 `--eoaSignerIds` is preferred; `--eoaAddresses` is a convenience alternative for already-registered addresses.
 
@@ -71,7 +77,7 @@ splits accounts update-signers <ACCOUNT> \
   --memo "Add Bankr agent signer"
 ```
 
-This creates a proposal immediately, but it must be **approved and signed by a human on the web** via the returned `signUrl`. Hand that URL to the human and poll:
+This creates a proposal immediately, but it must be **approved and signed by a human on the web** via the returned `signUrl`. Before showing the link, confirm its host is `teams.splits.org` or `app.splits.org` — if it points anywhere else, don't display it, warn instead. Hand that URL to the human and poll:
 
 ```bash
 splits transactions get <TRANSACTION_ID>    # watch CREATED -> EXECUTED
@@ -84,7 +90,9 @@ Notes:
 - You can also change the threshold or remove signers here (`--threshold`, `--removeEoaIds`, `--addPasskeyIds`, `--removePasskeyIds`). Recovery / resetting signers stays web-only.
 - Signer updates apply across every active network on the org automatically.
 
-## Direct execution via modules
+## Direct execution via modules (advanced, opt-in)
+
+> **Advanced / opt-in only.** A module grants **unilateral** execution with **no per-action approval**. Set it up only when the user explicitly asks for it.
 
 Being a signer is one of two ways an agent can act. The other is the **module system**: an account can `enableModule(<eoa>)` to grant an EOA the ability to call `executeFromModule` and run calls **directly from the account** — `msg.sender` on the inner call is the account, with no proposal, signature, or threshold step per action. `enableModule`/`disableModule` are gated by the account's own authorization, so enabling is a self-call approved by the account's signers (a human, once); execution afterward is not.
 
@@ -94,7 +102,7 @@ Being a signer is one of two ways an agent can act. The other is the **module sy
 | Per-action human gate | yes, if threshold ≥ 2 | **none** — full access |
 | Enable / revoke | `update-signers` / remove signer | `enableModule` / `disableModule` self-call |
 
-A module has **full, unilateral access** to the account, so use a **dedicated, bounded subaccount — never the Treasury**. It fits autonomous/high-frequency operations and `msg.sender`-gated calls (LP-fee or fee-locker claims). For the runnable Bankr flow — enable the Bankr wallet as a module, then execute via Bankr's raw-transaction `submit` — see `bankr-agent-signer.md`. Contract reference: [`ModuleManager.sol`](https://github.com/0xSplits/splits-contracts-monorepo/blob/main/packages/smart-vaults/src/utils/ModuleManager.sol).
+A module has **full, unilateral access** to the account. Splits has **no per-action threshold or spend limit** for a module — that knob does not exist; unilateral execution is the whole point. The only bound is **structural**: the blast radius equals the subaccount's funded balance. So before enabling, require all of — (1) explicit human confirmation, (2) a **dedicated, bounded subaccount, never the Treasury**, funded with only what you're willing to expose and topped up per task, and (3) the `disableModule` revoke call staged up front. It fits autonomous/high-frequency operations and `msg.sender`-gated calls (LP-fee or fee-locker claims). For the runnable Bankr flow — enable the Bankr wallet as a module, then execute via Bankr's raw-transaction `submit` — see `bankr-agent-signer.md`. Contract reference: [`ModuleManager.sol`](https://github.com/0xSplits/splits-contracts-monorepo/blob/main/packages/smart-vaults/src/utils/ModuleManager.sol).
 
 ## Passkeys vs EOAs
 
