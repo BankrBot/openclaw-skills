@@ -50,7 +50,7 @@ If step 4 fails with `untrusted_address` → **stop** (`references/BANKR-SUBMIT.
 1. POST /api/repo-claims/challenge  { "repo": "owner/repo" }  + x-wallet-address
 2. POST https://api.bankr.bot/wallet/sign  { "signatureType": "personal_sign", "message": "<signMessage>" }
 3. POST /api/repo-claims/prepare-file  { "claimId", "signature" }
-4. Validate filePath === ".proofofdev/claim.json" and fileContent JSON schema (v1)
+4. Validate filePath === ".proofofdev/claim.json" and fileContent against references/CLAIM-SCHEMA.json
 5. Show parsed JSON → get explicit user confirmation
 6. Commit + push ONLY that file at that path
 7. GET /api/repo-claims/status?repo=owner/repo&poll=1

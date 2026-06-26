@@ -216,4 +216,4 @@ When user says **Space**, **$SPACE**, or `0xef703b860a6d422fa00cc67bbbb2662297cb
 | `references/ONE-LINE-INTENTS.md` | Tweet → API mapping |
 | `references/AGENT-API.md` | Endpoint reference |
 | `streaming-hints.json` | Streaming lock hints only — **not an allowlist** |
-| `known-escrow.json` | Pinned escrow, oracle, selectors, URL rules |
+| `references/CLAIM-SCHEMA.json` | Repo claim JSON schema (`.proofofdev/claim.json` only) |

@@ -292,7 +292,7 @@ Returns `fileContent`, `filePath`, `commitMessage`.
 Before any git commit/push:
 
 1. **`filePath`** must be exactly `.proofofdev/claim.json` — reject any other path.
-2. **Parse `fileContent` as JSON** and validate schema:
+2. **Parse `fileContent` as JSON** and validate against `references/CLAIM-SCHEMA.json` (v1):
 
 ```json
 {
