@@ -243,7 +243,7 @@ Omit `threadId` to start a new conversation. CLI equivalent: `bankr agent prompt
 | `/addresses/resolve?value=<recipient>&type=<address\|ens\|twitter\|farcaster>` | GET | Resolve a recipient (0x address, ENS-style name `.eth`/`.base.eth`/`.cb.id`, or social handle) to a 0x address. Used by `bankr wallet transfer --to` to support ENS input. |
 | `/users/search?...` | GET | Search Bankr users by Twitter or Farcaster username. |
 
-The legacy aliases `/public/resolve-recipient` and `/public/search-users` still respond but are deprecated (they return `Deprecation`/`Sunset` headers) and slated for removal — migrate callers to the structured `/addresses/*` and `/users/*` namespaces.
+The legacy aliases `/public/resolve-recipient` and `/public/search-users` have been **removed** — use the structured `/addresses/resolve` and `/users/search` endpoints instead.
 
 #### Agent API (`/agent/*`) — AI-powered endpoints (async)
 
@@ -524,7 +524,10 @@ The AI agent can top up your LLM credits directly in conversation — no CLI or 
 ```bash
 bankr agent prompt "Top up my LLM credits with $25"
 bankr agent prompt "Add $10 of LLM credits using my ETH"
+bankr agent prompt "How many LLM credits do I have left?"
 ```
+
+The agent can also report your current LLM credit balance in conversation — including any expiring grants and when they lapse — without needing the `bankr llm credits` command.
 
 1 credit = $1 USD. Multi-chain: pay with USDC or USDT directly on Base, Polygon, Ethereum, Arbitrum, or BNB Chain, or with any other ERC-20 (auto-swapped to the chain's preferred stablecoin — USDC on most chains, USDT on BNB). When using `--token`, the CLI picks the chain with the highest USD balance of that token. Maximum $1,000 per top-up.
 
@@ -663,6 +666,10 @@ The agent has a built-in headless browser for web interactions:
 
 **Reference**: [references/x402-cloud.md](references/x402-cloud.md)
 
+### Ask About Bankr
+
+The agent can answer questions about Bankr itself — how features work, official domains and links, the official Telegram bot, and support channels — grounded in Bankr's own documentation. When it doesn't have a confident answer it abstains rather than guessing, so you won't get fabricated links or facts. Useful for onboarding questions and for verifying that a link or channel is genuinely official.
+
 ### Arbitrary Transactions
 
 - Submit raw EVM transactions with explicit calldata
@@ -702,6 +709,10 @@ User-controlled settings that apply to every surface — chat, agent, API, CLI. 
 | Disable arbitrary contract calls | Off | Blocks `write_contract`, raw `/wallet/submit`, and arbitrary transaction tools (named operations like swaps still work) |
 
 If USD pricing is unavailable and a limit is enabled, the transaction is **rejected** (fail-closed) rather than waved through. Your own wallet addresses are always implicitly allowed as recipients.
+
+### Protected-Token Swap Guard
+
+Bankr blocks **swaps** of a small set of protected tokens where swapping is almost always a costly mistake — for example staked positions that should be unwound through their own redeem flow. The block is swap-only: the token stays visible in your portfolio, transferable, and usable with the relevant staking/redeem tools. When a swap is blocked, the agent returns a clear reason pointing you to the correct exit path. This guard applies across the swap/limit/stop/DCA/TWAP tools on the EVM swap paths.
 
 ### API-Key Level Controls (bankr.bot/api-keys)
 
@@ -986,6 +997,7 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 
 - "Top up my LLM credits with $25"
 - "Add $50 of LLM credits"
+- "How many LLM credits do I have left?"
 - "Top up LLM credits using my ETH"
 - "Top up my LLM credits with $25 using USDT on Polygon"
 - "Add $10 of LLM credits paid in USDT on BNB"
