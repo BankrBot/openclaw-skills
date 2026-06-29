@@ -69,12 +69,14 @@ probe in depth.
 
 ## Check a grade
 
-A sub-second lookup against published grades — **one command before your agent installs
-anything:**
+A sub-second lookup against published grades. This runs the `polygraphso` **lookup** CLI: it
+reads a published grade and does **not** install or execute the target server. `npx` does fetch
+and run our CLI, though — so it's a lookup, not a "no-install" check; pin the version in any
+automated or trust context (e.g. before Bankr installs a server):
 
 ```bash
-$ npx polygraphso check npm/@modelcontextprotocol/server-filesystem
-→ polygraph: A · litmus-v9 · 2026-06-24
+$ npx polygraphso@<version> check npm/@modelcontextprotocol/server-filesystem
+→ polygraph: A · litmus-v10 · 2026-06-26
 → details → polygraph.so/#checks
 ```
 
@@ -96,11 +98,20 @@ The highest-value use at runtime: **gate an MCP server through its grade before 
 uses it, pays it, or routes a transaction through it.** Polygraph is the *verify* step; Bankr
 is the *execute* step. Two checks, both required:
 
-1. **Grade meets your bar.** Default: accept A/B, refuse D/F. (A remote server's ceiling is B —
-   see "Reading a B" above, and don't penalize it for that.)
+1. **Grade meets your bar.** Default (`DEFAULT_PASSING`): accept A/B, refuse D/F. **For a signed
+   action or a payment, raise the bar to a local A** (`PAYMENT_PASSING`, or `gateDecision(…, {
+   requireEgressVerified: true })`): a remote server caps at B because its egress was never
+   observed — so a B is exactly the case where network exfiltration wasn't tested. Don't auto-route
+   a Bankr transaction through a remote B; require a local A or a manual review.
 2. **Fingerprint still matches.** An attestation is only valid for the exact tool surface it
    graded. Recompute the server's **live** tool-surface fingerprint and require it to equal the
    attested one before acting — a built-in rug-pull check against a graded-then-swapped server.
+3. **Attestation is trustworthy enough for the action.** `readAttestation` binds to our EAS schema
+   (fail-closed) and a fixed Base RPC, and `gateDecision` checks revocation, expiry, and the
+   server-ref binding. A self-minted grade is still **forgeable**, so before Bankr routes value also
+   require an **attester allowlist** (`gateDecision(…, { allowedAttesters })`) and an accepted
+   **methodology version** — or, strongest, **re-run the open harness** (`run_litmus`) and compare.
+   Reproducibility, not the signature, is what makes a grade trustworthy.
 
 Drop the `verify_attestation` MCP tool in front of execution, or use the `gateDecision` helper.
 
@@ -152,6 +163,9 @@ polygraphso-litmus litmus ./path/to/local-mcp-server --json
 - **Node ≥ 18.** **Docker is optional** but recommended — without it the egress probe (C-02)
   is skipped and the grade is **capped at B** (as is any remote/HTTP target, which can't be
   sandboxed).
+- **`--bearer` is sent as an `Authorization` header to the target.** Pass it only to a remote you
+  explicitly trust and have pinned; use a scoped, short-lived token — never on an auto-discovered
+  or untrusted target.
 - **Exit codes are CI-friendly:** non-zero on a failing grade (D/F), zero on A/B — drop it into
   a pipeline to gate dependencies.
 
@@ -163,21 +177,27 @@ Flags, env vars, `--json` output, and the `check` / `list` subcommands are all i
 ## Gate your CI on grades
 
 Turn the grade into a build check: the **polygraph CI gate** fails a build when an MCP server or an
-Agent Skill grades D/F. Add the GitHub Action to a repo —
+Agent Skill grades D/F. Add the GitHub Action to a repo — pin it to a commit SHA (not the mutable
+`@v1` tag) and trigger on `pull_request`, never `pull_request_target`:
 
 ```yaml
-- uses: polygraphso/litmus@v1
+on: [pull_request]                          # not pull_request_target
+# …
+- uses: polygraphso/litmus@<commit-sha>     # pin a SHA for a security gate
   with:
-    servers: |
+    servers: |                              # name targets explicitly (recommended)
       npm/@modelcontextprotocol/server-filesystem
     skills: |
       ./my-skill
 ```
 
-— or run it anywhere with `npx @polygraphso/litmus ci`. It auto-discovers MCP servers
-(`.mcp.json` / `.vscode` / `.cursor`) and skills (`SKILL.md` dirs), grades each, and fails on D/F;
-un-gradeable targets warn unless `strict`. Full setup, inputs, and the run-anywhere command:
-[`references/ci-gate.md`](references/ci-gate.md).
+— or run it anywhere with `npx @polygraphso/litmus@<version> ci` (pin the version). **Grading a
+server runs its code** (egress is Docker-sandboxed, but it still executes), so on a public repo
+keep auto-discovery **off** (the default) and name targets explicitly rather than grading
+PR-controlled `.mcp.json` / `.vscode` / `.cursor` config. Un-gradeable targets warn unless `strict`.
+A **skill** grade is a **static** scan, not behavioral proof — treat a skill that runs install-time
+code or carries transaction instructions as needing manual review regardless of its letter. Full
+setup, inputs, and the security notes: [`references/ci-gate.md`](references/ci-gate.md).
 
 ---
 

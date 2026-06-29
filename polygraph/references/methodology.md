@@ -112,7 +112,11 @@ verifiable onchain by any agent.
 - **Reproducibility is the anchor.** Open + deterministic harness ⇒ a false grade is
   falsifiable by re-running it.
 - **A published grade is forgeable by its signer.** Trust comes from reproducibility and the
-  fingerprint recheck, not from the signature alone.
+  fingerprint recheck, not from the signature alone. The read path binds to our EAS schema and a
+  fixed Base RPC (fail-closed), and `gateDecision` checks revocation, expiry, and the server-ref +
+  fingerprint binding. **Before routing value**, also require an attester allowlist and an accepted
+  methodology version (`gateDecision` options), demand a grade whose **egress was actually verified**
+  (a local A, not a remote/no-sandbox B), or — strongest — re-run the harness yourself and compare.
 - **Evasion is the residual limit:** a server that detects the test context could pass grading
   and misbehave in production.
 - Independent/unforgeable upgrades (staked bonds, zkTLS, TEE-backed runs, independent

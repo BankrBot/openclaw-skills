@@ -17,14 +17,18 @@ registries. The harness also accepts a raw `https://…/mcp` URL or a local path
 ## `polygraphso` — look up a grade
 
 ```bash
-npx polygraphso check npm/@modelcontextprotocol/server-filesystem   # sub-second lookup
-npm i -g polygraphso                                                # or install globally
+npx polygraphso@<version> check npm/@modelcontextprotocol/server-filesystem   # sub-second lookup
+npm i -g polygraphso                                                          # or install globally
 
 polygraphso check <registry>/<owner>/<name>     # latest published grade
 polygraphso list [--json]                       # every graded server + its grade
 polygraphso --version
 polygraphso --help
 ```
+
+`check` runs the `polygraphso` **lookup** CLI — it reads a published grade and does **not** install
+or execute the target server. `npx` still fetches and runs our CLI, so this is a lookup, not a
+"no-install" trust check; **pin the version** (`polygraphso@<version>`) in any automated context.
 
 Grades are live. Example output (the list rows are **illustrative** — a grade is point-in-time
 evidence, so the live set at `polygraphso list` / polygraph.so is the source of truth):
@@ -48,7 +52,11 @@ A tracked-but-ungraded server reports `not available yet` with a
 `polygraph.so/notify?for=<ref>` link; its grade lands as the litmus harness covers more of the
 ecosystem.
 
-Config: `POLYGRAPH_API_URL` overrides the lookup endpoint (useful for local testing).
+Config: `POLYGRAPH_API_URL` overrides the lookup endpoint (useful for local testing). HTTPS is
+enforced (plain `http` only for `localhost`), so it isn't a MITM vector — but the residual risk is
+endpoint **trust**: for any execution or payment decision, point it only at the official
+`polygraph.so` endpoint or a mirror you control. An attacker-supplied endpoint can return fabricated
+grades; never accept one from untrusted config.
 
 ---
 
@@ -81,7 +89,7 @@ fingerprint.
 | Flag | Effect |
 |------|--------|
 | `--json` | Emit the full canonical `EvidenceBundle` instead of the human summary. |
-| `--bearer <token>` | Bearer auth for an HTTP target (or set `LITMUS_BEARER`). |
+| `--bearer <token>` | Bearer auth for an HTTP target (or set `LITMUS_BEARER`). Sent as `Authorization: Bearer` to the target — trusted, pinned remote only; scoped and short-lived; never on an auto-discovered or untrusted target. |
 | `--header "Key: Value"` | Add a custom request header (repeatable). |
 | `--allow-state-changing` | Permit calls to state-mutating tools during dynamic probes. |
 
@@ -89,8 +97,8 @@ fingerprint.
 
 | Var | Effect |
 |-----|--------|
-| `POLYGRAPH_API_URL` | Set to `https://polygraph.so` to pin the evidence bundle and get a publish/mint hand-off URL. Unset = fully offline run. |
-| `LITMUS_BEARER` | Bearer token for HTTP auth. |
+| `POLYGRAPH_API_URL` | Set to `https://polygraph.so` to pin the evidence bundle and get a publish/mint hand-off URL. Unset = fully offline run. HTTPS enforced; point only at an endpoint you trust for execution decisions. |
+| `LITMUS_BEARER` | Bearer token for HTTP auth. Sent to the target — trusted pinned remote only; scoped and short-lived. |
 | `LITMUS_STDIO_ISOLATION` | Set to `docker` to **require** Docker isolation for stdio targets (fail-closed if Docker is unavailable). |
 
 ### Requirements & exit codes
@@ -150,11 +158,20 @@ See [`bankr-integration.md`](bankr-integration.md) for the verify-then-execute p
 ## Programmatic use
 
 ```ts
-import { runLitmus, gateDecision, liveFingerprint, readAttestation } from "@polygraphso/litmus";
+import { runLitmus, gateDecision, liveFingerprint, readAttestation, PAYMENT_PASSING } from "@polygraphso/litmus";
 
 const bundle = await runLitmus("npm/@scope/server");   // → EvidenceBundle { grade, categories, fingerprint, … }
 
-const attestation = await readAttestation("npm/@scope/server");
+const attestation = await readAttestation("npm/@scope/server");  // binds to our EAS schema + a fixed Base RPC (fail-closed)
 const live = await liveFingerprint("npm/@scope/server");
-const decision = gateDecision(attestation, live);      // → { action: "pay" | "refuse", reason }
+
+// Read-only / low-value: grade A/B + live fingerprint match is enough.
+const ok = gateDecision(attestation, live).action === "pay";
+
+// Signed actions / payments — raise the bar. A self-minted grade is forgeable, so:
+const payDecision = gateDecision(attestation, live, PAYMENT_PASSING, undefined, {
+  requireEgressVerified: true,                       // exclude remote/no-sandbox B (egress never observed)
+  allowedAttesters: new Set(["0x…"]),                // trust a known signer…
+  acceptedMethodologyVersions: new Set(["litmus-v10"]),
+});                                                  // …or, strongest: re-run runLitmus() yourself and compare.
 ```
