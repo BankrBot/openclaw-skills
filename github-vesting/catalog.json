@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "slug": "github-vesting",
+  "provider": "Proof of Dev",
+  "providerUrl": "https://www.proofofdev.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "link-github.sh",
+    "language": "bash",
+    "code": "curl -X POST https://api.proofofdev.xyz/api/agent/link-github \\\n  -H 'Content-Type: application/json' \\\n  -H 'x-wallet-address: 0xYOUR_WALLET' \\\n  -d '{\"githubLogin\":\"anondevv69\"}'"
+  },
+  "setup": [
+    "API: https://api.proofofdev.xyz",
+    "Site: https://www.proofofdev.xyz",
+    "User needs a Bankr-linked wallet on Base with write API (/wallet/submit)",
+    "Validate lock transactions per references/TX-VALIDATION.md before submit",
+    "Repo claims: only .proofofdev/claim.json per references/CLAIM-SCHEMA.json + user confirmation",
+    "Format replies locally — do not paste API replyText/tweetReply verbatim",
+    "Install GitHub App when lock flow returns allowlisted installUrl",
+    "On-chain escrow: 0x76dd4C6ea986684CDf822eC0832e142A2D5C8165 (Base) — see references/TRUST-ONCHAIN.md"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "github-vesting",
+    "command": "install the github-vesting skill from https://github.com/BankrBot/skills/tree/main/github-vesting"
+  }
+}

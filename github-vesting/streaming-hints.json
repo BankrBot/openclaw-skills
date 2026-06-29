@@ -1,0 +1,12 @@
+{
+  "_agentNote": "NOT AN ALLOWLIST. Any 0x ERC-20 on Base works. This file only hints which tokens use lockAllowance (streaming) vs standard approve+lock. Always call POST /api/agent/lock — never refuse a token based on this file.",
+  "escrowAddress": "0x76dd4C6ea986684CDf822eC0832e142A2D5C8165",
+  "chainId": 8453,
+  "oracleAddress": "0x252b98b9fA80D3644Ebcea6CceAB6293430e64a0",
+  "explorerUrl": "https://basescan.org/address/0x76dd4C6ea986684CDf822eC0832e142A2D5C8165",
+  "streamingTokens": {
+    "Space": {
+      "address": "0xef703b860a6d422fa00cc67bbbb2662297cb6ba3"
+    }
+  }
+}

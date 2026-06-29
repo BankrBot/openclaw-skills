@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProofOfDevRepoClaim",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["v", "claimId", "repo", "wallet", "signature"],
+  "properties": {
+    "v": { "const": 1 },
+    "claimId": { "type": "string", "pattern": "^clm_[a-f0-9]+$" },
+    "repo": { "type": "string", "pattern": "^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$" },
+    "wallet": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" },
+    "signature": { "type": "string", "pattern": "^0x[a-fA-F0-9]+$" }
+  }
+}
