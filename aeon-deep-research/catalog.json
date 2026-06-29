@@ -3,7 +3,7 @@
   "slug": "aeon-deep-research",
   "provider": "Aeon",
   "providerUrl": "https://github.com/aaronjmars/aeon",
-  "logo": null,
+  "logo": "aeon-deep-research.png",
   "demo": {
     "title": "deep-research.sh",
     "language": "bash",

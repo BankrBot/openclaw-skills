@@ -3,7 +3,7 @@
   "slug": "opensea",
   "provider": "OpenSea",
   "providerUrl": "https://opensea.io/",
-  "logo": null,
+  "logo": "opensea.png",
   "demo": {
     "title": "opensea.sh",
     "language": "bash",
