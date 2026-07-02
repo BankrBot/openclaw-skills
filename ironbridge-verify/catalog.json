@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "ironbridge-verify",
+  "provider": "IronBridge",
+  "providerUrl": "https://ironbridge.foundation/",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "verify.sh",
+    "language": "bash",
+    "code": "# 100% FREE — no wallet, no account, no trust in IronBridge.\n# Verify a single seal and get its shareable proof URL:\nbankr prompt \"Use ironbridge-verify on seal d65cfca527650f61 and show its /proof URL\"\n\n# Re-walk the whole public seal chain and confirm it links end-to-end:\nbankr prompt \"Use ironbridge-verify to re-walk the seal chain and confirm every row links\"\n\n# Check another agent's claimed result before trusting it:\nbankr prompt \"Use ironbridge-verify on receipt <rid> and recompute request_sha256 + data_sha256\""
+  },
+  "setup": [
+    "Nothing to install and nothing to fund — verification is plain HTTP and always free.",
+    "Base URL: https://ironbridge.foundation",
+    "Re-walk rule: each chain row's prev_hash must equal the previous row's entry_hash; any disclosed discontinuity is listed in known_breaks (honest history, not a rewrite).",
+    "Shareable evidence: every seal has a human page at /proof/<seal_id> that anyone can open and re-walk with no wallet."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "ironbridge-verify",
+    "command": "install the ironbridge-verify skill from https://github.com/BankrBot/skills/tree/main/ironbridge-verify"
+  }
+}

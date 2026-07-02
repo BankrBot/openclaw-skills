@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "ironbridge-receipt",
+  "provider": "IronBridge",
+  "providerUrl": "https://ironbridge.foundation/",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "receipt.sh",
+    "language": "bash",
+    "code": "# Make a paid agent call and get a receipt that binds input -> output -> payment.\n# pay-then-prove: you send the USDC yourself, then prove the tx (IronBridge holds no key).\nbankr prompt \"Use ironbridge-receipt: run bnkr_llm_chat, I'll pay 0.1 USDC on Base and give you the tx hash, return the receipt + /proof URL\"\n\n# Trending DEX tokens with a receipt you can hand to anyone:\nbankr prompt \"Use ironbridge-receipt on solvr_dex_trending and return the result plus its receipt id\"\n\n# Then verify it for free with the ironbridge-verify skill."
+  },
+  "setup": [
+    "Fund a Base wallet with USDC (lane price is 0.1 USDC/call) plus ~$0.01 ETH for gas.",
+    "Scheme is pay-then-prove (NOT auto-settle x402): POST the lane, get 402 with a receiver + price, send USDC to the receiver on Base, then resend the SAME request with header X-IB-Payment-Tx: <txHash>.",
+    "IronBridge never takes custody of your wallet — you sign your own USDC transfer.",
+    "The response carries a receipt id; verify it any time (free) with the ironbridge-verify skill."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "ironbridge-receipt",
+    "command": "install the ironbridge-receipt skill from https://github.com/BankrBot/skills/tree/main/ironbridge-receipt"
+  }
+}
