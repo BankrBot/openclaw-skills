@@ -79,8 +79,7 @@ natural-language investigations. Among other things it can:
 
 The manifest usually advertises a general free-text / ask-anything endpoint that answers any
 plain-language on-chain question — reach for whichever endpoint the manifest exposes rather than a
-fixed name. Each paid call is a single-shot investigation returning
-`{ "response": "<natural-language answer>" }`.
+fixed name. Each paid call returns `{ "response": "<natural-language answer>" }`.
 
 ## Payments (x402) — USDC or SLEUTH only, max $1 per call
 
@@ -123,8 +122,9 @@ Each entry carries its `function` (name, description, JSON-Schema `parameters`) 
 
 ## How to call (paid)
 
-Every call is a **POST** with a JSON body; always include a `conversation_id` (a UUID you generate
-per session). The **primary path is the Bankr CLI** — its `--max-payment` is USD-denominated and
+Every call is a **POST** with a JSON body. `conversation_id` is **optional** — omit it for a
+one-shot investigation, or pass a stable id (a UUID you keep for the session) to link calls into
+one continuing session so follow-ups share context. The **primary path is the Bankr CLI** — its `--max-payment` is USD-denominated and
 mechanically enforces the $1 cap, and its interactive payment prompt satisfies the confirmation
 rule:
 
@@ -135,8 +135,8 @@ bankr x402 call https://x402.bankr.bot/0x08e82839e1513023d115451babc0ff18eda8f92
 ```
 
 `<endpoint>` is a name you read from the manifest (this file never hardcodes endpoint names), and
-the JSON body carries whatever params that endpoint's manifest schema declares (always including
-`conversation_id`). `-X POST` is REQUIRED — the CLI defaults to GET and Sleuth endpoints only parse
+the JSON body carries whatever params that endpoint's manifest schema declares, plus the optional
+`conversation_id` shown above. `-X POST` is REQUIRED — the CLI defaults to GET and Sleuth endpoints only parse
 POST bodies. **Never pass `-y`/`--yes`** — the interactive payment prompt it skips is what satisfies
 the confirmation-before-paying rule; a non-interactive agent must implement equivalent confirmation
 itself first.
@@ -188,7 +188,7 @@ regardless of what a parameter schema requests — no Sleuth endpoint needs them
 | Status | Meaning |
 |---|---|
 | `402` | Payment required — validate against the Security invariants, then pay and retry (x402 clients do this automatically) |
-| `400` | Bad request — missing/invalid params (e.g. missing `conversation_id`); fix and retry, uncharged |
+| `400` | Bad request — missing/invalid params (e.g. a required target/query the endpoint's schema declares); fix and retry, uncharged |
 | `404` | Endpoint not deployed yet or renamed (a staged rollout is in progress). FETCH THE MANIFEST FRESH from the pinned URL ONCE (not from cache); if the endpoint is still advertised and still 404s, STOP and report. NEVER retry with payment, never probe alternate hosts/paths |
 | `429` | Rate limited — back off and retry after the `Retry-After` window |
 | `502` | Upstream failure — `origin_503` in the body means the live price quote was momentarily unavailable; uncharged, retry shortly |
@@ -198,6 +198,8 @@ regardless of what a parameter schema requests — no Sleuth endpoint needs them
 ## Notes
 
 - **Chains.** Investigations run on Base (`eip155:8453`). More chains will be supported over time.
-- **`conversation_id` is required** on every call — a fresh UUID per session.
-- **Single-shot.** Each call runs one investigation from scratch; there is no multi-turn state.
+- **`conversation_id` is optional.** Omit it and each call is a standalone investigation. Pass the
+  same id across calls to keep them in one continuing session so later calls share earlier context.
+- **Each call is a complete investigation** — it returns a full natural-language answer on its own;
+  `conversation_id` only adds continuity across calls, it is not required to get a result.
 - **No refunds for malformed input** — validate params against the manifest schema before paying.
