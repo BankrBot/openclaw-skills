@@ -7,7 +7,7 @@
   "demo": {
     "title": "sleuth.sh",
     "language": "bash",
-    "code": "# 1. Discover the live endpoints (free, no key)\ncurl https://app.sleuthagent.ai/x402/openai-bnkr.json\n\n# 2. Call any endpoint — USDC or SLEUTH on Base only, hard max $1/call.\n#    Always cap authorization at $1 (and never pass -y — the payment prompt is the confirmation):\nbankr x402 call https://x402.bankr.bot/0x08e82839e1513023d115451babc0ff18eda8f925/insiders \\\n  -X POST --max-payment 1 \\\n  -d '{\"conversation_id\":\"<uuid>\",\"token\":\"$HUSTLE\"}'"
+    "code": "# 1. Discover the live endpoints (free, no key) — the manifest is the only source of endpoint names\ncurl https://app.sleuthagent.ai/x402/openai-bnkr.json\n\n# 2. Call an endpoint from step 1 (<endpoint> + body params come from the manifest, never hardcoded).\n#    USDC or SLEUTH on Base only, hard max $1/call. Always cap authorization at $1\n#    (and never pass -y — the payment prompt is the confirmation):\nbankr x402 call https://x402.bankr.bot/0x08e82839e1513023d115451babc0ff18eda8f925/<endpoint> \\\n  -X POST --max-payment 1 \\\n  -d '{\"conversation_id\":\"<uuid>\",\"query\":\"<your on-chain question>\"}'"
   },
   "setup": [
     "No install required — every endpoint is plain HTTP behind x402 (no account; validate every 402 against the pinned invariants in SKILL.md)",
