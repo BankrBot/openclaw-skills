@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "onchainkit",
   "provider": "Coinbase",
-  "providerUrl": "https://www.base.org/build/onchainkit",
+  "providerUrl": "https://github.com/coinbase/onchainkit",
   "logo": null,
   "demo": {
     "title": "onchain-app.tsx",

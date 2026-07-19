@@ -166,7 +166,7 @@ Next steps:
 4. Start building with OnchainKit components:
    import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
 
-Need help? Check the OnchainKit docs at https://onchainkit.xyz
+Need help? Check the OnchainKit repository at https://github.com/coinbase/onchainkit
 """)
 
 def main():

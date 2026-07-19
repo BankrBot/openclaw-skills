@@ -71,8 +71,6 @@ function UserProfile({ address }) {
 }
 ```
 
-**Reference:** [references/identity-components.md](references/identity-components.md)
-
 ### 3. Token Operations
 Handle token swaps, purchases, and transfers:
 
@@ -112,8 +110,6 @@ function SendTransaction({ calls }) {
 }
 ```
 
-**Reference:** [references/transactions.md](references/transactions.md)
-
 ### 5. Payment Processing
 Build checkout flows and payment processing:
 
@@ -129,8 +125,6 @@ function PaymentFlow() {
 }
 ```
 
-**Reference:** [references/payments.md](references/payments.md)
-
 ### 6. NFT Integration
 Display, mint, and manage NFTs:
 
@@ -141,8 +135,6 @@ function NFTDisplay({ contract, tokenId }) {
   return <NFTCard contract={contract} tokenId={tokenId} />;
 }
 ```
-
-**Reference:** [references/nft-integration.md](references/nft-integration.md)
 
 ## Common Workflows
 
@@ -272,8 +264,6 @@ function CustomApp() {
 - Handle wallet connection failures gracefully
 - Support multiple wallet types
 
-**Reference:** [references/best-practices.md](references/best-practices.md)
-
 ## Troubleshooting
 
 ### Common Issues
@@ -333,8 +323,6 @@ function FrameApp() {
 }
 ```
 
-**Reference:** [references/advanced-features.md](references/advanced-features.md)
-
 ## API Reference
 
 OnchainKit provides both React components and utility functions:
@@ -344,13 +332,10 @@ OnchainKit provides both React components and utility functions:
 - **Utilities**: TypeScript utilities for data formatting and validation
 - **Types**: Complete TypeScript definitions
 
-**Reference:** [references/api-reference.md](references/api-reference.md)
-
 ## Resources
 
 ### Documentation
-- Official docs: [onchainkit.xyz](https://onchainkit.xyz)
-- GitHub: [github.com/coinbase/onchainkit](https://github.com/coinbase/onchainkit)
+- Source and documentation: [github.com/coinbase/onchainkit](https://github.com/coinbase/onchainkit)
 - Examples: [OnchainKit playground](https://github.com/coinbase/onchainkit/tree/main/packages/playground)
 
 ### Support
