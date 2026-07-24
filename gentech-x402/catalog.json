@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "gentech-x402",
+  "provider": "GenTech Labs",
+  "providerUrl": "https://gentechlabs.net",
+  "logo": null,
+  "demo": {
+    "title": "x402-payment-flow.ts",
+    "language": "typescript",
+    "code": "import { createPublicClient, http } from 'viem';\nimport { base } from 'viem/chains';\n\nconst API = 'https://api.gentechlabs.net';\nconst WALLET = '0x...'; // your wallet\n\n// 1. Call endpoint → get 402 + payment request\nconst res = await fetch(`${API}/api/v1/agentscan`, {\n  headers: { Accept: 'application/json' }\n});\n\nif (res.status === 402) {\n  const payment = await res.json();\n  \n  // 2. Sign the payment request with your wallet\n  const signature = await signPayment(payment, WALLET);\n  \n  // 3. Retry with the proof\n  const data = await fetch(`${API}/api/v1/agentscan`, {\n    headers: {\n      'Payment-Signature': signature,\n      'Payment-Response': 'base64-encoded-response'\n    }\n  }).then(r => r.json());\n  \n  console.log(data);\n}"
+  },
+  "setup": [
+    "Install: `npx skills add gentech-x402`",
+    "Set your EVM wallet address in `~/.bankr/.env`",
+    "Fund wallet with USDC on Base (~$0.01 per call)",
+    "Test: `curl https://api.gentechlabs.net/api/v1/health`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "gentech-x402",
+    "command": "install the gentech-x402 skill from https://github.com/BankrBot/skills/tree/main/gentech-x402"
+  }
+}
