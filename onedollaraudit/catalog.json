@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "onedollaraudit",
+  "provider": "One Dollar Audit",
+  "providerUrl": "https://onedollaraudit.com",
+  "logo": null,
+  "demo": {
+    "title": "onedollaraudit.ts",
+    "language": "typescript",
+    "code": "// npm install viem @x402/core @x402/evm @x402/fetch\n// Wallet needs ~$1 USDC on Base — no ETH (EIP-3009 is gasless), no API key\nconst fetchWithPayment = wrapFetchWithPaymentFromConfig(fetch, {\n  schemes: [{ network: \"eip155:8453\", client: new ExactEvmScheme(signer) }],\n});\n\n// Commission the audit — x402 handles the 402 → sign → retry dance\nconst res = await fetchWithPayment(\"https://leftclaw.services/api/audit\", {\n  method: \"POST\",\n  headers: { \"Content-Type\": \"application/json\" },\n  body: JSON.stringify({ description: \"0xYourContract on Base — ERC20 with custom transfer logic\" }),\n});\nconst { jobId } = await res.json(); // PERSIST this before polling\n\n// Poll the free, unauthenticated job API until the report lands\nconst job = await (await fetch(`https://onedollaraudit.com/api/jobs/${jobId}`)).json();\n// job.status: pending | in_progress | complete — when complete, read job.reportUrl"
+  },
+  "setup": [
+    "No signup, no API key — the x402 payment is the authorization ($1 USDC per audit on Base)",
+    "Install deps: `npm install viem @x402/core @x402/evm @x402/fetch`",
+    "Set `PRIVATE_KEY` to a dedicated wallet holding ~$1 USDC on Base (gasless EIP-3009 — no ETH needed)",
+    "POST a description (contract address or pasted Solidity) to `https://leftclaw.services/api/audit` — persist the returned `jobId`",
+    "Poll `https://onedollaraudit.com/api/jobs/<jobId>` (free, no auth) until `status: \"complete\"`, or pass a `callbackUrl` in the POST body to get pushed the result — never re-pay to re-check a job"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "onedollaraudit",
+    "command": "install the onedollaraudit skill from https://github.com/BankrBot/skills/tree/main/onedollaraudit"
+  }
+}
