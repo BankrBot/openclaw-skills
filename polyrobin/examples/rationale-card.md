@@ -25,7 +25,7 @@ draw or no-contest → NO. **Ambiguity:** low ✅ (single authoritative source, 
 ```
 EV_gross = (p − c) / c = (0.58 − 0.52) / 0.52   = +11.5%
 − slippage ($20 order ≪ ~$120k depth)            ≈  0%   (negligible)
-− taker fee (live from feeSchedule; feesEnabled=false → 0)      ≈  0%
+− fee (read from live feeSchedule: feesEnabled=false → genuinely 0, not assumed) ≈ 0%
 EV_net                                           ≈ +11.5%  → clears the +4% gate
 ```
 

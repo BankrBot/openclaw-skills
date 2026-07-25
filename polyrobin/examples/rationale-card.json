@@ -55,7 +55,8 @@
     "gross_ev_formula": "EV_gross = (p - c) / c = (0.58 - 0.52) / 0.52 = 0.1154",
     "fees_pct": 0.0,
     "est_slippage_pct": 0.0,
-    "slippage_notes": "$20 order is far smaller than ~$120k book depth, so slippage is negligible (~0). Taker fee read live from the market's feeSchedule (feesEnabled=false here -> fee 0); never assumed.",
+    "fees_notes": "Read from the market's live feeSchedule: feesEnabled=false, so taker fee is genuinely 0 here (not assumed). Where feesEnabled=true, taker cost is rate x c x (1 - c) per share and is subtracted below.",
+    "slippage_notes": "$20 order is far smaller than ~$120k book depth, so slippage is negligible (~0).",
     "net_ev_pct": 11.5,
     "net_ev_formula": "EV_net = EV_gross - slippage - fees = 11.5 - ~0 - 0 = ~11.5%",
     "notes": "Net EV clears the +4% gate comfortably; size still kept conservative."
