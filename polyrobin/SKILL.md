@@ -58,8 +58,7 @@ safety gates, and guides @bankrbot — it does not execute trades itself.
 - ❌ **Not an autonomous trader.** It never bets, bridges, or hedges without your
   explicit `yes`.
 - ❌ **Not a new execution venue or smart contract.** It uses BankrBot's existing
-  integrations; it adds judgment, not plumbing. (The `$PR` utility token —
-  `0x7fa0adced2b6d0d4bc2e41566829054b0f8f2ba3` on Robinhood Chain — is
+  integrations; it adds judgment, not plumbing. (The `$PR` utility token is
   separate from the skill itself and plays no role in its analysis or gates.)
 
 ### Robinhood Chain emphasis (realistic)

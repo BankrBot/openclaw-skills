@@ -14,7 +14,7 @@
     "Use it on X by tagging @bankrbot, e.g. `@bankrbot using the polyrobin skill, what's the edge on <market>?`",
     "Tune the 7 risk gates in conversation (e.g. `@bankrbot using the polyrobin skill, set my daily loss limit to 3%`) — gate 5 (confirmation) can never be disabled",
     "No private keys are ever needed — execution runs through BankrBot's rails and every trade waits for your explicit yes",
-    "Utility token: $PR on Robinhood Chain — 0x7fa0adced2b6d0d4bc2e41566829054b0f8f2ba3 (added at Bankr's request; the skill's analysis and gates work identically whether or not you hold it)",
+    "Utility token: $PR — separate from the skill; analysis and gates work identically whether or not you hold it (contract address to be announced after verification)",
     "Source: https://github.com/BankrBot/skills/tree/main/polyrobin"
   ],
   "install": {
