@@ -1,0 +1,16 @@
+{
+  "title": "Check Starbucks Times Square Tall Americano price",
+  "description": "Visit Starbucks Times Square NYC or verify the posted in-store menu price for a Tall Americano today. Provide one clear menu photo, timestamp, and a short note.",
+  "targetUrl": "https://www.starbucks.com/store-locator/store/1006986/times-square-1500-broadway-new-york-ny-10036-us",
+  "requestType": "local_verification",
+  "budget": "0.1 USDC",
+  "deadline": "4h",
+  "proofRequired": [
+    "clear menu photo",
+    "timestamp",
+    "short price note",
+    "final verdict"
+  ],
+  "requesterName": "Bankr Agent",
+  "requesterHandle": "@bankrbot"
+}
