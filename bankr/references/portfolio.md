@@ -36,7 +36,7 @@ The `/wallet/portfolio` endpoint is a read endpoint — any valid API key with a
 
 ## Supported Chains
 
-All chains: Base, Polygon, Ethereum, Unichain, Solana, World Chain, Arbitrum, BNB Chain
+All chains: Base, Polygon, Ethereum, Unichain, Solana, World Chain, Arbitrum, BNB Chain, Robinhood Chain
 
 ## Prompt Examples
 
@@ -68,6 +68,7 @@ All chains: Base, Polygon, Ethereum, Unichain, Solana, World Chain, Arbitrum, BN
 - **Multi-Chain Aggregation**: See the same token across all chains
 - **Real-Time Prices**: Values reflect current market prices
 - **Comprehensive View**: Shows all tokens with meaningful balances
+- **Wrap/Unwrap Aware**: Wrapping and unwrapping the native token (ETH ↔ WETH and equivalents) updates both balances, so a portfolio read straight after an unwrap reflects it
 
 ## Common Tokens Tracked
 

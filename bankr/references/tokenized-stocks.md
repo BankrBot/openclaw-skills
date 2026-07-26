@@ -35,6 +35,8 @@ Robinhood Chain hosts 95+ tokenized stocks and ETFs issued by Robinhood — larg
 
 Prices track the underlying equity. Trades settle on-chain against **USDG (Global Dollar)**, Robinhood Chain's native stablecoin — Bankr routes through it automatically, so you can fund a purchase from ETH, USDG, or any token on the chain in a single command.
 
+Stock legs are routed differently from the chain's memecoin pools: tokenized stocks have no AMM pool of their own, so Bankr sends them to a venue that quotes them directly (with a tighter slippage tolerance), while ordinary Robinhood Chain pairs keep the thin-pool protection they've always had. This is automatic — the same prompt works for both.
+
 Robinhood Chain supports the full set of advanced orders — **limit, stop (including trailing), DCA, and TWAP** — alongside spot swaps and transfers:
 
 ```

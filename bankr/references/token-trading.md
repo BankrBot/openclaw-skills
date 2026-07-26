@@ -7,9 +7,12 @@ Execute token trades and swaps across multiple blockchains.
 | Chain | Native Token | Characteristics |
 |-------|--------------|-----------------|
 | Base | ETH | Low fees, ideal for memecoins |
-| Polygon | MATIC | Fast, cheap transactions |
+| Polygon | POL | Fast, cheap transactions |
 | Ethereum | ETH | Highest liquidity, expensive gas |
 | Unichain | ETH | Newer L2 option |
+| World Chain | ETH | Uniswap V3/V4 swaps |
+| Arbitrum | ETH | DeFi, low-cost transactions |
+| BNB Chain | BNB | BSC ecosystem trading |
 | Robinhood Chain | ETH | Tokenized stocks & ETFs (USDG stablecoin), memecoins |
 | Solana | SOL | High speed, minimal fees |
 
@@ -39,12 +42,15 @@ Execute token trades and swaps across multiple blockchains.
 - "Convert 0.1 ETH to WETH"
 - "Unwrap 0.5 WETH to ETH"
 
+Both balances update after a wrap or unwrap, so you can check your portfolio immediately afterwards and see the result.
+
 ## Chain Selection
 
 - If no chain specified, Bankr selects the most appropriate chain
 - Base is preferred for most operations due to low fees
 - Cross-chain routes are automatically optimized
 - Include chain name in prompt to specify: "Buy ETH on Polygon"
+- **Pasting a raw contract address is safe**: Bankr verifies which chain actually hosts that contract before quoting, so a token on a less common chain (e.g. Robinhood Chain) is found even if the chain isn't named or is guessed wrong
 
 ## Slippage
 
