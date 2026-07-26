@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "bnkr-stock-buyback-vault",
+  "provider": "dmattrenggana",
+  "providerUrl": "https://github.com/dmattrenggana",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "bnkr-stock-buyback-vault",
+    "command": "install the bnkr-stock-buyback-vault skill from https://github.com/BankrBot/skills/tree/main/bnkr-stock-buyback-vault"
+  }
+}
