@@ -41,12 +41,14 @@ bankr config get llmKey
 | Model | Provider | Best For |
 |-------|----------|----------|
 | `claude-fable-5` | Anthropic | Latest generation, agentic + multimodal (1M context, image input) |
-| `claude-opus-4.8` | Anthropic | Latest, most capable reasoning (1M context) |
+| `claude-opus-5` | Anthropic | Latest Opus, most capable reasoning (1M context, image input) |
+| `claude-opus-4.8` | Anthropic | Previous flagship Opus (1M context) |
 | `claude-opus-4.7` | Anthropic | Advanced reasoning (1M context) |
 | `claude-opus-4.6` | Anthropic | Advanced reasoning (1M context) |
 | `claude-opus-4.5` | Anthropic | Complex reasoning (200K context) |
-| `claude-sonnet-4.6` | Anthropic | Balanced speed and quality (1M context) |
-| `claude-sonnet-4.5` | Anthropic | Previous generation Sonnet (1M context) |
+| `claude-sonnet-5` | Anthropic | Latest Sonnet, balanced speed and quality (1M context, image input) |
+| `claude-sonnet-4.6` | Anthropic | Previous generation Sonnet (1M context) |
+| `claude-sonnet-4.5` | Anthropic | Earlier Sonnet (1M context) |
 | `claude-haiku-4.5` | Anthropic | Fast, cost-effective (200K context) |
 | `gemini-3.5-flash` | Google | Latest Flash, 1M context |
 | `gemini-3.1-pro` | Google | Long context, reasoning (1M) |
@@ -296,15 +298,29 @@ Two ways to use Claude Code with the gateway:
 
 ```bash
 # Launch Claude Code through the gateway
-bankr llm claude
+bankr claude              # top-level alias
+bankr llm claude          # equivalent, explicit form
 
 # Pass any Claude Code flags through
-bankr llm claude --model claude-sonnet-4.6
-bankr llm claude --allowedTools Edit,Write,Bash
-bankr llm claude --resume
+bankr claude --model claude-sonnet-5
+bankr claude --allowedTools Edit,Write,Bash
+bankr claude --resume
 ```
 
 All arguments after `claude` are forwarded to the `claude` binary. The CLI sets `ANTHROPIC_BASE_URL` and `ANTHROPIC_AUTH_TOKEN` automatically from your config (using `llmKey` if set, otherwise `apiKey`).
+
+`bankr claude` is a top-level alias for `bankr llm claude` (requires **@bankr/cli 0.3.18+**; `bankr llm claude` works on every version). Named commands win over the prompt fallthrough, so `bankr claude ...` launches Claude Code rather than sending "claude ..." to the agent — use `bankr agent "..."` when a prompt starts with a command name.
+
+`-h` / `--help` on the launchers (`bankr claude`, `bankr llm claude`, `bankr llm opencode`) is forwarded to the spawned tool and prints *its* help, without requiring authentication. For the Bankr CLI's own help use `bankr --help` or `bankr llm --help`.
+
+**1M-token context tier:** Claude Code exposes it as a `[1m]` model suffix (`claude-opus-5[1m]`). Through the gateway the suffix is **optional** — it is stripped before model lookup and the 1M window is enabled from the model's own context window, so `claude-opus-5` and `claude-opus-5[1m]` send an identical request. Omitting it is simplest. If you do pass it, **quote it**: in zsh (the macOS default) `[1m]` is a glob character class and the command aborts with `zsh: no matches found` before the CLI runs, while bash passes it through literally — so the same command can work on one machine and fail on another.
+
+```bash
+bankr claude --model claude-opus-5          # full 1M window, nothing to quote
+bankr claude --model "claude-opus-5[1m]"    # explicit suffix — quotes required
+```
+
+Inside `~/.claude/settings.json` it's already a JSON string, so no extra escaping is needed: `{ "model": "claude-opus-5[1m]" }`.
 
 **Option B: Set environment variables**
 
@@ -324,6 +340,9 @@ Add these to `~/.zshrc` or `~/.bashrc` so all Claude Code sessions use the gatew
 ### OpenCode
 
 ```bash
+# Launch OpenCode through the gateway (args forwarded to the tool)
+bankr llm opencode
+
 # Auto-install Bankr provider into ~/.config/opencode/opencode.json
 bankr llm setup opencode --install
 

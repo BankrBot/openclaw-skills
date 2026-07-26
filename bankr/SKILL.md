@@ -421,6 +421,12 @@ Environment variables override config file values. Config file values override d
 | `bankr llm setup claude` | Show Claude Code environment setup |
 | `bankr llm setup cursor` | Show Cursor IDE setup instructions |
 | `bankr llm claude [args...]` | Launch Claude Code via the Bankr LLM Gateway |
+| `bankr claude [args...]` | Top-level alias for `bankr llm claude` |
+| `bankr llm opencode [args...]` | Launch OpenCode via the Bankr LLM Gateway |
+
+On the launcher commands (`bankr claude`, `bankr llm claude`, `bankr llm opencode`) all arguments — including `-h` / `--help` — are forwarded to the spawned tool, and a help run doesn't require authentication. Use `bankr --help` / `bankr llm --help` for the Bankr CLI's own help. Named commands also take precedence over the prompt fallthrough, so `bankr claude ...` launches Claude Code instead of prompting the agent; use `bankr agent "..."` when a prompt starts with a command name.
+
+The `bankr claude` alias and the `--help` passthrough require **@bankr/cli 0.3.18+**; on older versions use `bankr llm claude`.
 
 ## Core Usage
 
@@ -500,6 +506,7 @@ The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unifie
 - **New accounts start with $0 LLM credits** — top up via `bankr llm credits add 25` or at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) before making any LLM calls, or you will get a 402 error
 - Check credits: `bankr llm credits` | Top up: `bankr llm credits add <amount>` | Auto top-up: `bankr llm credits auto --enable --amount 25 --tokens USDC`
 - In OpenClaw config, prefix model IDs with `bankr/` (e.g. `bankr/claude-sonnet-5`). In direct API calls, use bare IDs (e.g. `claude-sonnet-5`). Run `bankr llm models` for the current model list
+- **Claude Code's `[1m]` context-tier suffix is optional through the gateway** — it's stripped before model lookup and the 1M window comes from the model's own context window, so `claude-opus-5` and `claude-opus-5[1m]` behave identically. If you do use it, quote it (`--model "claude-opus-5[1m]"`) — in zsh it's a glob character class and the command aborts before the CLI runs
 - **Per-model discounts** available for Bankr Club members and partners — applied automatically at billing time
 - **Image generation**: generate images via the OpenAI-native `/v1/images/generations` endpoint (model `gpt-image-2`), billed from the same LLM credit balance — see the reference
 - **Expiring credit grants**: promotional or developer grants may carry an expiry date. Your spendable balance is your permanent (purchased) credits plus any unexpired grants — grants are spent first (soonest-expiring first) and drop off automatically at expiry
@@ -515,7 +522,9 @@ bankr llm credits add 25 --token ETH       # Native token; auto-swapped on its c
 bankr llm credits auto --enable --amount 25 --tokens USDC,USDT  # Multi-chain auto top-up
 bankr llm setup openclaw --install         # Install Bankr provider into OpenClaw
 bankr llm setup claude                     # Print Claude Code env vars
-bankr llm claude                           # Launch Claude Code through gateway
+bankr claude                               # Launch Claude Code through gateway
+bankr claude --model claude-opus-5         # Any tool flags are forwarded
+bankr llm opencode                         # Launch OpenCode through gateway
 ```
 
 ### Agent Credit Top-Up
@@ -561,6 +570,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - Track holdings by token or chain
 - Real-time price updates
 - Multi-chain aggregation
+- Wrapping/unwrapping the native token (ETH ↔ WETH and equivalents) is reflected in both balances right away
 - Filter by chain: `bankr wallet portfolio --chain base,solana` or `GET /wallet/portfolio?chains=base,solana`
 
 **Reference**: [references/portfolio.md](references/portfolio.md)
@@ -1072,6 +1082,12 @@ curl -X POST "https://api.bankr.bot/wallet/transfer" \
 
 Swap tokens via CLI or Wallet API without AI processing. The **CLI** (`bankr wallet swap`) executes **same-chain EVM** swaps only. The **Wallet API** (`/wallet/swap`, `/wallet/swap-quote`) also handles **cross-chain and Solana** legs: same-chain EVM stays on the fast direct path, while cross-chain or any Solana leg routes through Relay behind the same endpoints. The CLI resolves token symbols to contracts and uses the quote's `minBuyAmount` as slippage protection when executing.
 
+Venue selection is automatic and the Wallet API now covers the same edge cases the agent does — you don't pick a route:
+
+- **Brand-new Solana tokens** still on their Raydium LaunchLab bonding curve fall back to the curve when no aggregator route exists yet, instead of failing with "no route"
+- **Polygon `pUSD` ↔ `USDC.e`** uses the 1:1 on-chain unwrap rather than a DEX quote (`pUSD` isn't reliably DEX-routable)
+- **Robinhood Chain tokenized stocks** are routed to a venue that quotes them, while ordinary Robinhood Chain pairs keep their thin-pool protection
+
 ```bash
 # CLI — quote only (no execution)
 bankr wallet swap --from ETH --to USDC --amount 0.1 --chain base --quote-only
@@ -1195,7 +1211,7 @@ See [references/error-handling.md](references/error-handling.md) for comprehensi
 
 ---
 
-**Pro Tip**: The most common issue is not specifying the chain for tokens. When in doubt, always include "on Base" or "on Ethereum" in your prompt.
+**Pro Tip**: The most common issue is not specifying the chain for tokens. When in doubt, always include "on Base" or "on Ethereum" in your prompt — or paste the contract address, which Bankr verifies against the chain that actually hosts it.
 
 **Security**: Keep your API key private. Never commit your config file to version control. Only trade amounts you can afford to lose.
 
