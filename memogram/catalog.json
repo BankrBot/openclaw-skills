@@ -11,8 +11,12 @@
   },
   "setup": [
     "Install: `install the memogram skill from https://github.com/BankrBot/skills/tree/main/memogram`",
-    "Set up the memo-mcp server (read-only needs no key): https://github.com/GeObts/memo-mcp",
-    "For sends: configure MEMO_PRIVATE_KEY on a dedicated wallet, plus spend caps MEMO_MAX_PER_SEND / MEMO_MAX_TOTAL",
+    "Set up the memo-mcp server, pinned to a reviewed revision — v0.2.0 (commit 635c396): https://github.com/GeObts/memo-mcp",
+    "Read-only needs no key and has no spend surface — prefer it unless sends are required",
+    "For sends: MEMO_PRIVATE_KEY must be a FRESH dedicated key that has never held real value, funded minimally, run over local stdio only — never hosted, remote, or shared",
+    "For sends: both spend caps MEMO_MAX_PER_SEND and MEMO_MAX_TOTAL are mandatory — the server refuses to boot with a key and no caps",
+    "memo-mcp is first-party (same author as this skill) and is NOT audited — review the source before enabling sends",
+    "Sends always require an explicit user confirmation of a preview_send; there is no auto-send",
     "Source: https://github.com/BankrBot/skills/tree/main/memogram"
   ],
   "install": {
