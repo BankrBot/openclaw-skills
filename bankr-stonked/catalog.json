@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "bankr-stonked",
+  "provider": "azdogg007",
+  "providerUrl": "https://github.com/azdogg007",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "bankr-stonked",
+    "command": "install the bankr-stonked skill from https://github.com/BankrBot/skills/tree/main/bankr-stonked"
+  }
+}
