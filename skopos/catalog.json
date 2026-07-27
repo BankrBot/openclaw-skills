@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "skopos",
+  "provider": "Skopos",
+  "providerUrl": "https://www.tryskopos.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "skopos.sh",
+    "language": "bash",
+    "code": "# Ask anything crypto — one endpoint, no key, no signup\ncurl -s -X POST https://www.tryskopos.xyz/api/chat \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"message\":\"who is buying $doge\",\"anonId\":\"demo-1\",\"format\":\"text\"}'\n\n# Autonomous agents pay per call over x402 (USDC on Base)\n# price $0.01 · risk $0.02 · smart-money $0.05 · sniper-check $0.25\n# flash-order $0.02 — limit / stop-loss / take-profit / TWAP quotes\ncurl -s https://www.tryskopos.xyz/llms.txt"
+  },
+  "setup": [
+    "Nothing to install — the free chat endpoint works immediately, no key",
+    "Agents: discover the pay-per-call x402 endpoints at https://www.tryskopos.xyz/openapi.json",
+    "MCP-speaking agents: `npx skopos-mcp`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "skopos",
+    "command": "install the skopos skill from https://github.com/BankrBot/skills/tree/main/skopos"
+  }
+}
