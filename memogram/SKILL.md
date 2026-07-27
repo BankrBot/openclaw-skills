@@ -136,9 +136,10 @@ to a reviewed revision** — do not track a moving branch, and do not let it aut
 ```bash
 git clone https://github.com/GeObts/memo-mcp.git
 cd memo-mcp
-git checkout v0.2.0        # commit 635c3967b9abe376ea0f9a6d0ab555639c97fc9b
-git verify-tag v0.2.0 2>/dev/null || echo "note: tag is unsigned"
+git checkout v0.2.1        # commit 2c2c6630cd211e7a23465c397577d4d0071284bf
+git verify-tag v0.2.1 2>/dev/null || echo "note: tag is unsigned"
 npm ci
+npm audit                  # expected: 0 vulnerabilities at this tag
 npm test                   # 150 unit tests, no network or wallet needed
 npm run build
 ```
