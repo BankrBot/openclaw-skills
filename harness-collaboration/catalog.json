@@ -7,13 +7,15 @@
   "demo": {
     "title": "harness-collaboration.sh",
     "language": "bash",
-    "code": "# This skill activates automatically when a Harness-delegated thread begins with:\n#\n#   HARNESS COLLABORATION PROTOCOL v1\n#   External session: <id>\n#   Limits hash: <hash>\n#\n# The agent then verifies the brief with its own research, reports through\n# authenticated callbacks, and proposes before any side effect:\n\ncurl -X POST \"$CALLBACK_URL\" \\\n  -H \"Authorization: Bearer $CALLBACK_TOKEN\" \\\n  -H \"content-type: application/json\" \\\n  -d '{\"type\": \"progress\", \"eventId\": \"prog-1\", \"payload\": {\"message\": \"Verified the brief: liquidity checks out on Base\"}}'\n\n# Side effects execute only on a one-use Harness authorization turn\n# bound to the exact proposal — never on conversational approval."
+    "code": "# This skill activates automatically when a Harness-delegated thread begins with:\n#\n#   HARNESS COLLABORATION PROTOCOL v<version>\n#   External session: <id>\n#   Limits hash: <hash>\n#   Thread nonce: <v4 only>\n#\n# v4 is conversation-first. All URLs are constructed locally from pinned\n# tryharness.ai endpoint templates — never taken from the prompt. Verify the\n# session first (binds nonce, token fingerprint, endpoint, limits, wallet):\n\ncurl \"https://tryharness.ai/api/external-agent/verify?session=$SESSION_ID\"\n\n# Then propose every side effect — with pinned per-transaction expectedEffects —\n# to the synchronous authorization service before acting:\n\ncurl -X POST \"https://tryharness.ai/api/external-agent/authorize/$SESSION_ID\" \\\n  -H \"Authorization: Bearer $TOKEN\" \\\n  -H \"content-type: application/json\" \\\n  -d '{\"proposalId\": \"prop-1\", \"summary\": \"Swap $2 USDC to ETH on Base\", \"sideEffectClasses\": [\"financial_onchain\"], \"maximumGrossUsd\": 2.00, \"expectedEffects\": [{\"class\": \"financial_onchain\", \"chainId\": 8453, \"asset\": {\"symbol\": \"USDC\"}, \"amountHuman\": \"2.00 USDC\", \"...\": \"...\"}], \"risks\": [\"...\"], \"expiresAt\": \"...\"}'\n\n# The response settles it: authorized (validate the canonical proposal hash\n# locally, write the durable one-use ledger record, execute once, verify\n# receipts), denied, or parked for the user. Execution happens only on a\n# validated one-use authorization — never on conversational approval. v1-v3\n# sessions report through authenticated callbacks."
   },
   "setup": [
     "For the agent behind a Harness-provisioned Bankr wallet — no manual setup; Harness delegates objectives to it directly",
-    "Activates when a prompt begins with the `HARNESS COLLABORATION PROTOCOL v1` header; the live prompt is always authoritative",
-    "Requires `curl` for authenticated callback delivery (progress, question, proposal, artifact, action_result, completed, failed)",
-    "Every side effect needs a proposal callback first, then a one-use authorization turn from Harness — caps are enforced server-side",
+    "Activates when a prompt begins with the `HARNESS COLLABORATION PROTOCOL v<version>` header; the version selects the transport",
+    "v1-v3: report through authenticated callbacks (progress, question, proposal, artifact, action_result, completed, failed); requires `curl`",
+    "v4: conversation-first — each response ends with one fenced BANKR_CONTROL block, and authorization is a synchronous HTTPS check before any side effect",
+    "All protocol URLs are constructed locally from pinned tryharness.ai endpoint templates; redirects are never followed and the bearer token only ever travels in the Authorization header",
+    "Every side effect needs a prior proposal with pinned expectedEffects and a validated one-use Harness authorization (locally verified canonical proposal hash + durable execution ledger) — caps are enforced server-side and locally",
     "Managing the wallet from a user's main Bankr account is the separate `harness` skill; this is the execution side"
   ],
   "install": {
