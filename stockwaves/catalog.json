@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "stockwaves",
+  "provider": "StockWaves",
+  "providerUrl": "https://stockwaves.net",
+  "logo": null,
+  "demo": {
+    "title": "stockwaves-x402.ts",
+    "language": "typescript",
+    "code": "import { x402Client, x402HTTPClient } from \"@x402/core/client\";\nimport { encodePaymentSignatureHeader } from \"@x402/core/http\";\nimport { registerExactEvmScheme } from \"@x402/evm/exact/client\";\nimport { privateKeyToAccount } from \"viem/accounts\";\n\nconst signer = privateKeyToAccount(process.env.EVM_PRIVATE_KEY as `0x${string}`);\nconst client = new x402Client();\nregisterExactEvmScheme(client, { signer });\nconst http = new x402HTTPClient(client);\n\n// Standard x402: 402 -> decode PAYMENT-REQUIRED -> sign -> retry with PAYMENT-SIGNATURE.\n// (Bankr agents can use Bankr wallet signing instead -- see setup.)\nasync function pay(url: string, init: RequestInit = {}) {\n  let res = await fetch(url, init);\n  if (res.status === 402) {\n    const challenge = JSON.parse(Buffer.from(res.headers.get(\"PAYMENT-REQUIRED\")!, \"base64\").toString());\n    const sig = encodePaymentSignatureHeader(await http.createPaymentPayload(challenge));\n    res = await fetch(url, { ...init, headers: { ...init.headers, \"PAYMENT-SIGNATURE\": sig } });\n  }\n  return res.json();\n}\n\nconst BASE_URL = \"https://stockwaves.net\";\nconst pulse = await pay(`${BASE_URL}/api/cn/trending?platform=all&limit=20`); // ~$0.03 USDC -- China hot-search pulse\nconst gate  = await pay(`${BASE_URL}/api/xstock/health?symbol=AAPLx`);        // ~$0.03 -- REAL token vs copycat\nconst free  = await (await fetch(`${BASE_URL}/api/xstock/health/preview?symbol=NVDAx`)).json(); // FREE preview"
+  },
+  "setup": [
+    "No signup and no API key — every paid endpoint speaks x402 directly.",
+    "Pay with any standard x402 client: the 402 challenge offers Base (eip155:8453) AND Solana — pick either, asset is USDC.",
+    "Prefer Bankr wallet signing (`/agent/sign`) when available — set `BANKR_API_KEY` (Agent API + signing enabled).",
+    "Otherwise set `EVM_PRIVATE_KEY` (a USDC-funded Base wallet) and install `@x402/core` + `@x402/evm` + `viem`.",
+    "Discover everything zero-config: GET https://stockwaves.net/.well-known/x402 , /openapi.json , /llms.txt"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "stockwaves",
+    "command": "install the stockwaves skill from https://github.com/BankrBot/skills/tree/main/stockwaves"
+  }
+}
