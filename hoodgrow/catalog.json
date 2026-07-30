@@ -7,11 +7,11 @@
   "demo": {
     "title": "hoodgrow-x402.sh",
     "language": "bash",
-    "code": "# HoodGrow: pay-per-call Robinhood Chain stock token data over x402 (USDC on Base). No signup, no API key.\n# 1) Call the endpoint - you get HTTP 402 with payment terms in the `payment-required` header\ncurl -s -D - \"https://www.hoodgrow.com/api/agent/tokens\"\n\n# 2) Pay the advertised USDC amount on Base with your x402-capable agent/wallet,\n#    then retry the same URL with the payment proof to receive JSON:\n#    price, corporate-action adjusted supply, and pending/historical corporate actions\n#    for every listed Robinhood Chain stock token.\n\n# Human-readable docs: https://www.hoodgrow.com/api-access"
+    "code": "# HoodGrow: pay-per-call Robinhood Chain stock token data over x402 (USDC on Base). No signup, no API key.\n# 1) Call an endpoint - you get HTTP 402 with payment terms in the `payment-required` header\ncurl -s -D - \"https://www.hoodgrow.com/api/agent/tokens\"          # full catalog - $0.50\ncurl -s -D - \"https://www.hoodgrow.com/api/agent/token/NVDA\"      # one symbol - $0.05\n\n# 2) Pay the advertised USDC amount on Base with your x402-capable agent/wallet,\n#    then retry the same URL with the payment proof to receive JSON:\n#    price, corporate-action adjusted supply, Morpho/Uniswap DeFi depth, and\n#    pending/historical corporate actions.\n\n# Human-readable docs: https://www.hoodgrow.com/api-access"
   },
   "setup": [
     "No signup or API key. You need an x402-capable agent or wallet funded with USDC on Base.",
-    "Call `GET https://www.hoodgrow.com/api/agent/tokens`.",
+    "Call `GET https://www.hoodgrow.com/api/agent/tokens` (full catalog, $0.50) or `GET https://www.hoodgrow.com/api/agent/token/{symbol}` (one token, $0.05).",
     "On HTTP 402, pay the advertised USDC amount on Base and retry to receive structured JSON."
   ],
   "install": {
