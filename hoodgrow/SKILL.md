@@ -53,4 +53,8 @@ Same shape as above, scoped to one token (e.g. `/api/agent/token/NVDA`) — use 
 
 On first call to either endpoint (no prior payment), the response is `HTTP 402` with payment terms encoded in the `payment-required` response header; pay the quoted USDC amount on Base and retry with the payment proof to receive the JSON response.
 
+## Rate limits
+
+Both endpoints default to 30 requests/minute per IP for x402/pay-per-call callers. A `429` means back off, not that something is wrong — respect the `Retry-After` header rather than retrying immediately (a retry after a paid call may also risk a duplicate payment, see above). Need more sustained throughput (algo trading, continuous polling)? A persistent API key with its own higher limit is available — see "Getting access" at https://www.hoodgrow.com/api-access.
+
 Human-readable version of the same data: https://www.hoodgrow.com/api-access
