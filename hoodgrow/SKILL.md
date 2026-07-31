@@ -57,4 +57,12 @@ On first call to either endpoint (no prior payment), the response is `HTTP 402` 
 
 Both endpoints default to 30 requests/minute per IP for x402/pay-per-call callers. A `429` means back off, not that something is wrong — respect the `Retry-After` header rather than retrying immediately (a retry after a paid call may also risk a duplicate payment, see above). Need more sustained throughput (algo trading, continuous polling)? A persistent API key with its own higher limit is available — see "Getting access" at https://www.hoodgrow.com/api-access.
 
+## SDKs
+
+Official thin clients if you'd rather not call the endpoints raw — both handle x402 payment (or a bearer key) and give typed responses instead of raw JSON:
+- TypeScript: `npm i hoodgrow` — https://github.com/MeMikko/hoodgrow-ts
+- Python: `pip install hoodgrow` — https://github.com/MeMikko/hoodgrow-py
+
+Same payment-safety invariants above still apply when using an SDK — it wraps the HTTP calls, it doesn't change what you're paying or to whom.
+
 Human-readable version of the same data: https://www.hoodgrow.com/api-access
