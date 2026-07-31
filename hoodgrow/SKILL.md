@@ -63,6 +63,8 @@ Official thin clients if you'd rather not call the endpoints raw — both handle
 - TypeScript: `npm i hoodgrow` — https://github.com/MeMikko/hoodgrow-ts
 - Python: `pip install hoodgrow` — https://github.com/MeMikko/hoodgrow-py
 
-Same payment-safety invariants above still apply when using an SDK — it wraps the HTTP calls, it doesn't change what you're paying or to whom.
+Already an MCP client (Claude Desktop, Claude Code, another MCP host)? `npx hoodgrow-mcp` runs an MCP server exposing `get_catalog`, `get_token`, and `get_corporate_actions` as tools — set `HOODGROW_API_KEY` or `HOODGROW_PRIVATE_KEY` in its env, no code to write: https://github.com/MeMikko/hoodgrow-mcp
+
+Same payment-safety invariants above still apply when using an SDK or the MCP server — they wrap the HTTP calls, they don't change what you're paying or to whom.
 
 Human-readable version of the same data: https://www.hoodgrow.com/api-access

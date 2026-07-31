@@ -13,7 +13,7 @@
     "No signup or API key. You need an x402-capable agent or wallet funded with USDC on Base.",
     "Call `GET https://www.hoodgrow.com/api/agent/tokens` (full catalog, $0.50) or `GET https://www.hoodgrow.com/api/agent/token/{symbol}` (one token, $0.05).",
     "On HTTP 402, pay the advertised USDC amount on Base and retry to receive structured JSON.",
-    "Or skip raw HTTP: `npm i hoodgrow` / `pip install hoodgrow` for a typed client that handles x402 payment for you."
+    "Or skip raw HTTP: `npm i hoodgrow` / `pip install hoodgrow` for a typed client that handles x402 payment for you, or `npx hoodgrow-mcp` for an MCP server if your agent is an MCP client."
   ],
   "install": {
     "type": "bankr",
