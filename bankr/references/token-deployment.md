@@ -210,8 +210,6 @@ Every trade pays a **0.7% swap fee on the pool, and 95% of it goes to you** — 
 | BNKR buyback (via hook) | 0.2375% |
 | Protocol (Doppler) | ~0.0875% |
 
-The LP fee goes to your side too — it compounds inside your token's own pool, strengthening its liquidity on every swap and never needing to be claimed. Counting it, the creator side totals **0.95% of volume**.
-
 **Fee schedules are fixed at launch and never change retroactively.** Tokens launched before the current structure keep the schedule they launched with: the creator's 95% of the 0.7% pool fee works exactly the same, only the hook add-on differs. Claiming, redirecting, and transferring all behave identically on older tokens.
 
 Fees accumulate in your token and WETH and can be claimed anytime.
