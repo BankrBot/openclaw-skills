@@ -20,7 +20,7 @@ Preflight: `GET https://api.hood.markets/health` → `{ "ok": true, "service": "
 |------|------|
 | Token page | `https://hood.markets/?token=0x…` |
 | Launch | `https://hood.markets/` |
-| Explorer | `https://robinhoodchain.blockscout.com/…` |
+| Explorer | `https://robinscan.io/…` |
 | DexScreener | `https://dexscreener.com/robinhood/0x…` |
 | Uniswap | `https://app.uniswap.org/…chain=robinhood…` |
 | Bankr submit | `https://api.bankr.bot/wallet/submit` only |
