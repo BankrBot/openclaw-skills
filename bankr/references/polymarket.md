@@ -53,6 +53,18 @@ curl "https://api.bankr.bot/polymarket/positions" \
 
 Only positions worth more than $0 are redeemed — resolved losers have nothing to claim, so they're skipped rather than reported as failed redemptions.
 
+### Unspent Deposit-Wallet Collateral
+
+Betting funds flow through a transient Polymarket deposit wallet (fund → bet → sell → auto-sweep back), so a non-zero balance sitting there is always an anomaly — a bet that didn't go through, an interrupted sweep. The positions view now **reports that balance whenever it's non-zero**, including when you have no positions at all.
+
+Read it for what it is: unspent collateral, not a position and not winnings. You can bet with it, or recover it:
+
+```
+"sweep my polymarket deposit wallet"
+```
+
+This matters because "$0.00 claimable" is a truthful answer that can still hide money — the collateral isn't redeemable, because it was never staked. If a balance looks unaccounted for, check here before concluding the funds are gone.
+
 ## How Betting Works
 
 ### Share-Based System

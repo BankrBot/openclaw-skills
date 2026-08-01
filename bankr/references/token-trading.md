@@ -59,6 +59,8 @@ Both balances update after a wrap or unwrap, so you can check your portfolio imm
 - If slippage is exceeded, the transaction fails safely
 - You can specify: "with 1% slippage"
 
+**Via the Wallet API**, set it explicitly with `slippageBps` (10–2000, default 500 = 5%) on `/wallet/swap-quote` and `/wallet/swap`. It always shapes the quote's `minBuyAmount`, but only Relay-routed pairs — cross-chain, Solana, and the relay-first chains, tokenized-stock legs excepted — carry your full tolerance into the fill. On the same-chain EVM aggregator path the execution re-quote is deliberately clamped to **2% (200 bps)**; the gap between the looser quote tolerance and the tighter execution tolerance is headroom for price drift between quote and submit. A 2000 bps quote does not execute at 2000 bps there.
+
 ## Common Issues
 
 | Issue | Resolution |
