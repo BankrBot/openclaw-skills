@@ -25,6 +25,12 @@ USD limits accept `1` to `1,000,000`. Setting `0` is rejected — disable the li
 
 Enabled by default at **15%**, adjustable from **1% to 100%** or turned off on the Security page. Before a swap is signed, Bankr estimates its price impact (how far the trade moves the pool price) and rejects it when the estimate exceeds the limit — this protects against catastrophic fills on thin or low-liquidity pools while leaving normal trading (well under the threshold) untouched. The guard applies to user-initiated swaps across chains; when impact can't be estimated it fails open, and slippage plus minimum-received bounds still protect the fill.
 
+The check runs against the **fee-exclusive** pool impact, not the display estimate — over the Wallet API that's the quote's `swapImpactBps` (`priceImpactBps` is the display figure, which folds in token taxes). Your configured ceiling comes back on the quote as `maxPriceImpactBps` (`null` when protection is off), so you can decide before spending an execution call.
+
+Distinguish the two rejections you can get: a **`400`** is the venue refusing the trade because the pool can't absorb it (retry smaller); a **`403`** is your own price-impact protection rejecting the fresh execution quote. The `403` is not an auth or location failure.
+
+**One venue fails closed rather than open.** A brand-new Solana token still on its Raydium LaunchLab bonding curve exposes no impact figure at all, so it can't be checked against your limit. Rather than fill an unguardable venue, Bankr refuses and surfaces a clean no-route — so with price-impact protection enabled, those bonding-curve fallback swaps are rejected by design. Turn the limit off if you need them; the `minBuyAmount` floor still applies inside the fill.
+
 ### Pricing & Fail-Closed Behavior
 
 Bankr prices each transaction at submission time using on-chain quotes (0x for EVM, Jupiter for Solana). If pricing is unavailable and a USD limit is enabled, the transaction is **rejected** rather than waved through. Disable the limit if you need to proceed unpriced.
@@ -137,7 +143,7 @@ For `/agent/submit`:
 | Swaps | Token buy/sell/swap across all chains |
 | Transfers | Send tokens, NFTs |
 | NFT Operations | Purchase, mint NFTs |
-| Staking | Stake/unstake operations |
+| Staking | Unstake / redeem operations (BNKR staking is withdraw-only — new deposits are deprecated) |
 | Orders | Limit orders, stop losses |
 | Token Launches | Deploy ERC20/SPL tokens |
 | Leverage | Open/close/modify positions |

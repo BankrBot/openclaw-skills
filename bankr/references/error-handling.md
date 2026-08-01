@@ -100,10 +100,24 @@ bankr agent "What is my balance?"
 | **401** | Unauthorized | Fix API key (see Authentication section) |
 | **402** | Payment required | For LLM Gateway: top up via `bankr llm credits add 25` or at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) (`bankr llm credits` to check). For Agent API: ensure wallet has funds for fees |
 | **403** | Forbidden | Agent API access not enabled — enable at https://bankr.bot/api-keys |
+| **409** | Conflict | A request with the same `idempotencyKey` is still processing, or a pending transaction is in the way — wait, don't resubmit under a new key |
 | **429** | Rate limited | Wait and retry with exponential backoff |
 | **500** | Server error | Retry after delay |
-| **502** | Bad gateway | Temporary issue, retry after delay |
+| **502** | Bad gateway | Temporary issue, retry after delay — **except** a LaunchLab fill, which may already be on-chain (see below) |
 | **503** | Service unavailable | Service maintenance, retry later |
+| **504** | Confirmation timeout | **Do not blind-retry** — the transaction may already be on-chain (see below) |
+
+### Retry Safety on `/wallet/swap`
+
+Not every failure is safe to retry. Sort them into three buckets:
+
+| Bucket | Codes | What to do |
+|--------|-------|------------|
+| Pre-broadcast | `400`, `401`, `403`, `429`, `503`, most `502`s | Nothing was sent. Safe to retry — reuse the same `idempotencyKey` |
+| **May be on-chain** | `504`, and a `502` on a Solana LaunchLab fill | The transaction **was broadcast**; only the confirmation is missing. Check the wallet's activity for the hash **before** retrying — an automatic retry can execute a second swap |
+| Terminal | `400` validation failures | Fix the request; retrying unchanged won't help |
+
+Sending an `idempotencyKey` (a UUID) on every execution is the cheap insurance here: a repeat POST with the same key returns the original result rather than broadcasting again, which turns an ambiguous network timeout into a safe retry.
 
 ## Network/Connection Errors
 

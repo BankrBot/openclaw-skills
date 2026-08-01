@@ -197,10 +197,40 @@ Launch ERC20 tokens on Base or Robinhood Chain. New launches create a Uniswap V4
 |----------|-------|
 | **Supply** | Fixed 100 billion (not mintable after deployment) |
 | **Pool** | Uniswap V4 |
-| **Swap fee** | 0.7% per trade |
-| **Fee split** | 95% creator / 5% protocol (Doppler) |
+| **Pool swap fee** | 0.7% per trade — **95% to the creator** |
+| **All-in swap fee** | 1.75% of volume (pool fee + hook-added legs) |
+
+Every trade pays a **0.7% swap fee on the pool, and 95% of it goes to you** — 0.665% of trading volume, paid directly and claimable anytime. On top of that the hook adds the Bankr protocol fee + BNKR buyback and LP fee:
+
+| Recipient | Share of volume |
+|-----------|-----------------|
+| **Creator (you)** — 95% of the 0.7% pool swap fee, claim anytime | **0.665%** |
+| **LP fee** (via hook) — a second creator-side fee: compounds as permanently locked liquidity in your own pool, strengthening your token's liquidity on every swap | **0.285%** |
+| Bankr protocol fee (via hook) | 0.475% |
+| BNKR buyback (via hook) | 0.2375% |
+| Protocol (Doppler) | ~0.0875% |
+
+**Fee schedules are fixed at launch and never change retroactively.** Tokens launched before the current structure keep the schedule they launched with: the creator's 95% of the 0.7% pool fee works exactly the same, only the hook add-on differs. Claiming, redirecting, and transferring all behave identically on older tokens.
 
 Fees accumulate in your token and WETH and can be claimed anytime.
+
+### Quote-Only Fees (optional, fixed at launch)
+
+By default creator fees accrue as a mix of the launched token and the quote token (e.g. WETH). At launch you can instead opt into **quote-only fees**, so the entire creator share is collected in the quote token. **Your total take is identical either way** — this is a denomination choice, not a rate change.
+
+| How | Syntax |
+|-----|--------|
+| Natural language | "launch a token with quote-only fees" |
+| CLI | `bankr launch --name MyToken --quote-only-fees` |
+| Deploy API | `"quoteOnlyFees": true` |
+| Web | toggle in the launch form |
+
+Two knock-on effects for anyone integrating against a quote-only token:
+
+- **Claiming** — the creator's fee entry lives on the **hook contract's** fees manager rather than the pool initializer, and the whole claim arrives in the quote token with no launched-token leg. The claim APIs resolve the right contract automatically.
+- **Transferring fee rights** — a direct on-chain `updateBeneficiary` call must target the hook address, not the initializer. The Bankr transfer endpoints resolve this for you either way.
+
+Like the fee schedule, this option cannot be changed after launch.
 
 ### Deployment Parameters
 
@@ -214,6 +244,7 @@ Fees accumulate in your token and WETH and can be claimed anytime.
 | **Twitter** | No | Associated tweet / X handle for social proof | "@myproject" |
 | **Telegram** | No | Telegram group | "@mytoken" |
 | **Fee Recipient** | No | Route creator fees to a wallet, ENS, or social handle | "@partner" |
+| **Quote-only fees** | No | Collect all creator fees in the quote token; fixed at launch | `quoteOnlyFees: true` |
 
 ### Prompt Examples
 
@@ -224,6 +255,7 @@ Fees accumulate in your token and WETH and can be claimed anytime.
 - "Create a token on Base"
 - "Launch a token called CoolBot on robinhood"
 - "Launch a token called CoolBot and route fees to @partner"
+- "Launch a token with quote-only fees"
 
 **Claim fees:**
 - "Claim fees for my token MTK"
@@ -246,8 +278,10 @@ High-volume or bot-like deploy patterns can trigger automated spam protections a
 
 ### Fee Structure
 
-- 0.7% swap fee on every trade, split 95% creator / 5% protocol
-- Fees accrue in your token and WETH; claimable anytime via "Claim fees for my token"
+- 0.7% swap fee on the pool, **95% of it to the creator** (0.665% of volume); the hook adds the Bankr protocol fee + BNKR buyback and LP fee on top, 1.75% all-in — see [Token Economics](#token-economics) for the full split
+- The 0.285% LP fee is creator-side as well, strengthening your token's liquidity on every swap — 0.95% of volume working for your side in total
+- Fees accrue in your token and WETH (quote token only on [quote-only](#quote-only-fees-optional-fixed-at-launch) launches); claimable anytime via "Claim fees for my token"
+- Fee schedules are fixed at launch — older tokens keep the schedule they launched with
 - Older tokens launched via Clanker are still claimable — the claim path auto-detects the protocol
 
 ### Deployment Process

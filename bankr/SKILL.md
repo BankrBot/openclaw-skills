@@ -614,7 +614,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - Search prediction markets
 - Check odds
 - Place bets on outcomes
-- View positions
+- View positions — including any unspent collateral left in the Polymarket deposit wallet, which is recoverable with "sweep my polymarket deposit wallet"
 - Redeem winnings
 
 **Reference**: [references/polymarket.md](references/polymarket.md)
@@ -624,6 +624,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - **Hyperliquid** (primary) — Perpetual futures on Hyperliquid L1 with on-chain order book. Crypto, stocks (TSLA, AAPL, NVDA via HIP-3), spot trading. Up to 50x leverage.
 - **Avantis** (secondary) — Perpetuals on Base for crypto, equities (NVDA, TSLA, AAPL, HOOD, and more), forex, and commodities. Equity, forex, and commodity pairs trade during their underlying market hours only.
 - Stop loss, take profit, and position management on both platforms
+- Funding Hyperliquid is a **venue** deposit/withdraw, not a bridge: a deposit only reaches Hyperliquid, a withdrawal only lands on Arbitrum. Name the venue ("deposit $500 to hyperliquid") rather than saying "bridge"; to move withdrawn funds onward, chain a cross-chain swap after the withdrawal
 
 **Reference**: [references/leverage-trading.md](references/leverage-trading.md) | [references/hyperliquid.md](references/hyperliquid.md)
 
@@ -642,7 +643,8 @@ Spot stocks work with swaps, transfers, limit orders, and DCA. Only Robinhood st
 
 ### Token Deployment
 
-- **EVM (Base default, or Robinhood Chain)**: Launch ERC20 tokens via Doppler on a Uniswap V4 pool with customizable metadata and social links. Fixed **100 billion** supply, **0.7%** swap fee split **95% creator / 5% protocol**. Tokens deploy to Base by default; pass a chain (`bankr launch --chain robinhood`) to launch on Robinhood Chain instead. Legacy Clanker tokens remain claimable (claims auto-detect Doppler vs Clanker).
+- **EVM (Base default, or Robinhood Chain)**: Launch ERC20 tokens via Doppler on a Uniswap V4 pool with customizable metadata and social links. Fixed **100 billion** supply. Every trade pays a **0.7% swap fee on the pool and 95% of it goes to you** (0.665% of volume, claimable anytime); the hook adds the Bankr protocol fee + BNKR buyback and LP fee on top, for **1.75% all-in**. The **0.285% LP fee is creator-side too** — it compounds as locked liquidity in your own pool, strengthening your token's liquidity on every swap, so the creator side totals **0.95% of volume**. Tokens deploy to Base by default; pass a chain (`bankr launch --chain robinhood`) to launch on Robinhood Chain instead. Legacy Clanker tokens remain claimable (claims auto-detect Doppler vs Clanker).
+- **Quote-only fees** (EVM, optional): opt in at launch to collect all creator fees in the quote token (e.g. WETH) instead of a mix of the launched token and quote token — your total take is identical either way. Ask for "quote-only fees", pass `quoteOnlyFees: true` to the deploy API, or use `bankr launch --quote-only-fees`. Fixed at launch, like the fee schedule itself.
 - **Solana**: Launch SPL tokens via Raydium LaunchLab with bonding curve and auto-migration to CPMM
 - Creator fee claiming on both chains
 - Fee Key NFTs for Solana (50% LP trading fees post-migration)
@@ -739,9 +741,17 @@ User-controlled settings that apply to every surface — chat, agent, API, CLI. 
 
 If USD pricing is unavailable and a limit is enabled, the transaction is **rejected** (fail-closed) rather than waved through. Your own wallet addresses are always implicitly allowed as recipients.
 
+Spend limits apply to **every** swap path, including cross-chain and Solana legs — the sell side is priced and checked before execution, and a successful swap counts toward your rolling 24h total.
+
+One side effect worth knowing: the price-impact limit also fails closed on venues that can't report an impact figure. The clearest case is a brand-new Solana token still on its LaunchLab bonding curve — with the limit enabled, that fallback is refused rather than filled unguarded. Turn the limit off if you specifically need those fills.
+
 ### Protected-Token Swap Guard
 
 Bankr blocks **swaps** of a small set of protected tokens where swapping is almost always a costly mistake — for example staked positions that should be unwound through their own redeem flow. The block is swap-only: the token stays visible in your portfolio, transferable, and usable with the relevant staking/redeem tools. When a swap is blocked, the agent returns a clear reason pointing you to the correct exit path. This guard applies across the swap/limit/stop/DCA/TWAP tools on the EVM swap paths.
+
+### BNKR Staking Is Withdraw-Only
+
+BNKR staking is deprecated and **no longer accepts new deposits**. Asking the agent to stake BNKR gets an explanation rather than a transaction. Existing stakers keep the full exit path — initiate cooldown, redeem shares, withdraw — and can still view their staked position. Don't build flows that assume a deposit will go through.
 
 ### API-Key Level Controls (bankr.bot/api-keys)
 
@@ -1027,9 +1037,10 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Claim my fee NFT for ROCKET" (post-migration)
 - "Transfer fees for MOON to 7xKXtg..."
 
-**EVM (Clanker):**
+**EVM (Base & Robinhood Chain, via Doppler):**
 
 - "Deploy a token called BankrFan with symbol BFAN on Base"
+- "Launch a token with quote-only fees" (all creator fees collected in the quote token)
 - "Claim fees for my token MTK"
 
 ### LLM Credits
@@ -1084,9 +1095,10 @@ Swap tokens via CLI or Wallet API without AI processing. The **CLI** (`bankr wal
 
 Venue selection is automatic and the Wallet API now covers the same edge cases the agent does — you don't pick a route:
 
-- **Brand-new Solana tokens** still on their Raydium LaunchLab bonding curve fall back to the curve when no aggregator route exists yet, instead of failing with "no route"
-- **Polygon `pUSD` ↔ `USDC.e`** uses the 1:1 on-chain unwrap rather than a DEX quote (`pUSD` isn't reliably DEX-routable)
-- **Robinhood Chain tokenized stocks** are routed to a venue that quotes them, while ordinary Robinhood Chain pairs keep their thin-pool protection
+- **Same-chain EVM** goes through the DEX aggregator, with a direct-pool venue preferred on thin-liquidity chains; **cross-chain and any Solana leg** goes through the bridge/swap aggregator
+- **Brand-new Solana tokens** still on their Raydium LaunchLab bonding curve fall back to the curve when no aggregator route exists yet, instead of failing with "no route". The fallback is narrow: both legs on Solana, a SOL ↔ token pair with an un-migrated curve, a genuine no-route from the aggregator, and **no price-impact limit set on the wallet** — the curve exposes no impact figure to check, so Bankr fails closed rather than fill an unguardable venue. With price-impact protection on, these swaps are rejected by design (the `minBuyAmount` floor still applies inside the fill)
+- **Polygon `pUSD` → `USDC.e`** uses the 1:1 on-chain Offramp unwrap rather than a DEX quote: no fee, no slippage, no price impact. The reverse direction (`USDC.e` → `pUSD`) is quoted like any ordinary pair
+- **Robinhood Chain tokenized stocks** are quoted and filled through the aggregator's RFQ makers, settling against USDG, while ordinary Robinhood Chain pairs keep their thin-pool protection
 
 ```bash
 # CLI — quote only (no execution)
@@ -1102,10 +1114,11 @@ curl -X POST "https://api.bankr.bot/wallet/swap-quote" \
   -d '{"fromChain": "base", "fromToken": "0x...", "toChain": "base", "toToken": "0x...", "amount": "0.1"}'
 
 # REST API — execute (write; pass the quote's minBuyAmount for slippage protection)
+# Always send an idempotencyKey so a retried request can't broadcast a second swap
 curl -X POST "https://api.bankr.bot/wallet/swap" \
   -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"fromChain": "base", "fromToken": "0x...", "toChain": "base", "toToken": "0x...", "amount": "0.1", "minBuyAmount": "..."}'
+  -d '{"fromChain": "base", "fromToken": "0x...", "toChain": "base", "toToken": "0x...", "amount": "0.1", "minBuyAmount": "...", "idempotencyKey": "<uuid>"}'
 
 # REST API — cross-chain (Base → Solana): distinct fromChain/toChain, base58 mint on the Solana leg
 curl -X POST "https://api.bankr.bot/wallet/swap-quote" \
@@ -1114,7 +1127,38 @@ curl -X POST "https://api.bankr.bot/wallet/swap-quote" \
   -d '{"fromChain": "base", "fromToken": "0x...", "toChain": "solana", "toToken": "<base58-mint>", "amount": "25"}'
 ```
 
-The `/wallet/swap*` endpoints take token **contract addresses** — EVM legs use a 0x address (zero address for the chain's native token), Solana legs use a base58 mint; the CLI resolves symbols for you. For a **cross-chain or Solana** swap, set `fromChain`/`toChain` to different chains (or to `solana`) and the endpoints quote/execute the route automatically. Swap output is always returned to your own wallet, so `allowedRecipients` does not apply. Supported EVM chains include `base`, `mainnet`, `polygon`, `unichain`, `arbitrum`, `bnb`, `worldchain`, and `robinhood`, plus `solana`. Swaps of tokenized stocks on `robinhood` require a passed location check on **either leg** — without one the endpoint returns `403` with instructions to verify at the Bankr console. Execution is also checked against your Bankr Terminal per-transaction and daily spend limits (a `403` is returned when a limit would be exceeded).
+The `/wallet/swap*` endpoints take token **contract addresses** — EVM legs use a 0x address (zero address for the chain's native token), Solana legs use a base58 mint; the CLI resolves symbols for you. For a **cross-chain or Solana** swap, set `fromChain`/`toChain` to different chains (or to `solana`) and the endpoints quote/execute the route automatically. Swap output is always returned to your own wallet, so `allowedRecipients` does not apply. Supported EVM chains include `base`, `mainnet`, `polygon`, `unichain`, `arbitrum`, `bnb`, `worldchain`, and `robinhood`, plus `solana`. **Executing** a swap that touches tokenized stocks on `robinhood` requires a passed location check on **either leg** — without one `/wallet/swap` returns `403` with instructions to verify at the Bankr console. Quotes are **not** gated, so a successful `/wallet/swap-quote` is not clearance to execute. Execution is also checked against your Bankr Terminal per-transaction and daily spend limits (a `403` is returned when a limit would be exceeded).
+
+#### Optional swap parameters
+
+| Field | Where | Description |
+|-------|-------|-------------|
+| `slippageBps` | quote + execute | Max slippage tolerance in bps, `10`–`2000`. Defaults to `500` (5%) and sets the quote's `minBuyAmount` |
+| `quoteId` | execute | Echo the `quoteId` from a fresh quote to reuse it and skip re-pricing. Stale, unknown or mismatched ids fall back to a fresh quote silently |
+| `idempotencyKey` | execute | UUID duplicate-submit guard. A repeat POST with the same key returns the original result instead of broadcasting again |
+
+Only `from`, `to` and `minBuyAmount` are guaranteed on a quote response. Depending on the venue that priced it you may also get `feeBps` (`0` = fee-free), `feeWaivedForEcosystemToken`, `slippageBps`, `priceImpactBps` (display estimate), `swapImpactBps` (the fee-exclusive figure execution gates on), `networkCostsUsd`, `maxPriceImpactBps` (your wallet's protection limit), `sellTokenPriceUsd`, `buyTokenPriceUsd`, and `quoteId`. Treat a missing field as `null`/unknown rather than hard-blocking on it.
+
+Two caveats worth coding against:
+
+- **`slippageBps` is clamped at execution on the aggregator path.** It always shapes the quote's `minBuyAmount`, but only Relay-routed pairs (cross-chain, Solana, the relay-first chains — tokenized-stock legs excepted) carry your full tolerance into the fill. Elsewhere the execution re-quote is clamped to **2% (200 bps)** by design, so the gap between a looser quote tolerance and the tighter execution tolerance is headroom for price drift, not the slippage you'll get.
+- **`quoteId` reuse only affects same-chain EVM.** Cross-chain and Solana executions route before the stored-quote lookup, so the id is accepted and ignored there.
+
+#### Swap error semantics
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Invalid body, unsupported chain, same-token swap, amount too small, insufficient balance/gas, untradable pair, venue-side price impact too high, or no Solana address on the wallet |
+| `403` | Read-only key, wallet paused, failed location check, buy token banned or scan-flagged, price impact above **your wallet's** limit, fee beneficiary selling its own fee token, or a spend limit would be exceeded |
+| `409` | A swap with the same `idempotencyKey` is still processing, or a pending transaction is in the way |
+| `429` | Rate limited — safe to retry |
+| `502` | No fresh quote at execution, a Relay fill failed, or a LaunchLab fill was broadcast but couldn't be confirmed |
+| `503` | Swap service temporarily unavailable — safe to retry |
+| `504` | Submitted, but confirmation is taking longer than expected |
+
+> **Never blind-retry a `504` or a LaunchLab `502`.** Both mean the transaction **may already be on-chain** — it was broadcast and only the confirmation is missing. Check the wallet's activity for the hash before retrying. Everything else is either pre-broadcast (safe to retry, ideally with the same `idempotencyKey`) or terminal.
+
+Note the two different price-impact rejections: a `400` is the **venue** refusing the trade (the pool can't absorb it — retry smaller), while a `403` is **your own wallet's** price-impact protection rejecting the fresh execution quote. Don't read that `403` as an auth or location problem.
 
 ### Sign API (Synchronous)
 
