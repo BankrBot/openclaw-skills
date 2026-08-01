@@ -205,12 +205,12 @@ Every trade pays a **0.7% swap fee on the pool, and 95% of it goes to you** — 
 | Recipient | Share of volume |
 |-----------|-----------------|
 | **Creator (you)** — 95% of the 0.7% pool swap fee, claim anytime | **0.665%** |
-| **LP fee** (via hook) — compounds as permanently locked liquidity in your own pool | **0.285%** |
+| **LP fee** (via hook) — a second creator-side fee: compounds as permanently locked liquidity in your own pool, strengthening your token's liquidity on every swap | **0.285%** |
 | Bankr protocol fee (via hook) | 0.475% |
 | BNKR buyback (via hook) | 0.2375% |
 | Protocol (Doppler) | ~0.0875% |
 
-Because the LP fee compounds inside your token's own pool — deepening its liquidity floor with every trade, and never needing to be claimed — the creator side totals **0.95% of volume**.
+The LP fee goes to your side too — it compounds inside your token's own pool, strengthening its liquidity on every swap and never needing to be claimed. Counting it, the creator side totals **0.95% of volume**.
 
 **Fee schedules are fixed at launch and never change retroactively.** Tokens launched before the current structure keep the schedule they launched with: the creator's 95% of the 0.7% pool fee works exactly the same, only the hook add-on differs. Claiming, redirecting, and transferring all behave identically on older tokens.
 
@@ -281,6 +281,7 @@ High-volume or bot-like deploy patterns can trigger automated spam protections a
 ### Fee Structure
 
 - 0.7% swap fee on the pool, **95% of it to the creator** (0.665% of volume); the hook adds the Bankr protocol fee + BNKR buyback and LP fee on top, 1.75% all-in — see [Token Economics](#token-economics) for the full split
+- The 0.285% LP fee is creator-side as well, strengthening your token's liquidity on every swap — 0.95% of volume working for your side in total
 - Fees accrue in your token and WETH (quote token only on [quote-only](#quote-only-fees-optional-fixed-at-launch) launches); claimable anytime via "Claim fees for my token"
 - Fee schedules are fixed at launch — older tokens keep the schedule they launched with
 - Older tokens launched via Clanker are still claimable — the claim path auto-detects the protocol
