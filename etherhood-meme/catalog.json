@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "etherhood-meme",
+  "provider": "bankrhood",
+  "providerUrl": "https://github.com/bankrhood",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "etherhood-meme",
+    "command": "install the etherhood-meme skill from https://github.com/BankrBot/skills/tree/main/etherhood-meme"
+  }
+}
