@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "etherhood-content",
+  "provider": "bankrhood",
+  "providerUrl": "https://github.com/bankrhood",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "etherhood-content",
+    "command": "install the etherhood-content skill from https://github.com/BankrBot/skills/tree/main/etherhood-content"
+  }
+}
