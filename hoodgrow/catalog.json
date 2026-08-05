@@ -7,13 +7,13 @@
   "demo": {
     "title": "hoodgrow-x402.sh",
     "language": "bash",
-    "code": "# HoodGrow: pay-per-call Robinhood Chain stock token data over x402 (USDC on Base). No signup, no API key.\n# 1) Call an endpoint - you get HTTP 402 with payment terms in the `payment-required` header\ncurl -s -D - \"https://www.hoodgrow.com/api/agent/tokens\"          # full catalog - $0.50\ncurl -s -D - \"https://www.hoodgrow.com/api/agent/token/NVDA\"      # one symbol - $0.05\n\n# 2) Pay the advertised USDC amount on Base with your x402-capable agent/wallet,\n#    then retry the same URL with the payment proof to receive JSON:\n#    price, corporate-action adjusted supply, Morpho/Uniswap DeFi depth, and\n#    pending/historical corporate actions.\n\n# Human-readable docs: https://www.hoodgrow.com/api-access"
+    "code": "# HoodGrow: Robinhood Chain stock token data. Pay-per-call over x402 (USDC on Base, no signup),\n# or get a free self-serve API key at https://www.hoodgrow.com/builders (300 req/day, no payment).\n# 1) Call an endpoint - no key means HTTP 402 with payment terms in the `payment-required` header\ncurl -s -D - \"https://www.hoodgrow.com/api/agent/tokens\"          # full catalog - $0.50\ncurl -s -D - \"https://www.hoodgrow.com/api/agent/token/NVDA\"      # one symbol - $0.05\ncurl -s -D - \"https://www.hoodgrow.com/api/corporate-actions\"     # corporate actions only - $0.05\n\n# 2) Pay the advertised USDC amount on Base with your x402-capable agent/wallet,\n#    then retry the same URL with the payment proof to receive JSON:\n#    price, corporate-action adjusted supply, Morpho/Uniswap DeFi depth, and\n#    pending/historical corporate actions. Or add `-H \"Authorization: Bearer <key>\"`\n#    with a free or paid key instead of paying per call.\n\n# Human-readable docs: https://www.hoodgrow.com/api-access"
   },
   "setup": [
-    "No signup or API key. You need an x402-capable agent or wallet funded with USDC on Base.",
-    "Call `GET https://www.hoodgrow.com/api/agent/tokens` (full catalog, $0.50) or `GET https://www.hoodgrow.com/api/agent/token/{symbol}` (one token, $0.05).",
-    "On HTTP 402, pay the advertised USDC amount on Base and retry to receive structured JSON.",
-    "Or skip raw HTTP: `npm i hoodgrow` / `pip install hoodgrow` for a typed client that handles x402 payment for you, or `npx hoodgrow-mcp` for an MCP server if your agent is an MCP client."
+    "No signup required. Either an x402-capable agent/wallet funded with USDC on Base, or a free self-serve API key from https://www.hoodgrow.com/builders (300 requests/day, no payment).",
+    "Call `GET https://www.hoodgrow.com/api/agent/tokens` (full catalog, $0.50), `GET https://www.hoodgrow.com/api/agent/token/{symbol}` (one token, $0.05), or `GET https://www.hoodgrow.com/api/corporate-actions` (corporate actions only, $0.05).",
+    "With a key: send `Authorization: Bearer <key>`. Without one: on HTTP 402, pay the advertised USDC amount on Base and retry to receive structured JSON.",
+    "Or skip raw HTTP: `npm i hoodgrow` / `pip install hoodgrow` for a typed client that handles x402 payment (or a bearer key) for you, or `npx hoodgrow-mcp` for an MCP server if your agent is an MCP client."
   ],
   "install": {
     "type": "bankr",

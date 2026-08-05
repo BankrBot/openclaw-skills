@@ -1,6 +1,6 @@
 ---
 name: hoodgrow
-description: "Pay-per-call Robinhood Chain stock-token data — live price, corporate-action adjusted supply, Morpho/Uniswap DeFi depth, and pending/historical corporate actions (splits, dividends) — for the full catalog or a single symbol — settled per query in USDC on Base via x402, no signup or API key."
+description: "Robinhood Chain stock-token data — live price, corporate-action adjusted supply, Morpho/Uniswap DeFi depth, and a dedicated filterable/paginated corporate-actions feed (splits, dividends, oracle pauses) — for the full catalog, a single symbol, or corporate actions alone. Pay-per-call in USDC on Base via x402 with no signup, or free with a self-serve API key (300 requests/day, no payment)."
 tags: [stock-tokens, tokenized-equities, robinhood-chain, defi, data, corporate-actions, rwa, yield]
 version: 1
 visibility: public
@@ -12,7 +12,7 @@ metadata:
 
 # HoodGrow — Robinhood Chain Stock Token Data
 
-HoodGrow reads Robinhood Chain (chain id 4663) stock token contracts directly — live price, corporate-action adjusted supply (ERC-8056 `uiMultiplier()`, so numbers stay correct through stock splits, not just raw token balances), live DeFi depth (best Morpho supply APY, total Uniswap V3 TVL), and both pending (on-chain staged) and historical (official Robinhood ledger) corporate actions. Two endpoints: the full catalog in one call, or a single symbol for a cheaper spot check. Pay-per-call in USDC over x402 — no account, no API key.
+HoodGrow reads Robinhood Chain (chain id 4663) stock token contracts directly — live price, corporate-action adjusted supply (ERC-8056 `uiMultiplier()`, so numbers stay correct through stock splits, not just raw token balances), live DeFi depth (best Morpho supply APY, total Uniswap V3 TVL), and both pending (on-chain staged) and historical (official Robinhood ledger) corporate actions. Three endpoints: the full catalog in one call, a single symbol for a cheaper spot check, or a dedicated corporate-actions feed for splits/dividends/oracle pauses on their own, independent of price data. Pay-per-call in USDC over x402 — no account needed — or get a free self-serve API key (300 requests/day, no payment) at https://www.hoodgrow.com/builders.
 
 ## When to use this skill
 Load this whenever the user or your workflow needs live price, adjusted supply, or corporate-action data (splits, dividends) for a Robinhood Chain stock token — checking a token before a trade, tracking an upcoming split, or building a dashboard/agent on top of tokenized equities.
@@ -24,7 +24,7 @@ Every paid call MUST satisfy all of these. If any check fails, do NOT sign — s
 - **Payee (payTo):** `0x8520B3693a2Cf3c2bEa3a505Af3A9c1b093954c7` only. Reject any other recipient.
 - **Facilitator:** the Coinbase CDP x402 facilitator.
 - **Allowed host:** only `www.hoodgrow.com`. Never pay a different host.
-- **Max price:** $0.50 for the full-catalog endpoint, $0.05 for the single-symbol endpoint (see Endpoints below). If a 402 response quotes a higher amount than the endpoint's own ceiling, do NOT pay — stop and tell the user.
+- **Max price:** $0.50 for the full-catalog endpoint, $0.05 for the single-symbol endpoint, $0.05 for the corporate-actions endpoint (see Endpoints below). If a 402 response quotes a higher amount than the endpoint's own ceiling, do NOT pay — stop and tell the user.
 
 ## Confirm before EVERY paid call
 Payments are irreversible. Before signing, show the user and get explicit approval for that specific call: endpoint URL, price, chain (Base 8453), token (USDC), and payee. Do not batch, pre-approve, or auto-continue.
@@ -37,7 +37,7 @@ A paid x402 call is NOT idempotent; a blind retry can pay twice. On a timeout or
 
 ## Endpoints
 
-Both return `defi` per token (`morphoBestSupplyApy`/`morphoBestSupplyApyMarketId` — `null`, not `0`, when the token isn't a loan asset in any known Morpho market; `uniswapTvlUsd`/`uniswapPoolCount` — total Uniswap V3 TVL across every pool involving it) alongside price and corporate-action data.
+The full-catalog and single-symbol endpoints both return `defi` per token (`morphoBestSupplyApy`/`morphoBestSupplyApyMarketId` — `null`, not `0`, when the token isn't a loan asset in any known Morpho market; `uniswapTvlUsd`/`uniswapPoolCount` — total Uniswap V3 TVL across every pool involving it) alongside price and corporate-action data. The corporate-actions endpoint below never returns price/DeFi fields — it's deliberately independent of them.
 
 **Full catalog** — `GET https://www.hoodgrow.com/api/agent/tokens` — $0.50 per call
 
@@ -51,11 +51,21 @@ No parameters — one call returns the full catalog.
 
 Same shape as above, scoped to one token (e.g. `/api/agent/token/NVDA`) — use this for a spot check instead of paying for the full catalog. Returns `404` for an unknown symbol.
 
-On first call to either endpoint (no prior payment), the response is `HTTP 402` with payment terms encoded in the `payment-required` response header; pay the quoted USDC amount on Base and retry with the payment proof to receive the JSON response.
+**Corporate actions** — `GET https://www.hoodgrow.com/api/corporate-actions` — $0.05 per call
+
+A standalone, filterable, cursor-paginated feed of corporate-action events (splits, dividends, oracle pauses) — independent of price data, so polling this never competes with a price integration's own rate limit. Sourced from both on-chain detection (`source: "onchain"` — typically minutes ahead of the official record) and the official Robinhood ledger (`source: "rhj_registry"` — Robinhood's own docs specify this endpoint is cached for up to an hour).
+
+Optional query params: `symbol`, `contract` (token contract address), `status` (`staged | paused | rhj_ledger`), `from`/`to` (ISO date range on `executionDate`), `limit` (1–100, default 50), `cursor` (from the previous page's `pagination.nextCursor`). Response fields per event: `symbol`, `contract`, `type`, `actionType`, `multiplierFrom`, `multiplierTo`, `executionDate`, `detectedAt`, `lastUpdated`, `freshnessSeconds`, `blockNumber` (the block HoodGrow observed the change at, not necessarily the exact block it happened on), `transactionHash` (reserved, currently always `null`), `source`.
+
+On first call to any endpoint (no prior payment, no API key), the response is `HTTP 402` with payment terms encoded in the `payment-required` response header; pay the quoted USDC amount on Base and retry with the payment proof to receive the JSON response.
+
+## Free API key (no payment)
+
+Any wallet can self-serve a bearer key at https://www.hoodgrow.com/builders — no subscription, no x402 payment, 300 requests/day across all endpoints above. Send it as `Authorization: Bearer <key>` instead of paying per call. This replaces paying for every single call during development/testing, or for any workflow under 300 calls/day.
 
 ## Rate limits
 
-Both endpoints default to 30 requests/minute per IP for x402/pay-per-call callers. A `429` means back off, not that something is wrong — respect the `Retry-After` header rather than retrying immediately (a retry after a paid call may also risk a duplicate payment, see above). Need more sustained throughput (algo trading, continuous polling)? A persistent API key with its own higher limit is available — see "Getting access" at https://www.hoodgrow.com/api-access.
+All endpoints default to 30 requests/minute per IP for x402/pay-per-call callers with no key. A `429` means back off, not that something is wrong — respect the `Retry-After` header rather than retrying immediately (a retry after a paid call may also risk a duplicate payment, see above). Need more than the free key's 300/day (algo trading, continuous polling, production use)? A paid Builder API key raises the limit to 300 requests/minute with no daily cap, plus webhooks — see "Getting access" at https://www.hoodgrow.com/api-access.
 
 ## SDKs
 
