@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "unitreex",
+  "provider": "UnitreeX",
+  "providerUrl": "https://unitreex.club/",
+  "logo": "unitreex.png",
+  "demo": {
+    "title": "unitreex.sh",
+    "language": "bash",
+    "code": "# Make the robot wave hello\nbankr prompt \"using the unitreex skill, wave hello on my Unitree\"\n\n# Check robot state and battery\nbankr prompt \"using the unitreex skill, check my robot's state\"\n\n# Multi-step motion: stand up, balance, walk forward\nbankr prompt \"using the unitreex skill, tell my robot to come here\"\n\n# Shake hands\nbankr prompt \"using the unitreex skill, shake hands with the G1\""
+  },
+  "setup": [
+    "Install: `npx skills add unitreex`",
+    "Run the bridge on your robot's LAN: https://github.com/richard7463/unitree-skill (mock mode works with no hardware)",
+    "Expose the bridge via cloudflared/ngrok and set `BRIDGE_URL` + `BRIDGE_TOKEN` env vars",
+    "Say \"wave hello on my Unitree\" — the robot moves"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "unitreex",
+    "command": "install the unitreex skill from https://github.com/BankrBot/skills/tree/main/unitreex"
+  }
+}
