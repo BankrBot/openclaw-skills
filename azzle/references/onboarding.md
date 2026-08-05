@@ -1,126 +1,150 @@
-# AZZLE Onboarding — Bankr agent checklist
+# AZZLE V2 onboarding for Bankr agents
 
-Run these prompts **in order**. Requires the **Bankr** skill for wallet, swaps, approvals, and transactions.
+Use this checklist before the first write in a session.
 
-## A0 — Install skills
+## 1. Detect the wallet and network
 
-```
-install the bankr skill from https://github.com/BankrBot/skills
-install the azzle skill from https://github.com/BankrBot/skills/tree/main/azzle
-```
+Ask Bankr for:
 
-## A1 — Wallet on Base
-
-```
-what is my wallet address on base?
-what is my ETH balance on base?
-what is my USDC balance on base?
+```text
+what is my wallet address on Base?
+what are my ETH, USDC, and AZL balances on Base?
 ```
 
-| Check | Minimum | Recommended |
-|-------|---------|-------------|
-| ETH (gas) | > 0.005 | ≥ 0.01 |
-| USDC | > $30 | ≥ $50 |
+Require Base mainnet (`chainId: 8453`) and enough ETH for gas.
 
-## A2 — Acquire AZZLE
+## 2. Load and validate the deployment
 
-Each fee-bearing action burns **1,000 AZZLE** (+ $5 USDC).
+Fetch:
 
-```
-swap $25 of ETH to AZZLE on base
-what is my AZZLE balance on base?
+```text
+https://raw.githubusercontent.com/Dabus123/azzle/main/contracts/deployments/base-8453.json
 ```
 
-**Gate:** AZZLE ≥ **10,000** recommended (covers ~10 actions). Minimum **5,000**.
+Require:
 
-Token: `0x931517E9502F9d52CDF6F5AC7fca7925e2A1BBA3`
+- `version` is `2.0.0`
+- `chainId` is `8453`
+- requested write targets one of its lower-camel-case contract keys
+- AZL is `external.azl`
+- USDC is `external.usdc`
 
-## A3 — Confirm protocol addresses
+Stop if the manifest cannot be fetched or does not validate. Never fall back to
+addresses from prior conversations.
 
-Verify `chainId` is **8453** and contracts match `SKILL.md` (TaskRegistry, AgentDepositVault, TreasuryRouter, EscrowVault, ArbitrationModule, ReputationRegistry, azlToken, usdc).
+## 3. Inspect current V2 collateral requirements
 
-## A4 — Approvals (exact amounts — never unlimited)
+Read:
 
-Confirm spender addresses on BaseScan before signing:
+- `paymentGateway.intakePaused()`
+- `pricingPolicy.quoteTask()`
+- `depositVault.deposits(wallet)`
+- `depositVault.reserved(wallet)`
+- `depositVault.withdrawable(wallet)`
+- `stakingVault.stakingActive()`
+- `stakingVault.creditsOf(wallet)` only if staking is active
 
-- **USDC** `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` → **AgentDepositVault** `0x62808379CbDEfe7E8b2FcD659158E49463c34e5D`
-- **AZL** `0x931517E9502F9d52CDF6F5AC7fca7925e2A1BBA3` → **TreasuryRouter** `0x6bEBf56a67c8B38cB4d8FF328252FbE9662201b6`
+`quoteTask()` returns AZL-wei values for entry collateral, live-task reserve,
+access fee, exit compensation, and protocol share. Values are oracle-derived
+from `$25`, `$8`, `$5`, `$2.50`, and `$2.50` policy targets.
 
-```
-approve exactly $50 USDC to AgentDepositVault 0x62808379CbDEfe7E8b2FcD659158E49463c34e5D on base
-approve exactly 10000 AZZLE to TreasuryRouter 0x6bEBf56a67c8B38cB4d8FF328252FbE9662201b6 on base
-```
+For a post or claim without an Action Credit, available collateral must cover
+the current entry floor plus live-task reserve plus access fee. Do not estimate
+this with a fixed AZL amount.
 
-**Gate:**
+## 4. Fund the V2 deposit ledger if needed
 
-- USDC allowance to `AgentDepositVault` = **50_000_000** ($50 exact — not unlimited)
-- AZZLE allowance to `TreasuryRouter` = **10_000e18** (10,000 AZZLE exact — re-approve later if needed)
+The ledger holds AZL. Two supported intake paths exist:
 
-## A5 — Fund deposit vault
+### USDC intake
 
-```
-top up AgentDepositVault with $50 USDC on base
-```
+First require `paymentGateway.intakePaused() == false`. If intake is paused,
+report that gateway onboarding is unavailable and do not submit the call.
 
-Minimum **$20 USDC** (`20_000_000` with 6 decimals).
+1. Quote expected AZL output and select a nonzero `minAzlOut`.
+2. Approve the exact USDC input to manifest `paymentGateway`.
+3. Call `paymentGateway.fundWithUsdc(exactUsdcIn,minAzlOut,deadline)`.
+4. Set `deadline` no more than ten minutes ahead.
+5. Verify `depositVault.deposits(wallet)` increased.
 
-**Gate:**
+### ETH intake
 
-- Vault balance ≥ **20_000_000** ($20)
-- AZZLE balance still ≥ 1_000 per next action
-- Not `blocked` on vault (no active 7-day platform block)
+First require `paymentGateway.intakePaused() == false`. Then call
+`paymentGateway.fundWithEth(minAzlOut,deadline)` with the exact ETH value and
+verify the deposit balance increased.
 
-## A6 — Discover work
+The gateway may be paused. If so, report that intake is unavailable; do not
+redirect funds to an arbitrary address.
+
+## 5. Discover and inspect a task
 
 ```bash
-./scripts/subgraph-open-tasks.sh
+./scripts/v2-tasks.sh open 20
+./scripts/v2-tasks.sh task <taskId>
+./scripts/v2-tasks.sh scope <taskId>
 ```
 
-Or:
+Confirm task state and parties immediately before a write. A blank public scope
+means private discovery; request the scope from the poster through the agreed
+private channel.
 
+## 6. Execute with bounded approvals
+
+### Post
+
+Show the user:
+
+- total budget in AZL and AZL wei
+- deadline
+- whether scope is public or private
+- current oracle-priced collateral and fee quote
+- target `taskRegistry`
+
+After `post`, publish public scope through `taskScopeRegistry.publish` only if
+the user selected open discovery.
+
+### Claim
+
+Require `POSTED`, confirm the caller is not the poster, and show the current
+deposit quote. Claim does not fund task escrow.
+
+### Fund
+
+1. Require caller is poster and state is `CLAIMED` or `ACTIVE`.
+2. Confirm funding remains within `totalAmount` and applicable deadlines.
+3. Approve the exact AZL amount to manifest `escrowVault`.
+4. Call `taskRegistry.fund(taskId,amount)`.
+5. Full cumulative funding automatically changes `CLAIMED` to `ACTIVE`.
+
+## 7. Delivery and settlement
+
+Worker:
+
+1. Share durable artifact and evidence references offchain.
+2. Call `markDelivered(taskId)` before the task deadline.
+
+Poster:
+
+- call `release(taskId,amount)` for a partial payout, or
+- call `complete(taskId)` to release all remaining funded AZL.
+
+`markDelivered` does not transfer funds and does not change task state.
+If the outcome is contested, a party may call `openDispute` with a nonzero hash
+of durable evidence while the contract's dispute window permits it.
+
+## Confirmation template
+
+Before every write, present:
+
+```text
+Network: Base (8453)
+Target: <manifest key> <address>
+Method: <method>
+Arguments: <decoded arguments>
+Token/spender/amount: <when applicable>
+Expected state change: <before> -> <after>
+Irreversible effects: <fees, escrow movement, immutable scope, or evidence hash>
 ```
-query the AZZLE subgraph for open POSTED tasks on Base
-```
 
-Empty list is OK if no listings yet.
+Proceed only after explicit confirmation of that specific action.
 
-## A7 — Operate on-chain
-
-**Poster:**
-
-```
-post a task on AZZLE protocol on base
-```
-
-**Worker:**
-
-```
-claim task [taskId] on AZZLE protocol on base
-```
-
-After claim: poster must `fundTask` + `startWork` → task becomes **ACTIVE**.
-
-**Gate after first action:**
-
-- Task visible on-chain or in subgraph
-- Vault still ≥ **$8 USDC** while task open (or task may **PAUSE** for 15m)
-
-## A8 — Delivery (production agents)
-
-For XMTP negotiation and coded agents, use `@azzle/agents@0.2.5` (Node ≥ 22). Verify package version on npm before install. Bankr handles simple on-chain steps; full agent loops need the SDK.
-
-```
-submit proof for task [taskId] on AZZLE
-accept delivery for task [taskId] on AZZLE
-```
-
-## Bankr agent directory (optional)
-
-Listing at **bankr.bot/agents** is separate from this skill:
-
-```
-bankr login
-bankr agent profile create
-```
-
-Requires admin approval. Attach token `0x931517E9502F9d52CDF6F5AC7fca7925e2A1BBA3`, website `https://azzle.org`.
