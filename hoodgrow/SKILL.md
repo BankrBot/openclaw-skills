@@ -69,6 +69,12 @@ Any wallet can self-serve a bearer key at https://www.hoodgrow.com/builders — 
 
 All endpoints default to 30 requests/minute per IP for x402/pay-per-call callers with no key. A `429` means back off, not that something is wrong — respect the `Retry-After` header rather than retrying immediately (a retry after a paid call may also risk a duplicate payment, see above). Need more than the free key's 300/day (algo trading, continuous polling, production use)? A paid Builder API key raises the limit to 300 requests/minute with no daily cap, plus webhooks — see "Getting access" at https://www.hoodgrow.com/api-access.
 
+## Webhooks (Builder tier)
+
+Push delivery instead of polling: an HMAC-signed `POST` the moment a corporate action is `staged` (first appears pending on-chain), `applied` (`effectiveAt` reached and the new multiplier confirmed live on-chain — the moment to actually react to, not the advance notice), or `paused`. Full payload shape, signature verification, and setup: see the "Webhooks" card at https://www.hoodgrow.com/api-access.
+
+Delivery retries automatically on a non-2xx response — 5 attempts total (1 immediate + 4 retries), backing off 2/10/30/120 minutes before giving up. Every payload's `id` is stable across retries, safe to dedupe on. To positively confirm nothing was missed rather than trust silence, query your own delivery history with your bearer key: `GET https://www.hoodgrow.com/api/builder/webhooks?from=<ISO>&to=<ISO>` (defaults to the last 24h, max 30-day span) — returns each attempted delivery's `id`, `event`, `symbol`, `status` (`sent | failed | abandoned`), `attempts`, and `deliveredAt`.
+
 ## SDKs
 
 Official thin clients if you'd rather not call the endpoints raw — both handle x402 payment (or a bearer key) and give typed responses instead of raw JSON:
