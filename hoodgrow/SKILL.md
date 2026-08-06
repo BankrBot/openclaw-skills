@@ -63,6 +63,8 @@ On first call to any endpoint (no prior payment, no API key), the response is `H
 
 Any wallet can self-serve a bearer key at https://www.hoodgrow.com/builders — no subscription, no x402 payment, 300 requests/day across all endpoints above. Send it as `Authorization: Bearer <key>` instead of paying per call. This replaces paying for every single call during development/testing, or for any workflow under 300 calls/day.
 
+**Always call `www.hoodgrow.com`, never the bare `hoodgrow.com` host.** The bare host redirects to `www.hoodgrow.com`, and `fetch` drops the `Authorization` header on a cross-host redirect per spec — so a bearer-key call to the bare host silently loses its key mid-request and falls through to the x402 paywall instead of erroring. It looks exactly like "no key was sent," not like a bug, so it's easy to misdiagnose. Hardcode `www.hoodgrow.com` (as every example above does) rather than relying on the redirect.
+
 ## Rate limits
 
 All endpoints default to 30 requests/minute per IP for x402/pay-per-call callers with no key. A `429` means back off, not that something is wrong — respect the `Retry-After` header rather than retrying immediately (a retry after a paid call may also risk a duplicate payment, see above). Need more than the free key's 300/day (algo trading, continuous polling, production use)? A paid Builder API key raises the limit to 300 requests/minute with no daily cap, plus webhooks — see "Getting access" at https://www.hoodgrow.com/api-access.
