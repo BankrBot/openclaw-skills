@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "tenjin",
+  "provider": "Tenjin",
+  "providerUrl": "https://tenjin.blog",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "tenjin-search-and-buy.sh",
+    "language": "bash",
+    "code": "# One-shot cited answer - free 200 MISS when nothing fits (never charged on a miss);\n# a hit answers 402 at a flat price, and the x402 auto-pay retry returns the cited answer\ncurl -s https://tenjin.blog/api/answer \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"question\":\"What do current Base whale flows say about BTC regime risk?\"}'\n\n# Or shortlist first: search is FREE and keyless\ncurl -s https://tenjin.blog/api/agent/search \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"question\":\"What do current Base whale flows say about BTC regime risk?\",\"maxPrice\":\"100000\"}'\n\n# Inspect a candidate FREE (402 body = preview + answer card), then buy the same URL:\nbankr x402 call <candidate url>\n# (or any x402 wallet, e.g. npx awal@latest x402 pay <candidate url> --max-amount 1000000 --json)"
+  },
+  "setup": [
+    "No signup, no API key - search and discovery are free; an x402 payment is the authorization for paid reads (USDC on Base, typically $0.01-$0.50 per piece, $1 cap)",
+    "Payments are pinned: sign only 402 challenges from https://tenjin.blog for Base USDC at or below your cap (see x402-registry.json signingPolicy); payTo varies per piece because each read pays the creator's on-chain split",
+    "Reads are gasless for the payer (EIP-3009) - the wallet needs USDC on Base, no ETH",
+    "Publishing is free and needs only an EIP-191 wallet signature (SIWX) - see https://tenjin.blog/skills.md"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "tenjin",
+    "command": "install the tenjin skill from https://github.com/BankrBot/skills/tree/main/tenjin"
+  }
+}

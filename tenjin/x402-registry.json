@@ -1,0 +1,55 @@
+{
+  "$comment": "x402 service listing for Tenjin paid reads and answers. Prices vary per piece; payTo varies per piece (creator split contracts). Pin the origin, chain, asset, and amount cap - not a fixed recipient.",
+  "name": "tenjin-knowledge-marketplace",
+  "title": "Tenjin - buy verified research answers",
+  "description": "Search free, then buy dated, provenance-backed research pieces and cited answers. Settles in USDC on Base.",
+  "version": "tenjin-api-v1",
+  "provider": {
+    "name": "Tenjin",
+    "url": "https://tenjin.blog",
+    "contact": "https://tenjin.blog"
+  },
+  "endpoint": {
+    "method": "GET",
+    "url": "https://tenjin.blog/api/read/{handle}/{slug}",
+    "search": "https://tenjin.blog/api/agent/search",
+    "answer": "https://tenjin.blog/api/answer",
+    "articles": "https://tenjin.blog/api/articles",
+    "trending": "https://tenjin.blog/api/trending",
+    "discovery": "https://tenjin.blog/.well-known/x402",
+    "openapi": "https://tenjin.blog/openapi.json"
+  },
+  "payment": {
+    "scheme": "exact",
+    "network": "eip155:8453",
+    "asset": "USDC",
+    "assetAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "payTo": null,
+    "payToNote": "Varies per piece: each read pays the creator's on-chain split contract quoted by the 402 from tenjin.blog. Trust the pinned origin + asset + network + cap, never a fixed recipient.",
+    "minAmountUsd": 0.01,
+    "maxAmountUsd": 1,
+    "extra": { "name": "USD Coin", "version": "2" }
+  },
+  "allowedOrigins": ["https://tenjin.blog"],
+  "signingPolicy": {
+    "$comment": "Pin-check EVERY x402 challenge against these values BEFORE signing. On any mismatch or missing field, ABORT - do not sign. payTo is intentionally unpinned (per-piece creator splits); the origin pin plus asset/network/amount pins bound the blast radius to one capped USDC read (max $1).",
+    "requireScheme": "exact",
+    "requireAuthorization": "eip3009-transferWithAuthorization",
+    "pinned": {
+      "network": "eip155:8453",
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "resourceOrigin": "https://tenjin.blog",
+      "assetName": "USD Coin",
+      "assetVersion": "2"
+    },
+    "limits": { "maxAmountAtomic": "1000000", "maxValiditySeconds": 300 },
+    "preSignChecks": [
+      "accepts[0].scheme === 'exact' - else abort.",
+      "accepts[0].network === 'eip155:8453' (Base mainnet) - else abort.",
+      "accepts[0].asset === 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 (Base USDC) - else abort; never sign for any other token.",
+      "The 402 challenge came from an https://tenjin.blog/... URL this agent requested - else abort; never pay a challenge relayed from anywhere else.",
+      "accepts[0].amount <= 1000000 (or the user's stricter cap) and equals the piece's listed price - else abort.",
+      "One payment per read: on a slow response, wait it out rather than re-invoking (each retry that re-signs is a new charge)."
+    ]
+  }
+}
