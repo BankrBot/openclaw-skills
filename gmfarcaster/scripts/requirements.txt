@@ -1,0 +1,9 @@
+# Dependencies for the gmfarcaster skill's query.py (x402 buyer).
+# Versions are pinned exactly — this script signs payments with a private key,
+# so don't float ranges; bump deliberately after reviewing the release.
+# The x402[evm] extra pulls web3 + eth-account, which the EVM "exact" signer needs.
+# eth-account >= 0.13.5 is required: x402's EthAccountSigner calls
+# LocalAccount.sign_typed_data, which only exists from 0.13.5 onward.
+x402[evm]==2.14.0
+eth-account==0.13.7
+requests==2.34.2

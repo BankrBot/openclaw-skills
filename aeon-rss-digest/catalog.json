@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-rss-digest",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "rss-digest.sh",
+    "language": "bash",
+    "code": "# Run the configured feed list\naeon-rss-digest\n\n# Config:\n#   feeds:\n#     - url: https://blog.example.com/feed.xml\n#       label: \"Example Blog\"\n#       weight: 2"
+  },
+  "setup": [
+    "Install: `install the aeon-rss-digest skill from https://github.com/BankrBot/skills/tree/main/aeon-rss-digest`",
+    "List feeds + per-feed weights in the config YAML",
+    "Schedule daily (or hourly for fast-moving newsrooms)",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-rss-digest"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-rss-digest",
+    "command": "install the aeon-rss-digest skill from https://github.com/BankrBot/skills/tree/main/aeon-rss-digest"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-tools",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "cast-essentials.sh",
+    "language": "bash",
+    "code": "# abi.ninja — interact with any contract in the browser\n# https://abi.ninja\n\n# Blockscout MCP — agent-readable block explorer\n# claude mcp add https://mcp.blockscout.com/mcp\n\n# Essential cast commands\ncast call 0xTOKEN \"balanceOf(address)(uint256)\" $ADDR\ncast send 0xTOKEN \"transfer(address,uint256)\" $TO $AMT \\\n  --private-key $KEY --rpc-url https://mainnet.base.org\ncast decode-abi \"transfer(address,uint256)\" 0xa9059cbb..."
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/tools/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/tools/SKILL.md for Ethereum dev tools\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/tools/SKILL.md",
+    "reference": "https://ethskills.com/tools/SKILL.md"
+  }
+}

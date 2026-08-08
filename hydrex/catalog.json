@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "hydrex",
+  "provider": "Hydrex",
+  "providerUrl": "https://hydrex.fi",
+  "logo": null,
+  "demo": {
+    "title": "hydrex.sh",
+    "language": "bash",
+    "code": "# Lock HYDX for voting power\nbankr prompt \"Lock 1000 HYDX on Hydrex with rolling lock\"\n\n# Vote optimally to maximize fee earnings\nbankr prompt \"Vote optimally on Hydrex to maximize fees\"\n\n# Deposit single-sided liquidity\nbankr prompt \"Deposit 500 BNKR into the BNKR/WETH strategy on Hydrex\"\n\n# Claim oHYDX rewards and convert to veHYDX\nbankr prompt \"Claim my Hydrex oHYDX rewards\"\nbankr prompt \"Convert my oHYDX to veHYDX on Hydrex\""
+  },
+  "setup": [
+    "Install skill: `npx skills add hydrex`",
+    "Requires Bankr skill for transaction execution",
+    "Fund wallet with HYDX and ETH on Base",
+    "Rolling locks auto-extend to 2-year duration — voting power activates next epoch"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "hydrex",
+    "command": "install the hydrex skill from https://github.com/BankrBot/skills/tree/main/hydrex"
+  }
+}

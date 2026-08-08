@@ -17,9 +17,9 @@ Hydrex distributes rewards as **oHYDX** (options HYDX) — a token that can be c
 ### Natural Language
 
 ```bash
-bankr prompt "Check my Hydrex rewards"
-bankr prompt "How much oHYDX have I earned on Hydrex?"
-bankr prompt "Show my unclaimed Hydrex incentives"
+bankr agent "Check my Hydrex rewards"
+bankr agent "How much oHYDX have I earned on Hydrex?"
+bankr agent "Show my unclaimed Hydrex incentives"
 ```
 
 ### Rewards API
@@ -54,8 +54,8 @@ If `unclaimed == 0`, skip — already fully claimed.
 ### Natural Language
 
 ```bash
-bankr prompt "Claim my Hydrex rewards"
-bankr prompt "Claim all my unclaimed Hydrex incentives"
+bankr agent "Claim my Hydrex rewards"
+bankr agent "Claim all my unclaimed Hydrex incentives"
 ```
 
 ### Steps Bankr Executes
@@ -96,9 +96,9 @@ oHYDX is an options token — exercising it converts it into a locked veHYDX pos
 ### Natural Language
 
 ```bash
-bankr prompt "Convert my oHYDX to veHYDX on Hydrex"
-bankr prompt "Exercise my Hydrex oHYDX rewards into veHYDX"
-bankr prompt "How much does it cost to exercise my oHYDX on Hydrex?"
+bankr agent "Convert my oHYDX to veHYDX on Hydrex"
+bankr agent "Exercise my Hydrex oHYDX rewards into veHYDX"
+bankr agent "How much does it cost to exercise my oHYDX on Hydrex?"
 ```
 
 ### `exerciseVe` Call
@@ -139,16 +139,16 @@ To read oHYDX balance directly — `balanceOf(address)` selector `0x70a08231`, e
 
 ```bash
 # 1. Check what rewards you've earned
-bankr prompt "Check my Hydrex rewards"
+bankr agent "Check my Hydrex rewards"
 
 # 2. Claim all unclaimed oHYDX
-bankr prompt "Claim my Hydrex oHYDX rewards"
+bankr agent "Claim my Hydrex oHYDX rewards"
 
 # 3. Check your oHYDX balance
-bankr prompt "What's my oHYDX balance on Base?"
+bankr agent "What's my oHYDX balance on Base?"
 
 # 4. Convert oHYDX into veHYDX (locking for voting power + fee earnings)
-bankr prompt "Exercise my oHYDX into veHYDX on Hydrex"
+bankr agent "Exercise my oHYDX into veHYDX on Hydrex"
 ```
 
 ## Implementation Guide for Bankr

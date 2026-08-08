@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" fill="none">
+  <rect width="120" height="40" rx="8" fill="#0a0f0c"/>
+  <text x="12" y="27" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#00e676">$hood</text>
+  <text x="68" y="27" font-family="system-ui, sans-serif" font-size="14" fill="#8ea295">.markets</text>
+</svg>

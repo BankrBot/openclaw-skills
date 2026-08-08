@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "zerion",
+  "provider": "Zerion",
+  "providerUrl": "https://zerion.io",
+  "logo": "zerion.svg",
+  "demo": {
+    "title": "zerion-portfolio.sh",
+    "language": "bash",
+    "code": "# Get full portfolio via API key\ncurl \"https://api.zerion.io/v1/wallets/0x.../portfolio?currency=usd\" \\\n  -H \"Authorization: Basic $(echo -n $ZERION_API_KEY: | base64)\"\n\n# Or pay-per-request with x402 (no account needed)\nzerion-cli wallet portfolio 0x... --x402\n\n# All token + DeFi positions\nzerion-cli wallet positions 0x...\n\n# PnL tracking (realized, unrealized, per-asset)\nzerion-cli wallet pnl 0x...\n\n# Full transaction history with human-readable types\nzerion-cli wallet transactions 0x..."
+  },
+  "setup": [
+    "Option A (no signup): use x402 — pay $0.01 USDC per request on Base",
+    "Option B (free key): get API key instantly at dashboard.zerion.io",
+    "Install CLI: `npm install -g zerion-cli`",
+    "Set `ZERION_API_KEY` env var, then run `zerion-cli wallet analyze 0x...`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "zerion",
+    "command": "install the zerion skill from https://github.com/BankrBot/skills/tree/main/zerion"
+  }
+}

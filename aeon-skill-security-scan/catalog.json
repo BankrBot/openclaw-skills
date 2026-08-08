@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-skill-security-scan",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "skill-security-scan.sh",
+    "language": "bash",
+    "code": "# Scan every installed skill\naeon-skill-security-scan\n\n# Scan one\naeon-skill-security-scan target=aeon-distribute-tokens"
+  },
+  "setup": [
+    "Install: `install the aeon-skill-security-scan skill from https://github.com/BankrBot/skills/tree/main/aeon-skill-security-scan`",
+    "Run before enabling any newly installed skill",
+    "Re-run on a schedule to catch updates introduced by other skills",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-skill-security-scan"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-skill-security-scan",
+    "command": "install the aeon-skill-security-scan skill from https://github.com/BankrBot/skills/tree/main/aeon-skill-security-scan"
+  }
+}

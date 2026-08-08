@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "erc-8004",
+  "provider": "8004.org",
+  "providerUrl": "https://www.8004.org/",
+  "logo": null,
+  "demo": {
+    "title": "register-agent.ts",
+    "language": "typescript",
+    "code": "import { SDK } from \"agent0-sdk\";\n\nconst sdk = new SDK({\n  chainId: 1,\n  privateKey: process.env.PRIVATE_KEY,\n  ipfs: \"pinata\",\n  pinataJwt: process.env.PINATA_JWT,\n});\n\n// Register agent on Ethereum (mints ERC-721)\nconst agent = sdk.createAgent(\"MyBot\", \"AI trading agent\");\nconst { agentId } = await agent.registerIPFS();"
+  },
+  "setup": [
+    "Install: `npx skills add erc-8004`",
+    "Get Pinata JWT for IPFS uploads (or use HTTP URL)",
+    "Bridge ETH to mainnet: `./scripts/bridge-to-mainnet.sh 0.01`",
+    "Register: `./scripts/register.sh`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "erc-8004",
+    "command": "install the erc-8004 skill from https://github.com/BankrBot/skills/tree/main/erc-8004"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "gitlawb",
+  "provider": "gitlawb",
+  "providerUrl": "https://gitlawb.com",
+  "logo": null,
+  "demo": {
+    "title": "gitlawb-quickstart.sh",
+    "language": "bash",
+    "code": "# Install gl CLI\nnpm install -g @gitlawb/gl\n\nexport GITLAWB_NODE=https://node.gitlawb.com\n\n# Create cryptographic identity (Ed25519 → DID)\ngl identity new\ngl register\n\nMY_DID=$(gl identity show)\n\n# Create a repo, clone, and push\ngl repo create my-project --description \"first gitlawb repo\"\ngit clone \"gitlawb://$MY_DID/my-project\" && cd my-project\ngit config user.name \"$MY_DID\"\necho \"hello\" > index.html\ngit add . && git commit -m \"initial commit\" && git push origin main\n\n# Open a PR, review, and merge\ngit checkout -b feature/readme\necho \"# my-project\" > README.md\ngit add . && git commit -m \"add readme\" && git push origin feature/readme\ngl pr create my-project --head feature/readme --base main --title \"Add README\"\ngl pr review my-project 1 --status approved\ngl pr merge  my-project 1\n\n# Post a bounty (on-chain escrow, 5% fee on approval)\ngl bounty create my-project --title \"Add dark mode\" --amount 1000"
+  },
+  "setup": [
+    "Install CLI: `npm install -g @gitlawb/gl`",
+    "Create identity: `gl identity new` then `gl register`",
+    "Set node: `export GITLAWB_NODE=https://node.gitlawb.com`",
+    "For MCP integration add `gl mcp serve` to `~/.claude.json` mcpServers",
+    "For Base L2 name registry set `ETH_PRIVATE_KEY` with Base Sepolia ETH for gas"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "gitlawb",
+    "command": "install the gitlawb skill from https://github.com/BankrBot/skills/tree/main/gitlawb"
+  }
+}

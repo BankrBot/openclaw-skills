@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "base",
+  "provider": "Base",
+  "providerUrl": "https://base.org",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "base",
+    "command": "install the base skill from https://github.com/BankrBot/skills/tree/main/base"
+  }
+}

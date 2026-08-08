@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "harness",
+  "provider": "Harness",
+  "providerUrl": "https://tryharness.ai",
+  "logo": null,
+  "demo": {
+    "title": "harness.sh",
+    "language": "bash",
+    "code": "# Pair this Bankr account with your Harness account (get the code from Harness app > Settings > Bankr)\nbankr prompt \"Pair my Harness account with pairing code ABC123\"\n\n# Inspect the Harness trading wallet and portfolio\nbankr prompt \"Show my Harness wallet summary\"\n\n# Fund the Harness wallet from this Bankr wallet\nbankr prompt \"Deposit $5 USDC and $1 of ETH on Base into my Harness wallet\"\n\n# Top up Harness credits with $HARNESS over x402\nbankr prompt \"Buy the $10 Harness credit pack with $HARNESS\"\n\n# Watch or stop what the Harness agent is doing\nbankr prompt \"List my Harness sessions\"\nbankr prompt \"Cancel Harness session <id>\"\n\n# Emergency: revoke the Harness trading wallet\nbankr prompt \"Revoke my Harness trading wallet\""
+  },
+  "setup": [
+    "Create a Harness account at https://tryharness.ai and get a pairing code from Settings > Bankr",
+    "Pair once: the skill signs the domain-separated `harness-pair v2` message with this wallet's EVM key and exchanges it for a management token (secret-store only, never displayed)",
+    "Fund in one deposit: about $5 USDC plus about $1 of ETH (gas) on Base to the provisioned wallet address",
+    "Withdrawals only create a request — the user always approves them inside the Harness app"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "harness",
+    "command": "install the harness skill from https://github.com/BankrBot/skills/tree/main/harness"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "@rhwallet/connect",
+  "version": "0.1.0",
+  "description": "One-time Robinhood Agentic OAuth for Bankr — localhost PKCE, auto-save to Bankr env",
+  "bin": {
+    "rhwallet-connect": "bin/cli.js",
+    "rh-wallet-connect": "bin/cli.js"
+  },
+  "files": ["bin", "lib"],
+  "engines": { "node": ">=18" },
+  "keywords": ["robinhood", "bankr", "agentic", "oauth", "mcp"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rhagent69/Rhagent.git",
+    "directory": "skill/connect"
+  }
+}

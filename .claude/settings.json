@@ -1,0 +1,15 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "permissions": {
+    "deny": [
+      "Read(**/config.json)",
+      "Read(**/.env*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)"
+    ]
+  }
+}

@@ -26,7 +26,7 @@ The wallet address is fetched automatically from Bankr's `/agent/me` endpoint.
 
 ## Register as ERC-8004 Agent
 
-Bankr wallets are smart contract accounts (ERC-4337). To register on the ERC-8004 Identity Registry, submit the registration as an [arbitrary transaction](https://github.com/BankrBot/openclaw-skills/blob/main/bankr/references/arbitrary-transaction.md) via Bankr's `/agent/submit` endpoint.
+Bankr wallets are smart contract accounts (ERC-4337). To register on the ERC-8004 Identity Registry, submit the registration as an [arbitrary transaction](https://github.com/BankrBot/skills/blob/main/bankr/references/arbitrary-transaction.md) via Bankr's `/agent/submit` endpoint.
 
 ### Supported Networks
 

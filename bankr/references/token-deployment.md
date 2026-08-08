@@ -1,14 +1,16 @@
 # Token Deployment Reference
 
-Deploy and manage tokens on EVM chains (via Clanker) and Solana (via Raydium LaunchLab).
+Deploy and manage tokens on Base and Robinhood Chain (via Doppler / Uniswap V4) and Solana (via Raydium LaunchLab). Older tokens launched through Clanker remain fully claimable; fee claims auto-detect Doppler vs Clanker.
 
 ## Supported Chains
 
 | Chain | Protocol | Token Standard | Best For |
 |-------|----------|----------------|----------|
-| **Base** | Clanker | ERC20 | Memecoins, social tokens |
-| **Unichain** | Clanker | ERC20 | Lower fees, newer ecosystem |
+| **Base** (default) | Doppler (Uniswap V4) | ERC20 | Memecoins, social/agent tokens |
+| **Robinhood Chain** | Doppler (Uniswap V4) | ERC20 | Memecoins alongside tokenized stocks |
 | **Solana** | Raydium LaunchLab | SPL | High-speed trading, bonding curves |
+
+> **Builder exits:** selling a token you earn creator fees on through Bankr's ordinary swap/limit/stop/DCA/TWAP tools is intentionally restricted (buying and transferring still work). To take profit, builders use a **Glidepath** — a capped, AI-paced gradual sell managed from the token page at [bankr.bot](https://bankr.bot). Glidepath is a web feature, not a CLI/API action. Details: https://docs.bankr.bot/token-launching/glidepath
 
 ---
 
@@ -185,21 +187,64 @@ Users can launch additional tokens beyond sponsored limits by paying ~0.01 SOL g
 
 ---
 
-## EVM Token Launches (Clanker)
+## EVM Token Launches (Base & Robinhood Chain, via Doppler)
 
-Deploy ERC20 tokens on Base and Unichain using Clanker.
+Launch ERC20 tokens on Base or Robinhood Chain. New launches create a Uniswap V4 pool via Doppler with a fixed supply and a single swap-fee tier shared between you and the protocol. Tokens deploy to **Base by default**; pass a chain to launch on Robinhood Chain instead (`bankr launch --chain robinhood`, or "launch a token on robinhood"). Robinhood Chain memecoin launches need no location verification — that gate only applies to Robinhood-issued tokenized stocks.
+
+### Token Economics
+
+| Property | Value |
+|----------|-------|
+| **Supply** | Fixed 100 billion (not mintable after deployment) |
+| **Pool** | Uniswap V4 |
+| **Pool swap fee** | 0.7% per trade — **95% to the creator** |
+| **All-in swap fee** | 1.75% of volume (pool fee + hook-added legs) |
+
+Every trade pays a **0.7% swap fee on the pool, and 95% of it goes to you** — 0.665% of trading volume, paid directly and claimable anytime. On top of that the hook adds the Bankr protocol fee + BNKR buyback and LP fee:
+
+| Recipient | Share of volume |
+|-----------|-----------------|
+| **Creator (you)** — 95% of the 0.7% pool swap fee, claim anytime | **0.665%** |
+| **LP fee** (via hook) — a second creator-side fee: compounds as permanently locked liquidity in your own pool, strengthening your token's liquidity on every swap | **0.285%** |
+| Bankr protocol fee (via hook) | 0.475% |
+| BNKR buyback (via hook) | 0.2375% |
+| Protocol (Doppler) | ~0.0875% |
+
+**Fee schedules are fixed at launch and never change retroactively.** Tokens launched before the current structure keep the schedule they launched with: the creator's 95% of the 0.7% pool fee works exactly the same, only the hook add-on differs. Claiming, redirecting, and transferring all behave identically on older tokens.
+
+Fees accumulate in your token and WETH and can be claimed anytime.
+
+### Quote-Only Fees (optional, fixed at launch)
+
+By default creator fees accrue as a mix of the launched token and the quote token (e.g. WETH). At launch you can instead opt into **quote-only fees**, so the entire creator share is collected in the quote token. **Your total take is identical either way** — this is a denomination choice, not a rate change.
+
+| How | Syntax |
+|-----|--------|
+| Natural language | "launch a token with quote-only fees" |
+| CLI | `bankr launch --name MyToken --quote-only-fees` |
+| Deploy API | `"quoteOnlyFees": true` |
+| Web | toggle in the launch form |
+
+Two knock-on effects for anyone integrating against a quote-only token:
+
+- **Claiming** — the creator's fee entry lives on the **hook contract's** fees manager rather than the pool initializer, and the whole claim arrives in the quote token with no launched-token leg. The claim APIs resolve the right contract automatically.
+- **Transferring fee rights** — a direct on-chain `updateBeneficiary` call must target the hook address, not the initializer. The Bankr transfer endpoints resolve this for you either way.
+
+Like the fee schedule, this option cannot be changed after launch.
 
 ### Deployment Parameters
 
 | Parameter | Required | Description | Example |
 |-----------|----------|-------------|---------|
 | **Name** | Yes | Full token name | "My Token" |
-| **Symbol** | Yes | Ticker, 3-5 chars | "MTK" |
+| **Symbol** | No | Ticker; defaults to name if omitted | "MTK" |
 | **Description** | No | Token description | "A community token" |
 | **Image** | No | Logo URL or upload | URL or file |
 | **Website** | No | Project website | "myproject.com" |
-| **Twitter** | No | Twitter/X handle | "@myproject" |
+| **Twitter** | No | Associated tweet / X handle for social proof | "@myproject" |
 | **Telegram** | No | Telegram group | "@mytoken" |
+| **Fee Recipient** | No | Route creator fees to a wallet, ENS, or social handle | "@partner" |
+| **Quote-only fees** | No | Collect all creator fees in the quote token; fixed at launch | `quoteOnlyFees: true` |
 
 ### Prompt Examples
 
@@ -208,12 +253,14 @@ Deploy ERC20 tokens on Base and Unichain using Clanker.
 - "Create a memecoin: name=DogeKiller, symbol=DOGEK"
 - "Deploy token with website myproject.com and Twitter @myproject"
 - "Create a token on Base"
-- "Launch new token on Unichain"
+- "Launch a token called CoolBot on robinhood"
+- "Launch a token called CoolBot and route fees to @partner"
+- "Launch a token with quote-only fees"
 
 **Claim fees:**
 - "Claim fees for my token MTK"
-- "Check my Clanker fees"
-- "Claim legacy Clanker fees"
+- "How much can I claim for MyToken?"
+- "Claim legacy Clanker fees" (older tokens — claims auto-detect Doppler vs Clanker)
 
 **Update metadata:**
 - "Update description for MyToken"
@@ -222,36 +269,30 @@ Deploy ERC20 tokens on Base and Unichain using Clanker.
 
 ### Rate Limits
 
-| User Type | Daily Limit |
-|-----------|-------------|
-| Standard Users | 1 token/day |
-| Bankr Club Members | 10 tokens/day |
+| User Type | Daily Limit | Gas |
+|-----------|-------------|-----|
+| Standard Users | 50 tokens/day | Sponsored within limit |
+| Bankr Club Members | 100 tokens/day | Sponsored within limit |
+
+High-volume or bot-like deploy patterns can trigger automated spam protections and temporary or permanent restrictions. For legitimate programmatic deploy use cases, open a support ticket before scaling up.
 
 ### Fee Structure
 
-- Small fee on each trade, accumulated for token creator
-- Claimable anytime via "Claim fees for my token"
-- Legacy fees (older Clanker versions) claimed separately
-
-### Chain Selection
-
-**Base (Recommended):**
-- Primary Clanker support
-- Low deployment cost
-- Growing ecosystem
-- Easy liquidity provision
-
-**Unichain:**
-- Secondary option
-- Low cost
-- Newer ecosystem
-- Less liquidity
+- 0.7% swap fee on the pool, **95% of it to the creator** (0.665% of volume); the hook adds the Bankr protocol fee + BNKR buyback and LP fee on top, 1.75% all-in — see [Token Economics](#token-economics) for the full split
+- The 0.285% LP fee is creator-side as well, strengthening your token's liquidity on every swap — 0.95% of volume working for your side in total
+- Fees accrue in your token and WETH (quote token only on [quote-only](#quote-only-fees-optional-fixed-at-launch) launches); claimable anytime via "Claim fees for my token"
+- Fee schedules are fixed at launch — older tokens keep the schedule they launched with
+- Older tokens launched via Clanker are still claimable — the claim path auto-detects the protocol
 
 ### Deployment Process
 
-1. **Specify Parameters**: Name, symbol (required); description, social links (optional)
-2. **Contract Deployment**: Clanker deploys audited ERC20 contract with automatic liquidity
-3. **Verification**: Get contract address, view on block explorer
+1. **Specify Parameters**: Name (required); symbol, description, social links, fee recipient (optional)
+2. **Contract Deployment**: Doppler deploys the ERC20 and creates the Uniswap V4 pool with automatic liquidity
+3. **Verification**: Get the token address and pool metadata, view on a block explorer
+
+### Taking Profit (Glidepath)
+
+Selling a token you earn creator fees on through Bankr's swap/limit/stop/DCA/TWAP tools is restricted (buying and transferring are unaffected). To take profit, builders use a **Glidepath** — a capped, AI-paced gradual sell that feeds a committed slice of your tokens back into the pool over time instead of dumping. Glidepath is available for Base and Robinhood Chain launches and is managed from the token page at [bankr.bot](https://bankr.bot) (a web feature, not a CLI/API action). Details: https://docs.bankr.bot/token-launching/glidepath
 
 ---
 
@@ -295,11 +336,11 @@ Deploy ERC20 tokens on Base and Unichain using Clanker.
 - Permanent fee arrangements are immutable
 - Shared fee claims use atomic transactions (claim+transfer)
 
-### EVM (Clanker)
-- Uses audited contracts
-- Standard ERC20 implementation
+### EVM (Base / Doppler)
+- Standard ERC20 with a fixed, non-mintable 100B supply
+- Liquidity lives in a Uniswap V4 pool
 - Verifiable on block explorer
-- Creator controls metadata
+- Creator controls metadata and fee routing
 
 ## Legal Considerations
 

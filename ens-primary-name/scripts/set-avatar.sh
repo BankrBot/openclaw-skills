@@ -85,7 +85,7 @@ echo "Submitting to resolver on Ethereum mainnet..." >&2
 echo "⚠️  Note: This requires ETH on mainnet for gas" >&2
 
 # Submit transaction via Bankr
-RESULT=$(bankr prompt "Submit this transaction: {\"to\": \"$RESOLVER\", \"data\": \"$CALLDATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}" 2>/dev/null)
+RESULT=$(bankr agent "Submit this transaction: {\"to\": \"$RESOLVER\", \"data\": \"$CALLDATA\", \"value\": \"0\", \"chainId\": $CHAIN_ID}" 2>/dev/null)
 
 if echo "$RESULT" | grep -q "$EXPLORER"; then
   TX_HASH=$(echo "$RESULT" | grep -oE "$EXPLORER/tx/0x[a-fA-F0-9]{64}" | grep -oE '0x[a-fA-F0-9]{64}')

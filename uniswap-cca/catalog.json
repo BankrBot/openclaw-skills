@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "uniswap-cca",
+  "provider": "Uniswap",
+  "providerUrl": "https://uniswap.org",
+  "logo": "uniswap.svg",
+  "demo": {
+    "title": "cca-deploy.sh",
+    "language": "bash",
+    "code": "# Step 1: Configure your auction parameters\n/configurator\n# > Token address: 0xYourToken\n# > Total supply: 1000000\n# > Auction duration: 72 hours\n# > Start price (USD): 0.10\n# > End price (USD): 0.01\n# > Network: base (chainId 8453)\n# ✓ Supply schedule generated (convex curve α=1.2)\n# ✓ Q96 prices calculated\n# ✓ Config saved: cca-config.json\n\n# Step 2: Review and deploy\n/deployer\n# > Config: cca-config.json\n# ✓ Validated against factory 0xCCccCcCAE...\n# Foundry script generated — review before signing"
+  },
+  "setup": [
+    "Install plugin: `/plugin install uniswap-cca`",
+    "Requires Python 3.10+ for MCP supply schedule server",
+    "Run `/configurator` to set auction parameters",
+    "Run `/deployer` and test on Sepolia before mainnet"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Uniswap",
+    "command": "npx skills add Uniswap/uniswap-ai",
+    "reference": null
+  }
+}

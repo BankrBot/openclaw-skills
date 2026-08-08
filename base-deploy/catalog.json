@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "base-deploy",
+  "provider": "Base",
+  "providerUrl": "https://base.org",
+  "logo": "base-account.png",
+  "demo": {
+    "title": "deploy.sh",
+    "language": "bash",
+    "code": "# Import key into Foundry encrypted keystore (never commit keys)\ncast wallet import deployer --interactive\n\n# Deploy & verify on Base Sepolia\nforge create src/MyContract.sol:MyContract \\\n  --rpc-url https://sepolia.base.org \\\n  --account deployer \\\n  --verify \\\n  --etherscan-api-key $BASESCAN_API_KEY\n\n# Deploy to Base Mainnet\nforge create src/MyContract.sol:MyContract \\\n  --rpc-url https://mainnet.base.org \\\n  --account deployer \\\n  --verify \\\n  --etherscan-api-key $BASESCAN_API_KEY\n\n# Faucet: claim testnet ETH via CDP SDK\nnpx ts-node scripts/faucet.ts --address 0xYourAddress"
+  },
+  "setup": [
+    "Install Foundry: `curl -L https://foundry.paradigm.xyz | bash`",
+    "Get BaseScan API key at basescan.org/apidashboard",
+    "Claim testnet ETH from portal.cdp.coinbase.com/products/faucet"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Base",
+    "command": "npx skills add base/base-skills",
+    "reference": null
+  }
+}

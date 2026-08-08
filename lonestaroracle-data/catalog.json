@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "lonestaroracle-data",
+  "provider": "LoneStarOracle",
+  "providerUrl": "https://lonestaroracle.xyz",
+  "logo": null,
+  "demo": {
+    "title": "lonestaroracle-x402.sh",
+    "language": "bash",
+    "code": "# LoneStarOracle: pay-per-call data over x402 (USDC on Base). No signup, no API key.\n# 1) Call any endpoint - you get HTTP 402 with payment terms\ncurl -s \"https://defi.lonestaroracle.xyz/risk?protocol=morpho\"\n\n# 2) Pay the advertised USDC amount on Base with your x402-capable agent/wallet,\n#    then retry the same URL with the payment proof header to receive JSON.\n\n# More examples:\ncurl -s \"https://funding.lonestaroracle.xyz/rates\"             # perp funding rates\ncurl -s \"https://equity.lonestaroracle.xyz/equity?symbol=NVDA\" # equity signal + AI\ncurl -s \"https://macro.lonestaroracle.xyz/macro\"              # macro regime signal\n\n# All 49 services: https://lonestaroracle.xyz  |  MCP: https://mcp.lonestaroracle.xyz/mcp"
+  },
+  "setup": [
+    "No signup or API key. You need an x402-capable agent or wallet funded with USDC on Base.",
+    "Call any endpoint, e.g. `GET https://defi.lonestaroracle.xyz/risk?protocol=morpho`",
+    "On HTTP 402, pay the advertised USDC amount on Base and retry to receive structured JSON.",
+    "Browse all 49 services at https://lonestaroracle.xyz or connect via MCP at https://mcp.lonestaroracle.xyz/mcp"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "lonestaroracle-data",
+    "command": "install the lonestaroracle-data skill from https://github.com/BankrBot/skills/tree/main/lonestaroracle-data"
+  }
+}

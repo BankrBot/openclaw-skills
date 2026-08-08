@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "uniswap-trading",
+  "provider": "Uniswap",
+  "providerUrl": "https://uniswap.org",
+  "logo": "uniswap.svg",
+  "demo": {
+    "title": "swap.ts",
+    "language": "typescript",
+    "code": "import { createPublicClient, http } from 'viem';\nimport { base } from 'viem/chains';\n\n// Fetch a swap quote from the Uniswap Trading API\nconst quote = await fetch(\n  'https://trading-api.uniswap.org/v1/quote?' +\n  new URLSearchParams({\n    tokenIn: '0x4200000000000000000000000000000000000006', // WETH\n    tokenOut: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC\n    amount: '1000000000000000000', // 1 ETH\n    type: 'EXACT_INPUT',\n    chainId: '8453',\n  })\n).then(r => r.json());\n\n// Execute via Universal Router\nconst { calldata, value } = quote.routing.universalRouterCalldata;\nawait walletClient.sendTransaction({ to: UNIVERSAL_ROUTER, data: calldata, value });"
+  },
+  "setup": [
+    "Install plugin: `/plugin install uniswap-trading`",
+    "Install viem: `npm install viem`",
+    "Configure RPC endpoint for your target chain",
+    "Trigger with: \"Help me integrate Uniswap swaps into my app\""
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Uniswap",
+    "command": "npx skills add Uniswap/uniswap-ai",
+    "reference": null
+  }
+}

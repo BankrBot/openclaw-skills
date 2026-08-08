@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "ai2human-task-router",
+  "provider": "AI2Human",
+  "providerUrl": "https://ai2human.io",
+  "logo": null,
+  "demo": {
+    "title": "Create a verified human-execution task",
+    "language": "text",
+    "code": "Ask your agent: \"Preview an AI2Human task to check the public code and dataset links for this paper: https://example.org/paper. Require source URLs, access screenshots, and limitation notes. Budget 10 USDC. Deadline 48h.\"\n\nThe agent must show the full task and payment preview first. It creates the task only after you reply: confirm create task."
+  },
+  "setup": [
+    "Install: `install the ai2human-task-router skill from https://github.com/BankrBot/skills/tree/main/ai2human-task-router`",
+    "For API-key mode, create a key at https://ai2human.io/developers/api-keys and store `AI2HUMAN_API_KEY` only in the approved secret store",
+    "For x402 mode, only approve the pinned AI2Human endpoint on X Layer: 0.01 USDT0 maximum per task-creation request; preview and explicit confirmation are mandatory",
+    "The immediate deliverable is a task URL and proof schema. Human evidence and verification arrive asynchronously, typically within 24h"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "ai2human-task-router",
+    "command": "install the ai2human-task-router skill from https://github.com/BankrBot/skills/tree/main/ai2human-task-router"
+  }
+}

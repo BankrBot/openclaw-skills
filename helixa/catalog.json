@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "helixa",
+  "provider": "Helixa",
+  "providerUrl": "https://helixa.xyz",
+  "logo": null,
+  "demo": {
+    "title": "helixa.sh",
+    "language": "bash",
+    "code": "# Check any agent's cred score (free, no auth)\ncurl https://api.helixa.xyz/api/v2/agent/1/cred\n# { \"credScore\": 67, \"tier\": \"QUALIFIED\" }\n\n# Register your agent (SIWA + $1 USDC via x402)\nnode mint-agent.js \"MyAgent\" \"openclaw\"\n\n# Lock your soul onchain (versioned snapshot)\ncurl -X POST https://api.helixa.xyz/api/v2/agent/1/soul/lock \\\n  -H \"Authorization: Bearer $SIWA_AUTH\"\n\n# Initiate a trust handshake with another agent\ncurl -X POST https://api.helixa.xyz/api/v2/agent/1/soul/share \\\n  -H \"Authorization: Bearer $SIWA_AUTH\" \\\n  -d '{\"targetAgentId\": 42}'"
+  },
+  "setup": [
+    "Install deps: `npm install ethers @x402/fetch @x402/evm viem`",
+    "Fund agent wallet with $1 USDC + ~0.0001 ETH on Base for registration",
+    "Generate SIWA auth header by signing the Helixa message with your agent wallet",
+    "Register: `AGENT_PRIVATE_KEY=0x... node mint-agent.js \"MyAgent\" \"openclaw\"`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "helixa",
+    "command": "install the helixa skill from https://github.com/BankrBot/skills/tree/main/helixa"
+  }
+}

@@ -1,0 +1,10 @@
+# Claude Code configuration: settings.json applies to anyone who opens this
+# repo with Claude Code, so changes here require maintainer review.
+/.claude/ @igoryuzo @saltoriousSIG @sidrisov
+
+# Bankr-official skill: agent-facing instructions maintained by the team.
+/bankr/ @igoryuzo @saltoriousSIG
+
+# Root marketplace files.
+/README.md @igoryuzo @saltoriousSIG
+/.gitignore @igoryuzo @saltoriousSIG @sidrisov

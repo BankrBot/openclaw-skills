@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "trails",
+  "provider": "Polygon",
+  "providerUrl": "https://polygon.technology/",
+  "logo": null,
+  "demo": {
+    "title": "trails.ts",
+    "language": "typescript",
+    "code": "import { submit } from '@bankr/cli/dist/lib/api.js';\n\nconst TRAILS_API = process.env.TRAILS_API;\nconst headers = { 'Content-Type': 'application/json', 'X-Access-Key': TRAILS_API };\n\n// 1. Quote a swap (ETH → USDC on Base)\nconst quote = await fetch('https://trails-api.sequence.app/rpc/Trails/QuoteIntent', {\n  method: 'POST',\n  headers,\n  body: JSON.stringify({\n    fromAddress: process.env.BANKR_WALLET,\n    fromChainId: '8453',\n    fromToken: '0x0000000000000000000000000000000000000000', // native ETH\n    fromAmount: '10000000000000000', // 0.01 ETH in wei\n    toChainId: '8453',\n    toToken: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC on Base\n  }),\n}).then(r => r.json());\n\n// 2. Lock the intent\nconst { intent } = await fetch('https://trails-api.sequence.app/rpc/Trails/CommitIntent', {\n  method: 'POST', headers,\n  body: JSON.stringify({ intentId: quote.intent.intentId }),\n}).then(r => r.json());\n\n// 3. Submit deposit transaction via Bankr\nawait submit(intent.depositTransaction);\n\n// 4. Execute and wait for receipt\nawait fetch('https://trails-api.sequence.app/rpc/Trails/ExecuteIntent', {\n  method: 'POST', headers,\n  body: JSON.stringify({ intentId: intent.intentId }),\n});\nconst receipt = await fetch('https://trails-api.sequence.app/rpc/Trails/WaitIntentReceipt', {\n  method: 'POST', headers,\n  body: JSON.stringify({ intentId: intent.intentId }),\n}).then(r => r.json());\nconsole.log('Swap complete:', receipt);"
+  },
+  "setup": [
+    "Install skill: `npx skills add trails`",
+    "Get a Sequence access key at sequence.build and set `TRAILS_API`",
+    "Set `BANKR_API_KEY` for on-chain execution via Bankr submit()",
+    "Token amounts use base units — 10 USDC = `10000000` (6 decimals); native tokens use `0x000...000`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "trails",
+    "command": "install the trails skill from https://github.com/BankrBot/skills/tree/main/trails"
+  }
+}

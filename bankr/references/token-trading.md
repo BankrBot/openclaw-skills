@@ -7,10 +7,16 @@ Execute token trades and swaps across multiple blockchains.
 | Chain | Native Token | Characteristics |
 |-------|--------------|-----------------|
 | Base | ETH | Low fees, ideal for memecoins |
-| Polygon | MATIC | Fast, cheap transactions |
+| Polygon | POL | Fast, cheap transactions |
 | Ethereum | ETH | Highest liquidity, expensive gas |
 | Unichain | ETH | Newer L2 option |
+| World Chain | ETH | Uniswap V3/V4 swaps |
+| Arbitrum | ETH | DeFi, low-cost transactions |
+| BNB Chain | BNB | BSC ecosystem trading |
+| Robinhood Chain | ETH | Tokenized stocks & ETFs (USDG stablecoin), memecoins |
 | Solana | SOL | High speed, minimal fees |
+
+> **Tokenized stocks & ETFs:** Bankr can buy and sell tokenized equities (spot) on Robinhood Chain, Solana (xStocks), and Base, and offers leveraged equity perps on Avantis/Hyperliquid. Robinhood-issued stocks require one-time location verification. See [tokenized-stocks.md](tokenized-stocks.md).
 
 ## Amount Formats
 
@@ -36,12 +42,15 @@ Execute token trades and swaps across multiple blockchains.
 - "Convert 0.1 ETH to WETH"
 - "Unwrap 0.5 WETH to ETH"
 
+Both balances update after a wrap or unwrap, so you can check your portfolio immediately afterwards and see the result.
+
 ## Chain Selection
 
 - If no chain specified, Bankr selects the most appropriate chain
 - Base is preferred for most operations due to low fees
 - Cross-chain routes are automatically optimized
 - Include chain name in prompt to specify: "Buy ETH on Polygon"
+- **Pasting a raw contract address is safe**: Bankr verifies which chain actually hosts that contract before quoting, so a token on a less common chain (e.g. Robinhood Chain) is found even if the chain isn't named or is guessed wrong
 
 ## Slippage
 
@@ -49,6 +58,8 @@ Execute token trades and swaps across multiple blockchains.
 - For volatile tokens, Bankr adjusts slippage as needed
 - If slippage is exceeded, the transaction fails safely
 - You can specify: "with 1% slippage"
+
+**Via the Wallet API**, set it explicitly with `slippageBps` (10–2000, default 500 = 5%) on `/wallet/swap-quote` and `/wallet/swap`. It always shapes the quote's `minBuyAmount`, but only Relay-routed pairs — cross-chain, Solana, and the relay-first chains, tokenized-stock legs excepted — carry your full tolerance into the fill. On the same-chain EVM aggregator path the execution re-quote is deliberately clamped to **2% (200 bps)**; the gap between the looser quote tolerance and the tighter execution tolerance is headroom for price drift between quote and submit. A 2000 bps quote does not execute at 2000 bps there.
 
 ## Common Issues
 

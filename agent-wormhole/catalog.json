@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "agent-wormhole",
+  "provider": "BuiltByEcho",
+  "providerUrl": "https://www.builtbyecho.xyz/agent-wormhole.html",
+  "logo": null,
+  "demo": {
+    "title": "agent-wormhole.sh",
+    "language": "bash",
+    "code": "# Send a one-time sealed mission brief with a 10-minute TTL\nagent-wormhole send --text \"mission brief\" --ttl 10m\n\n# Send a file artifact for handoff (claim once, then collapses)\nagent-wormhole send --file ./artifact.tgz --note \"handoff bundle\"\n\n# Inspect, then claim on the receiver side\nagent-wormhole inspect <code>\nagent-wormhole receive <code> --out ./received\n\n# Bankr x402 paid open (non-owner wallet, capped payment)\nbankr --config \"$BANKR_PAYER_CONFIG\" x402 call -X POST \\\n  -d '{\"payload\":\"dGVzdA==\"}' --max-payment 0.01 -y --raw \\\n  https://x402.bankr.bot/0x2a16625fad3b0d840ac02c7c59edea3781e340ae/agent-wormhole-open"
+  },
+  "setup": [
+    "Install: `install the agent-wormhole skill from https://github.com/BankrBot/skills/tree/main/agent-wormhole`",
+    "Pin the package when running via npx: `npx -p @builtbyecho/agent-wormhole@0.1.2 agent-wormhole <args>`",
+    "Set `BANKR_OWNER_CONFIG` (endpoint owner) and `BANKR_PAYER_CONFIG` (separate payer) for x402 verification",
+    "Health: `curl -sS https://storage.builtbyecho.xyz/agent-wormhole/health`",
+    "Source: https://github.com/BuiltByEcho/agent-wormhole · Package: `@builtbyecho/agent-wormhole@0.1.2`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "agent-wormhole",
+    "command": "install the agent-wormhole skill from https://github.com/BankrBot/skills/tree/main/agent-wormhole"
+  }
+}

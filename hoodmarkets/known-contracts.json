@@ -1,0 +1,22 @@
+{
+  "chainId": 4663,
+  "network": "Robinhood Chain",
+  "hoodmarketsV3FactoryVersion": "0.11.0",
+  "contracts": {
+    "hoodmarketsV3Factory": "0x9BDdC8ddf28f5629C989A36Eb5bb6C73cBA60Df5",
+    "hoodmarketsV3Vault": "0x856c6997A86752fB3E6A494AB93107B7A371A57f",
+    "hoodmarketsV3LpLocker": "0x23a1c52F4E93B0283d12CC16c29Df119803E8745",
+    "hoodmarketsV3FractionDeployer": "0x40A19d561b3200A2C9E1014248FcEB724c450692",
+    "hoodmarketsV3PlatformFeeRecipient": "0xbfD1be7a12A9FeF04D281C2D8D0D9EE15b576d98",
+    "weth": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+    "uniswapV3SwapRouter02": "0xCaf681a66D020601342297493863E78C959E5cb2",
+    "swapHelper": "0x6373285f77ad0a3f5a441439b3d23d16b79aa585"
+  },
+  "legacyHoodmarketsV3Factories": {
+    "v0.10.0": "0xf65536Eb3354Ad7e77E1b0d0F7bEBFa1C88885C9",
+    "v0.9.0": "0x3a94FD3422F50ed6cC08e547c6C697E4bb3e76c8",
+    "v0.8.0": "0xC2A604fF131dDE9201838007A129ea28b85d00e8",
+    "v0.7.0": "0x45A3820A9A563e78A4cF7F355F7Be10fA6B706B3",
+    "v0.6.0": "0x7E2905ddF3Dca96117A9e9d50F2924C1E7FE7Be1"
+  }
+}

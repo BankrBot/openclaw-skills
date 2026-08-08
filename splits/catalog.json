@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "splits",
+  "provider": "Splits",
+  "providerUrl": "https://splits.org/",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "splits-treasury.sh",
+    "language": "bash",
+    "code": "# Give a Bankr agent governed access to Splits Treasury\n# Placeholders (<...>) are illustrative — replace with real values; do not run as-is.\nsplits auth create-key --register --name \"Bankr Agent\"\nsplits accounts update-signers <TREASURY_ADDRESS> --addEoaSignerIds <AGENT_SIGNER_ID> --memo \"Add Bankr agent signer\"\n\n# Review balances and propose an expense payment\nsplits accounts balances <TREASURY_ADDRESS> --chainIds 1,8453\nsplits transactions create transfer --account <TREASURY_ADDRESS> --chainId 8453 --recipient <VENDOR_ADDRESS> --token <USDC_ADDRESS> --amount \"1000\" --memo \"Vendor payment INV-123\""
+  },
+  "setup": [
+    "Install CLI (pinned): `npm install -g @splits/splits-cli@0.2.9`",
+    "Create a Splits API key in the web app (needs a Splits team): https://teams.splits.org/settings/team/api-keys/",
+    "Login: `echo $SPLITS_API_KEY | splits auth login`",
+    "Register agent signer: `splits auth create-key --register --name \"Bankr Agent\"`",
+    "Create a bounded agent subaccount, or have a human approve agent signer access on an existing account"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "splits",
+    "command": "install the splits skill from https://github.com/BankrBot/skills/tree/main/splits"
+  }
+}

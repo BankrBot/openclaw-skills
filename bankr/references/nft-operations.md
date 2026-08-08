@@ -9,6 +9,7 @@ Browse, purchase, and manage NFTs across chains via OpenSea integration.
 - **Browse** - Search NFT collections
 - **View Listings** - Find best deals and floor prices
 - **Buy** - Purchase NFTs from marketplace listings
+- **Accept Offer** - Accept an offer on an NFT you own
 - **View Holdings** - Check your NFT portfolio
 - **Transfer** - Send NFTs to another wallet
 - **Mint** - Mint from supported platforms (Manifold, SeaDrop)
@@ -32,6 +33,10 @@ Browse, purchase, and manage NFTs across chains via OpenSea integration.
 - "Purchase this NFT: [OpenSea URL]"
 - "Buy Pudgy Penguin #1234"
 - "Get the floor Azuki"
+
+**Accept offers:**
+- "Accept the best offer on my Pudgy Penguin #1234"
+- "What's the highest offer on my Bored Ape?"
 
 **View holdings:**
 - "Show my NFTs"

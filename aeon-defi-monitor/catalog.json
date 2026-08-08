@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-defi-monitor",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "defi-monitor.sh",
+    "language": "bash",
+    "code": "# Run the configured watchlist\naeon-defi-monitor\n\n# Alert when health factor on Aave drops below 1.5\n# (set per-entry in watchlist YAML)\n#   alert_health_factor_floor: 1.5"
+  },
+  "setup": [
+    "Install: `install the aeon-defi-monitor skill from https://github.com/BankrBot/skills/tree/main/aeon-defi-monitor`",
+    "Configure the watchlist YAML — pool/market addresses, thresholds, optional position address",
+    "Set `BANKR_API_KEY` if you want Submit payloads attached to alerts",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-defi-monitor"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-defi-monitor",
+    "command": "install the aeon-defi-monitor skill from https://github.com/BankrBot/skills/tree/main/aeon-defi-monitor"
+  }
+}

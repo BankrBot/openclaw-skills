@@ -1,0 +1,12 @@
+{
+  "slug": "b20-console",
+  "name": "B20 Console",
+  "description": "Inspect B20 contract addresses on Base through the hosted B20 Console API and return sanitized deterministic risk flags.",
+  "homepage": "https://b20.charon.codes",
+  "logo": "logo.jpg",
+  "install": "install the b20-console skill from https://github.com/BankrBot/skills/tree/main/b20-console",
+  "examples": [
+    "inspect 0xb200000000000000000000c7d17966dc5e587ba0 with b20-console",
+    "use b20-console to inspect this B20 CA and explain the active risk flags"
+  ]
+}

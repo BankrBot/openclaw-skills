@@ -1,0 +1,72 @@
+{
+  "_agentNote": "NOT AN ALLOWLIST. Any Robinhood Chain token can exist off-catalog. This file hints how hood.markets catalog tokens route swaps (Simple V3 vs Pro V4). Always call GET /api/agent/token-info before prepare-buy|prepare-sell — never refuse a 0x address solely because it is missing here.",
+  "chainId": 4663,
+  "chainRequirement": "Abort if Bankr wallet/provider does not explicitly support Robinhood Chain 4663 — no fallback. See references/CHAIN-4663.md",
+  "apiBase": "https://api.hood.markets",
+  "webBase": "https://hood.markets",
+  "detection": {
+    "preferApi": "GET https://api.hood.markets/api/agent/token-info?token=0x… OR ?symbol=TICKER",
+    "poolIdRule": "catalog poolId starting with v3: → simple (Uniswap V3). Otherwise in-catalog → pro (V4 swap helper).",
+    "briefingField": "GET /api/agent/briefing returns launchType per deployment"
+  },
+  "launchTypes": {
+    "simple": {
+      "label": "Simple (Uniswap V3)",
+      "poolIdPrefix": "v3:",
+      "swapVia": "uniswap",
+      "oneClickSwapOnHoodmarkets": false,
+      "platformFeePercent": 5,
+      "agentBuySell": "Use uniswapSwapUrl from token-info or prepare-buy error hint — prepare-buy/sell returns 400 for V3 tokens"
+    },
+    "pro": {
+      "label": "Pro (Uniswap V4)",
+      "swapVia": "hoodmarkets-swap-helper",
+      "oneClickSwapOnHoodmarkets": true,
+      "swapHelper": "0x6373285F77ad0a3f5a441439B3D23d16B79aA585",
+      "agentBuySell": "POST /api/agent/prepare-buy or prepare-sell → validate txs → Bankr /wallet/submit chainId 4663"
+    }
+  },
+  "deployPreflight": {
+    "endpoint": "GET https://api.hood.markets/api/agent/preflight-deploy?wallet=0x…&name=…&symbol=…",
+    "blockingCodes": [
+      "ticker_reserved",
+      "name_reserved",
+      "ticker_cooldown",
+      "name_cooldown",
+      "duplicate_deployer_name_symbol",
+      "launch_mode_unavailable"
+    ],
+    "warningCodes": ["rate_limit_would_force_platform_fee", "rate_limit_would_force_burn", "third_party_rolling_warning"],
+    "secondDeployIn24h": "warning rate_limit_would_force_platform_fee — proceed after user yes; fees on new token go to hood.markets platform"
+  },
+  "feeClaim": {
+    "forAnyone": "POST /api/agent/claim-for-recipient { tokenAddress } — verify token-info first — NO Bankr /wallet/submit",
+    "ownWallet": "POST /api/agent/claim — JWT or X wallet — NO Bankr /wallet/submit",
+    "preVerify": "GET /api/agent/token-info before claim-for-recipient — confirm feeRecipientAddress and catalog membership",
+    "abuse": "Catalog-only tokens; idempotent when no fees; do not batch without per-token user intent",
+    "v3Modern": "v0.7+ tokens: API calls claimTradingFees() on Holder NFT — pro-rata to all share holders",
+    "v3Legacy": "v0.6 tokens: HoodMarketsV3.claimRewards(token) — fee wallet only",
+    "successReply": "When ok:true post replyHint if RESPONSE-SAFETY schema passes — do NOT say Bankr failed to submit a tx",
+    "seeAlso": "references/CLAIM-BANKR.md"
+  },
+  "holderNfts": {
+    "shareCount": 1000,
+    "buyerRewards": "post-launch only — fundBuyerRewardPool / cancelBuyerRewardPool on token page (v0.9+)",
+    "deployParamBuyerRewards": "buyerRewardShareCount optional in API deploy only — web UI uses post-launch fund; prefer post-launch",
+    "postLaunchFund": "fundBuyerRewardPool / cancelBuyerRewardPool (v0.9+ fraction)",
+    "batchAirdrop": "airdropShares one tx (v0.10+ bytecode; full amounts v0.11+). Web probes contract before batch — not legacy per-wallet sends",
+    "webFeeRecipientOther": "hood.markets Launch tab Someone else = 0x wallet address only",
+    "sharePlatformFeePercent": 5,
+    "sharePlatformFeeAppliesTo": "buyShares marketplace sales only",
+    "swapTradingFeeSplit": "5% platform / 95% pro-rata to share holders (LP locker at claimTradingFees)",
+    "tradingFeeToHoldersPercent": 95,
+    "noFundLpOnSite": "Launch LP locked — users buy/sell token on Uniswap, not fund LP on hood.markets",
+    "agentRestrictions": "Agents: claim fees via API only — NO airdropShares, buyShares, listShares, fundBuyerRewardPool via Bankr submit",
+    "seeAlso": "references/HOLDER-NFTS.md"
+  },
+  "hoodmarketsV3Factory": {
+    "currentVersion": "0.11.0",
+    "currentAddress": "0x9BDdC8ddf28f5629C989A36Eb5bb6C73cBA60Df5",
+    "legacyAddresses": "known-contracts.json legacyHoodmarketsV3Factories"
+  }
+}

@@ -33,10 +33,37 @@ Polymarket is a decentralized prediction market where users can search markets, 
 - "What bets do I have active?"
 - "My Polymarket portfolio"
 
+This lists your open bets and any resolved **winning** positions you can still redeem. Resolved **losing** positions (a market you lost settles at $0) are hidden by default and only summarized as a count — ask explicitly to see them:
+
+```
+"show my losing polymarket positions too"
+```
+
+You can also pull your current Polymarket positions directly over REST without going through the agent:
+
+```bash
+curl "https://api.bankr.bot/polymarket/positions" \
+  -H "X-API-Key: $BANKR_API_KEY"
+```
+
 **Redeem winnings:**
 - "Redeem my Polymarket positions"
 - "Cash out my resolved bets"
 - "Claim my winnings"
+
+Only positions worth more than $0 are redeemed — resolved losers have nothing to claim, so they're skipped rather than reported as failed redemptions.
+
+### Unspent Deposit-Wallet Collateral
+
+Betting funds flow through a transient Polymarket deposit wallet (fund → bet → sell → auto-sweep back), so a non-zero balance sitting there is always an anomaly — a bet that didn't go through, an interrupted sweep. The positions view now **reports that balance whenever it's non-zero**, including when you have no positions at all.
+
+Read it for what it is: unspent collateral, not a position and not winnings. You can bet with it, or recover it:
+
+```
+"sweep my polymarket deposit wallet"
+```
+
+This matters because "$0.00 claimable" is a truthful answer that can still hide money — the collateral isn't redeemable, because it was never staked. If a balance looks unaccounted for, check here before concluding the funds are gone.
 
 ## How Betting Works
 

@@ -1,0 +1,16 @@
+{
+  "title": "Review a public X post's link and media claim",
+  "description": "Check whether the public target post, its stated external link, and its attached media are reachable and accurately described. Do not like, repost, follow, comment, vote, or otherwise manipulate engagement. Submit source URLs, screenshot evidence, and a final verdict.",
+  "targetUrl": "https://x.com/ai2humannetwork",
+  "requestType": "public_content_claim_review",
+  "budget": "TBD",
+  "deadline": "24h",
+  "proofRequired": [
+    "public post URL and linked destination URL",
+    "screenshot evidence",
+    "execution summary",
+    "final pass/fail/needs_review verdict"
+  ],
+  "requesterName": "Bankr Agent",
+  "requesterHandle": "@bankrbot"
+}

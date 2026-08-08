@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "base-network",
+  "provider": "Base",
+  "providerUrl": "https://base.org",
+  "logo": "base-account.png",
+  "demo": {
+    "title": "network-config.ts",
+    "language": "typescript",
+    "code": "import { defineChain } from 'viem';\n\n// Base Mainnet\nexport const base = defineChain({\n  id: 8453,\n  name: 'Base',\n  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },\n  rpcUrls: {\n    default: { http: ['https://mainnet.base.org'] },\n  },\n  blockExplorers: {\n    default: { name: 'Basescan', url: 'https://basescan.org' },\n  },\n});\n\n// Base Sepolia Testnet\nexport const baseSepolia = defineChain({\n  id: 84532,\n  name: 'Base Sepolia',\n  rpcUrls: {\n    default: { http: ['https://sepolia.base.org'] },\n  },\n  blockExplorers: {\n    default: { name: 'Basescan', url: 'https://sepolia.basescan.org' },\n  },\n});"
+  },
+  "setup": [
+    "Install: `npx skills add base/base-skills`",
+    "Add Base to your wallet using chain ID 8453",
+    "For testnet: use chain ID 84532 (Base Sepolia)",
+    "Replace public RPC endpoints with a provider for production"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Base",
+    "command": "npx skills add base/base-skills",
+    "reference": null
+  }
+}

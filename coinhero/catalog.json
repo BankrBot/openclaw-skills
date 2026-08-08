@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "coinhero",
+  "provider": "CoinHero",
+  "providerUrl": "https://my.coinhero.fun",
+  "logo": "logo.png",
+  "demo": {
+    "title": "consign-token.sh",
+    "language": "bash",
+    "code": "# 0. Confirm COINHERO_API_KEY is set in Bankr Tools → Environment Variables\n\n# 1. Authorize a consignment deal\ncurl -X POST https://my.coinhero.fun/api/agent/deals/authorize \\\n  -H \"Authorization: Bearer $COINHERO_API_KEY\" \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"tokenAddress\":\"0x...\",\"managerAddress\":\"0x...\",\"tokenName\":\"My Token\",\"tokenSymbol\":\"MTK\",\"tokenDecimals\":18,\"dailyPurchaseUsd\":10}'\n\n# 2. Validate returned transactions per SKILL.md (ConsignmentManager 0x677378ab968D0e1116bCE42395B8E05f2B004D78, chainId 8453)\n#    Require explicit user confirmation, then sign and broadcast transaction.data from managerAddress\n\n# 3. Deposit tokens (compute amount from currentPrice + tokenDecimals; confirm with user before signing)\ncurl -X POST https://my.coinhero.fun/api/agent/deals/{dealId}/deposit \\\n  -H \"Authorization: Bearer $COINHERO_API_KEY\" \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"amount\":\"5000000000000000000\"}'\n\n# 4. Poll at most hourly until status === active\ncurl https://my.coinhero.fun/api/agent/deals/{dealId} \\\n  -H \"Authorization: Bearer $COINHERO_API_KEY\""
+  },
+  "setup": [
+    "Get an API key at https://my.coinhero.fun via the BANKR Agent Quick Start wizard (Step 2); keys start with chk_ and are shown once",
+    "Set COINHERO_API_KEY in Bankr Tools → Environment Variables — never paste the key in chat",
+    "Your bot wallet (EOA) needs Base ETH for gas and must hold the ERC-20 tokens you want to consign",
+    "Minimum initial deposit: $50 USD worth of your token before the deal goes live",
+    "Validate all returned transactions against ConsignmentManager 0x677378ab968D0e1116bCE42395B8E05f2B004D78 before signing; require explicit user confirmation for deposits, withdrawals, and config changes"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "coinhero",
+    "command": "install the coinhero skill from https://github.com/BankrBot/skills/tree/main/coinhero"
+  }
+}

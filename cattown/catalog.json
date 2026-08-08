@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "cattown",
+  "provider": "Cat Town",
+  "providerUrl": "https://cat.town",
+  "logo": null,
+  "demo": {
+    "title": "cattown.sh",
+    "language": "bash",
+    "code": "# Check live world state (season, weather, time of day)\nbankr prompt \"What's the weather in Cat Town right now?\"\n\n# Read staking position and pending rewards\nbankr prompt \"How much KIBBLE do I have staked?\"\n\n# Stake 10 KIBBLE (integer, NOT wei — critical)\nbankr prompt \"Stake 10 KIBBLE in the Wealth & Whiskers Bank\"\n\n# Check today's boutique items with KIBBLE + USD prices\nbankr prompt \"What's in the boutique today?\"\n\n# Spin the gacha machine\nbankr prompt \"Spin the gacha once\""
+  },
+  "setup": [
+    "Install Bankr CLI: `npm install -g @bankr/cli`",
+    "Login: `bankr login email you@example.com` — generate a read-write API key",
+    "Fund your Bankr wallet with KIBBLE + ETH on Base for write operations",
+    "Try it: `bankr prompt \"What's the weather in Cat Town right now?\"`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "cattown",
+    "command": "install the cattown skill from https://github.com/BankrBot/skills/tree/main/cattown"
+  }
+}

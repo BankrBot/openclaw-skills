@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-audit",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "audit-invoke.sh",
+    "language": "bash",
+    "code": "# Fetch master audit skill index\ncurl -s https://ethskills.com/audit/SKILL.md\n\n# Then tell your agent:\n\"Audit this contract: <paste Solidity>\n Use the 19-domain checklist.\n Run parallel specialist agents per domain.\n Synthesize findings by severity.\n File GitHub issues for anything high or critical.\"\n\n# Covers: reentrancy, access control, oracle safety,\n# math precision, proxy patterns, MEV, signatures,\n# flash loans, gas griefing, and 10 more domains."
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/audit/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/audit/SKILL.md before auditing\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/audit/SKILL.md",
+    "reference": "https://ethskills.com/audit/SKILL.md"
+  }
+}
