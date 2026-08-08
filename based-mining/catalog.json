@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "based-mining",
+  "provider": "GeObts",
+  "providerUrl": "https://github.com/GeObts",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "based-mining",
+    "command": "install the based-mining skill from https://github.com/BankrBot/skills/tree/main/based-mining"
+  }
+}
