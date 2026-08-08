@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "callput",
+  "provider": "Callput",
+  "providerUrl": "https://callput.app",
+  "logo": null,
+  "demo": {
+    "title": "callput.sh",
+    "language": "bash",
+    "code": "# Read-only discovery\nbankr prompt \"Using the Callput skill, list live assets and scan the best bullish TSLA spread. Do not prepare or submit a transaction.\"\n\n# Prepare with an explicit risk review\nbankr prompt \"Using the Callput skill, prepare the top bullish BTC spread for 1 contract. Show maximum USDC at risk, fees, expiry, strikes, wallet, and network before asking me to confirm.\"\n\n# Manage an existing position\nbankr prompt \"Using the Callput skill, review my Callput positions and identify anything expiring within 24 hours. Do not close or settle without my explicit minimum-output approval.\""
+  },
+  "setup": [
+    "Install the Callput skill",
+    "Add the remote MCP server https://mcp.callput.app/api/mcp using HTTP transport and no authentication",
+    "Run a read-only asset list and spread scan before preparing a transaction",
+    "Use a Base wallet funded with USDC plus a small amount of ETH for gas; every approval and order requires Bankr confirmation"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "callput",
+    "command": "install the callput skill from https://github.com/BankrBot/skills/tree/main/callput"
+  }
+}
