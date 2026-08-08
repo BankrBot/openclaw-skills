@@ -184,6 +184,21 @@ bankr agent prompt "What does the x402 weather endpoint cost?"
 
 The agent pays in the token each endpoint requires (USDC or any supported ERC-20) on Base. Maximum payment per request is $10. The agent will always confirm the payment amount and token before calling.
 
+### Via the CLI
+
+```bash
+bankr x402 schema <url>                           # Inspect pricing and input/output schema
+bankr x402 call <url>                             # Call with automatic payment (GET)
+bankr x402 call <url> -X POST -d '{"text":"hi"}'  # With a method and JSON body
+bankr x402 call <url> --max-payment 0.50          # Your cap in USD (default 1, ceiling 10)
+bankr x402 call <url> -i                          # Fetch the schema and prompt for input values
+bankr x402 call <url> -y                          # Skip the payment confirmation
+```
+
+**`--max-payment` is your cap, and your cap is what gets sent.** The price an endpoint advertises is display-only — it can never raise your cap, and a call whose advertised price exceeds the cap fails closed instead of paying. In non-interactive mode the price probe is skipped entirely, so `--ni` behaves the same as `-y`.
+
+**Smart-contract wallets can pay.** Payment signatures are verified through an ERC-1271/6492-aware path as well as plain ECDSA recovery, so gas-sponsored and 7702-delegated wallets settle x402 payments normally rather than failing verification.
+
 ### With x402-fetch (for developers)
 
 ```typescript

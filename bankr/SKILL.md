@@ -1,6 +1,6 @@
 ---
 name: bankr
-description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, trade tokenized stocks and ETFs (spot or leveraged), check portfolio balances (with PnL and NFTs), view token prices, search tokens, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, call or deploy x402 paid API endpoints, browse the web, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet. Supports Base, Ethereum, Polygon, Solana, Unichain, World Chain, Arbitrum, BNB Chain, and Robinhood Chain.
+description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, trade tokenized stocks and ETFs (spot or leveraged), check portfolio balances (with PnL and NFTs), view token prices, search tokens, research token holders, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, call or deploy x402 paid API endpoints, browse the web, store and query files on their wallet's filesystem, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet — including zero-data-retention and TEE-private inference tiers. Supports Base, Ethereum, Polygon, Solana, Unichain, World Chain, Arbitrum, BNB Chain, and Robinhood Chain.
 metadata:
   {
     "clawdbot":
@@ -301,6 +301,7 @@ For full API details (request/response schemas, job states, rich data, polling s
 | Command | Description |
 |---------|-------------|
 | `bankr agent prompt <text>` | Send a prompt to the Bankr AI agent |
+| `bankr agent prompt <text> --model <id>` | Max Mode — run this prompt on a specific gateway model, billed from LLM credits (`-m` also works) |
 | `bankr agent prompt --continue <text>` | Continue the most recent conversation thread |
 | `bankr agent prompt --thread <id> <text>` | Continue a specific conversation thread |
 | `bankr agent status <jobId>` | Check the status of a running job |
@@ -314,6 +315,21 @@ For full API details (request/response schemas, job states, rich data, polling s
 |---------|-------------|
 | `bankr tokens search <query>` | Search for tokens by name or symbol |
 | `bankr tokens info <symbol-or-address>` | Get detailed token information |
+
+### `bankr files` — File Storage
+
+| Command | Description |
+|---------|-------------|
+| `bankr files ls [--folder <path>]` | List files, optionally scoped to a folder |
+| `bankr files upload <file> [--folder <path>]` | Upload a local file |
+| `bankr files download <fileId>` | Get a download URL |
+| `bankr files cat <fileId>` | Print file contents to stdout (or save locally) |
+| `bankr files edit <fileId> --find <text> --replace <text>` | Find/replace in place (`--all` for every occurrence) |
+| `bankr files write <fileId> [--from <path>]` | Overwrite text content from a local file or stdin |
+| `bankr files search <query> [--folder <path>] [--limit <n>]` | Search by filename, extension, or description |
+| `bankr files mkdir <name> [--parent <path>]` | Create a folder |
+| `bankr files rm <fileId>` | Delete a file (soft — recoverable for 24h) |
+| `bankr files storage` | Show storage usage and quota |
 
 ### `bankr club` — Bankr Club Membership
 
@@ -330,6 +346,23 @@ Manage Bankr Club subscription from the CLI (status, signup, cancel). Pay with U
 | `bankr club cancel` | Cancel subscription (access continues until period ends) |
 
 Pricing is $20/mo or $198/yr USD-equivalent. Actual on-chain amount depends on the chosen token's price at quote time. The `--token` flag was added in CLI 0.3.4; older versions only support USDC.
+
+**What Club actually gates** (everything else works without it):
+
+| Perk | Standard | Bankr Club |
+|------|----------|------------|
+| Swap fee | 0.65% | **0.15%** |
+| Terminal messages | 5/day | Unlimited |
+| Agent API requests | 100/day | 1,000/day |
+| Concurrent recurring agent-command automations | — | Up to 20 |
+| Gas-sponsored token deploys | 3/day | 10/day |
+| Token deploys | 50/day | 100/day |
+| File storage | 1 GB (10 MB/file) | 10 GB (50 MB/file) |
+| Monthly file downloads | 10 GB | 100 GB |
+| Model routing | Standard | Top-tier models |
+| Browser sessions, advanced research (Bankr score, PnL & volume analytics, web search, social sentiment) | — | Included |
+
+**Max Mode is the alternative to a subscription** — pay per request from LLM credits for unlimited terminal messages, and it works with external/connected wallets, which Club checkout does not (Club requires an embedded Bankr wallet). On the Agent API, non-Club Max Mode is still capped at 100 requests/day. Holding a legacy Bankr Club NFT does **not** grant membership; it was a commemorative token for the first 1,000 subscribers.
 
 **Monthly → yearly upgrade**: active monthly members can upgrade to yearly by asking the agent (e.g. "upgrade me to yearly"). The full yearly price is charged and the new 365-day term stacks on top of any remaining monthly time, so no paid time is lost. Yearly → monthly downgrades and yearly resubscribes are not supported.
 
@@ -510,6 +543,57 @@ The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unifie
 - **Per-model discounts** available for Bankr Club members and partners — applied automatically at billing time
 - **Image generation**: generate images via the OpenAI-native `/v1/images/generations` endpoint (model `gpt-image-2`), billed from the same LLM credit balance — see the reference
 - **Expiring credit grants**: promotional or developer grants may carry an expiry date. Your spendable balance is your permanent (purchased) credits plus any unexpired grants — grants are spent first (soonest-expiring first) and drop off automatically at expiry
+- **Privacy tiers**: every request is served at `standard`, `zdr` (zero data retention), or `private` (TEE). Ask for a tier per request, per model, per base URL, or account-wide — see below
+
+### Privacy Tiers
+
+Three nesting levels of data-handling guarantee, requested the same way on every endpoint:
+
+| Tier | Guarantee | Coverage |
+|------|-----------|----------|
+| `standard` (default) | Never routed to a provider that trains on your prompts. Providers may still retain them. | Every model |
+| `zdr` | Only providers that retain nothing. | Subset — filter with `bankr llm models --zdr` |
+| `private` | Runs inside a hardware-secured enclave (TEE), attestation verified per request. Zero-retention by construction. | Open-weight models only |
+
+Four ways to ask, so any client can reach any tier:
+
+```bash
+# 1. The `privacy` request field
+curl -X POST https://llm.bankr.bot/v1/chat/completions -H "X-API-Key: $BANKR_LLM_KEY" \
+  -d '{"model":"glm-5.2","privacy":"zdr","messages":[{"role":"user","content":"Hello"}]}'
+
+# 2. A base-path prefix — for tools that only take a base URL, key, and model
+export OPENAI_BASE_URL=https://llm.bankr.bot/zdr/v1      # OpenAI-compatible clients
+export ANTHROPIC_BASE_URL=https://llm.bankr.bot/zdr      # Anthropic-compatible clients
+
+# 3. A model-ID suffix
+bankr llm models --zdr                                   # which models have a ZDR slot
+# → use `glm-5.2:zdr` or `glm-5.2:private` as the model ID
+
+# 4. Account-wide — Settings in the web terminal, applies to every request
+```
+
+- **Every tier fails closed.** If no provider can serve your model at the tier you asked for, the request is rejected (`422 zdr_unavailable`) — never quietly downgraded.
+- **Account setting and request combine, strongest wins.** A request can tighten past the account setting; nothing in a request can drop below it.
+- **A tier endpoint is authoritative.** Sending a request that names a *different* tier to `/zdr` or `/private` returns `400 privacy_conflict` rather than merging. An unparseable `privacy` value returns `400 invalid_privacy` rather than being ignored.
+- **`X-Privacy-Tier` response header** reports the tier the request was actually handled under, so the guarantee is verifiable rather than assumed.
+- Tier matching is case-insensitive, and only a *trailing* `:zdr` / `:private` token counts as the suffix opt-in.
+
+### Max Mode — Pick the Agent's Model
+
+Max Mode overrides the Bankr agent's default model with any model from the gateway, billed per token from your **LLM credit balance** (not your trading wallet):
+
+```bash
+bankr agent "analyze my portfolio" --model claude-opus-5     # or -m
+bankr agent "what are the top memecoins today?" -m gemini-3.1-pro
+bankr agent prompt "tell me more" --continue --model claude-sonnet-5
+```
+
+The setting is stored on your wallet and applies across every surface — CLI, web terminal, social platforms, and automations. In the web terminal, toggle the **Max** button and pick a model from the picker.
+
+- **Credits are enforced per LLM call, not after the fact.** Your spendable balance (minus anything already metered but not yet deducted) becomes the run's budget, re-checked before every call — the turn ends honestly when it's exhausted instead of overspending.
+- **Shortfalls survive.** If a batch can't be fully covered, the credit is left untouched and the usage stays owed, so a later top-up settles it rather than the overspend being written off.
+- Top up before enabling, or Max Mode messages will fail.
 
 ### Quick Commands
 
@@ -583,6 +667,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - Price charts
 - Trending tokens
 - Token comparisons
+- **Holder snapshots** — largest-first holder lists with USD value and supply percentage, plus a concentration summary. Supports a minimum-USD floor, which makes it usable for airdrop targeting ("holders of X with $50+")
 
 **Reference**: [references/market-research.md](references/market-research.md)
 
@@ -601,7 +686,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 - Browse and search collections
 - View floor prices and listings
-- Purchase NFTs via OpenSea
+- Purchase NFTs via OpenSea — including listings priced in an **ERC-20** rather than the native token (e.g. USDG on Robinhood Chain). The token approval, the payment-currency balance check, and decimals-aware pricing are all handled for you
 - Accept offers on NFTs you own
 - View your NFT portfolio
 - Transfer NFTs
@@ -625,6 +710,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - **Avantis** (secondary) — Perpetuals on Base for crypto, equities (NVDA, TSLA, AAPL, HOOD, and more), forex, and commodities. Equity, forex, and commodity pairs trade during their underlying market hours only.
 - Stop loss, take profit, and position management on both platforms
 - Funding Hyperliquid is a **venue** deposit/withdraw, not a bridge: a deposit only reaches Hyperliquid, a withdrawal only lands on Arbitrum. Name the venue ("deposit $500 to hyperliquid") rather than saying "bridge"; to move withdrawn funds onward, chain a cross-chain swap after the withdrawal
+- Hyperliquid charges a **1 USDC withdrawal fee, taken out of the requested amount** — so your full withdrawable balance is requestable (you receive amount − 1), and withdrawals under $1 are refused rather than netting to zero
 
 **Reference**: [references/leverage-trading.md](references/leverage-trading.md) | [references/hyperliquid.md](references/hyperliquid.md)
 
@@ -632,18 +718,22 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 Trade tokenized stocks and ETFs — real-world equities issued as on-chain tokens — with a plain prompt, the same way you trade any other asset. Bankr resolves the best venue automatically when you name a ticker, or you can specify a chain/venue:
 
-- **Robinhood Chain** — spot tokens issued by Robinhood (95+ stocks and ETFs: NVDA, AAPL, TSLA, SPY, QQQ, and more). Trades settle against USDG (Global Dollar); Bankr routes funding through it automatically. **Requires one-time location verification** — log in to the [Bankr console](https://bankr.bot) (verified automatically from your connection, renews on login, expires after 30 days). Not available in the US, UK, or sanctioned countries/regions.
+- **Robinhood Chain** — spot tokens issued by Robinhood (200 stocks and ETFs: NVDA, AAPL, TSLA, SPY, QQQ, and more). Trades settle against USDG (Global Dollar); Bankr routes funding through it automatically. **Requires one-time location verification.**
+- **Base (B20 tokenized equities)** — Coinbase-issued equity tokens on Base: AAPL, AMZN, COIN, CRCL, GOOGL, INTC, META, MSFT, MSTR, NVDA, SNDK, SPCX, TSLA. **Same location verification as Robinhood stocks.**
 - **Solana** — spot tokens from third-party issuers such as xStocks (AAPLx, TSLAx). No verification required; trade like any other token.
-- **Base** — spot tokens from third-party issuers. No verification required.
+- **Base (third-party issuers)** — other issuers' spot stock tokens on Base. No verification required.
 - **Leveraged (perps)** — for long/short exposure without owning the token, use Avantis (Base) or Hyperliquid.
 
-Spot stocks work with swaps, transfers, limit orders, and DCA. Only Robinhood stock trades are location-gated — memecoins on Robinhood Chain, bridging, and transfers work without verification.
+Location verification is a one-time step — log in to the [Bankr console](https://bankr.bot) (verified automatically from your connection, renews on login, expires after 30 days). Not available in the US, UK, or sanctioned countries/regions.
+
+Spot stocks work with swaps, transfers, limit orders, and DCA. Only issuer-tokenized stock trades (Robinhood Chain and Base B20) are location-gated — memecoins, bridging, and transfers work without verification. Tickers collide across chains (12 of the 13 B20 tickers also exist on Robinhood Chain), so name the chain when you mean a specific one.
 
 **Reference**: [references/tokenized-stocks.md](references/tokenized-stocks.md)
 
 ### Token Deployment
 
 - **EVM (Base default, or Robinhood Chain)**: Launch ERC20 tokens via Doppler on a Uniswap V4 pool with customizable metadata and social links. Fixed **100 billion** supply. Every trade pays a **0.7% swap fee on the pool and 95% of it goes to you** (0.665% of volume, claimable anytime); the hook adds the Bankr protocol fee + BNKR buyback and LP fee on top, for **1.75% all-in**. The **0.285% LP fee is creator-side too** — it compounds as locked liquidity in your own pool, strengthening your token's liquidity on every swap, so the creator side totals **0.95% of volume**. Tokens deploy to Base by default; pass a chain (`bankr launch --chain robinhood`) to launch on Robinhood Chain instead. Legacy Clanker tokens remain claimable (claims auto-detect Doppler vs Clanker).
+- **Stock-paired launches** (EVM, optional): pair the new token's pool with a registry tokenized stock instead of WETH, so the token trades against equity exposure. Available on Base (B20 equities) and Robinhood Chain — pass `pairedStockAddress` to the deploy API, or ask the agent to pair the launch with a ticker. Only stocks Bankr can price are offered, since launch-curve math needs a USD price.
 - **Quote-only fees** (EVM, optional): opt in at launch to collect all creator fees in the quote token (e.g. WETH) instead of a mix of the launched token and quote token — your total take is identical either way. Ask for "quote-only fees", pass `quoteOnlyFees: true` to the deploy API, or use `bankr launch --quote-only-fees`. Fixed at launch, like the fee schedule itself.
 - **Solana**: Launch SPL tokens via Raydium LaunchLab with bonding curve and auto-migration to CPMM
 - Creator fee claiming on both chains
@@ -674,7 +764,7 @@ The agent can discover, call, and deploy x402-protected API endpoints, automatic
 
 - **Discover** endpoints in the Bankr registry or via web search
 - **Inspect** endpoint pricing, methods, and input/output schemas
-- **Call** endpoints with automatic payment signing in the endpoint's required token — USDC or any supported ERC-20 (max $10/request)
+- **Call** endpoints with automatic payment signing in the endpoint's required token — USDC or any supported ERC-20 (max $10/request). From the CLI, `--max-payment <usd>` is your cap and is what gets sent: an endpoint's advertised price is display-only and can never raise it, and a call whose advertised price exceeds your cap fails closed rather than paying
 - **Deploy** new x402 endpoints directly through the agent (write handler code, set pricing, deploy)
 - **Price** your own endpoints in USDC or any supported ERC-20; revenue settles on-chain and is accounted in USD at settlement time
 - Works with any x402-compatible endpoint (Bankr-hosted or external)
@@ -693,6 +783,18 @@ The agent has a built-in headless browser for web interactions:
 
 **Reference**: [references/x402-cloud.md](references/x402-cloud.md)
 
+### File Storage
+
+Every Bankr wallet has a persistent filesystem, shared across the CLI, web terminal, API, and every social surface the agent runs on.
+
+- Create, read, edit, search, move, rename, and delete files by asking the agent — a path (`/research/notes.md`) works anywhere a file ID does
+- `bankr files ls|upload|download|cat|edit|write|search|mkdir|rm|storage` from the CLI; `/user/files/*` over REST
+- **Ask questions about a file without loading it** — the agent runs a read-only `jq`/`grep`/`awk`-style pipeline in a sandbox and returns only the answer, so a 4 MB CSV never enters the conversation. Available on every wallet, no Club subscription needed
+- Quotas: 1 GB / 10 MB per file / 10 GB monthly downloads on the free tier; 10 GB / 50 MB / 100 GB on Bankr Club. Checked at write time, resolved live from your current Club status
+- Deletion is soft — files are recoverable via support for 24 hours, then permanently gone
+
+**Reference**: [references/files.md](references/files.md)
+
 ### Ask About Bankr
 
 The agent can answer questions about Bankr itself — how features work, official domains and links, the official Telegram bot, and support channels — grounded in Bankr's own documentation. When it doesn't have a confident answer it abstains rather than guessing, so you won't get fabricated links or facts. Useful for onboarding questions and for verifying that a link or channel is genuinely official.
@@ -703,6 +805,7 @@ The agent can answer questions about Bankr itself — how features work, officia
 - Custom contract calls to any address
 - Execute pre-built calldata from other tools
 - Value transfers with data
+- Read an unknown contract's ABI and call it — struct (tuple) parameters are expanded into the parenthesized signature form the encoder accepts, so struct-taking functions like Uniswap V4 position mints encode on the first try instead of failing as `tuple`
 
 **Reference**: [references/arbitrary-transaction.md](references/arbitrary-transaction.md)
 
@@ -710,7 +813,7 @@ The agent can answer questions about Bankr itself — how features work, officia
 
 | Chain       | Native Token | Best For                      | Gas Cost |
 | ----------- | ------------ | ----------------------------- | -------- |
-| Base        | ETH          | Memecoins, general trading    | Very Low |
+| Base        | ETH          | Memecoins, general trading, B20 tokenized equities | Very Low |
 | Polygon     | POL          | Gaming, NFTs, frequent trades | Very Low |
 | Ethereum    | ETH          | Blue chips, high liquidity    | High     |
 | Solana      | SOL          | High-speed trading            | Minimal  |
@@ -720,7 +823,9 @@ The agent can answer questions about Bankr itself — how features work, officia
 | BNB Chain   | BNB          | BSC ecosystem trading         | Low      |
 | Robinhood Chain | ETH      | Tokenized stocks & ETFs (USDG), memecoins, token launches | Very Low |
 
-**Robinhood Chain** is an EVM L2 (chainId `4663`) whose native stablecoin is **USDG** (Global Dollar). It hosts 95+ Robinhood-issued tokenized stocks and ETFs alongside memecoins, and supports Bankr token launches (Doppler). Tokenized-stock trades require location verification (see [Tokenized Stock Trading](#tokenized-stock-trading)); memecoin swaps, token launches, bridging, and transfers do not.
+**Robinhood Chain** is an EVM L2 (chainId `4663`) whose native stablecoin is **USDG** (Global Dollar). It hosts 200 Robinhood-issued tokenized stocks and ETFs alongside memecoins, and supports Bankr token launches (Doppler). Tokenized-stock trades require location verification (see [Tokenized Stock Trading](#tokenized-stock-trading)); memecoin swaps, token launches, bridging, and transfers do not.
+
+**Base** additionally hosts the **B20 tokenized equities** — Coinbase-issued, 8-decimal equity tokens whose redemption ratio to the underlying share is an on-chain multiplier that moves on corporate actions. Trading them is gated by the same location verification as Robinhood stocks; everything else on Base is not.
 
 ## Safety & Access Control
 
@@ -963,6 +1068,8 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Buy $100 of NVDA on robinhood" (spot, location verification required)
 - "Swap $50 of ETH to SPY on robinhood"
 - "Sell half my AAPL on robinhood"
+- "Buy $100 of NVDA on base" (B20 equity, location verification required)
+- "Swap $50 of USDC to GOOGL on base"
 - "Buy $50 of AAPLx on solana" (xStocks, no verification)
 - "DCA $50 into SPY every friday"
 - "Long TSLA with 5x leverage on avantis" (leveraged perp)
@@ -986,6 +1093,15 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Analyze ETH price"
 - "Trending tokens on Base"
 - "Compare UNI vs SUSHI"
+- "Who are the top holders of 0x... on base?"
+- "List holders of 0x... on solana with at least $50" (airdrop targeting)
+
+### Files
+
+- "Save this analysis as /research/base-vs-solana.md"
+- "Search my files for hyperliquid"
+- "How many rows in /exports/portfolio.csv have a negative pnl?"
+- "What's the highest score in /data/candidates.json?"
 
 ### Transfers
 
@@ -1097,7 +1213,7 @@ Venue selection is automatic and the Wallet API now covers the same edge cases t
 
 - **Same-chain EVM** goes through the DEX aggregator, with a direct-pool venue preferred on thin-liquidity chains; **cross-chain and any Solana leg** goes through the bridge/swap aggregator
 - **Brand-new Solana tokens** still on their Raydium LaunchLab bonding curve fall back to the curve when no aggregator route exists yet, instead of failing with "no route". The fallback is narrow: both legs on Solana, a SOL ↔ token pair with an un-migrated curve, a genuine no-route from the aggregator, and **no price-impact limit set on the wallet** — the curve exposes no impact figure to check, so Bankr fails closed rather than fill an unguardable venue. With price-impact protection on, these swaps are rejected by design (the `minBuyAmount` floor still applies inside the fill)
-- **Polygon `pUSD` → `USDC.e`** uses the 1:1 on-chain Offramp unwrap rather than a DEX quote: no fee, no slippage, no price impact. The reverse direction (`USDC.e` → `pUSD`) is quoted like any ordinary pair
+- **Polygon `pUSD` → `USDC.e`** uses the 1:1 on-chain Offramp unwrap rather than a DEX quote: no fee, no slippage, no price impact. The reverse direction (`USDC.e` → `pUSD`) is quoted like any ordinary pair. The unwrap settles to your own wallet, so a **swap-and-send** naming a different recipient routes through the normal venues instead — it never silently settles to you
 - **Robinhood Chain tokenized stocks** are quoted and filled through the aggregator's RFQ makers, settling against USDG, while ordinary Robinhood Chain pairs keep their thin-pool protection
 
 ```bash

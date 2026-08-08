@@ -11,6 +11,21 @@ Research tokens and analyze market data using Bankr's AI-powered analysis.
 - Price charts
 - Trending tokens
 - Token comparisons
+- Holder snapshots and supply concentration
+
+## Token Holders
+
+Ask for a token's holders and Bankr returns them largest-first with **USD value** and **percentage of supply**, plus a concentration summary. It needs a contract address and a chain.
+
+```
+"who are the top holders of 0x... on base?"
+"show holder concentration for BNKR"
+"list holders of 0x... on solana with at least $50"
+```
+
+- Set a **minimum USD value** to bound the snapshot by value rather than by count — this is the shape you want for airdrop targeting ("holders with $50+").
+- The list is the **raw on-chain holder set**. It includes liquidity pools, the token contract itself, and treasuries — often the largest entries. Exclude those before paying anyone out.
+- Snapshots are capped per read, and the response tells you when it was truncated with more holders still qualifying.
 
 ## Prompt Examples
 

@@ -34,6 +34,8 @@ Browse, purchase, and manage NFTs across chains via OpenSea integration.
 - "Buy Pudgy Penguin #1234"
 - "Get the floor Azuki"
 
+Listings priced in an **ERC-20** rather than the chain's native token — for example USDG listings on Robinhood Chain — are buyable the same way. Bankr submits the token approval the marketplace conduit needs, checks your balance of the payment currency before signing, and prices the listing using that token's decimals, so the quoted amount is the amount you pay. If a listing turns out to be stale, it moves on to the next one instead of failing the whole request.
+
 **Accept offers:**
 - "Accept the best offer on my Pudgy Penguin #1234"
 - "What's the highest offer on my Bored Ape?"
