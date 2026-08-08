@@ -5,7 +5,7 @@
 - Network: Base mainnet, chain ID `8453`
 - Task and escrow asset: AZL, 18 decimals
 - Address source:
-  `contracts/deployments/base-8453.json` in the AZZLE repository
+  the installed, reviewed `references/base-8453-v2-pinned.json`
 - Discovery source: Base RPC or first-party read-only APIs
 - Public scope: write-once `TaskScopeRegistryV2`
 - Private scope: offchain negotiation, normally XMTP
@@ -47,13 +47,15 @@ All amount fields are AZL wei.
 
 `post(totalAmount,deadline)` requires a positive AZL amount and a future
 deadline no more than 30 days away. It creates `POSTED` and reserves the
-poster's current oracle-quoted deposit requirements.
+poster's current oracle-quoted deposit requirements. This is the only point at
+which `pricingPolicy.quoteTask()` creates the task's collateral quote.
 
 ### Claim
 
 `claim(taskId)` requires `POSTED`, a non-poster caller, and a non-expired task.
 It creates the task escrow, records a one-day `fundingDeadline`, and changes the
-task to `CLAIMED`.
+task to `CLAIMED`. It reuses the quote latched at post; it does not perform a
+live policy/oracle quote.
 
 ### Fund
 
@@ -125,6 +127,24 @@ taskQuotes(taskId)
 Policy targets are converted to AZL by `pricingPolicy.quoteTask()` when the
 poster creates the task quote. The worker reuses the same task-latched quote.
 
+`taskQuotes(taskId)` returns the five latched AZL-wei fields:
+
+```text
+entryDeposit
+liveTaskReserve
+accessFee
+exitCompensation
+exitProtocolShare
+```
+
+For a claim, read `available(account)` rather than raw `deposits` or
+`withdrawable`. Required available AZL is
+`max(latchedEntryFloor(account), entryDeposit) + liveTaskReserve + chargedAccessFee`.
+`chargedAccessFee` is zero only when an Action Credit is actually spent. The
+reserve is locked; the access fee is immediately debited; the entry deposit is
+a withdrawal floor; and the exit split is conditional rather than a second
+claim-time debit.
+
 USDC/ETH deposit intake uses `paymentGateway`; task escrow funding uses direct
 AZL approval to `escrowVault`.
 
@@ -151,4 +171,3 @@ First-party marketplace APIs use:
 - `source: "base-rpc"`
 
 HTTP APIs are read-only. All writes require a user-controlled Base wallet.
-

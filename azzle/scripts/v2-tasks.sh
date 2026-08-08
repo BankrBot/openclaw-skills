@@ -48,12 +48,11 @@ case "$COMMAND" in
       '
     ;;
   manifest)
-    curl --fail-with-body --silent --show-error \
-      "https://raw.githubusercontent.com/Dabus123/azzle/main/contracts/deployments/base-8453.json"
+    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+    cat "${SCRIPT_DIR}/../references/base-8453-v2-pinned.json"
     ;;
   *)
     echo "usage: v2-tasks.sh open [limit] | task <taskId> | scope <taskId> | manifest" >&2
     exit 2
     ;;
 esac
-

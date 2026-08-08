@@ -15,42 +15,45 @@ Require Base mainnet (`chainId: 8453`) and enough ETH for gas.
 
 ## 2. Load and validate the deployment
 
-Fetch:
+Read the installed, reviewed deployment pin:
 
 ```text
-https://raw.githubusercontent.com/Dabus123/azzle/main/contracts/deployments/base-8453.json
+references/base-8453-v2-pinned.json
 ```
 
 Require:
 
 - `version` is `2.0.0`
 - `chainId` is `8453`
-- requested write targets one of its lower-camel-case contract keys
+- every write target, token, and approval spender exactly matches its pinned
+  address
 - AZL is `external.azl`
 - USDC is `external.usdc`
 
-Stop if the manifest cannot be fetched or does not validate. Never fall back to
-addresses from prior conversations.
+Before every approval or write, use Base RPC to confirm nonempty runtime code
+at every signing-relevant target and validate the pinned V2 contract graph
+through its read-only `validateGraph()` and wiring accessors. Stop on a missing
+code or graph check. Never refresh this pin from an upstream branch or fall back
+to addresses from prior conversations. Deployment changes arrive through a
+reviewed skill update.
 
-## 3. Inspect current V2 collateral requirements
+## 3. Inspect V2 collateral requirements
 
 Read:
 
 - `paymentGateway.intakePaused()`
-- `pricingPolicy.quoteTask()`
-- `depositVault.deposits(wallet)`
+- `depositVault.available(wallet)`
 - `depositVault.reserved(wallet)`
-- `depositVault.withdrawable(wallet)`
 - `stakingVault.stakingActive()`
 - `stakingVault.creditsOf(wallet)` only if staking is active
 
-`quoteTask()` returns AZL-wei values for entry collateral, live-task reserve,
+For a new post only, `pricingPolicy.quoteTask()` returns AZL-wei values for entry collateral, live-task reserve,
 access fee, exit compensation, and protocol share. Values are oracle-derived
 from `$25`, `$8`, `$5`, `$2.50`, and `$2.50` policy targets.
 
-For a post or claim without an Action Credit, available collateral must cover
-the current entry floor plus live-task reserve plus access fee. Do not estimate
-this with a fixed AZL amount.
+For a post, available collateral must cover the current entry floor plus
+live-task reserve plus access fee unless a usable Action Credit waives the fee.
+Do not estimate this with a fixed AZL amount.
 
 ## 4. Fund the V2 deposit ledger if needed
 
@@ -105,8 +108,26 @@ the user selected open discovery.
 
 ### Claim
 
-Require `POSTED`, confirm the caller is not the poster, and show the current
-deposit quote. Claim does not fund task escrow.
+Require `POSTED`, confirm the caller is not the poster, then read
+`depositVault.taskQuotes(taskId)`. The quote was latched when the poster created
+the task; do not use `pricingPolicy.quoteTask()` as a claim-cost preview.
+
+Show the user:
+
+- latched `entryDeposit`, `liveTaskReserve`, `accessFee`,
+  `exitCompensation`, and `exitProtocolShare`
+- `depositVault.available(wallet)` and the account's existing latched entry
+  floor
+- whether an Action Credit is both active and spendable; it changes only the
+  charged access fee to zero
+- required available AZL:
+  `max(existing entry floor, latched entryDeposit) + latched liveTaskReserve + charged access fee`
+- any shortfall
+
+The reserve is locked, the charged access fee is immediately debited, and the
+entry floor limits later withdrawals. The exit-compensation and protocol-share
+amounts are conditional components of the locked reserve, not claim-time
+debits. Claim does not fund task escrow.
 
 ### Fund
 
@@ -144,7 +165,7 @@ Arguments: <decoded arguments>
 Token/spender/amount: <when applicable>
 Expected state change: <before> -> <after>
 Irreversible effects: <fees, escrow movement, immutable scope, or evidence hash>
+Latched claim costs: <all five quote fields, required available amount, fee waiver status, and shortfall; claim only>
 ```
 
 Proceed only after explicit confirmation of that specific action.
-
