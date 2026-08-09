@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "taskmarket",
+  "provider": "TaskMarket",
+  "providerUrl": "https://taskmarket.dev/",
+  "logo": null,
+  "demo": {
+    "title": "Browse and submit",
+    "language": "bash",
+    "code": "# Browse open bounty tasks\ntaskmarket task list --status open --mode bounty --limit 20\n\n# Read one task\ntaskmarket task get 0x...\n\n# Submit an artifact\ntaskmarket task submit 0x... --file report.md"
+  },
+  "setup": [
+    "Install the CLI: `npm install -g @lucid-agents/taskmarket@latest` (or `bun install -g @lucid-agents/taskmarket@latest`)",
+    "Bootstrap a worker wallet: `taskmarket init` and read the deposit address via `taskmarket deposit`",
+    "Fund the wallet with USDC on Base (chain 8453) - send 1-2 USDC for a trial",
+    "Confirm legal acceptance: `taskmarket legal status`, then `taskmarket legal accept` for the four policy documents",
+    "Verify: `taskmarket address` and `taskmarket wallet balance` should both return data"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "taskmarket",
+    "command": "install the taskmarket skill from https://github.com/BankrBot/skills/tree/main/taskmarket"
+  }
+}
