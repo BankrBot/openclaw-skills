@@ -7,7 +7,7 @@
   "demo": {
     "title": "callput.sh",
     "language": "bash",
-    "code": "# Read-only discovery\nbankr prompt \"Using the Callput skill, list live assets and scan the best bullish TSLA spread. Do not prepare or submit a transaction.\"\n\n# Prepare with an explicit risk review\nbankr prompt \"Using the Callput skill, prepare the top bullish BTC spread for 1 contract. Show maximum USDC at risk, fees, expiry, strikes, wallet, and network before asking me to confirm.\"\n\n# Manage an existing position\nbankr prompt \"Using the Callput skill, review my Callput positions and identify anything expiring within 24 hours. Do not close or settle without my explicit minimum-output approval.\""
+    "code": "# Read-only discovery\nbankr prompt \"Using the Callput skill, list live assets and scan the best bullish TSLA spread. Do not prepare or submit a transaction.\"\n\n# Review risk, then explicitly approve preparation\nbankr prompt \"Using the Callput skill, scan the top bullish BTC spread for 1 contract. Show maximum USDC at risk, fees, expiry, strikes, wallet, and network, then ask for my explicit approval before preparing any transaction.\"\n\n# Manage an existing position\nbankr prompt \"Using the Callput skill, review my Callput positions and identify anything expiring within 24 hours. Do not close or settle without my explicit minimum-output approval.\""
   },
   "setup": [
     "Install the Callput skill",
