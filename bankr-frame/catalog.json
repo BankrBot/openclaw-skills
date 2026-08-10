@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "bankr-frame",
+  "provider": "reansky",
+  "providerUrl": "https://github.com/reansky",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "bankr-frame",
+    "command": "install the bankr-frame skill from https://github.com/BankrBot/skills/tree/main/bankr-frame"
+  }
+}
