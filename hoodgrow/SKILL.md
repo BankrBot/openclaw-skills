@@ -1,6 +1,6 @@
 ---
 name: hoodgrow
-description: "Robinhood Chain stock-token data — live price, corporate-action adjusted supply, Morpho/Uniswap DeFi depth, and a dedicated filterable/paginated corporate-actions feed (splits, dividends, oracle pauses) — for the full catalog, a single symbol, or corporate actions alone. Pay-per-call in USDC on Base via x402 with no signup, or free with a self-serve API key (40 requests/day, no payment)."
+description: "Robinhood Chain stock-token data: live price, corporate-action adjusted supply, and Morpho/Uniswap DeFi depth, plus a dedicated corporate-actions feed (splits, dividends, oracle pauses). Pay-per-call in USDC on Base via x402 ($0.10 full catalog, no signup) or use a free self-serve API key (40 requests/day, no payment)."
 tags: [stock-tokens, tokenized-equities, robinhood-chain, defi, data, corporate-actions, rwa, yield]
 version: 1
 visibility: public
