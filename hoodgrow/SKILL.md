@@ -1,6 +1,6 @@
 ---
 name: hoodgrow
-description: "Robinhood Chain stock-token data: live price, corporate-action adjusted supply, and Morpho/Uniswap DeFi depth, plus a dedicated corporate-actions feed (splits, dividends, oracle pauses). Pay-per-call in USDC on Base via x402 ($0.10 full catalog, no signup) or use a free self-serve API key (40 requests/day, no payment)."
+description: "Robinhood Chain stock-token data: live price, corporate-action adjusted supply, and Morpho/Uniswap DeFi depth, plus a dedicated corporate-actions feed (splits, dividends, oracle pauses). Pay-per-call in USDC on Base via x402 ($0.10 full catalog, no signup), a free self-serve API key (40 requests/day), or a prepaid credit balance for gas-free repeat calls."
 tags: [stock-tokens, tokenized-equities, robinhood-chain, defi, data, corporate-actions, rwa, yield]
 version: 1
 visibility: public
@@ -12,13 +12,13 @@ metadata:
 
 # HoodGrow — Robinhood Chain Stock Token Data
 
-HoodGrow reads Robinhood Chain (chain id 4663) stock token contracts directly — live price, corporate-action adjusted supply (ERC-8056 `uiMultiplier()`, so numbers stay correct through stock splits, not just raw token balances), live DeFi depth (best Morpho supply APY, total Uniswap V3 TVL), and both pending (on-chain staged) and historical (official Robinhood ledger) corporate actions. Three endpoints: the full catalog in one call, a single symbol for a cheaper spot check, or a dedicated corporate-actions feed for splits/dividends/oracle pauses on their own, independent of price data. Pay-per-call in USDC over x402 — no account needed — or get a free self-serve API key (40 requests/day, no payment) at https://www.hoodgrow.com/builders.
+HoodGrow reads Robinhood Chain (chain id 4663) stock token contracts directly — live price, corporate-action adjusted supply (ERC-8056 `uiMultiplier()`, so numbers stay correct through stock splits, not just raw token balances), live DeFi depth (best Morpho supply APY, total Uniswap V3 TVL), and both pending (on-chain staged) and historical (official Robinhood ledger) corporate actions. Three endpoints: the full catalog in one call, a single symbol for a cheaper spot check, or a dedicated corporate-actions feed for splits/dividends/oracle pauses on their own, independent of price data. Pay-per-call in USDC over x402 — no account needed — get a free self-serve API key (40 requests/day, no payment) at https://www.hoodgrow.com/builders, or buy a prepaid credit balance once and spend it down over many calls with a cheap wallet signature instead of a fresh on-chain payment each time (see "Prepaid credits" below).
 
 ## When to use this skill
 Load this whenever the user or your workflow needs live price, adjusted supply, or corporate-action data (splits, dividends) for a Robinhood Chain stock token — checking a token before a trade, tracking an upcoming split, or building a dashboard/agent on top of tokenized equities.
 
 ## Payment safety — hard invariants (verify LOCALLY before any wallet signs)
-Every paid call MUST satisfy all of these. If any check fails, do NOT sign — stop and tell the user.
+Applies to every REAL on-chain payment: a per-call x402 payment, and buying a credit bundle. Every one of these MUST satisfy all of these. If any check fails, do NOT sign — stop and tell the user. (A per-call credit SPEND — see "Prepaid credits" below — is a separate, gas-free wallet signature that moves no funds; these invariants don't apply to it, but it must still only ever be sent to `www.hoodgrow.com`.)
 - **Network:** Base mainnet only, chain id `eip155:8453` (8453). Reject any other chain.
 - **Token:** USDC only, contract `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`. Reject any other token.
 - **Payee (payTo):** `0x8520B3693a2Cf3c2bEa3a505Af3A9c1b093954c7` only. Reject any other recipient.
@@ -65,11 +65,25 @@ Any wallet can self-serve a bearer key at https://www.hoodgrow.com/builders — 
 
 **Always call `www.hoodgrow.com`, never the bare `hoodgrow.com` host.** The bare host redirects to `www.hoodgrow.com`, and `fetch` drops the `Authorization` header on a cross-host redirect per spec — so a bearer-key call to the bare host silently loses its key mid-request and falls through to the x402 paywall instead of erroring. It looks exactly like "no key was sent," not like a bug, so it's easy to misdiagnose. Hardcode `www.hoodgrow.com` (as every example above does) rather than relying on the redirect.
 
+## Prepaid credits (optional — cheaper than paying x402 per call, no account required)
+
+Buy a dollar-denominated credit balance once via x402, then spend it down over many calls with a lightweight, gas-free wallet signature instead of a fresh on-chain USDC payment every time. Same "just a wallet, no signup" posture as raw x402 — a credit balance is keyed to the paying wallet address, not an account.
+
+1. **Buy a bundle** — `POST https://www.hoodgrow.com/api/agent/credits/purchase?bundle=<id>` — an x402-payable endpoint like any other (see Payment safety above; this one settles a REAL on-chain payment). Bundle catalog: `GET` the same URL (no payment) to see current ids/prices — as of this writing: `10` ($10 → $11 credit), `50` ($50 → $60 credit), `200` ($200 → $260 credit). Bigger bundles carry a bigger bonus, but never enough to out-value a Builder subscription at sustained high volume — see "Rate limits" below for when Builder is the better deal.
+2. **Spend it** — on any metered `GET` call above, send three extra headers instead of paying x402 or a bearer key:
+   - `X-HoodGrow-Credit-Wallet: 0x...` — the wallet that funded the balance
+   - `X-HoodGrow-Credit-Timestamp: <unix seconds>` — must be within 60s of "now"
+   - `X-HoodGrow-Credit-Signature: 0x...` — that wallet's EIP-191 `personal_sign` of the exact string `HoodGrow credit spend\nmethod: <METHOD>\npath: <path>\ntimestamp: <timestamp>` (method uppercase, path exactly as called e.g. `/api/agent/tokens`, no query string, no host). A signature can only ever be used once (replay is rejected) and only ever for the exact method+path it was signed for.
+   The endpoint's own price (same as its x402 price above) is debited from your balance; a `402` with `insufficientCredit` details means top up via step 1.
+3. **Check your balance** — `GET https://www.hoodgrow.com/api/agent/credits/balance` with the same three headers — free, doesn't spend anything.
+
+Credits can also fund webhooks (see below) without a Builder subscription: `POST https://www.hoodgrow.com/api/agent/credits/webhook  { "webhookUrl": "https://..." }` with the same three headers — debits a flat monthly fee and activates delivery for 30 days, stacking on renewal.
+
 ## Rate limits
 
-All endpoints default to 30 requests/minute per IP for x402/pay-per-call callers with no key. A `429` means back off, not that something is wrong — respect the `Retry-After` header rather than retrying immediately (a retry after a paid call may also risk a duplicate payment, see above). Need more than the free key's 40/day (algo trading, continuous polling, production use)? A paid Builder API key raises the limit to 300 requests/minute with no daily cap, plus webhooks — see "Getting access" at https://www.hoodgrow.com/api-access.
+All endpoints default to 30 requests/minute per IP for x402/pay-per-call callers with no key — this applies to credit-spend calls too, since they're not bearer-key-authenticated. A `429` means back off, not that something is wrong — respect the `Retry-After` header rather than retrying immediately (a retry after a paid call may also risk a duplicate payment, see above). Need more than the free key's 40/day (algo trading, continuous polling, production use)? A paid Builder API key raises the limit to 300 requests/minute with no daily cap, plus webhooks — see "Getting access" at https://www.hoodgrow.com/api-access.
 
-## Webhooks (Builder tier)
+## Webhooks (Builder tier, or prepaid credits — see above)
 
 Push delivery instead of polling: an HMAC-signed `POST` the moment a corporate action is `staged` (first appears pending on-chain), `applied` (`effectiveAt` reached and the new multiplier confirmed live on-chain — the moment to actually react to, not the advance notice), or `paused`. Full payload shape, signature verification, and setup: see the "Webhooks" card at https://www.hoodgrow.com/api-access.
 
