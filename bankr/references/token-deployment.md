@@ -269,12 +269,34 @@ Like the fee schedule, this option cannot be changed after launch.
 
 ### Rate Limits
 
-| User Type | Daily Limit | Gas |
-|-----------|-------------|-----|
-| Standard Users | 50 tokens/day | Sponsored within limit |
-| Bankr Club Members | 100 tokens/day | Sponsored within limit |
+| User Type | Deploys per day | Gas-sponsored deploys per day |
+|-----------|-----------------|-------------------------------|
+| Standard Users | 50 | 3 |
+| Bankr Club Members | 100 | 10 |
+
+The two limits are separate: the daily cap is how many tokens you may deploy, the sponsorship cap is how many of those Bankr pays gas for. Past the sponsorship cap you can keep deploying up to the daily cap by paying gas yourself. A deploy that fails before broadcast because of gas doesn't consume sponsorship quota, though it still counts against the daily cap.
+
+A separate cross-account limit applies to fee recipients: an address may be named fee recipient on at most **20 deploys per 24 hours** across all accounts.
 
 High-volume or bot-like deploy patterns can trigger automated spam protections and temporary or permanent restrictions. For legitimate programmatic deploy use cases, open a support ticket before scaling up.
+
+### Stock-Paired Launches
+
+Instead of pairing your token's pool with WETH, you can pair it with a registry **tokenized stock**, so the token trades against equity exposure rather than against ETH. Available on **Base** (B20 equities) and **Robinhood Chain**.
+
+```bash
+bankr agent prompt "Launch a token called Semis paired with NVDA on base"
+```
+
+```json
+POST /token/deploy
+{ "name": "Semis", "symbol": "SEMIS", "chain": "base", "pairedStockAddress": "0x..." }
+```
+
+- Only stocks Bankr can price are offered — the launch curve's tick math needs a USD price, so an unpriceable stock would fail late rather than early.
+- The same rule set validates the pairing in the launch wizard, the deploy API, and the agent, so what's offered is what's accepted.
+- Pairing is fixed at launch, like the fee schedule.
+- The pool's quote asset is the stock, so a swap leg that touches it is subject to that stock's location verification like any other stock trade.
 
 ### Fee Structure
 

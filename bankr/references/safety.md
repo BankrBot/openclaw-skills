@@ -285,8 +285,11 @@ The `/agent/prompt` endpoint enforces daily message limits per account:
 | Tier | Daily Limit |
 |------|-------------|
 | Standard | 100 messages/day |
+| Standard + Max Mode | 100 messages/day (Max Mode does not raise the API cap) |
 | Bankr Club | 1,000 messages/day |
 | Custom | Set per API key |
+
+These are Agent API limits. The web terminal is capped separately at 5 messages/day without a subscription, and unlimited with Bankr Club or Max Mode.
 
 **429 response when limit exceeded:**
 ```json

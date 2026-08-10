@@ -93,6 +93,11 @@ Submit this ERC-20 transfer:
 | Invalid calldata | Ensure proper hex encoding with 0x prefix |
 | Transaction reverted | Check calldata encoding and contract state |
 | Insufficient funds | Ensure wallet has enough ETH/MATIC for gas + value |
+| Signature won't encode (`tuple`) | Struct parameters must be written in parenthesized form — `mint((address,uint256) params)`, not `mint(tuple params)`. Signatures Bankr reads off a contract's ABI already come back expanded; when you write one from memory and encoding fails, the error includes the corrected form |
+
+## Reading a Contract's ABI
+
+Ask Bankr for an unknown contract's ABI and it returns human-readable function signatures you can pass straight to a read or write call. Struct (tuple) parameters and return values are recursively expanded into the parenthesized form the encoder accepts, and every generated signature is round-tripped through the parser before being offered — so a struct-taking function like a Uniswap V4 position mint encodes on the first attempt rather than failing as the literal keyword `tuple`.
 
 ## Use Cases
 
