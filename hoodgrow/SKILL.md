@@ -77,7 +77,7 @@ Buy a dollar-denominated credit balance once via x402, then spend it down over m
    The endpoint's own price (same as its x402 price above) is debited from your balance; a `402` with `insufficientCredit` details means top up via step 1.
 3. **Check your balance** — `GET https://www.hoodgrow.com/api/agent/credits/balance` with the same three headers — free, doesn't spend anything.
 
-Credits can also fund webhooks (see below) without a Builder subscription: `POST https://www.hoodgrow.com/api/agent/credits/webhook  { "webhookUrl": "https://..." }` with the same three headers — debits a flat monthly fee and activates delivery for 30 days, stacking on renewal.
+Credits can also fund webhooks (see below) without a Builder subscription: `POST https://www.hoodgrow.com/api/agent/credits/webhook  { "webhookUrl": "https://..." }` with the same three headers — registration itself is free. Billing is per-EVENT: $0.05 is debited only when a corporate action actually fires and triggers a push to your URL — zero idle cost for a webhook that never fires. If the balance can't cover it at send time, that one event is simply skipped for your webhook (no charge, no retry) until you top up again.
 
 ## Rate limits
 
