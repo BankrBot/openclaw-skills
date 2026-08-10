@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "taskmarket",
+  "provider": "Taskmarket",
+  "providerUrl": "https://taskmarket.dev",
+  "logo": null,
+  "demo": {
+    "title": "taskmarket-read-only.sh",
+    "language": "bash",
+    "code": "TM_API=https://api.taskmarket.dev\\n\\n# Discover open Base work without a wallet or payment\\ncurl -fsS \\\"$TM_API/api/tasks?status=open&phase=active&mode=bounty&limit=10&sort=deadline_asc\\\" | jq '.tasks[] | {id,title,reward,expiresAt,pendingActions}'\\n\\n# Inspect one task before deciding whether to work\\ncurl -fsS \\\"$TM_API/api/tasks/<taskId>\\\" | jq '{id,title,status,phase,reward,expiry,pendingActions}'\\n\\n# Worker writes use one Bankr wallet for address lookup and EIP-191 signing.\\n# The skill never pays an X402 fee automatically."
+  },
+  "setup": [
+    "Install the taskmarket skill from https://github.com/BankrBot/skills/tree/main/taskmarket",
+    "Public discovery needs no credentials; set BANKR_API_KEY only when the Bankr wallet must sign or pay",
+    "Use a Bankr Wallet API key with explicit write access for signing; keep it in the approved secret store",
+    "Register one free Taskmarket device for the same Bankr wallet and store its token as TASKMARKET_API_TOKEN",
+    "For requester escrow or any paid worker action, preview the exact X402 amount and obtain explicit authorization"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "taskmarket",
+    "command": "install the taskmarket skill from https://github.com/BankrBot/skills/tree/main/taskmarket"
+  }
+}
