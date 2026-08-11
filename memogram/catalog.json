@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "slug": "memogram",
+  "provider": "memogram",
+  "providerUrl": "https://memogram.pages.dev",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "memogram.sh",
+    "language": "bash",
+    "code": "# Read every memo in a transaction, joined to its payment\nbankr prompt \"Using the memogram skill, read the memos in tx 0xf726…1c4f\"\n\n# Read an address's recent memos\nbankr prompt \"Using the memogram skill, show the last 10 memos from 0xYourAddr\"\n\n# Send a payment with an on-chain memo attached\nbankr prompt \"Using the memogram skill, send 1 MEMO to 0xFriend with the memo 'gm from bankr'\""
+  },
+  "setup": [
+    "Install: `install the memogram skill from https://github.com/BankrBot/skills/tree/main/memogram`",
+    "Set up the memo-mcp server, pinned to a reviewed revision — v0.2.1 (commit 2c2c663): https://github.com/GeObts/memo-mcp",
+    "Read-only needs no key and has no spend surface — prefer it unless sends are required",
+    "For sends: MEMO_PRIVATE_KEY must be a FRESH dedicated key that has never held real value, funded minimally, run over local stdio only — never hosted, remote, or shared",
+    "For sends: both spend caps MEMO_MAX_PER_SEND and MEMO_MAX_TOTAL are mandatory — the server refuses to boot with a key and no caps",
+    "memo-mcp is first-party (same author as this skill) and is NOT audited — review the source before enabling sends",
+    "Sends always require an explicit user confirmation of a preview_send; there is no auto-send",
+    "Source: https://github.com/BankrBot/skills/tree/main/memogram"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "memogram",
+    "command": "install the memogram skill from https://github.com/BankrBot/skills/tree/main/memogram"
+  }
+}

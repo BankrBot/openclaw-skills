@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="memogram — on-chain memos">
+  <defs>
+    <radialGradient id="mg-screen" cx="50%" cy="40%" r="78%">
+      <stop offset="0%" stop-color="#231900"/>
+      <stop offset="100%" stop-color="#0a0700"/>
+    </radialGradient>
+    <filter id="mg-glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="0.7" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="mg-scan" width="4" height="3" patternUnits="userSpaceOnUse">
+      <rect width="4" height="1" y="2" fill="#000000" opacity="0.16"/>
+    </pattern>
+  </defs>
+
+  <!-- bezel + CRT screen -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#050400"/>
+  <rect x="5" y="5" width="54" height="54" rx="11" fill="url(#mg-screen)"/>
+
+  <!-- amber memo lines + cursor -->
+  <g fill="#ffb000" filter="url(#mg-glow)">
+    <rect x="15" y="16" width="34" height="5" rx="2.5"/>
+    <rect x="15" y="25" width="34" height="5" rx="2.5"/>
+    <rect x="15" y="34" width="34" height="5" rx="2.5"/>
+    <rect x="15" y="43" width="18" height="5" rx="2.5"/>
+    <circle cx="42" cy="45.5" r="3.3" fill="#ffd24a"/>
+  </g>
+
+  <!-- scanline overlay (subtle; vanishes at small sizes) -->
+  <rect x="5" y="5" width="54" height="54" rx="11" fill="url(#mg-scan)"/>
+</svg>
