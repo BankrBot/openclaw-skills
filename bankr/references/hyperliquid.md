@@ -87,6 +87,11 @@ Perps trading requires USDC in the perps account. Bankr auto-transfers from spot
 
 Hyperliquid is a trading **venue**, not a chain, so moving USDC in and out of it is venue funding rather than bridging — and deposit and withdraw are separate operations with fixed destinations. A deposit only ever reaches Hyperliquid; a withdrawal only ever lands on **Arbitrum**. To get withdrawn funds somewhere else, follow it with an ordinary cross-chain swap ("withdraw $500 from hyperliquid, then move it to Base") — it composes as two steps.
 
+**Withdrawal fee.** Hyperliquid charges a flat **1 USDC** withdrawal fee and takes it **out of the amount you request** — request 100, receive 99. Two consequences worth knowing:
+
+- Your **full withdrawable balance is requestable**. You don't need to leave a dollar behind to cover the fee, so "withdraw everything" works as stated.
+- **Withdrawals under $1 are refused** rather than netting to zero or a negative amount.
+
 **Name the venue when you mean the venue.** Say "hyperliquid" (or "hl") rather than a bare "bridge" or "withdraw"; a generic verb with a non-Hyperliquid destination is a request for that destination, and Bankr will treat it as one.
 
 **Market data:**

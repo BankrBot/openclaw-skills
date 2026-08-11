@@ -69,6 +69,7 @@ All chains: Base, Polygon, Ethereum, Unichain, Solana, World Chain, Arbitrum, BN
 - **Real-Time Prices**: Values reflect current market prices
 - **Comprehensive View**: Shows all tokens with meaningful balances
 - **Wrap/Unwrap Aware**: Wrapping and unwrapping the native token (ETH ↔ WETH and equivalents) updates both balances, so a portfolio read straight after an unwrap reflects it
+- **Exact Balances**: token `balance` is the exact decimal amount in plain notation, carried as a string — never rounded, and never in scientific notation for very small or very large holdings. If you do arithmetic on it, parse it with a decimal-safe library rather than relying on a float
 
 ## Common Tokens Tracked
 
