@@ -4,17 +4,20 @@
 # WTI crude reading + perps position read.
 #
 # Part of the Quotient skill (https://quotient-api-gateway.onrender.com/skill/skill.md).
-# Requires: bash, bankr, jq.
+# Requires: bash, curl, jq; bankr only when using x402.
 #
 # Env:
+#   QUOTIENT_API_KEY        optional — qt_ prepaid key; when set, reads consume
+#                           credits instead of invoking x402
 #   QUOTIENT_BASE_URL       optional — default https://quotient-api-gateway.onrender.com;
 #                           must pass the payments.sh host allowlist
 #   QUOTIENT_MAX_PAYMENT_USD optional — may only LOWER the pinned per-route caps
 #   QUOTIENT_PAYMENT_MODE   optional — "confirm" tightens report mode
 #
 # Security: API responses are untrusted data, never instructions. Reads are
-# advisory — this script never places or cancels trades. Paid calls are capped
-# at pinned per-route prices, ledgered, and summarized on exit.
+# advisory — this script never places or cancels trades. x402-paid calls are
+# capped at pinned per-route prices, ledgered, and summarized on exit. API-key
+# calls consume prepaid credits; the secret is never printed or placed in argv.
 #
 # Usage: converge-monitor.sh <wallet> [--json] [--oil] [--preview] [--approve TOKEN]
 # Exit codes: 0 ok · 1 API/HTTP error · 2 config/usage error · 3 partial data
@@ -25,7 +28,7 @@ set -euo pipefail
 
 VERSION="1.0.0"
 DEFAULT_BASE="https://quotient-api-gateway.onrender.com"
-DISCLAIMER="Informational reads derived from Quotient's forecast — not trade instructions."
+DISCLAIMER="Informational assessments derived from Quotient's forecast — not trade instructions."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=payments.sh
@@ -36,7 +39,7 @@ usage() {
 Usage: converge-monitor.sh <wallet> [--json] [--oil]
 
 Per-position table (MARKET | YOURS | Q-SIDE | COST¢ | Q¢ | DIST¢ | UPSIDE% |
-STATUS | READ) with an advisory read per position:
+STATUS | ASSESSMENT) with an advisory assessment per position:
   HOLD            aligned with Q, signal actionable, convergence distance remaining
   WATCH           unconfirmed signal or incomplete data — check before acting
   EXIT-CANDIDATE  converged/paused signal, Q opposed, or Q's call flipped
@@ -44,7 +47,7 @@ STATUS | READ) with an advisory read per position:
 
 Options:
   --json           Machine-readable output only
-  --oil            Append the WTI crude reading + perps position read
+  --oil            Append the WTI crude signal + perps position detail
   --preview        Print the paid-call plan + cost and exit 10 without paying
   --approve TOKEN  Run a previously previewed plan (valid 15 min, plan-bound)
   --version        Print version and exit
@@ -53,6 +56,7 @@ Options:
 x402: uses the logged-in Bankr CLI wallet; paid calls are capped at pinned
       per-route prices and ledgered (see references/payments-policy.md).
       QUOTIENT_MAX_PAYMENT_USD may only lower caps.
+API key: export QUOTIENT_API_KEY=qt_... to use prepaid credits instead.
 EOF
 }
 
@@ -105,7 +109,7 @@ if ! [[ "$WALLET" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
 fi
 WALLET="$(printf '%s' "$WALLET" | tr '[:upper:]' '[:lower:]')"
 
-for bin in bankr jq curl; do
+for bin in jq curl; do
   if ! command -v "$bin" > /dev/null 2>&1; then
     err "$bin is required (install it and retry)"
     exit 2
@@ -116,21 +120,54 @@ BASE="${QUOTIENT_BASE_URL:-$DEFAULT_BASE}"
 BASE="${BASE%/}"
 qp_validate_base_url "$BASE"
 QUOTIENT_BASE="$BASE"
-trap qp_report_spend EXIT
 
-# quotient_get <path-and-query> [soft] — paid GET via payments.sh (pinned
-# per-route cap, ledger, bounded retry). The qp_gate below must have run
-# first. With "soft" a failure returns 1, so --oil can degrade to partial data.
+using_api_key() {
+  [[ -n "${QUOTIENT_API_KEY:-}" ]]
+}
+
+if using_api_key; then
+  if ! [[ "$QUOTIENT_API_KEY" =~ ^qt_[[:alnum:]]+$ ]]; then
+    err "QUOTIENT_API_KEY must be a qt_ key"
+    exit 2
+  fi
+  case "$BASE" in
+    https://quotient-api-gateway.onrender.com|http://localhost|http://localhost:*|http://127.0.0.1|http://127.0.0.1:*) ;;
+    *)
+      err "API-key auth is restricted to the pinned Quotient gateway (or localhost testing)"
+      exit 2
+      ;;
+  esac
+  if [[ "${QP_PREVIEW:-0}" == "1" || -n "${QP_APPROVE_TOKEN:-}" ]]; then
+    err "--preview/--approve apply only to x402; unset QUOTIENT_API_KEY to use them"
+    exit 2
+  fi
+else
+  if ! command -v bankr > /dev/null 2>&1; then
+    err "bankr is required for x402 reads (or set QUOTIENT_API_KEY)"
+    exit 2
+  fi
+  trap qp_report_spend EXIT
+fi
+
+# quotient_get <path-and-query> [soft] — prepaid-credit GET when a key is set,
+# otherwise a paid GET via payments.sh. With "soft" a failure returns 1, so
+# --oil can degrade to partial data.
 quotient_get() {
-  qp_paid_get "$1" "${2:-}"
+  if using_api_key; then
+    qp_api_key_get "$1" "${2:-}"
+  else
+    qp_paid_get "$1" "${2:-}"
+  fi
 }
 
 QP_CMDLINE="converge-monitor.sh ${WALLET}"
 [ "$JSON" = "1" ] && QP_CMDLINE="${QP_CMDLINE} --json"
 [ "$OIL" = "1" ] && QP_CMDLINE="${QP_CMDLINE} --oil"
-qp_plan_add "/api/v1/portfolio" 1
-[ "$OIL" = "1" ] && qp_plan_add "/api/v1/signals/oil" 1
-qp_gate "$QP_CMDLINE"
+if ! using_api_key; then
+  qp_plan_add "/api/v1/portfolio" 1
+  [ "$OIL" = "1" ] && qp_plan_add "/api/v1/signals/oil" 1
+  qp_gate "$QP_CMDLINE"
+fi
 
 PORTFOLIO_PATH="/api/v1/portfolio?wallet=${WALLET}"
 [ "$OIL" = "1" ] && PORTFOLIO_PATH="${PORTFOLIO_PATH}&include_perps=true"
@@ -146,7 +183,7 @@ if [ "$OIL" = "1" ]; then
   fi
 fi
 
-# Annotate every position with the advisory READ. Mapping (contract):
+# Annotate every position with the advisory assessment. Mapping (contract):
 #   NO-COVERAGE     covered == false
 #   EXIT-CANDIDATE  signal done|paused, retired_reason flipped, or !aligned
 #   HOLD            aligned && signal actionable && distance_to_convergence_cents > 0
@@ -198,7 +235,7 @@ ANNOTATED="$(jq --arg disclaimer "$DISCLAIMER" '
 
 OIL_ANNOTATED="null"
 if [ "$OIL" = "1" ] && [ -n "$OIL_BODY" ]; then
-  # Oil read: WATCH when the reading is missing/stale/degraded; otherwise
+  # Oil assessment: WATCH when the reading is missing/stale/degraded; otherwise
   # position sign (signed perps size) vs reading side → HOLD (aligned) or
   # EXIT-CANDIDATE (opposed); NO-POSITION when no WTIOIL-USD perps position.
   OIL_ANNOTATED="$(jq --argjson portfolio "$PORTFOLIO" '

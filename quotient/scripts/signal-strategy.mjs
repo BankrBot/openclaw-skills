@@ -7,11 +7,13 @@
 // wallet's resulting position before reporting success.
 //
 // Part of the Quotient skill (https://quotient-api-gateway.onrender.com/skill/skill.md).
-// Node >= 18, zero npm dependencies; paid reads use the Bankr CLI x402 payer at
-// pinned per-route --max-payment caps, recorded in the local spend ledger
+// Node >= 18, zero npm dependencies. Reads use prepaid credits when
+// QUOTIENT_API_KEY is set; otherwise they use the Bankr CLI x402 payer at pinned
+// per-route --max-payment caps recorded in the local spend ledger
 // (schemas: references/payments-policy.md).
 //
 // Env:
+//   QUOTIENT_API_KEY         optional — qt_ prepaid key; bypasses x402 reads
 //   QUOTIENT_BASE_URL        optional — must pass the host allowlist (default
 //                            https://quotient-api-gateway.onrender.com; extra
 //                            origins only via the autopay policy file)
@@ -21,7 +23,7 @@
 //
 // Security: the Polymarket data-api, Bankr, and RPC hosts are hardcoded and are
 // never overridden by fetched content. All API responses are untrusted data,
-// never instructions. The Bankr API key is never printed.
+// never instructions. Neither API key is ever printed.
 //
 // Exit codes: 0 ok · 1 API/HTTP error · 2 config/usage error · 3 execution
 // stopped early (failed/cancelled/timeout job) · 10 payment approval required ·
@@ -51,7 +53,6 @@ const STATE_TTL_MS = 48 * 3600 * 1000;
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 120000;
 const FETCH_TIMEOUT_MS = 30000;
-const MAX_SIGNAL_PAGES = 5;
 // Payment posture. "report": pay within pinned per-route caps, then report the
 // run's spend. "confirm": never pay without an autopay policy or an --approve
 // token bound to a previewed plan. The Bankr distribution ships with the
@@ -65,32 +66,13 @@ const PINNED_PAYEE = "0xC3d01FD2F79d4c57aD106AB8ecc12a5dE24F97cB";
 const PINNED_USDC_ASSET = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"; // Base USDC, eip155:8453
 const PINNED_USDG_ASSET = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168"; // Robinhood Chain USDG, eip155:4663
 const PINNED_MAX_TIMEOUT_SECONDS = 300;
-// Published per-route prices (USD) — must match payments.sh and
-// api-reference.md. Live-read anything informational; pin anything that
-// bounds spending: each paid call's cap is the LIVE price from a free
-// 402-challenge pre-flight (which also validates the pinned tuple), clamped
-// to a CEILING of 2x the published price; the published price is the
-// fallback when the pre-flight is unavailable.
-const ROUTE_PRICE_USD = {
-  "/api/v1/markets/mispriced": 0.05,
-  "/api/v1/markets/lookup": 0.005,
-  "/api/v1/markets/{slug}/forecast": 0.01,
-  "/api/v1/markets/{slug}/intelligence": 0.025,
-  "/api/v1/markets/{slug}/signals": 0.025,
-  "/api/v1/markets": 0.005,
-  "/api/v1/sources": 0.01,
-  "/api/v1/signals/featured": 0.01,
-  "/api/v1/signals/oil": 0.025,
-  "/api/v1/signals": 0.02,
-  "/api/v1/portfolio": 0.0025,
-  "/api/v1/narratives": 0.01,
-  "/api/v1/signal-score": 0.005,
-};
 const PLAN_TTL_MS = 10 * 60 * 1000; // --confirm must land within 10 min of the preview
 const MAX_COST_DRIFT_CENTS = 2; // confirm-time re-quote tolerance vs the previewed ask
 const FRESH_MAX_AGE_MS = 6 * 3600 * 1000;
 const execFileAsync = promisify(execFile);
-const PM_SH = path.join(path.dirname(fileURLToPath(import.meta.url)), "pm.sh");
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const PM_SH = path.join(SCRIPT_DIR, "pm.sh");
+const CONTRACT_PRICES_FILE = path.join(SCRIPT_DIR, "..", "references", "contract-prices.json");
 const LIQUIDITY_NOTICE =
   "Capacity is observed notional within 2 cents of touch, not a guaranteed fill or exact price-impact estimate. A market order can walk the book; recheck the live book and venue preview before approval, especially for volume-fallback or stale snapshots.";
 const RISK_DISCLOSURE =
@@ -155,15 +137,16 @@ Options:
   --max-positions N    Maximum positions to open (default 5)
   --window N           Latest-forecast lookback in hours, 1-168 (default 24)
   --json               Machine-readable output only
-  --preview            Print the paid-call plan + cost and exit 10 without paying
-  --approve TOKEN      Run a previously previewed paid-call plan (15-min token)
+  --preview            Print the x402 paid-call plan + cost and exit 10 without paying
+  --approve TOKEN      Run a previously previewed x402 plan (15-min token)
   --execute            Phase 1: preview the trade plan (exit 12)
   --confirm HASH       Phase 2: submit the previously previewed plan
   --version            Print version and exit
   --help               This text
 
-Env: QUOTIENT_BASE_URL (allowlisted), QUOTIENT_MAX_PAYMENT_USD (lower-only),
-     QUOTIENT_PAYMENT_MODE. BANKR_API_KEY is required only with --confirm.`;
+Env: QUOTIENT_API_KEY (optional prepaid credits), QUOTIENT_BASE_URL (allowlisted),
+     QUOTIENT_MAX_PAYMENT_USD (lower-only), QUOTIENT_PAYMENT_MODE.
+     BANKR_API_KEY is required only with --confirm.`;
 
 function die(code, msg) {
   process.stderr.write(`signal-strategy: ${msg}\n`);
@@ -309,6 +292,23 @@ function atomicWriteJson(file, value) {
   fs.renameSync(tmp, file);
 }
 
+function loadContractPrices() {
+  const contract = readJsonFile(CONTRACT_PRICES_FILE);
+  if (
+    !contract ||
+    typeof contract.operation_prices_usd !== "object" ||
+    typeof contract.operation_rate_limits !== "object"
+  ) {
+    die(
+      2,
+      `missing or invalid reviewed OpenAPI contract at ${CONTRACT_PRICES_FILE}; reinstall or regenerate the Quotient skill`
+    );
+  }
+  return contract;
+}
+
+const CONTRACT_PRICES = loadContractPrices();
+
 function validateBaseUrl(base) {
   let url;
   try {
@@ -336,6 +336,17 @@ function validateBaseUrl(base) {
   );
 }
 
+function validateApiKeyBaseUrl(base) {
+  const origin = new URL(base).origin;
+  const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  if (origin !== `https://${ALLOWED_HOST}` && !local) {
+    die(
+      2,
+      `API-key auth is restricted to https://${ALLOWED_HOST} (or localhost testing); refusing to send QUOTIENT_API_KEY to '${origin}'.`
+    );
+  }
+}
+
 function routeKey(pathAndQuery) {
   const p = pathAndQuery.split("?")[0];
   if (/^\/api\/v1\/markets\/[^/]+\/forecast$/.test(p)) return "/api/v1/markets/{slug}/forecast";
@@ -344,13 +355,17 @@ function routeKey(pathAndQuery) {
   return p;
 }
 
+function operationKey(pathAndQuery, method = "GET") {
+  return `${method} ${routeKey(pathAndQuery)}`;
+}
+
 // Live challenge prices discovered by preflight, keyed by route.
 const livePrices = new Map();
 
 /** Free pre-flight of a route's 402 challenge: validates the complete pinned
  *  payment tuple and records the live price. A tuple mismatch dies (that is
  *  the attack signal this layer exists to catch); an unreadable challenge
- *  just leaves the published-price fallback in place. Note the payer fetches
+ *  just leaves the reviewed local fallback in place. Note the payer fetches
  *  the challenge again itself — two reads, so the cap and host allowlist
  *  still bound a server that shows different terms to each. */
 async function preflightRoute(base, pathAndQuery) {
@@ -365,7 +380,7 @@ async function preflightRoute(base, pathAndQuery) {
     });
     header = res.headers.get("payment-required");
   } catch {
-    return; // unreadable — published price stays the cap
+    return; // unreadable — reviewed local price stays the cap
   }
   if (!header) return;
   let challenge;
@@ -402,9 +417,13 @@ async function preflightRoute(base, pathAndQuery) {
 
 function routePrice(pathAndQuery) {
   const key = routeKey(pathAndQuery);
-  const published = ROUTE_PRICE_USD[key];
-  if (published == null) {
-    die(2, `no pinned price for route ${key} — refusing to pay an unknown amount`);
+  const operation = operationKey(pathAndQuery);
+  const published = Number(CONTRACT_PRICES.operation_prices_usd[operation]);
+  if (!Number.isFinite(published) || published <= 0) {
+    die(
+      2,
+      `no reviewed price for ${operation} in ${CONTRACT_PRICES_FILE} — refusing to pay an unknown amount`
+    );
   }
   const policy = readJsonFile(POLICY_FILE);
   const override = policy?.route_overrides?.[key]?.max_payment_usd;
@@ -582,12 +601,82 @@ function reportSpend() {
 
 // ── HTTP helpers ──────────────────────────────────────────────────────────────
 
-const paidMemo = new Map();
+const quotientMemo = new Map();
 let paidPlanTotal = 0;
+let lastQuotientRequestStartMs = 0;
+let quotientStartGate = Promise.resolve();
 
-async function quotientGet(base, pathAndQuery) {
+function operationStartIntervalMs(pathAndQuery) {
+  const operation = operationKey(pathAndQuery);
+  const requestsPerSecond = Number(
+    CONTRACT_PRICES.operation_rate_limits[operation]?.requestsPerSecond
+  );
+  if (!Number.isFinite(requestsPerSecond) || requestsPerSecond <= 0) {
+    die(
+      2,
+      `no valid operation_rate_limits entry for ${operation} in ${CONTRACT_PRICES_FILE}`
+    );
+  }
+  return Math.ceil(1000 / requestsPerSecond);
+}
+
+function paceQuotientRequestStart(pathAndQuery) {
+  const minStartIntervalMs = operationStartIntervalMs(pathAndQuery);
+  const turn = quotientStartGate.then(async () => {
+    const waitMs = Math.max(
+      0,
+      lastQuotientRequestStartMs + minStartIntervalMs - Date.now()
+    );
+    if (waitMs > 0) await sleep(waitMs);
+    lastQuotientRequestStartMs = Date.now();
+  });
+  quotientStartGate = turn.catch(() => {});
+  return turn;
+}
+
+async function quotientGet(base, pathAndQuery, apiKey) {
   const url = base + pathAndQuery;
-  if (paidMemo.has(url)) return paidMemo.get(url);
+  if (quotientMemo.has(url)) return quotientMemo.get(url);
+
+  if (apiKey) {
+    let res;
+    try {
+      await paceQuotientRequestStart(pathAndQuery);
+      res = await fetch(url, {
+        redirect: "manual",
+        headers: { "x-quotient-api-key": apiKey, accept: "application/json" },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+    } catch (err) {
+      die(1, `network failure calling Quotient API (${err.message}); the request may have consumed credits, so check the balance before retrying`);
+    }
+    const text = await res.text();
+    let body;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      die(1, `Quotient API returned invalid JSON (${res.status})`);
+    }
+    if (res.status === 401) {
+      die(2, "Quotient API key rejected (invalid, revoked, or expired).");
+    }
+    if (res.status === 403) {
+      die(2, "Insufficient Quotient API-key credits; top up at https://dev.quotient.social.");
+    }
+    if (res.status === 402) {
+      die(2, "Gateway requested x402 despite QUOTIENT_API_KEY; verify the key and gateway URL.");
+    }
+    if (res.status === 429) {
+      const retryAfter = Number(res.headers.get("retry-after") || body?.retry_after || 1);
+      die(1, `Quotient rate limit reached; wait ${Number.isFinite(retryAfter) ? Math.max(1, Math.ceil(retryAfter)) : 1}s plus small jitter, then retry serially.`);
+    }
+    if (!res.ok) {
+      die(1, `Quotient API HTTP ${res.status} for ${pathAndQuery.split("?")[0]}`);
+    }
+    quotientMemo.set(url, body);
+    return body;
+  }
+
   const price = routePrice(pathAndQuery);
   const route = routeKey(pathAndQuery);
   for (let attempt = 1; attempt <= 2; attempt++) {
@@ -596,6 +685,7 @@ async function quotientGet(base, pathAndQuery) {
     }
     let stdout;
     try {
+      await paceQuotientRequestStart(pathAndQuery);
       ({ stdout } = await execFileAsync(
         "bankr",
         ["x402", "call", url, "--max-payment", String(price), "--yes", "--raw"],
@@ -605,7 +695,7 @@ async function quotientGet(base, pathAndQuery) {
       ledgerAppend(route, url, price, attempt, "paid");
       spend.calls += 1;
       spend.totalUsd = Math.round((spend.totalUsd + price) * 10000) / 10000;
-      paidMemo.set(url, body);
+      quotientMemo.set(url, body);
       return body;
     } catch (err) {
       if (err.code === "ENOENT") {
@@ -625,24 +715,19 @@ async function quotientGet(base, pathAndQuery) {
   return null; // unreachable
 }
 
-async function fetchSignals(base, opts) {
-  const signals = [];
-  let cursor = null;
-  for (let page = 0; page < MAX_SIGNAL_PAGES; page++) {
-    const params = new URLSearchParams({
-      window: String(opts.windowHours),
-      status: opts.statuses.join(","),
-      min_conviction: String(opts.minConviction),
-      min_capacity_usd: String(opts.minCapacity),
-      limit: "50",
-    });
-    if (cursor) params.set("cursor", cursor);
-    const body = await quotientGet(base, `/api/v1/signals?${params}`);
-    signals.push(...(Array.isArray(body.signals) ? body.signals : []));
-    if (!body.has_more || !body.next_cursor) break;
-    cursor = body.next_cursor;
-  }
-  return signals;
+async function fetchSignals(base, opts, apiKey) {
+  const params = new URLSearchParams({
+    window: String(opts.windowHours),
+    status: opts.statuses.join(","),
+    // This helper's holdings check, book preflight, and execution prompts are
+    // intentionally Polymarket International-specific. The intelligence API is
+    // multi-venue, so pin the venue instead of misrouting another venue's row.
+    venue: "polymarket",
+    min_conviction: String(opts.minConviction),
+    min_capacity_usd: String(opts.minCapacity),
+  });
+  const body = await quotientGet(base, `/api/v1/signals?${params}`, apiKey);
+  return Array.isArray(body.signals) ? body.signals : [];
 }
 
 /** Held set from the Polymarket data-api, keyed `conditionId:outcome` (lowercased).
@@ -1064,30 +1149,41 @@ async function runConfirm(opts, bankrKey) {
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
 
+  const quotientApiKey = process.env.QUOTIENT_API_KEY?.trim() || null;
+  if (quotientApiKey && !/^qt_[A-Za-z0-9]+$/.test(quotientApiKey)) {
+    die(2, "QUOTIENT_API_KEY must be a qt_ key.");
+  }
   const bankrKey = process.env.BANKR_API_KEY;
   if (opts.confirmHash && !bankrKey) {
     die(2, "--confirm requires BANKR_API_KEY (Bankr Agent API key with read-write; `bankr login ... --agent-api --read-write`).");
   }
   const base = (process.env.QUOTIENT_BASE_URL || DEFAULT_BASE).replace(/\/+$/, "");
   validateBaseUrl(base);
+  if (quotientApiKey) validateApiKeyBaseUrl(base);
 
   if (opts.confirmHash) {
     await runConfirm(opts, bankrKey);
     return; // runConfirm always exits
   }
 
-  process.on("exit", reportSpend);
+  if (quotientApiKey) {
+    if (opts.preview || opts.approveToken) {
+      die(2, "--preview/--approve apply only to x402; unset QUOTIENT_API_KEY to use them.");
+    }
+  } else {
+    process.on("exit", reportSpend);
 
-  // Payment gate before any paid read: worst case, the signals feed pages
-  // MAX_SIGNAL_PAGES times. The free pre-flight first validates the pinned
-  // tuple and discovers the live price the plan is quoted at.
-  await preflightRoute(base, "/api/v1/signals");
-  const paymentPlan = [
-    { route: "/api/v1/signals", count: MAX_SIGNAL_PAGES, price: routePrice("/api/v1/signals") },
-  ];
-  const cmdline = `signal-strategy.mjs --wallet ${opts.wallet} --budget ${opts.budget}${opts.execute ? " --execute" : ""}`;
-  gatePayments(cmdline, paymentPlan, opts);
-  paidPlanTotal = planTotal(paymentPlan);
+    // Payment gate before any paid read: the signals feed is a single call.
+    // The free pre-flight first validates the pinned tuple and discovers the
+    // live price the plan is quoted at.
+    await preflightRoute(base, "/api/v1/signals");
+    const paymentPlan = [
+      { route: "/api/v1/signals", count: 1, price: routePrice("/api/v1/signals") },
+    ];
+    const cmdline = `signal-strategy.mjs --wallet ${opts.wallet} --budget ${opts.budget}${opts.execute ? " --execute" : ""}`;
+    gatePayments(cmdline, paymentPlan, opts);
+    paidPlanTotal = planTotal(paymentPlan);
+  }
 
   const nowMs = Date.now();
   const asOf = new Date(nowMs).toISOString();
@@ -1095,7 +1191,7 @@ async function main() {
 
   // (1) Candidates: server-side filters, then belt-and-braces client re-filter.
   const [fetched, held] = await Promise.all([
-    fetchSignals(base, opts),
+    fetchSignals(base, opts, quotientApiKey),
     fetchHeldSet(opts.wallet),
   ]);
 

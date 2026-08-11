@@ -67,7 +67,7 @@ server puts its poison entry first).
    domain separator).
 6. `payTo` equals the pinned Quotient payee address.
 7. `amount` parses as a positive integer of atomic units and is ≤ the route's published
-   price (from `/api/public/pricing`; 6 decimals — $0.02 = `20000`). The `exact` scheme
+   price (from `/api/public/pricing`; convert USD to the asset's 6-decimal atomic units). The `exact` scheme
    transfers exactly this value.
 8. `maxTimeoutSeconds ≤ 300` — it becomes your authorization's `validBefore`; an unbounded
    value is an unbounded-lifetime signed transfer authorization.

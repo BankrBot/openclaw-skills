@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# payments.sh — shared x402 payment policy library for the Quotient skill's
-# paid-read scripts (quotient.sh, converge-monitor.sh). Not a command: source it.
+# payments.sh — shared access/payment policy library for the Quotient skill's
+# read scripts (quotient.sh, converge-monitor.sh). Not a command: source it.
 #
 # What it owns (canonical spec: references/payments-policy.md):
-#   - the pinned per-route price table (each paid call's exact --max-payment)
+#   - the reviewed per-operation price ceilings generated from canonical OpenAPI
 #   - the QUOTIENT_BASE_URL allowlist (default gateway host; extras only from
 #     the user-created policy file, never from env or fetched content)
 #   - the payment gate: report mode pays within caps and reports spend after
@@ -11,6 +11,7 @@
 #     policy before anything is paid
 #   - the local autopay policy (autopay.json) and spend ledger
 #   - bounded, ledgered retries that never exceed the run's planned total
+#   - prepaid API-key GETs that keep the key off argv and never print it
 #
 # Exit codes contributed to callers: 10 approval required (preview printed,
 # nothing paid) · 11 policy cap exceeded (preview printed, nothing paid).
@@ -51,6 +52,10 @@ QP_POLICY_FILE="$QP_CONFIG_DIR/autopay.json"
 QP_LEDGER_FILE="$QP_STATE_DIR/spend-ledger.json"
 QP_PENDING_FILE="$QP_STATE_DIR/pending-approval.json"
 QP_PRICE_CACHE="$QP_STATE_DIR/price-cache-$$.json"
+QP_PACE_FILE="$QP_STATE_DIR/request-start-ms"
+QP_PACE_LOCK="${QP_PACE_FILE}.lock"
+QP_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+QP_CONTRACT_PRICES_FILE="${QP_CONTRACT_PRICES_FILE:-${QP_SCRIPT_DIR}/../references/contract-prices.json}"
 
 # NOTE: qp_paid_get runs inside $(…) command substitutions, so shell variables
 # it sets never reach the parent. All cross-call accounting therefore goes
@@ -69,8 +74,64 @@ qp_now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 # Float helpers (bash has no float math; awk is POSIX).
 qp_lt() { awk -v a="$1" -v b="$2" 'BEGIN { exit !(a + 0 < b + 0) }'; }
 qp_gt() { awk -v a="$1" -v b="$2" 'BEGIN { exit !(a + 0 > b + 0) }'; }
-qp_add() { awk -v a="$1" -v b="$2" 'BEGIN { printf "%.4f", a + b }'; }
-qp_mul() { awk -v a="$1" -v b="$2" 'BEGIN { printf "%.4f", a * b }'; }
+qp_add() { awk -v a="$1" -v b="$2" 'BEGIN { printf "%.6f", a + b }'; }
+qp_mul() { awk -v a="$1" -v b="$2" 'BEGIN { printf "%.6f", a * b }'; }
+
+qp_epoch_ms() { jq -nr 'now * 1000 | floor'; }
+
+# Serialize Quotient request starts across command-substitution subshells and
+# concurrent skill processes, using each operation's generated OpenAPI limit.
+qp_operation_key() {
+  printf 'GET %s\n' "$(qp_route_key "$1")"
+}
+
+qp_operation_start_interval_ms() {
+  # Derive pacing from the reviewed OpenAPI artifact. Unknown or malformed
+  # operations fail closed instead of falling back to a handwritten constant.
+  local operation requests_per_second
+  operation="$(qp_operation_key "$1")"
+  requests_per_second="$(jq -er --arg operation "$operation" '
+    .operation_rate_limits[$operation].requestsPerSecond
+    | select(type == "number" and . > 0)
+  ' "$QP_CONTRACT_PRICES_FILE" 2>/dev/null)" || {
+    qp_err "no valid operation_rate_limits entry for ${operation} in ${QP_CONTRACT_PRICES_FILE}"
+    return 2
+  }
+  awk -v rps="$requests_per_second" 'BEGIN { printf "%d", (1000 / rps) + 0.999999 }'
+}
+
+qp_pace_request_start() {
+  local path="$1" attempts=0 now_ms lock_ms last_ms wait_ms wait_seconds min_interval_ms
+  min_interval_ms="$(qp_operation_start_interval_ms "$path")" || return 2
+  mkdir -p "$QP_STATE_DIR"
+  while ! mkdir "$QP_PACE_LOCK" 2>/dev/null; do
+    attempts=$((attempts + 1))
+    now_ms="$(qp_epoch_ms)"
+    lock_ms="$(cat "$QP_PACE_LOCK/acquired-ms" 2>/dev/null || printf '0')"
+    if [[ "$lock_ms" =~ ^[0-9]+$ ]] && ((now_ms - lock_ms > 10000)); then
+      rm -f "$QP_PACE_LOCK/acquired-ms"
+      rmdir "$QP_PACE_LOCK" 2>/dev/null || true
+    fi
+    if ((attempts >= 240)); then
+      qp_err "could not acquire the local Quotient request pacing lock"
+      return 1
+    fi
+    sleep 0.05
+  done
+
+  now_ms="$(qp_epoch_ms)"
+  printf '%s\n' "$now_ms" >"$QP_PACE_LOCK/acquired-ms"
+  last_ms="$(cat "$QP_PACE_FILE" 2>/dev/null || printf '0')"
+  [[ "$last_ms" =~ ^[0-9]+$ ]] || last_ms=0
+  wait_ms=$((last_ms + min_interval_ms - now_ms))
+  if ((wait_ms > 0)); then
+    wait_seconds="$(awk -v ms="$wait_ms" 'BEGIN { printf "%.3f", ms / 1000 }')"
+    sleep "$wait_seconds"
+  fi
+  qp_epoch_ms >"$QP_PACE_FILE"
+  rm -f "$QP_PACE_LOCK/acquired-ms"
+  rmdir "$QP_PACE_LOCK" 2>/dev/null || true
+}
 
 qp_atomic_write() {
   # qp_atomic_write <file> <content>
@@ -82,42 +143,32 @@ qp_atomic_write() {
 }
 
 # ── Route prices: live under a pinned ceiling ─────────────────────────────────
-# Published per-route prices in USD (source: api-reference.md pricing table).
+# Reviewed per-operation prices in USD (source: contract-prices.json, generated
+# from OpenAPI x-payment-info.price metadata).
 # The general pattern: anything informational is read live; anything that
 # bounds spending is pinned. Price is both, so each route's LIVE price is read
 # from a free, unauthenticated 402-challenge pre-flight (which also validates
 # the pinned payment tuple) and used as --max-payment, clamped by a pinned
-# CEILING of 2x the published price. Price drops flow through automatically;
+# CEILING of 2x the reviewed local operation price. Price drops flow through automatically;
 # a raise above the ceiling, or any tuple mismatch, fails closed. When the
-# pre-flight is unavailable the published price is the fallback cap. A policy
+# pre-flight is unavailable the reviewed local price is the fallback cap. A policy
 # route_overrides entry replaces the ceiling (the deliberate way to accept a
 # larger raise); QUOTIENT_MAX_PAYMENT_USD may only lower, never raise.
 
 qp_base_route_price() {
-  local path="${1%%\?*}"
-  case "$path" in
-    /api/v1/markets/mispriced) echo "0.05" ;;
-    /api/v1/markets/lookup) echo "0.005" ;;
-    /api/v1/markets/*/forecast) echo "0.01" ;;
-    /api/v1/markets/*/intelligence) echo "0.025" ;;
-    /api/v1/markets/*/signals) echo "0.025" ;;
-    /api/v1/markets) echo "0.005" ;;
-    /api/v1/sources) echo "0.01" ;;
-    /api/v1/signals/featured) echo "0.01" ;;
-    /api/v1/signals/oil) echo "0.025" ;;
-    /api/v1/signals) echo "0.02" ;;
-    /api/v1/portfolio) echo "0.0025" ;;
-    /api/v1/narratives) echo "0.01" ;;
-    /api/v1/signal-score) echo "0.005" ;;
-    *) echo "" ;;
-  esac
+  local operation
+  operation="$(qp_operation_key "$1")"
+  jq -er --arg operation "$operation" '
+    .operation_prices_usd[$operation]
+    | select(type == "string" and test("^[0-9]+([.][0-9]+)?$"))
+  ' "$QP_CONTRACT_PRICES_FILE" 2>/dev/null || true
 }
 
 # Canonical route key for the plan/ledger (query stripped, slug collapsed).
 qp_route_key() {
   local path="${1%%\?*}"
   case "$path" in
-    /api/v1/markets/mispriced | /api/v1/markets/lookup | /api/v1/markets) echo "$path" ;;
+    /api/v1/markets/search | /api/v1/markets/mispriced | /api/v1/markets/lookup | /api/v1/markets) echo "$path" ;;
     /api/v1/markets/*/forecast) echo "/api/v1/markets/{slug}/forecast" ;;
     /api/v1/markets/*/intelligence) echo "/api/v1/markets/{slug}/intelligence" ;;
     /api/v1/markets/*/signals) echo "/api/v1/markets/{slug}/signals" ;;
@@ -128,7 +179,7 @@ qp_route_key() {
 # Free pre-flight of a route's 402 challenge: validates the complete pinned
 # payment tuple (scheme, network, asset contract, payee, expiry window) and
 # prints the live USD price. Empty output = challenge unavailable (fall back
-# to the published price); a TUPLE MISMATCH is a hard failure — that is the
+# to the reviewed local price); a TUPLE MISMATCH is a hard failure — that is the
 # attack signal this whole layer exists to catch. Results are cached per
 # route for the run (file-based: paid calls execute in subshells).
 # Honest caveat: this read and the payer's own challenge fetch are two
@@ -190,13 +241,13 @@ qp_preflight_price() {
 qp_route_price() {
   # qp_route_price <path> → the USD cap for one paid call: the live
   # challenge price when readable, clamped to the pinned ceiling
-  # (2x published, or the policy route_overrides value); the published price
+  # (2x the reviewed local baseline, or the policy route_overrides value); that baseline
   # when the pre-flight is unavailable. Exits on unknown routes, ceiling
   # breaches, and tuple mismatches (fail closed — never guess a payment cap).
   local path="$1" published ceiling override live price
   published="$(qp_base_route_price "$path")"
   if [[ -z "$published" ]]; then
-    qp_err "no pinned price for route ${path%%\?*} — refusing to pay an unknown amount (update the payments.sh price table deliberately)"
+    qp_err "no reviewed price for $(qp_operation_key "$path") in ${QP_CONTRACT_PRICES_FILE} — refusing to pay an unknown amount"
     exit 2
   fi
   ceiling="$(qp_mul "$published" 2)"
@@ -498,7 +549,45 @@ qp_gate() {
   return 0
 }
 
-# ── Paid fetch ────────────────────────────────────────────────────────────────
+# ── API-key and paid fetches ──────────────────────────────────────────────────
+
+qp_api_key_get() {
+  # qp_api_key_get <path-and-query> [soft] — one prepaid-credit GET. The key is
+  # supplied to curl over stdin so it never appears in argv/process listings.
+  # Unlike the x402 path, this deliberately does not retry: the gateway debits
+  # credits before proxying upstream, so an ambiguous retry could debit twice.
+  local path="$1" soft="${2:-}" url resp status body retry_after
+  url="${QUOTIENT_BASE:?qp_api_key_get: caller must set QUOTIENT_BASE}${path}"
+
+  qp_pace_request_start "$path" || exit 1
+  if ! resp="$(curl -sS --max-time 30 -w $'\n%{http_code}' -H @- "$url" \
+    <<< "x-quotient-api-key: ${QUOTIENT_API_KEY:?qp_api_key_get: QUOTIENT_API_KEY is required}")"; then
+    qp_err "network failure calling ${path%%\?*}; the request may have consumed credits, so check the balance before retrying"
+    [[ "$soft" == "soft" ]] && return 1
+    exit 1
+  fi
+
+  status="${resp##*$'\n'}"
+  body="${resp%$'\n'*}"
+  if [[ "$status" == "200" ]] && jq -e . >/dev/null 2>&1 <<<"$body"; then
+    printf '%s' "$body"
+    return 0
+  fi
+
+  case "$status" in
+    401) qp_err "Quotient API key rejected (invalid, revoked, or expired)" ;;
+    403) qp_err "insufficient Quotient API-key credits; top up at https://dev.quotient.social" ;;
+    402) qp_err "gateway requested x402 despite QUOTIENT_API_KEY; verify the key and gateway URL" ;;
+    429)
+      retry_after="$(jq -r '.retry_after // 1' <<<"$body" 2>/dev/null || printf '1')"
+      qp_err "Quotient rate limit reached; wait ${retry_after}s plus small jitter, then retry serially"
+      ;;
+    200) qp_err "Quotient API returned invalid JSON for ${path%%\?*}" ;;
+    *) qp_err "HTTP ${status} from ${path%%\?*}" ;;
+  esac
+  [[ "$soft" == "soft" ]] && return 1
+  exit 1
+}
 
 qp_paid_get() {
   # qp_paid_get <path-and-query> [soft] — one x402-paid GET through the Bankr
@@ -524,6 +613,7 @@ qp_paid_get() {
       [[ "$soft" == "soft" ]] && return 1
       exit 1
     fi
+    qp_pace_request_start "$path" || exit 1
     if body="$(bankr x402 call "$url" --max-payment "$price" --yes --raw 2>/dev/null)" \
        && jq -e . >/dev/null 2>&1 <<<"$body"; then
       qp_ledger_append "$route" "$url" "$price" "$attempt" "paid"
