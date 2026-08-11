@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "tlmnt-mini-app-doctor",
+  "provider": "TLMNT",
+  "providerUrl": "https://tlmnt.app",
+  "logo": "logo.svg",
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "tlmnt-mini-app-doctor",
+    "command": "install the tlmnt-mini-app-doctor skill from https://github.com/BankrBot/skills/tree/main/tlmnt-mini-app-doctor"
+  }
+}
