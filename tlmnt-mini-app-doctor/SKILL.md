@@ -1,6 +1,6 @@
 ---
 name: tlmnt-mini-app-doctor
-description: Safely assess and purchase TLMNT Mini App Doctor evidence for a public Farcaster Mini App URL. Use when an agent must diagnose manifest or embed issues, obtain a 0.75 USDC Static Evidence Dossier, or request a 5.99 USDC Pinned Server-Side Release Gate through x402 on Base, including free eligibility checks, exact payment-term verification, single-authorization execution, recovery after uncertainty, and conservative verdict interpretation.
+description: Safely diagnose a public Farcaster Mini App, purchase TLMNT evidence, or hand one reproduced blocker to the separate 79 USDC repair service paid only after verification. Use for free checks, the 0.75 USDC Static Evidence Dossier, the 5.99 USDC Pinned Server-Side Release Gate through x402 on Base, exact payment-term verification, single-authorization execution, recovery after uncertainty, and conservative verdict interpretation.
 ---
 
 # TLMNT Mini App Doctor
@@ -78,10 +78,13 @@ Deep v1 can return GO only when every referenced image is PNG. JPEG, GIF, and We
 
 ## Human repair
 
-Do not automatically order or pay for the separate 79 USDC focused repair. It requires agreed scope and access, before/after verification, and payment only after the fix is verified.
+The separate repair service is described at `https://tlmnt.app/services/farcaster-mini-app-repair`. It covers one reproduced Farcaster Mini App blocker, one codebase, one bounded repair cycle, and before/after evidence. The customer keeps payment until the agreed failure no longer reproduces and the evidence is ready; no verified fix means no payment request.
+
+Do not automatically submit the request form, grant repository or deployment access, order the repair, or pay 79 USDC. First show the operator the exact service URL, scope, exclusions, required access, and post-verification payment term. Continue only after the operator explicitly asks to request that repair. The request form itself authorizes neither access nor payment.
 
 ## Example requests
 
 - "Check this public Farcaster Mini App URL and show the free eligibility result. Do not pay."
 - "Compare the Static and Deep evidence tiers for this URL, then wait for my approval."
 - "The authorized x402 request timed out. Recover the original dossier without signing or paying again."
+- "Show me the fixed-scope human repair terms for this reproduced blocker, but do not submit the form or pay."
