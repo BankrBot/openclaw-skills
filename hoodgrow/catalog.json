@@ -11,7 +11,7 @@
   },
   "setup": [
     "No signup required. An x402-capable agent/wallet funded with USDC on Base, a free self-serve API key from https://www.hoodgrow.com/builders (40 requests/day, no payment), or a prepaid credit balance (see below).",
-    "Call `GET https://www.hoodgrow.com/api/agent/tokens` (full catalog, $0.10), `GET https://www.hoodgrow.com/api/agent/token/{symbol}` (one token, $0.05), or `GET https://www.hoodgrow.com/api/corporate-actions` (corporate actions only, $0.05).",
+    "Call `GET https://www.hoodgrow.com/api/agent/tokens` (full catalog, $0.10), `GET https://www.hoodgrow.com/api/agent/token/{symbol}` (one token, $0.05), or `GET https://www.hoodgrow.com/api/corporate-actions` (corporate actions only, $0.05). More market-data endpoints, all $0.05: `/api/agent/defi/{symbol}`, `/api/agent/holders/{symbol}`, `/api/agent/slippage/{symbol}`, `/api/agent/ohlc/{symbol}` (OHLC + swap volume), `/api/agent/markets` (movers), `/api/agent/trades` (recent large trades) — see SKILL.md.",
     "With a key: send `Authorization: Bearer <key>`. Without one: on HTTP 402, pay the advertised USDC amount on Base and retry to receive structured JSON.",
     "Prepaid credits: `POST https://www.hoodgrow.com/api/agent/credits/purchase?bundle=<id>` (x402-payable, GET the same URL for the bundle catalog) once, then send `X-HoodGrow-Credit-Wallet` / `-Timestamp` / `-Signature` headers on any call above to spend from the balance instead of paying x402 per call — see SKILL.md's \"Prepaid credits\" section for the exact signed-message format.",
     "Or skip raw HTTP: `npm i hoodgrow` / `pip install hoodgrow` for a typed client that handles x402 payment (or a bearer key) for you, or `npx hoodgrow-mcp` for an MCP server if your agent is an MCP client."

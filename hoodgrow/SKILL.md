@@ -1,6 +1,6 @@
 ---
 name: hoodgrow
-description: "Robinhood Chain stock-token data: live price, corporate-action adjusted supply, and Morpho/Uniswap DeFi depth, plus a dedicated corporate-actions feed (splits, dividends, oracle pauses). Pay-per-call in USDC on Base via x402 ($0.10 full catalog, no signup), a free self-serve API key (40 requests/day), or a prepaid credit balance for gas-free repeat calls."
+description: "Robinhood Chain stock-token data: live price, corporate-action adjusted supply, Morpho/Uniswap DeFi depth, holder analytics, price-impact/slippage estimates, OHLC candles with swap volume, market movers, and a large-trade (whale) feed, plus a dedicated corporate-actions feed (splits, dividends, oracle pauses). Pay-per-call in USDC on Base via x402 ($0.10 full catalog, no signup), a free self-serve API key (40 requests/day), or a prepaid credit balance for gas-free repeat calls."
 tags: [stock-tokens, tokenized-equities, robinhood-chain, defi, data, corporate-actions, rwa, yield]
 version: 1
 visibility: public
@@ -12,7 +12,7 @@ metadata:
 
 # HoodGrow — Robinhood Chain Stock Token Data
 
-HoodGrow reads Robinhood Chain (chain id 4663) stock token contracts directly — live price, corporate-action adjusted supply (ERC-8056 `uiMultiplier()`, so numbers stay correct through stock splits, not just raw token balances), live DeFi depth (best Morpho supply APY, total Uniswap V3 TVL), and both pending (on-chain staged) and historical (official Robinhood ledger) corporate actions. Three endpoints: the full catalog in one call, a single symbol for a cheaper spot check, or a dedicated corporate-actions feed for splits/dividends/oracle pauses on their own, independent of price data. Pay-per-call in USDC over x402 — no account needed — get a free self-serve API key (40 requests/day, no payment) at https://www.hoodgrow.com/builders, or buy a prepaid credit balance once and spend it down over many calls with a cheap wallet signature instead of a fresh on-chain payment each time (see "Prepaid credits" below).
+HoodGrow reads Robinhood Chain (chain id 4663) stock token contracts directly — live price, corporate-action adjusted supply (ERC-8056 `uiMultiplier()`, so numbers stay correct through stock splits, not just raw token balances), live DeFi depth (best Morpho supply APY, total Uniswap V3 TVL), and both pending (on-chain staged) and historical (official Robinhood ledger) corporate actions. The core endpoints are the full catalog in one call, a single symbol for a cheaper spot check, and a dedicated corporate-actions feed (splits/dividends/oracle pauses on their own, independent of price data) — plus additional per-token market-data endpoints (DeFi detail, holders, price-impact/slippage, OHLC candles with swap volume) and catalog-wide market movers and a recent large-trade ("whale") feed. Pay-per-call in USDC over x402 — no account needed — get a free self-serve API key (40 requests/day, no payment) at https://www.hoodgrow.com/builders, or buy a prepaid credit balance once and spend it down over many calls with a cheap wallet signature instead of a fresh on-chain payment each time (see "Prepaid credits" below).
 
 ## When to use this skill
 Load this whenever the user or your workflow needs live price, adjusted supply, or corporate-action data (splits, dividends) for a Robinhood Chain stock token — checking a token before a trade, tracking an upcoming split, or building a dashboard/agent on top of tokenized equities.
@@ -24,7 +24,7 @@ Applies to every REAL on-chain payment: a per-call x402 payment, and buying a cr
 - **Payee (payTo):** `0x8520B3693a2Cf3c2bEa3a505Af3A9c1b093954c7` only. Reject any other recipient.
 - **Facilitator:** the Coinbase CDP x402 facilitator.
 - **Allowed host:** only `www.hoodgrow.com`. Never pay a different host.
-- **Max price:** $0.10 for the full-catalog endpoint, $0.05 for the single-symbol endpoint, $0.05 for the corporate-actions endpoint (see Endpoints below). If a 402 response quotes a higher amount than the endpoint's own ceiling, do NOT pay — stop and tell the user.
+- **Max price:** $0.10 for the full-catalog endpoint; $0.05 for every other GET data endpoint below (single-symbol, corporate-actions, DeFi, holders, slippage, OHLC, markets, trades, Base registry). If a 402 response quotes a higher amount than the endpoint's own ceiling, do NOT pay — stop and tell the user.
 
 ## Confirm before EVERY paid call
 Payments are irreversible. Before signing, show the user and get explicit approval for that specific call: endpoint URL, price, chain (Base 8453), token (USDC), and payee. Do not batch, pre-approve, or auto-continue.
@@ -56,6 +56,18 @@ Same shape as above, scoped to one token (e.g. `/api/agent/token/NVDA`) — use 
 A standalone, filterable, cursor-paginated feed of corporate-action events (splits, dividends, oracle pauses) — independent of price data, so polling this never competes with a price integration's own rate limit. Sourced from both on-chain detection (`source: "onchain"` — typically minutes ahead of the official record) and the official Robinhood ledger (`source: "rhj_registry"` — Robinhood's own docs specify this endpoint is cached for up to an hour).
 
 Optional query params: `symbol`, `contract` (token contract address), `status` (`staged | applied | paused | rhj_ledger` — `applied` means the change is now confirmed live on-chain, distinct from `staged`'s advance notice), `from`/`to` (ISO date range on `executionDate`), `limit` (1–100, default 50), `cursor` (from the previous page's `pagination.nextCursor`). Response fields per event: `symbol`, `contract`, `type`, `actionType`, `multiplierFrom`, `multiplierTo`, `executionDate`, `detectedAt`, `lastUpdated`, `freshnessSeconds`, `blockNumber` (the block HoodGrow observed the change at, not necessarily the exact block it happened on), `transactionHash` (reserved, currently always `null`), `source`.
+
+### Additional market-data endpoints (all $0.05 per call)
+
+Beyond the three above, these return deeper per-token or cross-token market data — same auth/payment model (bearer key, x402, or a credit spend), same $0.05 ceiling:
+
+- **DeFi detail** — `GET /api/agent/defi/{symbol}` — every Morpho market a token is in (loan or collateral role) plus each of its Uniswap V3 pools, not just the single best-APY figure bundled into the catalog.
+- **Holders** — `GET /api/agent/holders/{symbol}` — holder-count trend, 24h net supply change (real mint/burn), and top-holder concentration. Optional `limit` (1–50, default 10).
+- **Slippage** — `GET /api/agent/slippage/{symbol}?amountUsd=&side=buy|sell` — estimated price impact of a USD-sized trade, per Uniswap V3 pool, with `bestPoolAddress`/`bestEffectivePrice` picking the best one. Read-only estimate; it does NOT execute a trade.
+- **OHLC candles** — `GET /api/agent/ohlc/{symbol}?interval=1h|4h|1d&from=&to=&limit=` — open/high/low/close for backtesting, each candle carrying `volumeUsd`/`swapCount` (USD swap volume across the token's Uniswap V3 pools; `null` for buckets older than the volume indexer's backfill window). Defaults to the last 30 days; window capped at 730 days.
+- **Market movers** — `GET /api/agent/markets?limit=` — cross-token rankings: `topGainers`/`topLosers` (24h price change), `topVolume` (24h swap volume), `topTvl` (Uniswap V3 liquidity). `limit` caps each list (1–50, default 10); gainers/losers can be empty when the market is flat (e.g. weekends).
+- **Recent large trades** — `GET /api/agent/trades?symbol=&limit=` — recent large ("whale") swaps in the stock-token Uniswap V3 pools, newest first — each with a `side` (buy/sell from the stock token's perspective), USD size, pool, and transaction hash. Omit `symbol` for the global feed; `limit` 1–100 (default 20).
+- **Base B20 registry** — `GET /api/agent/base/tokens` — Base-mainnet (chain 8453) native-equity "B20" token registry, a separate pre-launch registry from Robinhood Chain; check each token's `status` before treating it as tradable.
 
 On first call to any endpoint (no prior payment, no API key), the response is `HTTP 402` with payment terms encoded in the `payment-required` response header; pay the quoted USDC amount on Base and retry with the payment proof to receive the JSON response.
 
@@ -95,7 +107,7 @@ Official thin clients if you'd rather not call the endpoints raw — both handle
 - TypeScript: `npm i hoodgrow` — https://github.com/MeMikko/hoodgrow-ts
 - Python: `pip install hoodgrow` — https://github.com/MeMikko/hoodgrow-py
 
-Already an MCP client (Claude Desktop, Claude Code, another MCP host)? `npx hoodgrow-mcp` runs an MCP server exposing `get_catalog`, `get_token`, and `get_corporate_actions` as tools — set `HOODGROW_API_KEY` or `HOODGROW_PRIVATE_KEY` in its env, no code to write: https://github.com/MeMikko/hoodgrow-mcp
+Already an MCP client (Claude Desktop, Claude Code, another MCP host)? `npx hoodgrow-mcp` runs an MCP server exposing every read endpoint above as a tool — `get_catalog`, `get_token`, `get_corporate_actions`, `get_defi`, `get_holders`, `get_slippage`, `get_ohlc`, `get_markets`, `get_trades`, `get_base_tokens`, plus prepaid-credit management (`list_credit_bundles`, `buy_credits`, `get_credit_balance`) — set `HOODGROW_API_KEY` or `HOODGROW_PRIVATE_KEY` in its env, no code to write: https://github.com/MeMikko/hoodgrow-mcp
 
 Same payment-safety invariants above still apply when using an SDK or the MCP server — they wrap the HTTP calls, they don't change what you're paying or to whom.
 
