@@ -1,0 +1,876 @@
+[
+ {
+  "type": "constructor",
+  "inputs": [
+   {
+    "name": "directory",
+    "type": "address",
+    "internalType": "contract IJBDirectory"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "DIRECTORY",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBDirectory"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "allOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "startingId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "size",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "rulesets",
+    "type": "tuple[]",
+    "internalType": "struct JBRuleset[]",
+    "components": [
+     {
+      "name": "cycleNumber",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "id",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "basedOnId",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "start",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "duration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "weight",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "weightCutPercent",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "approvalHook",
+      "type": "address",
+      "internalType": "contract IJBRulesetApprovalHook"
+     },
+     {
+      "name": "metadata",
+      "type": "uint256",
+      "internalType": "uint256"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "currentApprovalStatusForLatestRulesetOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint8",
+    "internalType": "enum JBApprovalStatus"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "currentOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "ruleset",
+    "type": "tuple",
+    "internalType": "struct JBRuleset",
+    "components": [
+     {
+      "name": "cycleNumber",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "id",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "basedOnId",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "start",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "duration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "weight",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "weightCutPercent",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "approvalHook",
+      "type": "address",
+      "internalType": "contract IJBRulesetApprovalHook"
+     },
+     {
+      "name": "metadata",
+      "type": "uint256",
+      "internalType": "uint256"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "deriveCycleNumberFrom",
+  "inputs": [
+   {
+    "name": "baseRulesetCycleNumber",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "baseRulesetStart",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "baseRulesetDuration",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "start",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "pure"
+ },
+ {
+  "type": "function",
+  "name": "deriveStartFrom",
+  "inputs": [
+   {
+    "name": "baseRulesetStart",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "baseRulesetDuration",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "mustStartAtOrAfter",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "start",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "pure"
+ },
+ {
+  "type": "function",
+  "name": "deriveWeightFrom",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "baseRulesetStart",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "baseRulesetDuration",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "baseRulesetWeight",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "baseRulesetWeightCutPercent",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "baseRulesetCacheId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "start",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "weight",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "getRulesetOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "rulesetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "ruleset",
+    "type": "tuple",
+    "internalType": "struct JBRuleset",
+    "components": [
+     {
+      "name": "cycleNumber",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "id",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "basedOnId",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "start",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "duration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "weight",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "weightCutPercent",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "approvalHook",
+      "type": "address",
+      "internalType": "contract IJBRulesetApprovalHook"
+     },
+     {
+      "name": "metadata",
+      "type": "uint256",
+      "internalType": "uint256"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "latestQueuedOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "ruleset",
+    "type": "tuple",
+    "internalType": "struct JBRuleset",
+    "components": [
+     {
+      "name": "cycleNumber",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "id",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "basedOnId",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "start",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "duration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "weight",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "weightCutPercent",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "approvalHook",
+      "type": "address",
+      "internalType": "contract IJBRulesetApprovalHook"
+     },
+     {
+      "name": "metadata",
+      "type": "uint256",
+      "internalType": "uint256"
+     }
+    ]
+   },
+   {
+    "name": "approvalStatus",
+    "type": "uint8",
+    "internalType": "enum JBApprovalStatus"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "latestRulesetIdOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "queueFor",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "duration",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "weight",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "weightCutPercent",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "approvalHook",
+    "type": "address",
+    "internalType": "contract IJBRulesetApprovalHook"
+   },
+   {
+    "name": "metadata",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "mustStartAtOrAfter",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "tuple",
+    "internalType": "struct JBRuleset",
+    "components": [
+     {
+      "name": "cycleNumber",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "id",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "basedOnId",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "start",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "duration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "weight",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "weightCutPercent",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "approvalHook",
+      "type": "address",
+      "internalType": "contract IJBRulesetApprovalHook"
+     },
+     {
+      "name": "metadata",
+      "type": "uint256",
+      "internalType": "uint256"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "upcomingOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "ruleset",
+    "type": "tuple",
+    "internalType": "struct JBRuleset",
+    "components": [
+     {
+      "name": "cycleNumber",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "id",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "basedOnId",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "start",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "duration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "weight",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "weightCutPercent",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "approvalHook",
+      "type": "address",
+      "internalType": "contract IJBRulesetApprovalHook"
+     },
+     {
+      "name": "metadata",
+      "type": "uint256",
+      "internalType": "uint256"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "updateRulesetWeightCache",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "rulesetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "event",
+  "name": "RulesetInitialized",
+  "inputs": [
+   {
+    "name": "rulesetId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "basedOnId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "RulesetQueued",
+  "inputs": [
+   {
+    "name": "rulesetId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "duration",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "weight",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "weightCutPercent",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "approvalHook",
+    "type": "address",
+    "indexed": false,
+    "internalType": "contract IJBRulesetApprovalHook"
+   },
+   {
+    "name": "metadata",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "mustStartAtOrAfter",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "WeightCacheUpdated",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "weight",
+    "type": "uint112",
+    "indexed": false,
+    "internalType": "uint112"
+   },
+   {
+    "name": "weightCutMultiple",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "error",
+  "name": "JBControlled_ControllerUnauthorized",
+  "inputs": [
+   {
+    "name": "controller",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBRulesets_InvalidRulesetApprovalHook",
+  "inputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJBRulesetApprovalHook"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBRulesets_InvalidRulesetDuration",
+  "inputs": [
+   {
+    "name": "duration",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "limit",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBRulesets_InvalidRulesetEndTime",
+  "inputs": [
+   {
+    "name": "timestamp",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "limit",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBRulesets_InvalidWeight",
+  "inputs": [
+   {
+    "name": "weight",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "limit",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBRulesets_InvalidWeightCutPercent",
+  "inputs": [
+   {
+    "name": "percent",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBRulesets_WeightCacheRequired",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "PRBMath_MulDiv_Overflow",
+  "inputs": [
+   {
+    "name": "x",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "y",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "denominator",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ }
+]

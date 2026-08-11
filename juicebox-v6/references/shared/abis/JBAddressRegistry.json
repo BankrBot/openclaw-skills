@@ -1,0 +1,131 @@
+[
+ {
+  "type": "function",
+  "name": "deployerOf",
+  "inputs": [
+   {
+    "name": "addr",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "deployer",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "registerAddress",
+  "inputs": [
+   {
+    "name": "deployer",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "nonce",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "registerAddress",
+  "inputs": [
+   {
+    "name": "deployer",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "salt",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   },
+   {
+    "name": "bytecode",
+    "type": "bytes",
+    "internalType": "bytes"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "event",
+  "name": "AddressRegistered",
+  "inputs": [
+   {
+    "name": "addr",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "deployer",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "error",
+  "name": "JBAddressRegistry_AddressNotDeployed",
+  "inputs": [
+   {
+    "name": "addr",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBAddressRegistry_AlreadyRegistered",
+  "inputs": [
+   {
+    "name": "addr",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBAddressRegistry_NonceTooLarge",
+  "inputs": [
+   {
+    "name": "nonce",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBAddressRegistry_ZeroDeployer",
+  "inputs": [
+   {
+    "name": "deployer",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ }
+]

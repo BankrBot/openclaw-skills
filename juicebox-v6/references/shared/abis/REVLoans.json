@@ -1,0 +1,2261 @@
+[
+ {
+  "type": "constructor",
+  "inputs": [
+   {
+    "name": "controller",
+    "type": "address",
+    "internalType": "contract IJBController"
+   },
+   {
+    "name": "terminal",
+    "type": "address",
+    "internalType": "contract IJBPayoutTerminal"
+   },
+   {
+    "name": "suckerRegistry",
+    "type": "address",
+    "internalType": "contract IJBSuckerRegistry"
+   },
+   {
+    "name": "revId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "permit2",
+    "type": "address",
+    "internalType": "contract IPermit2"
+   },
+   {
+    "name": "trustedForwarder",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "fallback",
+  "stateMutability": "payable"
+ },
+ {
+  "type": "receive",
+  "stateMutability": "payable"
+ },
+ {
+  "type": "function",
+  "name": "CONTROLLER",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBController"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "DIRECTORY",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBDirectory"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "LOAN_LIQUIDATION_DURATION",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "MAX_PREPAID_FEE_PERCENT",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "MIN_PREPAID_FEE_PERCENT",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "PERMISSIONS",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBPermissions"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "PERMIT2",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IPermit2"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "PRICES",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBPrices"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "REV_ID",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "REV_PREPAID_FEE_PERCENT",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "SUCKER_REGISTRY",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBSuckerRegistry"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "TERMINAL",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBPayoutTerminal"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "approve",
+  "inputs": [
+   {
+    "name": "to",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "balanceOf",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "borrowFrom",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "token",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "minBorrowAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "collateralCount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "beneficiary",
+    "type": "address",
+    "internalType": "address payable"
+   },
+   {
+    "name": "prepaidFeePercent",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "holder",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "loanId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "",
+    "type": "tuple",
+    "internalType": "struct REVLoan",
+    "components": [
+     {
+      "name": "amount",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "collateral",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "createdAt",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "prepaidFeePercent",
+      "type": "uint16",
+      "internalType": "uint16"
+     },
+     {
+      "name": "prepaidDuration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "sourceToken",
+      "type": "address",
+      "internalType": "address"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "borrowableAmountFrom",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "collateralCount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "decimals",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "currency",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "borrowableNow",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "borrowableCapacity",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "determineSourceFeeAmount",
+  "inputs": [
+   {
+    "name": "loan",
+    "type": "tuple",
+    "internalType": "struct REVLoan",
+    "components": [
+     {
+      "name": "amount",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "collateral",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "createdAt",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "prepaidFeePercent",
+      "type": "uint16",
+      "internalType": "uint16"
+     },
+     {
+      "name": "prepaidDuration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "sourceToken",
+      "type": "address",
+      "internalType": "address"
+     }
+    ]
+   },
+   {
+    "name": "amount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "getApproved",
+  "inputs": [
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "isApprovedForAll",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "operator",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "isLoanSourceOf",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "token",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "isTrustedForwarder",
+  "inputs": [
+   {
+    "name": "forwarder",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "liquidateExpiredLoansFrom",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "startingLoanId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "count",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "loanOf",
+  "inputs": [
+   {
+    "name": "loanId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "tuple",
+    "internalType": "struct REVLoan",
+    "components": [
+     {
+      "name": "amount",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "collateral",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "createdAt",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "prepaidFeePercent",
+      "type": "uint16",
+      "internalType": "uint16"
+     },
+     {
+      "name": "prepaidDuration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "sourceToken",
+      "type": "address",
+      "internalType": "address"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "loanSourceTokensOf",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address[]",
+    "internalType": "address[]"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "name",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "string",
+    "internalType": "string"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "owner",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "ownerOf",
+  "inputs": [
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "reallocateCollateralFromLoan",
+  "inputs": [
+   {
+    "name": "loanId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "collateralCountToTransfer",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "token",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "minBorrowAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "collateralCountToAdd",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "beneficiary",
+    "type": "address",
+    "internalType": "address payable"
+   },
+   {
+    "name": "prepaidFeePercent",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "reallocatedLoanId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "newLoanId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "reallocatedLoan",
+    "type": "tuple",
+    "internalType": "struct REVLoan",
+    "components": [
+     {
+      "name": "amount",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "collateral",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "createdAt",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "prepaidFeePercent",
+      "type": "uint16",
+      "internalType": "uint16"
+     },
+     {
+      "name": "prepaidDuration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "sourceToken",
+      "type": "address",
+      "internalType": "address"
+     }
+    ]
+   },
+   {
+    "name": "newLoan",
+    "type": "tuple",
+    "internalType": "struct REVLoan",
+    "components": [
+     {
+      "name": "amount",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "collateral",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "createdAt",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "prepaidFeePercent",
+      "type": "uint16",
+      "internalType": "uint16"
+     },
+     {
+      "name": "prepaidDuration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "sourceToken",
+      "type": "address",
+      "internalType": "address"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "renounceOwnership",
+  "inputs": [],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "repayLoan",
+  "inputs": [
+   {
+    "name": "loanId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "maxRepayBorrowAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "collateralCountToReturn",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "beneficiary",
+    "type": "address",
+    "internalType": "address payable"
+   },
+   {
+    "name": "allowance",
+    "type": "tuple",
+    "internalType": "struct JBSingleAllowance",
+    "components": [
+     {
+      "name": "sigDeadline",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "amount",
+      "type": "uint160",
+      "internalType": "uint160"
+     },
+     {
+      "name": "expiration",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "nonce",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "signature",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ]
+   }
+  ],
+  "outputs": [
+   {
+    "name": "paidOffLoanId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "paidOffloan",
+    "type": "tuple",
+    "internalType": "struct REVLoan",
+    "components": [
+     {
+      "name": "amount",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "collateral",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "createdAt",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "prepaidFeePercent",
+      "type": "uint16",
+      "internalType": "uint16"
+     },
+     {
+      "name": "prepaidDuration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "sourceToken",
+      "type": "address",
+      "internalType": "address"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "payable"
+ },
+ {
+  "type": "function",
+  "name": "revnetIdOfLoanWith",
+  "inputs": [
+   {
+    "name": "loanId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "pure"
+ },
+ {
+  "type": "function",
+  "name": "safeTransferFrom",
+  "inputs": [
+   {
+    "name": "from",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "to",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "safeTransferFrom",
+  "inputs": [
+   {
+    "name": "from",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "to",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "data",
+    "type": "bytes",
+    "internalType": "bytes"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "setApprovalForAll",
+  "inputs": [
+   {
+    "name": "operator",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "approved",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "setTokenUriResolver",
+  "inputs": [
+   {
+    "name": "resolver",
+    "type": "address",
+    "internalType": "contract IJBTokenUriResolver"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "supportsInterface",
+  "inputs": [
+   {
+    "name": "interfaceId",
+    "type": "bytes4",
+    "internalType": "bytes4"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "symbol",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "string",
+    "internalType": "string"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "tokenURI",
+  "inputs": [
+   {
+    "name": "loanId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "string",
+    "internalType": "string"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "tokenUriResolver",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBTokenUriResolver"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "totalBorrowedFrom",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "token",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "totalCollateralOf",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "totalLoansBorrowedFor",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "transferFrom",
+  "inputs": [
+   {
+    "name": "from",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "to",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "transferOwnership",
+  "inputs": [
+   {
+    "name": "newOwner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "trustedForwarder",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "event",
+  "name": "Approval",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "approved",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "ApprovalForAll",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "operator",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "approved",
+    "type": "bool",
+    "indexed": false,
+    "internalType": "bool"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "Borrow",
+  "inputs": [
+   {
+    "name": "loanId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "loan",
+    "type": "tuple",
+    "indexed": false,
+    "internalType": "struct REVLoan",
+    "components": [
+     {
+      "name": "amount",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "collateral",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "createdAt",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "prepaidFeePercent",
+      "type": "uint16",
+      "internalType": "uint16"
+     },
+     {
+      "name": "prepaidDuration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "sourceToken",
+      "type": "address",
+      "internalType": "address"
+     }
+    ]
+   },
+   {
+    "name": "token",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   },
+   {
+    "name": "borrowAmount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "collateralCount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "sourceFeeAmount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "beneficiary",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address payable"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "Liquidate",
+  "inputs": [
+   {
+    "name": "loanId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "loan",
+    "type": "tuple",
+    "indexed": false,
+    "internalType": "struct REVLoan",
+    "components": [
+     {
+      "name": "amount",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "collateral",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "createdAt",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "prepaidFeePercent",
+      "type": "uint16",
+      "internalType": "uint16"
+     },
+     {
+      "name": "prepaidDuration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "sourceToken",
+      "type": "address",
+      "internalType": "address"
+     }
+    ]
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "OwnershipTransferred",
+  "inputs": [
+   {
+    "name": "previousOwner",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "newOwner",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "ReallocateCollateral",
+  "inputs": [
+   {
+    "name": "loanId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "reallocatedLoanId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "reallocatedLoan",
+    "type": "tuple",
+    "indexed": false,
+    "internalType": "struct REVLoan",
+    "components": [
+     {
+      "name": "amount",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "collateral",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "createdAt",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "prepaidFeePercent",
+      "type": "uint16",
+      "internalType": "uint16"
+     },
+     {
+      "name": "prepaidDuration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "sourceToken",
+      "type": "address",
+      "internalType": "address"
+     }
+    ]
+   },
+   {
+    "name": "removedCollateralCount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "RepayLoan",
+  "inputs": [
+   {
+    "name": "loanId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "paidOffLoanId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "loan",
+    "type": "tuple",
+    "indexed": false,
+    "internalType": "struct REVLoan",
+    "components": [
+     {
+      "name": "amount",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "collateral",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "createdAt",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "prepaidFeePercent",
+      "type": "uint16",
+      "internalType": "uint16"
+     },
+     {
+      "name": "prepaidDuration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "sourceToken",
+      "type": "address",
+      "internalType": "address"
+     }
+    ]
+   },
+   {
+    "name": "paidOffLoan",
+    "type": "tuple",
+    "indexed": false,
+    "internalType": "struct REVLoan",
+    "components": [
+     {
+      "name": "amount",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "collateral",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "createdAt",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "prepaidFeePercent",
+      "type": "uint16",
+      "internalType": "uint16"
+     },
+     {
+      "name": "prepaidDuration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "sourceToken",
+      "type": "address",
+      "internalType": "address"
+     }
+    ]
+   },
+   {
+    "name": "repayBorrowAmount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "sourceFeeAmount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "collateralCountToReturn",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "beneficiary",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address payable"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "SetTokenUriResolver",
+  "inputs": [
+   {
+    "name": "resolver",
+    "type": "address",
+    "indexed": true,
+    "internalType": "contract IJBTokenUriResolver"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "Transfer",
+  "inputs": [
+   {
+    "name": "from",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "to",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "error",
+  "name": "ERC721IncorrectOwner",
+  "inputs": [
+   {
+    "name": "sender",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "ERC721InsufficientApproval",
+  "inputs": [
+   {
+    "name": "operator",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "ERC721InvalidApprover",
+  "inputs": [
+   {
+    "name": "approver",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "ERC721InvalidOperator",
+  "inputs": [
+   {
+    "name": "operator",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "ERC721InvalidOwner",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "ERC721InvalidReceiver",
+  "inputs": [
+   {
+    "name": "receiver",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "ERC721InvalidSender",
+  "inputs": [
+   {
+    "name": "sender",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "ERC721NonexistentToken",
+  "inputs": [
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "FailedCall",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "InsufficientBalance",
+  "inputs": [
+   {
+    "name": "balance",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "needed",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBPermissioned_Unauthorized",
+  "inputs": [
+   {
+    "name": "account",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "sender",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "permissionId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "OwnableInvalidOwner",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "OwnableUnauthorizedAccount",
+  "inputs": [
+   {
+    "name": "account",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "PRBMath_MulDiv_Overflow",
+  "inputs": [
+   {
+    "name": "x",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "y",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "denominator",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_CashOutDelayNotFinished",
+  "inputs": [
+   {
+    "name": "cashOutDelay",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "blockTimestamp",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_CollateralExceedsLoan",
+  "inputs": [
+   {
+    "name": "collateralToReturn",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "loanCollateral",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_FeeAmountExceedsNetPayout",
+  "inputs": [
+   {
+    "name": "netAmountPaidOut",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "revFeeAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "sourceFeeAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_FeeOnTransferSourceUnsupported",
+  "inputs": [
+   {
+    "name": "token",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "expectedAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "creditedAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_InvalidAccountingContext",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "token",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_InvalidPrepaidFeePercent",
+  "inputs": [
+   {
+    "name": "prepaidFeePercent",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "min",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "max",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_LoanExpired",
+  "inputs": [
+   {
+    "name": "timeSinceLoanCreated",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "loanLiquidationDuration",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_LoanExpired",
+  "inputs": [
+   {
+    "name": "timeSinceLoanCreated",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "loanLiquidationDuration",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_LoanIdOverflow",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "loanNumber",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "maxLoanNumber",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_LoanOwnerChanged",
+  "inputs": [
+   {
+    "name": "loanId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "expectedOwner",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "actualOwner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_NewBorrowAmountGreaterThanLoanAmount",
+  "inputs": [
+   {
+    "name": "newBorrowAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "loanAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_NoMsgValueAllowed",
+  "inputs": [
+   {
+    "name": "msgValue",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "token",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_NotEnoughCollateral",
+  "inputs": [
+   {
+    "name": "collateralCountToRemove",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "loanCollateral",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_NothingToRepay",
+  "inputs": [
+   {
+    "name": "repayBorrowAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "collateralCountToReturn",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_OverMaxRepayBorrowAmount",
+  "inputs": [
+   {
+    "name": "maxRepayBorrowAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "repayBorrowAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_OverflowAlert",
+  "inputs": [
+   {
+    "name": "value",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "limit",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_PermitAllowanceNotEnough",
+  "inputs": [
+   {
+    "name": "allowanceAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "requiredAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_ReallocatingMoreCollateralThanBorrowedAmountAllows",
+  "inputs": [
+   {
+    "name": "newBorrowAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "loanAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_ReentrantLoanAction",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_SourceMismatch",
+  "inputs": [
+   {
+    "name": "expectedToken",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "actualToken",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_UnderMinBorrowAmount",
+  "inputs": [
+   {
+    "name": "minBorrowAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "borrowAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_ZeroBorrowAmount",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "collateralCount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_ZeroCollateralLoanIsInvalid",
+  "inputs": [
+   {
+    "name": "collateralCount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVLoans_ZeroPrice",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "pricingCurrency",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "unitCurrency",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "SafeERC20FailedDecreaseAllowance",
+  "inputs": [
+   {
+    "name": "spender",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "currentAllowance",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "requestedDecrease",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "SafeERC20FailedOperation",
+  "inputs": [
+   {
+    "name": "token",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ }
+]

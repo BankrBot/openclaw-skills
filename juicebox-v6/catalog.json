@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "slug": "juicebox-v6",
+  "provider": "Juicebox",
+  "providerUrl": "https://juicebox.money",
+  "logo": null,
+  "demo": null,
+  "setup": [
+    "Install: `install the juicebox-v6 skill from https://github.com/BankrBot/skills/tree/main/juicebox-v6`.",
+    "For onchain actions, work on a supported chain (Ethereum, Optimism, Base, Arbitrum, or their Sepolia testnets); inspect `references/shared/chain-config.json` before preparing a transaction.",
+    "Review the exact chain, contract, token, amount, recipient, calldata, and fee before asking for confirmation to sign or broadcast.",
+    "Upstream source and attribution: https://github.com/mejango/juicebox-skills (MIT)."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "juicebox-v6",
+    "command": "install the juicebox-v6 skill from https://github.com/BankrBot/skills/tree/main/juicebox-v6"
+  }
+}
