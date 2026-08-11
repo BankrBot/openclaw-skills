@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "megapot-tickets",
+  "provider": "BasedMining",
+  "providerUrl": null,
+  "logo": null,
+  "demo": {
+    "title": "megapot-tickets.sh",
+    "language": "bash",
+    "code": "# Check the live jackpot\nbankr prompt \"use the megapot-tickets skill to check the jackpot\"\n\n# Buy 2 quick-pick (random) tickets\nbankr prompt \"use the megapot-tickets skill to buy 2 megapot tickets\"\n\n# Buy a custom-number ticket (validated against live ball ranges)\nbankr prompt \"use the megapot-tickets skill to buy a ticket with numbers 4 8 15 16 23 + 7\"\n\n# Gift a ticket to any wallet, ENS, or X handle\nbankr prompt \"use the megapot-tickets skill to buy a megapot ticket for @friend\"\n\n# Subscribe: one ticket every day\nbankr prompt \"use the megapot-tickets skill to buy me a megapot ticket every day\"\n\n# Did I win? Discover and claim\nbankr prompt \"use the megapot-tickets skill — did I win? claim it if so\""
+  },
+  "setup": [
+    "Install: `install the megapot-tickets skill from https://github.com/BankrBot/skills/tree/main/megapot-tickets`",
+    "Requires the [bankr skill](https://github.com/BankrBot/skills/tree/main/bankr) for wallet signing and submission on Base (chain ID `8453`)",
+    "Fund the wallet with USDC for tickets ($1 each) plus a small amount of ETH for gas",
+    "Contract addresses and ABIs are verified live against https://llms.megapot.io",
+    "Source: https://github.com/BankrBot/skills/tree/main/megapot-tickets"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "megapot-tickets",
+    "command": "install the megapot-tickets skill from https://github.com/BankrBot/skills/tree/main/megapot-tickets"
+  }
+}
