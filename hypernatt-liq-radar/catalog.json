@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "hypernatt-liq-radar",
+  "provider": "HyperNatt",
+  "providerUrl": "https://hypernatt.com",
+  "logo": null,
+  "demo": {
+    "title": "liq-radar-mcp.sh",
+    "language": "bash",
+    "code": "# 1) Configure MCP connector URL in the agent runtime:\n#    https://hypernatt.com/mcp/protocol\n# 2) Free catalog:\n#    tools/call get_agent_manifest {}\n# 3) Before sizing any crypto perp (BTC ETH SOL BNB XRP HYPE ZEC):\n#    tools/call get_liq_radar {\"symbol\":\"ETH\"}\n# Cost: get_liq_radar = $0.001 USDC via x402 (Base or Solana).\n# This skill does not place orders and does not move funds."
+  },
+  "setup": [
+    "Add MCP connector: https://hypernatt.com/mcp/protocol (or server-card https://hypernatt.com/.well-known/mcp/server-card.json)",
+    "Optional ClawHub: `openclaw skills install @dialloube-research/hypernatt-liq-radar`",
+    "Call `get_agent_manifest` (free) once per session if needed",
+    "Before sizing/entering a perp: call `get_liq_radar` with optional symbol",
+    "Agent wallet / MCP payment client settles $0.001 USDC x402 for the data call — this skill holds no keys"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "hypernatt-liq-radar",
+    "command": "install the hypernatt-liq-radar skill from https://github.com/BankrBot/skills/tree/main/hypernatt-liq-radar"
+  }
+}
