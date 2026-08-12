@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "shopify-batch-payouts",
+  "provider": "Spraay Protocol",
+  "providerUrl": "https://github.com/plagtech/spraay-shopify",
+  "logo": null,
+  "demo": {
+    "title": "batch-payouts.sh",
+    "language": "bash",
+    "code": "# 1. Validate the batch (free) — never skip this step\ncurl -sS -X POST https://gateway.spraay.app/free/validate-batch \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"chain\":\"base\",\"token\":\"USDC\",\"recipients\":[{\"to\":\"0xAbc...123\",\"amount\":\"150.00\"},{\"to\":\"0xDef...456\",\"amount\":\"89.50\"}]}' | jq\n\n# Fix every entry in .errors before proceeding. If .summary.uniqueAddresses\n# is less than .summary.recipientCount, the list has duplicates — flag them.\n\n# 2. Estimate cost (free ballpark: 0.3% protocol fee + gas)\ncurl -sS 'https://gateway.spraay.app/free/estimate-batch?recipients=2' | jq\n\n# 3. Execute (paid, $0.02 via x402) — N recipients, ONE transaction on Base.\n#    Show recipient count, total USDC, the 0.3% fee, and estimated gas, and get\n#    an explicit yes from the user first. On-chain payouts are irreversible.\n#    Note the shape change: execute takes parallel arrays plus the sender.\ncurl -sS -X POST https://gateway.spraay.app/api/v1/batch/execute \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"token\":\"USDC\",\"sender\":\"0xPayerWallet...\",\"recipients\":[\"0xAbc...123\",\"0xDef...456\"],\"amounts\":[\"150.00\",\"89.50\"]}' | jq\n\n# Success returns a transactions array — link each hash as\n# https://basescan.org/tx/<hash> when summarizing back to the user."
+  },
+  "setup": [
+    "Install: `install the shopify-batch-payouts skill from https://github.com/BankrBot/skills/tree/main/shopify-batch-payouts`",
+    "No API key needed for the free tier — `POST /free/validate-batch` and `GET /free/estimate-batch` on `https://gateway.spraay.app` are open, rate-limited to 60 req/min per IP",
+    "Execution is a paid x402 endpoint ($0.02): fund a Base wallet with USDC, or connect the Spraay MCP server (https://smithery.ai/servers/Plagtech/Spraay-x402-mcp) to settle x402 payments automatically. Payment details: https://gateway.spraay.app/.well-known/x402.json",
+    "Non-custodial — funds move only when the payer's wallet signs. Batch contract on Base: `0x1646452F98E36A3c9Cfc3eDD8868221E207B5eEC` (verified on BaseScan), 0.3% protocol fee collected on-chain",
+    "Source: https://github.com/BankrBot/skills/tree/main/shopify-batch-payouts"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "shopify-batch-payouts",
+    "command": "install the shopify-batch-payouts skill from https://github.com/BankrBot/skills/tree/main/shopify-batch-payouts"
+  }
+}
