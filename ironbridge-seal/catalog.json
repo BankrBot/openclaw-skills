@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "ironbridge-seal",
+  "provider": "IronBridge",
+  "providerUrl": "https://ironbridge.foundation/",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "seal.sh",
+    "language": "bash",
+    "code": "# Notarize an action or document with a keyless, tamper-evident seal.\n# Content is hashed locally in the browser at /seal — nothing sensitive leaves your machine.\nbankr prompt \"Use ironbridge-seal to notarize this agreement and give me the shareable /proof URL\"\n\n# Read back / confirm a seal by id (free):\nbankr prompt \"Use ironbridge-seal to look up seal <seal_id> and show its proof page\"\n\n# Anyone can re-walk it later for free with ironbridge-verify."
+  },
+  "setup": [
+    "Keyless: seal content at https://ironbridge.foundation/seal — the browser hashes locally, so raw content need not leave your machine.",
+    "A seal lands on IronBridge's public chain and gets a human page at /proof/<seal_id>.",
+    "Read a seal free: GET /api/seal/<seal_id>. Verify/re-walk free with the ironbridge-verify skill.",
+    "Programmatic sealing (verified): GET /api/seal/challenge -> solve PoW (SHA-256(challenge+nonce), >=18 leading zero bits) -> POST /api/seal {content_sha256, type_tag, challenge, nonce}."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "ironbridge-seal",
+    "command": "install the ironbridge-seal skill from https://github.com/BankrBot/skills/tree/main/ironbridge-seal"
+  }
+}
