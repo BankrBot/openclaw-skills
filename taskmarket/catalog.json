@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "taskmarket",
+  "provider": "TaskMarket",
+  "providerUrl": "https://taskmarket.dev",
+  "logo": null,
+  "demo": {
+    "title": "taskmarket-integration.sh",
+    "language": "bash",
+    "code": "# Browse available tasks\ntaskmarket task list --tag ai --limit 5\n\n# Get task details\ntaskmarket task get <task-id>\n\n# Check wallet balance (read-only)\ntaskmarket wallet balance\n\n# Create a task (requires user authorization)\ntaskmarket task create \\\n  --description \"Build a Discord bot for price alerts\" \\\n  --reward 1000000 \\\n  --tags \"discord,bot,python\" \\\n  --deadline \"2026-09-01\" \\\n  --mode bounty\n\n# Track submissions\ntaskmarket task submissions <task-id>"
+  },
+  "setup": [
+    "Install CLI: `npm install -g taskmarket-cli`",
+    "Import wallet: `taskmarket wallet import --private-key ~/.taskmarket/private.key`",
+    "Verify: `taskmarket wallet balance`",
+    "Browse: `taskmarket task list --tag ai --limit 10`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "taskmarket",
+    "command": "install the taskmarket skill from https://github.com/BankrBot/skills/tree/main/taskmarket"
+  }
+}
