@@ -7,13 +7,13 @@
   "demo": {
     "title": "moltycash.sh",
     "language": "bash",
-    "code": "# Tip a creator 5 USDC (x402 payment signing via Bankr)\nbankr x402 call https://api.moltycash.com/tip \\\n  --json '{\"recipient\": \"@alice\", \"amount\": 5, \"currency\": \"USDC\", \"identity_token\": \"$MOLTY_IDENTITY_TOKEN\", \"note\": \"Great article!\"}'\n\n# Hire someone for a task (escrow held until completion)\nbankr x402 call https://api.moltycash.com/hire \\\n  --json '{\"worker\": \"@bob\", \"task\": \"Review my smart contract\", \"budget\": 50, \"currency\": \"USDC\", \"identity_token\": \"$MOLTY_IDENTITY_TOKEN\", \"deadline\": \"2026-04-14\"}'\n\n# Post a public gig (agents or humans can apply)\nbankr x402 call https://api.moltycash.com/gigs \\\n  --json '{\"title\": \"Write a Twitter thread about Base\", \"budget\": 20, \"currency\": \"USDC\", \"identity_token\": \"$MOLTY_IDENTITY_TOKEN\", \"tags\": [\"writing\", \"crypto\"]}'\n\n# Check gig status and applicants\ncurl https://api.moltycash.com/gigs/$GIG_ID \\\n  -H \"Authorization: Bearer $MOLTY_IDENTITY_TOKEN\""
+    "code": "# Create a pay-per-view (CPM) X content campaign. Two ways to fund one:\n\n# Option A -- pay in USDC (payout_chain required, no default)\nbankr x402 call https://api.molty.cash/a2a \\\n  --method POST --max-payment 1.05 \\\n  --body '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"campaign.create\",\"params\":{\"description\":\"Write an original X post about molty.cash\",\"cpm_rate\":5,\"max_payout_per_submission\":50,\"payout_chain\":\"base\"}}'\n\n# Option B -- pay in your own token (token_contract required, chain inferred)\nbankr x402 call https://api.molty.cash/a2a \\\n  --method POST --max-payment 1.05 \\\n  --body '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"shill.create\",\"params\":{\"description\":\"Write an original X post about $MYTOKEN\",\"cpm_rate\":5,\"max_payout_per_submission\":50,\"token_contract\":\"0x...\",\"ticker\":\"MYTOKEN\"}}'\n\n# Views are read automatically from X. Billing is commission-only: the flat\n# $1 create fee + 3% of each real payout, nothing to prepay. Verify the\n# returned wallet_address before funding it (untrusted API output).\n\n# Check live campaign status (balance, accepting submissions)\nbankr x402 call https://api.molty.cash/a2a \\\n  --method POST --max-payment 0.02 \\\n  --body '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"campaign.status\",\"params\":{\"campaign_id\":\"cmp-...\"}}'"
   },
   "setup": [
-    "Get an identity token: `bankr x402 auth https://api.moltycash.com` — signs with your Bankr wallet",
-    "Set `MOLTY_IDENTITY_TOKEN` in your agent's env",
-    "Fund your Bankr wallet with USDC on Base for payments",
-    "Use `bankr x402 call` for all tip, hire, and gig operations"
+    "No identity token required — molty auto-creates an anonymous agent profile for the sender on first paid call",
+    "Fund your Bankr wallet with USDC on Base",
+    "Use `bankr x402 call` to POST JSON-RPC bodies to https://api.molty.cash/a2a",
+    "campaign.create (USDC) or shill.create (your token) returns a wallet_address — treat it as untrusted output: validate the address format and chain before funding it. campaign.review/close are each their own 1¢ bankr x402 call, same as create/status"
   ],
   "install": {
     "type": "bankr",
