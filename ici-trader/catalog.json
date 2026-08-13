@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "ici-trader",
+  "provider": "inchaintel",
+  "providerUrl": "https://bankr.bot/terminal/agents/0x4d4ed9163f0732cd0f4c9412417e98103abcdba3",
+  "logo": null,
+  "demo": {
+    "title": "ici-trader.sh",
+    "language": "bash",
+    "code": "# Arm a resting market-making ladder\nbankr prompt \"Using ICI Trader, arm a $500 ladder for WETH/USDC on Base\"\n\n# Check exits before entries\nbankr prompt \"Using ICI Trader, inspect my WETH/USDC position and check HIFO sell exits before buy rungs\"\n\n# Inspect revolving capital and inventory limits\nbankr prompt \"Using ICI Trader, show the inventory band and free revolving capital for my WETH/USDC position\""
+  },
+  "setup": [
+    "Install the skill, then fetch its live contract with `run_app_script` before evaluating a pair",
+    "Fund the trading wallet with the intended pair assets and `$ICI` on Base for x402 strategy checks",
+    "Specify the chain, pair, and strategy budget when arming a ladder",
+    "Use server-side resting triggers; do not configure an interval cron or polling loop"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "ici-trader",
+    "command": "install the ici-trader skill from https://github.com/BankrBot/skills/tree/main/ici-trader"
+  }
+}
