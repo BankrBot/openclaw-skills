@@ -15,7 +15,7 @@ client, use `references/vanilla-x402-flow.md`.
 
 `bankr x402 call <url>` pays **whatever the endpoint's challenge requires**, in whatever
 supported token/chain the Bankr wallet holds, and its only client-side guard is
-`--max-payment` (CLI default **$1**, max $10 — 40×–400× any Quotient route price). The
+`--max-payment` (CLI default **$1**, max $10 — above every published Quotient route price). The
 Bankr wallet signs internally, so on this path nothing can inspect the typed data before it
 is signed. Consequences:
 

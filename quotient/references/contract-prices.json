@@ -1,0 +1,198 @@
+{
+  "openapi_version": "11.1.0",
+  "source": "https://dev.quotient.social/api/v1/openapi.json",
+  "credits_per_usd": 1000,
+  "prices_usd": {
+    "/api/v1/assets": "0.005",
+    "/api/v1/assets/search": "0.01",
+    "/api/v1/markets": "0.005",
+    "/api/v1/markets/search": "0.01",
+    "/api/v1/markets/mispriced": "0.02",
+    "/api/v1/markets/lookup": "0.005",
+    "/api/v1/markets/{slug}/intelligence": "0.01",
+    "/api/v1/markets/{slug}/signals": "0.01",
+    "/api/v1/signals": "0.01",
+    "/api/v1/signals/featured": "0.005",
+    "/api/v1/signals/oil": "0.01",
+    "/api/v1/signals/perps": "0.01",
+    "/api/v1/portfolio": "0.005",
+    "/api/v1/markets/{slug}/forecast": "0.01",
+    "/api/v1/sources": "0.005",
+    "/api/v1/x/search": "0.50",
+    "/api/v1/x/profile": "0.50",
+    "/api/v1/latest": "0.02"
+  },
+  "operation_prices_usd": {
+    "GET /api/v1/assets": "0.005",
+    "GET /api/v1/assets/search": "0.01",
+    "GET /api/v1/markets": "0.005",
+    "GET /api/v1/markets/search": "0.01",
+    "GET /api/v1/markets/mispriced": "0.02",
+    "GET /api/v1/markets/lookup": "0.005",
+    "GET /api/v1/markets/{slug}/intelligence": "0.01",
+    "GET /api/v1/markets/{slug}/signals": "0.01",
+    "GET /api/v1/signals": "0.01",
+    "GET /api/v1/signals/featured": "0.005",
+    "GET /api/v1/signals/oil": "0.01",
+    "GET /api/v1/signals/perps": "0.01",
+    "GET /api/v1/portfolio": "0.005",
+    "GET /api/v1/markets/{slug}/forecast": "0.01",
+    "GET /api/v1/sources": "0.005",
+    "POST /api/v1/x/search": "0.50",
+    "POST /api/v1/x/profile": "0.50",
+    "GET /api/v1/latest": "0.02"
+  },
+  "rate_limit_policies": {
+    "standard": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1,
+      "description": "Shared across all non-X payable routes for one API customer or verified x402 payer."
+    },
+    "x_research": {
+      "scope": "x_research",
+      "requestsPerSecond": 2,
+      "requestsPerMinute": 12,
+      "requestsPerDay": 100,
+      "maxConcurrent": 1,
+      "description": "Applies to structured X Search requests for one API customer or verified x402 payer."
+    },
+    "ip_abuse_guard": {
+      "scope": "ip_abuse_guard",
+      "requestsPerSecond": 10,
+      "requestsPerMinute": 200,
+      "requestsPerDay": 10000,
+      "description": "Secondary anti-key-spray protection. This is not additional caller quota and may be tightened during abuse."
+    }
+  },
+  "operation_rate_limits": {
+    "GET /api/v1/assets": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/assets/search": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/markets": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/markets/search": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/markets/mispriced": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/markets/lookup": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/markets/{slug}/intelligence": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/markets/{slug}/signals": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/signals": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/signals/featured": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/signals/oil": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/signals/perps": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/portfolio": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/markets/{slug}/forecast": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/sources": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    },
+    "POST /api/v1/x/search": {
+      "scope": "x_research",
+      "requestsPerSecond": 2,
+      "requestsPerMinute": 12,
+      "requestsPerDay": 100,
+      "maxConcurrent": 1
+    },
+    "POST /api/v1/x/profile": {
+      "scope": "x_research",
+      "requestsPerSecond": 2,
+      "requestsPerMinute": 12,
+      "requestsPerDay": 100,
+      "maxConcurrent": 1
+    },
+    "GET /api/v1/latest": {
+      "scope": "standard",
+      "requestsPerSecond": 5,
+      "requestsPerMinute": 60,
+      "requestsPerDay": 5000,
+      "maxConcurrent": 1
+    }
+  }
+}
