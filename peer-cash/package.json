@@ -1,0 +1,16 @@
+{
+  "name": "bankr-peer-cash-skill",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "smoke": "node scripts/peer-cash.mjs capabilities"
+  },
+  "dependencies": {
+    "@zkp2p/cash": "0.4.9",
+    "viem": "^2.38.5"
+  }
+}
