@@ -2,8 +2,6 @@
 
 Cash out a Bankr wallet's Base USDC to eligible fiat payment apps through USDCtoFiat by Galleon.
 
-This is a USDCtoFiat skill, not a Peer Cash skill and not Peerlytics.
-
 The CLI calls `@usdctofiat/offramp@7.0.1`:
 
 ```ts
@@ -13,7 +11,7 @@ cashout({ mode: "fast" | "best", signer, amount, currency, platform, payee })
 - **Fast**: live market rate, 0% spread. Attribution is locked to TOFIAT.
 - **Best**: Delegate strategy. 10 bps on fill, taken from USDC released to the taker.
 
-`createOfframp()` locks `referralCode` TOFIAT and puts `galleonlabs` first. Integrator ids are telemetry only. The package guarantees the marker, not the payout.
+Attribution is handled by `@usdctofiat/offramp`.
 
 Unsigned Base transactions are submitted through Bankr `/wallet/submit`. No private key. No Peer API key.
 

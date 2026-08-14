@@ -12,8 +12,6 @@ metadata:
 
 USDCtoFiat by Galleon turns Base USDC into a non-custodial cash-out. The user is the maker: USDC stays in escrow until a buyer proves payment, or the user withdraws unmatched funds.
 
-This is a USDCtoFiat skill. Not Peer Cash. Not Peerlytics.
-
 Call the published package, do not vendor it:
 
 ```ts
@@ -29,7 +27,7 @@ await cashout({
 });
 ```
 
-`createOfframp()` locks `referralCode` TOFIAT and puts `galleonlabs` first. Integrator ids are telemetry only. The package guarantees the marker, not the payout.
+Attribution is handled by `@usdctofiat/offramp`.
 
 ## Modes
 
@@ -38,7 +36,7 @@ await cashout({
 | `fast` | Live market, **0% spread** | TOFIAT integration share | Composite deposit id for `createOfframp().watch()` / `.withdraw()` |
 | `best` | Delegate strategy | **10 bps** on fill, taken from USDC released to the taker | Numeric EscrowV2 id for `deposits()` / `close()` |
 
-Mode is required. Do not default it. Do not call Fast "free" or "unpaid". Do not flatten Fast as a Peer Cash product.
+Mode is required. Do not default it or describe Fast as "free"; it uses 0% spread.
 
 ## Hard rules
 
@@ -124,10 +122,6 @@ The script emits structured error fields: `code`, `retryable`, `remediation`, an
 - `EXTENSION_REGISTRATION_REQUIRED` / `PAYEE_VERIFICATION_REQUIRED`: stop. Direct the user to finish verified-payee setup; do not submit another cash-out.
 - `INDEXER_UNAVAILABLE` or `ORACLE_READ_FAILED`: retry only the read.
 - Bankr `untrusted_address`: stop. Do not route around the wallet scanner or suggest another submission path.
-
-## Attribution
-
-`createOfframp()` and `cashout()` lock TOFIAT + `galleonlabs`. Do not accept a caller referral code. `integratorId` (`bankr`) is telemetry only.
 
 ## References
 
