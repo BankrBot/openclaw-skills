@@ -124,4 +124,6 @@ Already an MCP client (Claude Desktop, Claude Code, another MCP host)? `npx hood
 
 Same payment-safety invariants above still apply when using an SDK or the MCP server — they wrap the HTTP calls, they don't change what you're paying or to whom.
 
+**Idempotency through a client is opt-in, and you have to ask for it.** Neither SDK sends an `Idempotency-Key` unless you pass one: TypeScript takes `idempotencyKey` in the per-request options, Python takes `idempotency_key=` on each method. Pass a fresh unique string per logical call and reuse it when retrying that call. The MCP server does not send one at all, so a retried tool call in x402 or credit mode pays again — prefer a bearer key there, or call the HTTP endpoints directly when you need retry safety.
+
 Human-readable version of the same data: https://docs.hoodgrow.com
