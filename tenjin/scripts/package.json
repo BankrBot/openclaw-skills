@@ -1,0 +1,9 @@
+{
+  "name": "tenjin-skill-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Runtime dependency for siwx.mjs only. verify-402.mjs and tenjin-api.mjs are deliberately dependency-free (the payment gate stays auditable with no supply chain).",
+  "dependencies": {
+    "@x402/extensions": "^2.22.0"
+  }
+}
