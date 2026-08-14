@@ -1,0 +1,11 @@
+{
+  "request": "Cash out 100 USDC to my Monzo handle in GBP using Best",
+  "agentSteps": [
+    "Run capabilities and verify Monzo supports GBP",
+    "Run estimate 100 GBP and label it approximate",
+    "Run cashout --mode best without --confirm and show the exact preview, including the 10 bps Delegate fill fee",
+    "Wait for a later-turn user confirmation",
+    "Rerun the unchanged cashout command with --confirm",
+    "Return the depositId, transaction hashes, Best mode, and next action"
+  ]
+}

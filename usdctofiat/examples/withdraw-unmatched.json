@@ -1,8 +1,8 @@
 {
-  "request": "Cancel my unmatched Peer Cash order",
+  "request": "Cancel my unmatched USDCtoFiat order",
   "agentSteps": [
     "Run status with the saved depositId",
-    "Verify nextActions includes withdraw",
+    "Verify the order can be withdrawn or closed",
     "Run withdraw without --confirm and show the exact preview",
     "Wait for a later-turn user confirmation",
     "Rerun with --confirm",

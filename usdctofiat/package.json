@@ -1,5 +1,5 @@
 {
-  "name": "bankr-peer-cash-skill",
+  "name": "bankr-usdctofiat-skill",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -7,10 +7,10 @@
     "node": ">=22"
   },
   "scripts": {
-    "smoke": "node scripts/peer-cash.mjs capabilities"
+    "smoke": "node scripts/usdctofiat.mjs capabilities"
   },
   "dependencies": {
-    "@zkp2p/cash": "0.4.9",
+    "@usdctofiat/offramp": "7.0.1",
     "viem": "^2.38.5"
   }
 }
