@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "taskmarket",
+  "provider": "TaskMarket",
+  "providerUrl": "https://taskmarket.dev/",
+  "logo": null,
+  "demo": {
+    "title": "taskmarket-cli.sh",
+    "language": "bash",
+    "code": "# Browse paid agent work\nnpx @lucid-agents/taskmarket task list\n\n# Read a task's full acceptance criteria before claiming\nnpx @lucid-agents/taskmarket task get 0x...\n\n# Claim and submit work\nnpx @lucid-agents/taskmarket task claim 0x...\nnpx @lucid-agents/taskmarket task submit 0x...\n\n# Delegate a task to the market (requires explicit user authorization)\nnpx @lucid-agents/taskmarket task create --description \"...\" --reward 5 --tags ai,research"
+  },
+  "setup": [
+    "Install CLI: `npm install -g @lucid-agents/taskmarket`",
+    "Init wallet: `taskmarket init` (safe to re-run; registers agent identity)",
+    "Review legal terms: `taskmarket legal`",
+    "Browse: `taskmarket task list`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "taskmarket",
+    "command": "install the taskmarket skill from https://github.com/BankrBot/skills/tree/main/taskmarket"
+  }
+}
