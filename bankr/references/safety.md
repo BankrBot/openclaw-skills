@@ -206,6 +206,14 @@ The CLI stores keys in `~/.bankr/config.json`:
 - Use `bankr logout` to clear stored credentials when done on a shared machine
 - For CI/CD, prefer environment variables (`BANKR_API_KEY`, `BANKR_LLM_KEY`) over config files
 
+### CLI Sessions Are Revocable
+
+Email logins from the CLI (`bankr login email`) appear in **Active sessions** at [bankr.bot](https://bankr.bot) → Security, alongside browser sessions — with OS, approximate location, IP, and last-seen time. Log any of them out from there; the logout takes effect server-side immediately, and if MFA is on, revoking another session prompts for your passkey.
+
+`bankr logout` only clears the local config file — it doesn't revoke anything server-side. To cut off a machine you no longer control, revoke the session in Security (and rotate the key if it may have leaked).
+
+Sessions created by an older CLI predate this and won't be listed. If a CLI session is missing from the page, run `bankr update` and sign in again. Sessions drop off the list after 60 days of inactivity.
+
 ### Non-Interactive Login
 
 When running the CLI in automated scripts or AI agent environments where interactive prompts aren't possible:

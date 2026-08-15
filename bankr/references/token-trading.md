@@ -24,7 +24,10 @@ Execute token trades and swaps across multiple blockchains.
 |--------|---------|-------------|
 | USD | `$50` | Dollar amount to spend |
 | Percentage | `50%` | Percentage of your balance |
-| Exact | `0.1 ETH` | Specific token amount |
+| Exact input | `0.1 ETH` | Specific amount to sell |
+| Exact output | `exactly 1,000 PEPE` | Specific amount to **receive** — Bankr sizes the input for you |
+
+**Exact-output orders** work on same-chain EVM and same-chain Solana. On Solana the input is sized from the output token's USD price rather than a reverse quote, so treat the amount you spend as an estimate — the received quantity is the side being pinned.
 
 ## Prompt Examples
 
@@ -33,6 +36,11 @@ Execute token trades and swaps across multiple blockchains.
 - "Buy $50 of BNKR on Base"
 - "Sell 50% of my ETH holdings"
 - "Purchase 100 USDC worth of PEPE"
+
+**Exact-output swaps:**
+- "Buy exactly 1,000 PEPE on Base"
+- "Buy exactly 500 BONK on Solana"
+- "Get me exactly 100 USDC"
 
 **Cross-chain swaps:**
 - "Bridge 0.5 ETH from Ethereum to Base"

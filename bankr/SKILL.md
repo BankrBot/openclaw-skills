@@ -1,6 +1,6 @@
 ---
 name: bankr
-description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, trade tokenized stocks and ETFs (spot or leveraged), check portfolio balances (with PnL and NFTs), view token prices, search tokens, research token holders, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, call or deploy x402 paid API endpoints, browse the web, store and query files on their wallet's filesystem, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet — including zero-data-retention and TEE-private inference tiers. Supports Base, Ethereum, Polygon, Solana, Unichain, World Chain, Arbitrum, BNB Chain, and Robinhood Chain.
+description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, trade tokenized stocks and ETFs (spot or leveraged), check portfolio balances (with PnL and NFTs), view token prices, search tokens, research token holders, transfer crypto, buy/sell/list/bid on NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, deploy and verify arbitrary EVM contracts, set up automated trading, sign and submit raw transactions, call or deploy x402 paid API endpoints, deploy webhooks that trigger the agent from external events, browse the web, store and query files on their wallet's filesystem, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet — including zero-data-retention and TEE-private inference tiers. Supports Base, Ethereum, Polygon, Solana, Unichain, World Chain, Arbitrum, BNB Chain, and Robinhood Chain.
 metadata:
   {
     "clawdbot":
@@ -253,6 +253,25 @@ The legacy aliases `/public/resolve-recipient` and `/public/search-users` have b
 | `/agent/job/{jobId}` | GET | Check job status and results |
 | `/agent/job/{jobId}/cancel` | POST | Cancel a running job |
 
+#### Token data (`/tokens/*`)
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/tokens/search?query=<q>` | GET | None | Search tokens by name or symbol |
+| `/tokens/trending?chain=<chain>` | GET | None | Trending tokens for a chain |
+| `/tokens/balance` | GET | None | Single-token on-chain balance for an address (authoritative for fresh/thin tokens the portfolio read model hides) |
+| `/tokens/balances` | GET | None | Token balances for an address |
+| `/tokens/holders?tokenAddress=0x…&chain=<chain>` | GET | API key | Holders of an EVM token joined to Bankr wallet identity and X handle |
+
+`GET /tokens/holders` is the only authenticated route in this group — it maps addresses to real social identities. Query params: `tokenAddress` (0x, required), `chain` (required, any supported EVM chain), `filter` (`bankr` — default, Bankr wallets only, cheap and exact; or `all` — the full on-chain ranking annotated with Bankr identity where we recognise the address), `limit` (1–100, default 50), and `cursor`.
+
+```bash
+curl -s "https://api.bankr.bot/tokens/holders?tokenAddress=0x...&chain=base&filter=all&limit=50" \
+  -H "X-API-Key: $BANKR_API_KEY"
+```
+
+Each row carries `address`, `balance` (raw integer string — may exceed `Number` precision), `isBankrWallet`, and `xUsername` / `xProfileImageUrl` when known. Paginate by replaying `nextCursor` as `cursor` until it's absent; a cursor is only valid for the exact `tokenAddress` + `chain` + `filter` that minted it (`400` otherwise). Ranking is over live balances, so it is a feed, not a snapshot — a holder whose balance moves between pages can repeat or be missed.
+
 #### Public endpoints (no auth required)
 
 | Endpoint | Method | Description |
@@ -293,8 +312,9 @@ For full API details (request/response schemas, job states, rich data, polling s
 | `bankr wallet transfer --to vitalik.eth --token USDC --amount 50 --chain base` | ENS recipient with explicit chain |
 | `bankr wallet swap --from <symbol/addr> --to <symbol/addr> --amount <amount>` | Swap tokens on a single EVM chain (same-chain). Resolves symbols to contracts; `--from`/`--to`/`--amount` required; `--chain` defaults to `base`. Solana is not supported (use the Wallet API or agent for cross-chain and Solana swaps). |
 | `bankr wallet swap --from ETH --to USDC --amount 0.1 --chain base --quote-only` | Print the swap quote (you pay / you receive / min received) without executing |
-| `bankr wallet sign` | Sign messages/typed data/transactions |
-| `bankr wallet submit` | Submit raw transactions |
+| `bankr wallet sign -t <type> [-m <msg>\|--typed-data <json>\|--transaction <json>]` | Sign a message (`personal_sign`), EIP-712 typed data (`eth_signTypedData_v4`), or a transaction (`eth_signTransaction`) without broadcasting |
+| `bankr wallet submit tx --to <addr> --chain-id <id> [--value <wei>] [--data <hex>] [--no-wait]` | Submit a transaction from explicit parameters (also accepts gas/nonce/EIP-1559 overrides) |
+| `bankr wallet submit json '<json>'` | Submit a transaction from JSON: `{to, chainId, value?, data?}` |
 
 ### `bankr agent` — AI Agent Operations
 
@@ -328,8 +348,30 @@ For full API details (request/response schemas, job states, rich data, polling s
 | `bankr files write <fileId> [--from <path>]` | Overwrite text content from a local file or stdin |
 | `bankr files search <query> [--folder <path>] [--limit <n>]` | Search by filename, extension, or description |
 | `bankr files mkdir <name> [--parent <path>]` | Create a folder |
+| `bankr files mv <fileId> <folder>` | Move a file to a different folder |
+| `bankr files rename <fileId> <name>` | Rename a file or folder |
+| `bankr files info <fileId>` | Show file metadata |
 | `bankr files rm <fileId>` | Delete a file (soft — recoverable for 24h) |
 | `bankr files storage` | Show storage usage and quota |
+
+### `bankr webhooks` — Agent-Triggering Webhooks
+
+Deploy your own TypeScript handlers that turn an external event into a Bankr agent run. Each deployed webhook gets a public trigger URL — `https://webhooks.bankr.bot/u/<wallet>/<name>` — and the handler returns `{ prompt, threadId?, context? }`, which the agent then executes on your wallet.
+
+| Command | Description |
+|---------|-------------|
+| `bankr webhooks init` | Scaffold a `webhooks/` folder and `bankr.webhooks.json` |
+| `bankr webhooks add <name> [--provider slack\|github\|stripe\|generic]` | Add a handler, optionally from a provider template |
+| `bankr webhooks deploy [name]` | Bundle and deploy all handlers, or one |
+| `bankr webhooks list` | List deployed webhooks |
+| `bankr webhooks pause <name>` / `resume <name>` | Pause or resume a deployed webhook |
+| `bankr webhooks delete <name>` | Delete a deployed webhook (not undoable) |
+| `bankr webhooks logs <name>` | Recent invocations |
+| `bankr webhooks env set KEY=VALUE` / `list` / `unset KEY` | Manage encrypted env vars (e.g. signing secrets) |
+
+**The trigger URL is public — verify the signature in your handler.** The `slack`, `github`, and `stripe` templates ship with signature verification and return `401` without ever reaching the agent; the `generic` template does not, so anyone who guesses the URL can trigger agent runs on your wallet until you add a verifier.
+
+**Reference**: [references/webhooks.md](references/webhooks.md)
 
 ### `bankr club` — Bankr Club Membership
 
@@ -375,12 +417,14 @@ Pricing is $20/mo or $198/yr USD-equivalent. Actual on-chain amount depends on t
 | `bankr login email <address> --code <otp> [options]` | Verify OTP and complete setup (headless step 2) |
 | `bankr login --api-key <key>` | Login with an existing API key directly |
 | `bankr login --api-key <key> --llm-key <key>` | Login with separate LLM gateway key |
+| `bankr login siwe --private-key <key>` | Sign-in-with-Ethereum using a local key (headless) |
 | `bankr login --url` | Print Bankr Terminal URL for API key generation |
 | `bankr logout` | Clear stored credentials |
 | `bankr whoami` | Show current authentication info |
 | `bankr config get [key]` | Get config value(s) |
 | `bankr config set <key> <value>` | Set a config value |
 | `bankr --config <path> <command>` | Use a custom config file path |
+| `bankr update` | Update the CLI to the latest published version |
 
 Valid config keys: `apiKey`, `apiUrl`, `llmKey`, `llmUrl`
 
@@ -543,6 +587,7 @@ The [Bankr LLM Gateway](https://docs.bankr.bot/llm-gateway/overview) is a unifie
 - **Per-model discounts** available for Bankr Club members and partners — applied automatically at billing time
 - **Image generation**: generate images via the OpenAI-native `/v1/images/generations` endpoint (model `gpt-image-2`), billed from the same LLM credit balance — see the reference
 - **Expiring credit grants**: promotional or developer grants may carry an expiry date. Your spendable balance is your permanent (purchased) credits plus any unexpired grants — grants are spent first (soonest-expiring first) and drop off automatically at expiry
+- **Daily spend budget** (optional): a per-UTC-day cap on how much the wallet spends. The credit balance bounds *total* spend; this bounds *burn rate*, so a runaway loop or a leaked key can't drain a funded wallet in one day. Set it in the **Settings** tab at [bankr.bot/llm](https://bankr.bot/llm) — web auth only, so a key can never raise the cap it is bound by. See below
 - **Privacy tiers**: every request is served at `standard`, `zdr` (zero data retention), or `private` (TEE). Ask for a tier per request, per model, per base URL, or account-wide — see below
 
 ### Privacy Tiers
@@ -579,6 +624,21 @@ bankr llm models --zdr                                   # which models have a Z
 - **`X-Privacy-Tier` response header** reports the tier the request was actually handled under, so the guarantee is verifiable rather than assumed.
 - Tier matching is case-insensitive, and only a *trailing* `:zdr` / `:private` token counts as the suffix opt-in.
 
+### Daily Spend Budget
+
+An optional per-UTC-day cap across **all metered LLM spend on the wallet** — every API key it owns, plus Max Mode and app-invoked agent runs. Gateway requests over budget are refused; an agent run ends early once the day's spend reaches the cap.
+
+```bash
+curl -s https://llm.bankr.bot/v1/credits -H "X-API-Key: $BANKR_LLM_KEY"
+# → { "balanceUsd": …, "effectiveBalanceUsd": …, "undeductedCostUsd": …,
+#     "dailyBudget": { "limitUsd": 25, "spentUsd": 4.2, "remainingUsd": 20.8,
+#                      "exceeded": false, "resetsAt": "…T00:00:00.000Z" } }
+```
+
+- `dailyBudget` is **omitted entirely** when the wallet is uncapped, so its presence is the answer to "am I capped?" — no sentinel value to test for.
+- Over budget, spend requests return `402` with error `type: "daily_budget_exceeded"` — distinct from the `insufficient_credits` you get when the balance itself runs out. Read-only `GET` endpoints (`/v1/credits`, `/v1/usage`, `/v1/models`) keep working, so you can still read `remainingUsd` and `resetsAt` to find out when you'll be unblocked.
+- Budget changes reach the gateway within ~60s (it caches auth state), and each instance caches independently — so spend can overshoot slightly under a sustained burst. Treat it as a guardrail; your credit balance is still the hard limit on total spend.
+
 ### Max Mode — Pick the Agent's Model
 
 Max Mode overrides the Bankr agent's default model with any model from the gateway, billed per token from your **LLM credit balance** (not your trading wallet):
@@ -593,7 +653,8 @@ The setting is stored on your wallet and applies across every surface — CLI, w
 
 - **Credits are enforced per LLM call, not after the fact.** Your spendable balance (minus anything already metered but not yet deducted) becomes the run's budget, re-checked before every call — the turn ends honestly when it's exhausted instead of overspending.
 - **Shortfalls survive.** If a batch can't be fully covered, the credit is left untouched and the usage stays owed, so a later top-up settles it rather than the overspend being written off.
-- Top up before enabling, or Max Mode messages will fail.
+- **Out of credits is a reply, not a crash.** The agent asks you to top up rather than silently answering on the default model — except on X, where it quietly falls back to the standard model so a public thread never becomes a top-up nag. If credits run out *partway* through a turn, it stops there and saves its progress in the thread, so you can top up and ask it to continue.
+- Top up (or enable auto top-up) before enabling, so a run isn't interrupted mid-turn.
 
 ### Quick Commands
 
@@ -638,6 +699,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 ### Trading Operations
 
 - **Token Swaps**: Buy/sell/swap tokens across chains
+- **Exact-output orders**: pin the quantity you want to *receive* ("buy exactly 1,000 PEPE"), not just the amount to spend — supported on same-chain EVM and same-chain Solana
 - **Cross-Chain**: Bridge tokens between chains
 - **Limit Orders**: Execute at target prices
 - **Stop Loss**: Automatic sell protection
@@ -657,6 +719,8 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - Wrapping/unwrapping the native token (ETH ↔ WETH and equivalents) is reflected in both balances right away
 - Filter by chain: `bankr wallet portfolio --chain base,solana` or `GET /wallet/portfolio?chains=base,solana`
 
+> **`token.balance` is a string, not a number.** It holds the exact decimal amount — parsing it as a float rounds high-decimal tokens up, and a max-size trade built from a rounded balance reverts on-chain. `nativeBalance`, `nativeUsd` and `total` are strings too; `balanceUSD` and `price` are numbers.
+
 **Reference**: [references/portfolio.md](references/portfolio.md)
 
 ### Market Research
@@ -668,6 +732,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - Trending tokens
 - Token comparisons
 - **Holder snapshots** — largest-first holder lists with USD value and supply percentage, plus a concentration summary. Supports a minimum-USD floor, which makes it usable for airdrop targeting ("holders of X with $50+")
+- **Holders joined to Bankr identity** — `GET /tokens/holders` returns an EVM token's holders with their Bankr wallet and X handle, paginated. Use `filter=bankr` for just the Bankr users who hold it, `filter=all` for the full on-chain ranking annotated where we recognise the address
 
 **Reference**: [references/market-research.md](references/market-research.md)
 
@@ -684,13 +749,19 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 ### NFT Operations
 
+Buy, sell, bid, and manage NFTs through OpenSea on **every supported EVM chain** — Base, Ethereum, Polygon, Unichain, World Chain, Arbitrum, BNB Chain, and Robinhood Chain.
+
 - Browse and search collections
 - View floor prices and listings
 - Purchase NFTs via OpenSea — including listings priced in an **ERC-20** rather than the native token (e.g. USDG on Robinhood Chain). The token approval, the payment-currency balance check, and decimals-aware pricing are all handled for you
-- Accept offers on NFTs you own
+- **List your NFTs for sale**, see your own live listings, and cancel them
+- **Check the best offer** on any NFT (a collection with no live offers is a normal "no offers" answer, not an error) and accept offers on NFTs you own
+- **Make collection-wide bids** — an offer good for any token in a collection — see the bids you've made, and retract them
 - View your NFT portfolio
 - Transfer NFTs
 - Mint from supported platforms
+
+Bids are always paid in an **ERC-20**, never native ETH — WETH on most chains, or whatever currency the collection pins (USDG on some Robinhood Chain collections). If your balance is short and the currency is WETH, Bankr wraps the difference from ETH for you. Only collection-wide bids can be retracted through Bankr; a bid on a single token has to be cancelled on OpenSea directly.
 
 **Reference**: [references/nft-operations.md](references/nft-operations.md)
 
@@ -707,8 +778,9 @@ For full details — setup paths, model list, provider config, SDK examples, key
 ### Leverage Trading
 
 - **Hyperliquid** (primary) — Perpetual futures on Hyperliquid L1 with on-chain order book. Crypto, stocks (TSLA, AAPL, NVDA via HIP-3), spot trading. Up to 50x leverage.
-- **Avantis** (secondary) — Perpetuals on Base for crypto, equities (NVDA, TSLA, AAPL, HOOD, and more), forex, and commodities. Equity, forex, and commodity pairs trade during their underlying market hours only.
+- **Avantis** (secondary) — Perpetuals on Base for crypto, equities (NVDA, TSLA, AAPL, HOOD, and more), forex, and commodities, across ~118 pairs. Equity, forex, and commodity pairs trade during their underlying market hours only.
 - Stop loss, take profit, and position management on both platforms
+- On Avantis, a stop loss or take profit set on the wrong side of the trade — an SL past your liquidation price, or a TP the wrong side of entry — is **refused up front with the liquidation price in the message**, rather than accepted and silently dropped. Setting a level also waits until it is actually visible on the position before reporting success, so "set" means set. Avantis TP/SL is not available in wallet (connected-wallet) mode, which returns a clear unsupported error
 - Funding Hyperliquid is a **venue** deposit/withdraw, not a bridge: a deposit only reaches Hyperliquid, a withdrawal only lands on Arbitrum. Name the venue ("deposit $500 to hyperliquid") rather than saying "bridge"; to move withdrawn funds onward, chain a cross-chain swap after the withdrawal
 - Hyperliquid charges a **1 USDC withdrawal fee, taken out of the requested amount** — so your full withdrawable balance is requestable (you receive amount − 1), and withdrawals under $1 are refused rather than netting to zero
 
@@ -769,6 +841,11 @@ The agent can discover, call, and deploy x402-protected API endpoints, automatic
 - **Price** your own endpoints in USDC or any supported ERC-20; revenue settles on-chain and is accounted in USD at settlement time
 - Works with any x402-compatible endpoint (Bankr-hosted or external)
 
+Two things worth knowing when calling third-party endpoints:
+
+- **`$0` challenges are paid, not rejected.** Some services gate a free endpoint behind a `$0` 402 whose payment payload they verify but never settle. Bankr signs it (no allowance check, no gas burned on an approval) instead of bailing as unparseable
+- **A multi-rail 402 is priced on the rail Bankr can actually settle.** Sellers advertise rails in whatever order they like; Bankr prices and bounds the same entry it will sign, so a seller listing an unsupported rail first no longer makes a payable endpoint look unpriceable
+
 **Reference**: [references/x402-cloud.md](references/x402-cloud.md)
 
 ### Web Browsing
@@ -806,6 +883,11 @@ The agent can answer questions about Bankr itself — how features work, officia
 - Execute pre-built calldata from other tools
 - Value transfers with data
 - Read an unknown contract's ABI and call it — struct (tuple) parameters are expanded into the parenthesized signature form the encoder accepts, so struct-taking functions like Uniswap V4 position mints encode on the first try instead of failing as `tuple`
+- **Deploy a contract** from compiled creation bytecode, and **verify its source** on block explorers afterwards
+
+All of these work on every supported EVM chain (Base, Ethereum, Polygon, Unichain, World Chain, Arbitrum, BNB Chain, Robinhood Chain).
+
+> **Deploys go through a shared CREATE2 proxy**, so inside your constructor `msg.sender` is the proxy — **not** your wallet. A contract that assigns ownership or mints an initial supply to `msg.sender` will attribute those to the proxy. Prefer contracts that take the owner/recipient as an explicit constructor argument. The deployed address is deterministic and known before broadcasting, and deploys carry no native value. This is not for token launches — use the token deployment flow for those.
 
 **Reference**: [references/arbitrary-transaction.md](references/arbitrary-transaction.md)
 
@@ -869,6 +951,8 @@ Per-key settings configured at [bankr.bot/api-keys](https://bankr.bot/api-keys):
 **IP Whitelisting**: Set `allowedIps` on your API key to restrict usage to specific IPs or CIDR ranges (e.g., `10.0.0.0/24`). Requests from non-whitelisted IPs are rejected with 403 at the auth layer.
 
 **Recipient Allowlist**: Restrict which addresses the key can send funds to. Independent from the wallet-level permitted recipients — when both are configured, both must pass.
+
+**Active sessions**: [bankr.bot](https://bankr.bot) → Security lists every device signed in to the account. CLI email logins (`bankr login email`) appear there alongside browser sessions and can be logged out the same way — server-side, immediately. Sessions created by an older CLI predate this and won't be listed, so run `bankr update` and sign in again if a CLI session is missing.
 
 ### Incident Response
 
@@ -1062,6 +1146,8 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Swap 0.1 ETH for USDC"
 - "Sell 50% of my PEPE"
 - "Bridge 100 USDC from Polygon to Base"
+- "Buy exactly 1,000 PEPE on Base" (exact-output — pins what you receive)
+- "Buy exactly 500 BONK on Solana"
 
 ### Tokenized Stocks
 
@@ -1115,6 +1201,12 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Show Bored Ape floor price"
 - "Buy cheapest Pudgy Penguin"
 - "Show my NFTs"
+- "List my Pudgy Penguin #1234 for 5 ETH"
+- "Show my NFT listings" / "Cancel my listing on #1234"
+- "What's the best offer on my Bored Ape?"
+- "Bid 0.02 WETH on any okcomputers NFT" (collection-wide offer, paid in WETH)
+- "Offer 0.5 each for 3 Bored Apes, expiring in 2 days"
+- "Show the offers I've made" / "Cancel my okcomputers bids"
 
 ### Polymarket
 
@@ -1187,6 +1279,8 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Submit this transaction: {to: 0x..., data: 0x..., value: 0, chainId: 8453}"
 - "Execute this calldata on Base: {...}"
 - "Send raw transaction with this JSON: {...}"
+- "Deploy this bytecode on Base: 0x60806040..." (constructor args already ABI-encoded and appended)
+- "Verify the contract I just deployed at 0x... on Base"
 
 ### Transfers (Direct)
 

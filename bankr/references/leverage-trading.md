@@ -14,7 +14,16 @@ Two leverage platforms are available:
 ### Avantis Details
 
 **Chain**: Base
-**Protocol**: [Avantis](https://docs.avantisfi.com/)
+**Protocol**: [Avantis](https://docs.avantisfi.com/) (v2)
+
+Bankr trades Avantis v2. The pair catalogue — roughly **118 named pairs** — is sourced from the Avantis data API rather than read pair-by-pair on chain, so lookups are fast and a transient refresh failure serves the last-known catalogue instead of breaking every symbol lookup.
+
+**Take profit and stop loss are signed intents, not transactions.** Setting a level signs an EIP-712 request that Avantis executes through its operator; there is no on-chain transaction to wait on. Two consequences worth knowing:
+
+- **An unreachable level is refused up front, not silently dropped.** A stop loss past your liquidation price can never fire, and a take profit on the wrong side of entry is meaningless — Avantis accepts both and then discards them. Bankr rejects them before submitting, and tells you the liquidation price so you can pick a level that works.
+- **"Set" means visible on the position.** A `2xx` from Avantis means accepted, not executed, so Bankr polls your position and only reports success once the levels actually show up. If it times out, it says the outcome is unconfirmed rather than claiming a rejection it can't know about.
+
+Avantis TP/SL is **not available in wallet (connected-wallet) mode** — it returns a clear unsupported error rather than a transaction that would revert.
 
 ### Leverage Limits
 
@@ -168,6 +177,9 @@ NVDA, TSLA, AAPL, AMZN, MSFT, META, COIN, HOOD, and more. Equity pairs trade **d
 | Insufficient collateral | Add more funds to wallet |
 | Asset not supported | Check available markets list |
 | Position liquidated | Reduce leverage or add more collateral |
+| Stop loss refused as unreachable (Avantis) | The level is past liquidation — the error carries your liquidation price; pick a level inside it, or reduce leverage first |
+| Take profit refused (Avantis) | The level is on the wrong side of your entry for the direction you're trading |
+| TP/SL unsupported (Avantis) | You're in wallet (connected-wallet) mode; Avantis TP/SL requires an embedded Bankr wallet |
 | High funding rate | Consider closing and reopening |
 | Slippage | Use smaller position size |
 | Cannot close | Market might be paused (rare) |
