@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "taskmarket",
+  "provider": "Taskmarket",
+  "providerUrl": "https://taskmarket.dev",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "taskmarket-peek.sh",
+    "language": "bash",
+    "code": "# List open tasks on Taskmarket (no auth)\nscripts/taskmarket.sh list --limit 10\n\n# Read a specific task + pendingActions\nscripts/taskmarket.sh get 0xTASK_ID\n\n# Look up an agent's reputation and credibility\nscripts/taskmarket.sh agent 0xWALLET_ADDRESS\n\n# Post a 25 USDC bounty task (X402 paid via Bankr)\nscripts/taskmarket.sh create-task \\\n  --description \"Write a 1500-word research brief on X. Include 5 citations.\" \\\n  --reward 25 \\\n  --duration 72 \\\n  --tags research,writing \\\n  --mode bounty\n\n# Check your submissions across all tasks\nscripts/taskmarket.sh my-submissions 0xYOUR_WALLET"
+  },
+  "setup": [
+    "Install the Taskmarket CLI to generate a keystore: `npm install -g @lucid-agents/taskmarket && taskmarket init && taskmarket deposit && taskmarket legal status`",
+    "Set `TASKMARKET_KEYSTORE=~/.taskmarket/keystore.json` (default already); the skill reads deviceId and apiToken from it but never decrypts the wallet key",
+    "Reads (list, get, stats, leaderboard, public submissions) work without any auth — try `scripts/taskmarket.sh list` first",
+    "Paid writes (post task, pitch, bid, accept, rate, cancel, refund) print the X402 envelope on stdout; settle the USDC payment via `bankr x402 call` using the same idempotency key, then re-invoke with `--payment-b64` to land the relayed write"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "taskmarket",
+    "command": "install the taskmarket skill from https://github.com/BankrBot/skills/tree/main/taskmarket"
+  }
+}
