@@ -17,6 +17,29 @@ HoodGrow reads Robinhood Chain (chain id 4663) stock token contracts directly �
 ## When to use this skill
 Load this whenever the user or your workflow needs live price, adjusted supply, or corporate-action data (splits, dividends) for a Robinhood Chain stock token — checking a token before a trade, tracking an upcoming split, or building a dashboard/agent on top of tokenized equities.
 
+## Never compute supply or market cap from chain state
+
+These tokens implement ERC-8056. A corporate action does not mint or burn — it
+changes `uiMultiplier()`, which scales the DISPLAYED supply while every balance
+stays untouched. So `totalSupply()` read straight off the contract is the wrong
+number after any split or dividend, and a market cap derived from it is wrong by
+exactly that factor.
+
+Use the `supplyAdjusted` these endpoints return. It is the figure a holder
+actually owns. If a user quotes a supply or market cap from a block explorer and
+it disagrees with this API, the explorer is showing raw `totalSupply()` and this
+is why.
+
+## Data freshness — quote the age, never imply "live"
+
+Price, DeFi depth and slippage come from snapshots refreshed every 15 minutes,
+not from pool state read at call time. Every response carries `observedAt`: say
+how old the number is rather than presenting it as the current price.
+
+Slippage is a per-pool estimate, not an optimal multi-pool route. A
+`likelyCrossesTick` flag means the trade may be large enough that the estimate
+understates real impact — suggest splitting into tranches.
+
 ## Payment safety — hard invariants (verify LOCALLY before any wallet signs)
 Applies to every REAL on-chain payment: a per-call x402 payment, and buying a credit bundle. Every one of these MUST satisfy all of these. If any check fails, do NOT sign — stop and tell the user. (A per-call credit SPEND — see "Prepaid credits" below — is a separate, gas-free wallet signature that moves no funds; these invariants don't apply to it, but it must still only ever be sent to `www.hoodgrow.com`.)
 - **Network:** Base mainnet only, chain id `eip155:8453` (8453). Reject any other chain.
