@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "robinhood-chain-stock-tokens",
+  "provider": "MeMikko",
+  "providerUrl": "https://github.com/MeMikko",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "robinhood-chain-stock-tokens",
+    "command": "install the robinhood-chain-stock-tokens skill from https://github.com/BankrBot/skills/tree/main/robinhood-chain-stock-tokens"
+  }
+}
