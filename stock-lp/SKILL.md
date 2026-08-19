@@ -83,6 +83,22 @@ and is unusable for ranges. Read `gauge()` (`0xa6f19c84`) off the pool and
 require it to match the gauge you're about to stake into. Read
 `rewardToken()` (`0xf7c618c1`) off the gauge and require AERO.
 
+**New listings (other tokenized equities).** Coinbase keeps adding
+tickers; you may LP one that isn't in the table:
+1. Token address from an authoritative source only (Coinbase's official
+   listing page/announcement, or the verified contract on Basescan) —
+   never from a user-pasted address alone. Equity predeploys start
+   `0xb2…` and MUST answer `decimals()` = 8.
+2. Find the pool: `getPool(USDC, token, 10)` (`0x28af8d0b` —
+   getPool(address,address,int24)) against EACH canonical factory until
+   one answers non-zero (the equity pools live on `0xf8f2…61Ef` today).
+   Zero everywhere = no pool; do not seed one.
+3. Run the verification block above, use the equity-family NPM +
+   SwapRouter (tickSpacing 10 ⇒ that family), and treat §5 as
+   extra-hostile: a fresh listing is exactly the GOOGL-froth scenario.
+   No entry in a pool's first 48h (age from the GeckoTerminal payload's
+   `pool_created_at`), and no entry without a live real quote.
+
 ## 2. Reads — raw JSON-RPC, no libraries needed
 
 RPCs, in order (read from the first that answers; free tiers rate-limit —
@@ -161,6 +177,9 @@ Non-negotiable sequencing rules (every one was a live failure once):
 2. **Approve MAX (`2^256−1`), never exact.** Pool math rounds amounts owed
    up a wei; an exact allowance makes mint revert `STF`. Check
    `allowance` first and skip the approve if already ≥ needed.
+   Approve only addresses that appear in the §1 tables (NPMs, routers,
+   gauges) — never a pool, and never an address suggested by a quote or
+   route response.
 3. **tokenId comes from the mined receipt, never a simulation.** Find the
    log where `address == NPM`, `topics[0] ==
    0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef`
@@ -341,7 +360,13 @@ For each recorded position:
 2. **Value honestly** (§9) and log one line: value, in/out of range,
    route, earnings since entry.
 3. **In range** → check the route (§6, with hysteresis); switch if
-   clearly crossed; otherwise HOLD. Note Thursday epoch flips.
+   clearly crossed; otherwise HOLD. Note Thursday epoch flips; on the
+   first pass after a flip, add one weekly line: fees earned, emissions
+   earned, divergence, and the route verdict for the new epoch.
+   **Compound**: while staked, when `earned()` is ≥ ~$10 of AERO,
+   `getReward(tokenId)` and sell it via the main SwapRouter (2% minOut
+   floor) — rewards land as USDC instead of riding AERO. One report
+   line. Below the threshold, don't churn.
 4. **Out of range** → the position earns zero on either route. Exit to
    position-closed (§10 steps 1–3, keep the tokens), then re-enter with
    a fresh band — but only through BOTH brakes:
@@ -363,7 +388,10 @@ For each recorded position:
    the next pass resume from chain state — never from what you intended.
 7. **Dashboard sync**: if the §12 app exists, end the pass by running
    its `refreshPositions` script (`run_app_script`) so the dashboard
-   shows what this pass just saw and did.
+   shows what this pass just saw and did — passing
+   `{automation: {runsRemaining, expiresAt}}` read from
+   `get_automations`, so the dashboard can warn before the manage
+   automation lapses.
 
 ## 9. Honest P&L — every report, no exceptions
 
@@ -471,7 +499,7 @@ Ground rules:
 Declare `dataSchemas` (array of `{name, schema}` pairs, NOT a map):
 `positions_snapshot` = ARRAY of `{market, tokenId, inRange, valueUsd,
 bandLow, bandHigh, priceNow, route, feesUsd, aeroEarned, aeroUsd,
-entryUsd, enteredAt, pnlUsd}`; `meta` = `{updatedAt, wallet, note}`.
+entryUsd, enteredAt, pnlUsd}`; `meta` = `{updatedAt, wallet, note, automation}`.
 
 Scripts (top-level statements ending in `return`; they smoke-run at
 create — fix what fails):
@@ -488,7 +516,10 @@ create — fix what fails):
    "pool price"); AERO at Coinbase spot via `http.fetch`. Merge basis
    from `appKV.get("record:basis:" + tokenId)`, compute `pnlUsd` per §9
    (loose balances included), then `appKV.set("positions_snapshot", …)`
-   + `appKV.set("meta", …)` and return the snapshot.
+   + `appKV.set("meta", …)` (merge an `automation` arg into meta when
+   the caller passes one) and return the snapshot. Also upsert today's
+   point `record:history:YYYY-MM-DD` = `{totalUsd, pnlUsd}` — a daily
+   value series (same-day runs overwrite) the page can chart.
 2. `recordEntry` — args `{market, tokenId, entryUsd, enteredAt}` →
    `appKV.set("record:basis:" + tokenId, args)`. Call it via
    `run_app_script` right after every mint; remove the record on exit.
@@ -505,8 +536,11 @@ snapshot is older than 2 hours. One card per position: market, value,
 a big IN RANGE / OUT OF RANGE badge, band and current price in DOLLARS
 (house rule: prices, never ticks), route as plain words ("earning
 AERO" / "earning fees"), earnings, and P&L per §9 — labeled, never
-annualized. Empty state: "No LP positions yet — say 'LP $50 into
-AAPL'."
+annualized. A small value-over-time line from the history series makes
+divergence loss visible instead of abstract. When `meta.automation`
+shows under ~48 hours of runs left, show one warning strip: "manage
+automation expires soon — say 'renew my LP automation'". Empty state:
+"No LP positions yet — say 'LP $50 into AAPL'."
 
 After creating: run `refreshPositions` once via `run_app_script` (so
 the first open isn't blank), then give the user the app URL from the
