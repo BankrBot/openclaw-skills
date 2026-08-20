@@ -444,10 +444,24 @@ no contract internals, no gate narration.
 Per position: market, current value, P&L vs basis (§9 math; keep the full
 decomposition for follow-ups), IN or OUT of range with the band in
 dollars, route in plain words, and **projected APR at current rates** —
-annualize the position's own run-rate and divide by its current value:
+one division: annual run-rate ÷ current value (the §9 value line —
+simulations + loose balances — never the entry basis). Two ways to the
+run-rate; prefer measured, fall back to pot-share for positions too
+fresh to have a window:
 
-- staked: `yourL ÷ stakedLiquidity × pot` (this epoch's emissions)
-- unstaked: trailing-24h fee capture × (1 − skim)
+- **Measured**: earnings delta over a known window, annualized.
+  Staked: Δ`earned()` × AERO spot. Unstaked: Δ of the simulated
+  `collect` (that return is what you actually receive). Window = since
+  entry or since the last claim/compound — never measure across one.
+- **Pot-share estimate**: staked = `yourL ÷ stakedLiquidity() ×
+  rewardRate × 31,536,000 × AERO_spot` (a live position's L is already
+  inside `stakedLiquidity`; only a prospective entry adds itself — §6).
+  Unstaked = `vol24h × feeRate × yourL ÷ liquidity() × (1 −
+  unstakedFee) × 365` (feeRate per §1: 0.05% equities, 0.3% AERO).
+
+The number is GROSS and in-range-conditional: divergence loss and
+out-of-range time aren't in it — §9's decomposition is the net truth,
+and a tight band's headline APR only accrues while price stays inside.
 
 Always label it "at this epoch's rate" (emissions reset Thursday; fee
 run-rates move with volume) — it is a measurement of now, not a promise.
@@ -480,8 +494,12 @@ Example shape (match it, don't pad it):
 The manage pass (§8) only protects the user if it actually runs. After
 every successful entry, if no manage automation exists, offer it in one
 line: "Want me to check this position every hour and recenter when
-needed?" If the user says yes — or asked for managed/automated LP
-anywhere in the conversation — create it with `automate_agent_command`:
+needed?" Strictly OPT-IN — like the dashboard (§13), it is created only
+on a clear yes in this conversation (asking for "managed" or "automated"
+LP counts as yes). A no stands: don't re-offer on later entries; say
+once that "manage my LPs automatically" turns it on any time, and
+chat-driven passes ("check my LPs") always work without it. On yes,
+create it with `automate_agent_command`:
 
 - `humanReadableName`: `stock-lp manage pass`
 - `conditionType`: `"time"`, `schedule`: `"0 * * * *"` (hourly, UTC)
@@ -537,8 +555,9 @@ Platform rules that bite:
 ## 13. Dashboard app — the position screen
 
 Offer once, right after the first successful entry (same breath as the
-automation offer, §12). Also build it when the user asks to see their
-positions/dashboard. The platform's app-authoring directive is the
+automation offer, §12) — and like it, strictly OPT-IN: build only on a
+clear yes, or when the user asks to see their positions/dashboard. A no
+stands; mention once that "make me a dashboard" works any time later. The platform's app-authoring directive is the
 authority on app mechanics — it auto-loads when you build; if apps tools
 aren't bound, `request_additional_tools("apps create update run
 schedule share")`, and load `read_system_directive(["apps-authoring"])`
@@ -622,6 +641,8 @@ wiring with a real `run_app_script`.)
   form, explicitly labeled "at this epoch's rate".
 - Auto-sell without consent: compounding sells AERO only after the §12
   setup line was said and `compound: sell` recorded.
+- Create an automation or an app unbidden: both are offered once and
+  built only on the user's yes (§12, §13).
 - Silence a failure: every skipped step, estimated basis, degraded input,
   or stopped sequence is reported to the user in plain language.
 - Trade from the dashboard cron: `refreshPositions` reads and displays,

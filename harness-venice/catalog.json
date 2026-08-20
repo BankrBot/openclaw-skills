@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "harness-venice",
+  "provider": "Venice",
+  "providerUrl": "https://venice.ai",
+  "logo": null,
+  "demo": {
+    "title": "harness-venice.sh",
+    "language": "bash",
+    "code": "# One-time setup: buy DIEM on Base, stake it, mint an agent-owned INFERENCE key\nbankr prompt \"Fund Venice inference: buy $50 of DIEM, stake it, and mint my API key\"\n\n# Check today's DIEM allowance and remaining balance\nbankr prompt \"Check my Venice DIEM balance\"\n\n# Lost the key? Recover it from the secret store (private channel only)\nbankr prompt \"Show me my Venice API key again\"\n\n# Exposed key? Rotate it\nbankr prompt \"Rotate my Venice API key\"\n\n# Put the stake on YOUR OWN Venice account instead (EOA handoff)\nbankr prompt \"Buy $50 of DIEM and send it to my wallet 0x... so I can stake it on my Venice account\""
+  },
+  "setup": [
+    "Agent wallet on Base with USDC/ETH to buy DIEM (amount is always human-confirmed first)",
+    "The web3 key mint requires the wallet to hold a non-zero sVVV balance — a small VVV stake (human-approved) or the EOA handoff flow covers this",
+    "DIEM stakes on the DIEM token contract itself (0xF4d9...a024); 1 staked DIEM = $1/day Venice API allowance, resets 00:00 UTC",
+    "The minted key is shown once over a private channel and saved to the secret store as VENICE_API_KEY — recoverable later on explicit request (private channel, exposure check first), rotated if ever exposed"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "harness-venice",
+    "command": "install the harness-venice skill from https://github.com/BankrBot/skills/tree/main/harness-venice"
+  }
+}
