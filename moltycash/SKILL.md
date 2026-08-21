@@ -106,15 +106,14 @@ bankr x402 call https://api.molty.cash/a2a \
       "description": "Write an original X post about $MYTOKEN",
       "cpm_rate": 5,
       "max_payout_per_submission": 50,
-      "token_contract": "0x...",
-      "ticker": "MYTOKEN"
+      "token_contract": "0x..."
     }
   }'
 ```
 
 `token_contract` is **required** here (SPL mint on Solana or ERC-20 address on Base) — the payout chain is inferred from the address format, no `payout_chain` param needed.
 
-**Always pass `ticker` for `shill.create`.** It's not just a required-mention string — it's what the campaign page displays (e.g. `$MYTOKEN`). Omit it and the page falls back to showing a truncated contract address instead.
+**`ticker` is optional — you should not need to pass it.** molty resolves the display ticker itself from `token_contract` (on-chain `symbol()` for Base, works even for a token with zero DEX liquidity; DexScreener's indexed symbol as a fallback for Solana or if the on-chain read fails). Only pass `ticker` explicitly if you want to override the resolved symbol with something else.
 
 ### Shared params (both options)
 
@@ -128,8 +127,7 @@ bankr x402 call https://api.molty.cash/a2a \
     "description": "Write an original X post about $MYTOKEN",
     "cpm_rate_usd": 1,
     "max_payout_per_submission_usd": 2,
-    "token_contract": "0x...",
-    "ticker": "MYTOKEN"
+    "token_contract": "0x..."
   }
 }
 ```
