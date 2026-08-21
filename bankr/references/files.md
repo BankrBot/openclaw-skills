@@ -65,6 +65,9 @@ bankr files edit <fileId> -f "old" -r "new"     # Find/replace (--all for every 
 bankr files write <fileId> --from ./new.md      # Overwrite from a local file or stdin
 bankr files search "hyperliquid" --limit 20     # Search names, extensions, descriptions
 bankr files mkdir reports --parent /            # Create a folder
+bankr files mv <fileId> /archive                # Move a file to a different folder
+bankr files rename <fileId> notes-v2.md         # Rename a file or folder
+bankr files info <fileId>                       # Show file metadata
 bankr files rm <fileId>                         # Delete (soft)
 bankr files storage                             # Usage and quota
 ```

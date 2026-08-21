@@ -72,14 +72,16 @@ bankr config get llmKey
 | `gpt-5.2-codex` | OpenAI | Code generation (400K context) |
 | `gpt-5-mini` | OpenAI | Previous gen, economical (400K) |
 | `gpt-5-nano` | OpenAI | Previous gen, ultra-fast (400K) |
+| `grok-4.6` | xAI | Latest xAI reasoning (500K context, image input) |
 | `grok-4.20` | xAI | Deep reasoning, largest context (2M context) |
-| `grok-4.5` | xAI | Latest, balanced multimodal (500K context, image input) |
+| `grok-4.5` | xAI | Previous balanced multimodal (500K context, image input) |
 | `grok-4.3` | xAI | Balanced performance (1M context) |
 | `grok-4.1-fast` | xAI | Fast, economical, largest context (2M) |
 | `deepseek-v4-pro` | DeepSeek | Long context reasoning (1M, 384K output) |
 | `deepseek-v4-flash` | DeepSeek | High throughput, cost-effective (1M) |
 | `deepseek-v3.2` | DeepSeek | Cost-effective (164K context) |
-| `qwen3.7-max` | Alibaba | Latest flagship (1M) |
+| `qwen3.8-max` | Alibaba | Latest flagship, multimodal (1M context, image input) |
+| `qwen3.7-max` | Alibaba | Previous flagship (1M) |
 | `qwen3.7-plus` | Alibaba | Latest, long-context reasoning (1M) |
 | `qwen3.7-flash` | Alibaba | Latest fast tier, economical (1M, image input) |
 | `qwen3.6-flash` | Alibaba | Fast, economical (1M) |
@@ -232,6 +234,59 @@ bankr llm credits auto --disable
 ```
 
 When credits are exhausted, gateway requests will fail with HTTP 402.
+
+### Daily Spend Budget
+
+Your credit balance caps **total** spend; the daily budget caps **burn rate**. It's an optional per-UTC-day limit that exists so a runaway loop or a leaked key can't drain a funded wallet in a single day.
+
+Set it in the **Settings** tab at [bankr.bot/llm](https://bankr.bot/llm). It is **web-auth only** — an API key cannot change the budget of the wallet it belongs to, so a compromised key can't raise the cap it's bound by.
+
+The budget spans **all metered LLM spend on the wallet**, not just gateway traffic: requests from every API key it owns, plus Max Mode agent runs wherever they're invoked from. Both are enforced — gateway requests are refused, and a Max Mode run ends early once the day's spend reaches the cap. Ordinary non-Max agent runs don't draw on LLM credits, so the budget doesn't touch them.
+
+Read the current state from `/v1/credits`:
+
+```bash
+curl -s https://llm.bankr.bot/v1/credits -H "X-API-Key: $BANKR_LLM_KEY"
+```
+
+```json
+{
+  "object": "credit_balance",
+  "balanceUsd": 12.34,
+  "effectiveBalanceUsd": 11.2,
+  "undeductedCostUsd": 1.14,
+  "dailyBudget": {
+    "limitUsd": 25,
+    "spentUsd": 4.2,
+    "remainingUsd": 20.8,
+    "exceeded": false,
+    "resetsAt": "2026-08-16T00:00:00.000Z"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `limitUsd` | number | The configured cap, in USD per UTC day |
+| `spentUsd` | number | Spend counted against the budget so far today, including usage not yet deducted |
+| `remainingUsd` | number | `limitUsd - spentUsd`, floored at `0` |
+| `exceeded` | boolean | Whether the budget is spent. While `true`, spend requests are rejected |
+| `resetsAt` | string | ISO 8601 timestamp of the next reset — always the next 00:00 UTC |
+
+- **`dailyBudget` is omitted entirely when the wallet is uncapped**, so its presence answers "am I capped?" without a sentinel value to test for.
+- Over budget, spend requests return **`402` with `type: "daily_budget_exceeded"`** — distinct from the `insufficient_credits` you get when the balance itself runs out:
+
+  ```json
+  {
+    "error": {
+      "message": "Daily LLM Gateway spend budget reached. It resets at 00:00 UTC, or you can raise it at bankr.bot/llm.",
+      "type": "daily_budget_exceeded"
+    }
+  }
+  ```
+
+- **Only requests that spend are blocked.** Every read-only `GET` — `/v1/credits`, `/v1/usage`, `/v1/models` — keeps working while you're over budget, so you can still read `remainingUsd` and `resetsAt` to find out when you'll be unblocked, and check what spent the budget.
+- Budget changes take effect within ~60 seconds, and enforcement is eventually consistent against that view — so spend may overshoot the cap slightly under a sustained burst. **Treat it as a guardrail, not an accounting boundary** — your credit balance remains the hard limit on total spend.
 
 ### Expiring Credit Grants
 
@@ -548,15 +603,40 @@ Check `bankr llm models` for current model status and replacement mappings.
 - Ensure the key hasn't expired
 
 ### 402 Payment Required
-- Credits exhausted: `bankr llm credits` shows $0.00
-- Top up via CLI: `bankr llm credits add 25` or at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) — this is the most common error for new users
-- Set up auto top-up to prevent this: `bankr llm credits auto --enable --amount 25 --threshold 5 --tokens USDC`
-- New wallets start with $0 — you must add credits before first use
-- LLM credits are separate from your trading wallet balance
+
+Two different causes — **read the error `type`**, they need different fixes:
+
+- `insufficient_credits` — the balance is spent. `bankr llm credits` shows $0.00. Top up via CLI (`bankr llm credits add 25`) or at [bankr.bot/llm?tab=credits](https://bankr.bot/llm?tab=credits) — this is the most common error for new users. Set up auto top-up to prevent it: `bankr llm credits auto --enable --amount 25 --threshold 5 --tokens USDC`. New wallets start with $0, and LLM credits are separate from your trading wallet balance.
+- `daily_budget_exceeded` — you still have credit, but the wallet's **daily spend budget** is spent for this UTC day. Topping up does nothing. Wait for `resetsAt` (visible on `GET /v1/credits`, which keeps working over budget) or raise the cap in the Settings tab at [bankr.bot/llm](https://bankr.bot/llm). See [Daily Spend Budget](#daily-spend-budget).
 
 ### Model not found
 - Use exact model IDs (e.g., `claude-sonnet-4.6`, not `claude-3-sonnet`)
 - Check available models: `bankr llm models`
+
+### 503 Model temporarily unavailable
+
+```json
+{ "error": { "message": "Model temporarily unavailable", "type": "api_error", "code": "provider_unavailable" } }
+```
+
+No provider slot is currently serving the model you asked for. This is an operational state, not a bad request — retry, or fall back to another model.
+
+### Error envelopes differ by layer, not just by surface
+
+The OpenAI-compatible routes return `{"error": {"message", "type", "code"}}` throughout. On `/v1/messages` it's split, and the split matters if you're branching on the error:
+
+| Error class | Envelope on `/v1/messages` |
+|-------------|----------------------------|
+| Request and streaming errors (validation, model, provider) | **Anthropic** — `{"type": "error", "error": {"type", "message"}}` |
+| Auth and billing (`401`, `402`, `403`) | **OpenAI** — `{"error": {"message", "type"}}`, same as everywhere else |
+
+So the `402` checks above — `insufficient_credits` vs `daily_budget_exceeded` — are read from `error.type` in the **OpenAI** shape on every surface, `/v1/messages` included. Don't reach for `error.error.type` there.
+
+### OpenRouter routing controls are stripped on `/v1/messages`
+
+When a request is served through OpenRouter's native `/messages`, the OpenRouter routing controls — `provider`, `models`, `fallbacks`, `route`, `transforms`, `plugins` — are removed rather than forwarded. The gateway picks the upstream provider itself, and usage is metered and priced against the model you named, so a routing override in the body can't move the request to a model you aren't being billed for.
+
+**Don't send them at all**, though: that route is the only one that strips them, and a provider that receives an unknown top-level field may reject the whole request.
 
 ### Claude Code not found
 - `bankr llm claude` requires Claude Code to be installed separately

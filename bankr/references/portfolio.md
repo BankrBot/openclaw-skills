@@ -34,6 +34,27 @@ curl -s "https://api.bankr.bot/wallet/portfolio?chains=base,solana" \
 
 The `/wallet/portfolio` endpoint is a read endpoint — any valid API key with a wallet can access it (no feature flags required).
 
+### Response field types
+
+> **`token.balance` is a string, not a number.** It holds the exact decimal amount. Parsing it as a float rounds high-decimal tokens **up**, and a max-size trade built from a rounded balance reverts on-chain. `nativeBalance`, `nativeUsd` and `total` are strings too; `balanceUSD` and `price` are numbers.
+
+```json
+{
+  "network": "base",
+  "token": {
+    "balance": "1000",
+    "balanceUSD": 1000,
+    "baseToken": { "name": "USD Coin", "symbol": "USDC" }
+  }
+}
+```
+
+Other response notes:
+
+- `pnl` is only present when `?include=pnl` is set
+- `nfts` is only populated when `?include=nfts` is set
+- Tokens below $1 USD are filtered by default — pass `?showLowValueTokens=true` to include them
+
 ## Supported Chains
 
 All chains: Base, Polygon, Ethereum, Unichain, Solana, World Chain, Arbitrum, BNB Chain, Robinhood Chain

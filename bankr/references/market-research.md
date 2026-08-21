@@ -27,6 +27,30 @@ Ask for a token's holders and Bankr returns them largest-first with **USD value*
 - The list is the **raw on-chain holder set**. It includes liquidity pools, the token contract itself, and treasuries — often the largest entries. Exclude those before paying anyone out.
 - Snapshots are capped per read, and the response tells you when it was truncated with more holders still qualifying.
 
+### Holders joined to Bankr identity — `GET /tokens/holders`
+
+For EVM tokens there is also a direct REST endpoint that returns holders **with their Bankr wallet and X handle**, paginated. Unlike the rest of `/tokens/*` it requires an API key, because it maps addresses to real social identities.
+
+```bash
+curl -s "https://api.bankr.bot/tokens/holders?tokenAddress=0x...&chain=base&filter=all&limit=50" \
+  -H "X-API-Key: $BANKR_API_KEY"
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `tokenAddress` | Yes | 0x token address |
+| `chain` | Yes | Any supported EVM chain (`base`, `mainnet`, `polygon`, `unichain`, `worldchain`, `arbitrum`, `bnb`, `robinhood`) |
+| `filter` | No | `bankr` (default) — only holders who are Bankr users, answered straight from our index. `all` — the true on-chain ranking, annotated with Bankr identity where we recognise the address |
+| `limit` | No | 1–100, default 50 |
+| `cursor` | No | Opaque `nextCursor` from the previous page |
+
+Each holder row carries `address`, `balance`, `isBankrWallet`, and `xUsername` / `xProfileImageUrl` when known. The response also reports `source` (`index` for `filter=bankr`, `codex` for `filter=all`) and `nextCursor`.
+
+- **`balance` is a raw integer string** in the token's smallest unit — it can exceed `Number` precision, so don't parse it as a float.
+- **Paginate by replaying `nextCursor` as `cursor`** until it's absent. A cursor is only valid for the exact `tokenAddress` + `chain` + `filter` that minted it; anything else returns `400`.
+- **This is a feed, not a snapshot.** Ranking is over live balances, so a holder whose balance moves between pages can repeat or be missed. For a point-in-time list (airdrop targeting), prefer the agent's holder snapshot above.
+- `filter=bankr` is the cheap, exact answer to "which of our users hold this". `filter=all` costs an upstream call and returns mostly-anonymous rows.
+
 ## Prompt Examples
 
 **Price queries:**

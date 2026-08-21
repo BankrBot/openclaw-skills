@@ -197,7 +197,13 @@ bankr x402 call <url> -y                          # Skip the payment confirmatio
 
 **`--max-payment` is your cap, and your cap is what gets sent.** The price an endpoint advertises is display-only — it can never raise your cap, and a call whose advertised price exceeds the cap fails closed instead of paying. In non-interactive mode the price probe is skipped entirely, so `--ni` behaves the same as `-y`.
 
-**Smart-contract wallets can pay.** Payment signatures are verified through an ERC-1271/6492-aware path as well as plain ECDSA recovery, so gas-sponsored and 7702-delegated wallets settle x402 payments normally rather than failing verification.
+**Smart-contract wallets can pay — if they're deployed.** The Bankr facilitator verifies Permit2 signatures on-chain, so an **ERC-1271** signature from a *deployed* smart account, or a gas-sponsored **EIP-7702** delegated wallet (such as Bankr's), is accepted alongside a plain ECDSA/EOA signature.
+
+**Counterfactual (ERC-6492) signatures from an undeployed account are rejected** with `invalid_permit2_signature`. Permit2 itself only validates ECDSA and deployed ERC-1271, so such a payment would verify and then fail to settle — deploy the account first.
+
+**`$0` challenges are paid, not rejected.** Some services gate a free endpoint behind a `$0` 402 whose payment payload they verify cryptographically but never settle. Bankr signs it and clears the cap rather than bailing with "could not read this endpoint's payment requirements", and skips the Permit2 allowance check entirely (a `$0` payment pulls no tokens, so there's no gas to burn on an approval).
+
+**A multi-rail 402 is priced on the rail Bankr will actually sign.** Sellers advertise rails in whatever order they like, and Bankr doesn't settle every rail (there's no Solana client, for instance). Pricing, the payment bound, and the signature all select the same entry — the first whose scheme and network Bankr registers — so a seller listing an unsupported rail first no longer makes a payable endpoint read as unpriceable. If nothing on the 402 is signable, it fails closed with the usual error.
 
 ### With x402-fetch (for developers)
 
