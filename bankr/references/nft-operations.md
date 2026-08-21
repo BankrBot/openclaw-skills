@@ -2,7 +2,9 @@
 
 Browse, purchase, sell, bid on, and manage NFTs across chains via OpenSea integration.
 
-**Supported Chains**: every supported EVM chain — Base, Ethereum, Polygon, Unichain, World Chain, Arbitrum, BNB Chain, and Robinhood Chain. (Solana NFTs are not covered by these tools.)
+**Supported Chains**: Base, Ethereum, Polygon, Unichain, Arbitrum, and Robinhood Chain.
+
+**World Chain and BNB Chain are not supported for NFTs** even though Bankr trades tokens on both — there's no marketplace coverage for them, so a collection on either chain is rejected rather than traded. (Solana NFTs are also outside these tools.)
 
 ## Operations
 
@@ -133,7 +135,7 @@ Bankr resolves common names and abbreviations:
 - Buying, listing, bidding, and accepting offers all work here — the ERC-20 payment currency is handled for you
 - Very low gas fees
 
-### Unichain, World Chain, Arbitrum, BNB Chain
+### Unichain, Arbitrum
 - Supported by the same tools; collection depth varies by chain
 
 ## OpenSea Integration
@@ -157,6 +159,7 @@ Bankr uses OpenSea's marketplace:
 | Bid rejected as too low | OpenSea enforces per-collection minimums and increments — raise the amount, don't retry the same price |
 | "You don't have enough WETH" on a bid | Bids are ERC-20; Bankr wraps ETH → WETH for you, but you still need the ETH to wrap |
 | Can't cancel a bid | Only collection-wide bids are cancellable through Bankr; single-token bids must be cancelled on OpenSea |
+| "Not supported by Bankr" on a collection | The collection is on World Chain or BNB Chain — no NFT marketplace coverage there, though token trading works |
 
 ## Safety Tips
 

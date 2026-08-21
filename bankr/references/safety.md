@@ -208,7 +208,7 @@ The CLI stores keys in `~/.bankr/config.json`:
 
 ### CLI Sessions Are Revocable
 
-Email logins from the CLI (`bankr login email`) appear in **Active sessions** at [bankr.bot](https://bankr.bot) → Security, alongside browser sessions — with OS, approximate location, IP, and last-seen time. Log any of them out from there; the logout takes effect server-side immediately, and if MFA is on, revoking another session prompts for your passkey.
+Email logins from the CLI (`bankr login email`) appear in **Active sessions** at [bankr.bot](https://bankr.bot) → Security, alongside browser sessions — with OS, approximate location, IP, and last-seen time. Log any of them out from there; revocation is server-side and propagates within seconds. If MFA is on, revoking a session prompts for your passkey.
 
 `bankr logout` only clears the local config file — it doesn't revoke anything server-side. To cut off a machine you no longer control, revoke the session in Security (and rotate the key if it may have leaked).
 

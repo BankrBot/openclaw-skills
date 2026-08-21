@@ -241,7 +241,7 @@ Your credit balance caps **total** spend; the daily budget caps **burn rate**. I
 
 Set it in the **Settings** tab at [bankr.bot/llm](https://bankr.bot/llm). It is **web-auth only** — an API key cannot change the budget of the wallet it belongs to, so a compromised key can't raise the cap it's bound by.
 
-The budget spans **all metered LLM spend on the wallet**, not just gateway traffic: requests from every API key it owns, plus Max Mode and app-invoked Bankr agent runs. Both are enforced — gateway requests are refused, and an agent run ends early once the day's spend reaches the cap.
+The budget spans **all metered LLM spend on the wallet**, not just gateway traffic: requests from every API key it owns, plus Max Mode agent runs wherever they're invoked from. Both are enforced — gateway requests are refused, and a Max Mode run ends early once the day's spend reaches the cap. Ordinary non-Max agent runs don't draw on LLM credits, so the budget doesn't touch them.
 
 Read the current state from `/v1/credits`:
 
@@ -286,7 +286,7 @@ curl -s https://llm.bankr.bot/v1/credits -H "X-API-Key: $BANKR_LLM_KEY"
   ```
 
 - **Only requests that spend are blocked.** Every read-only `GET` — `/v1/credits`, `/v1/usage`, `/v1/models` — keeps working while you're over budget, so you can still read `remainingUsd` and `resetsAt` to find out when you'll be unblocked, and check what spent the budget.
-- Budget changes reach the gateway within ~60 seconds (it caches authentication state), and enforcement is evaluated against that cached view, so spend may overshoot slightly under a sustained burst. Each gateway instance caches independently, so the overshoot scales with instance count. **Treat it as a guardrail, not an accounting boundary** — your credit balance remains the hard limit on total spend.
+- Budget changes take effect within ~60 seconds, and enforcement is eventually consistent against that view — so spend may overshoot the cap slightly under a sustained burst. **Treat it as a guardrail, not an accounting boundary** — your credit balance remains the hard limit on total spend.
 
 ### Expiring Credit Grants
 
@@ -621,9 +621,16 @@ Two different causes — **read the error `type`**, they need different fixes:
 
 No provider slot is currently serving the model you asked for. This is an operational state, not a bad request — retry, or fall back to another model.
 
-### Error envelopes differ by surface
+### Error envelopes differ by layer, not just by surface
 
-The OpenAI-compatible routes return `{"error": {"message", "type", "code"}}`. On `/v1/messages`, errors use the **Anthropic** envelope instead — `{"type": "error", "error": {"type", "message"}}` — with the same status codes. Parse for the surface you're calling.
+The OpenAI-compatible routes return `{"error": {"message", "type", "code"}}` throughout. On `/v1/messages` it's split, and the split matters if you're branching on the error:
+
+| Error class | Envelope on `/v1/messages` |
+|-------------|----------------------------|
+| Request and streaming errors (validation, model, provider) | **Anthropic** — `{"type": "error", "error": {"type", "message"}}` |
+| Auth and billing (`401`, `402`, `403`) | **OpenAI** — `{"error": {"message", "type"}}`, same as everywhere else |
+
+So the `402` checks above — `insufficient_credits` vs `daily_budget_exceeded` — are read from `error.type` in the **OpenAI** shape on every surface, `/v1/messages` included. Don't reach for `error.error.type` there.
 
 ### OpenRouter routing controls are stripped on `/v1/messages`
 

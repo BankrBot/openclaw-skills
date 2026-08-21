@@ -25,9 +25,9 @@ Execute token trades and swaps across multiple blockchains.
 | USD | `$50` | Dollar amount to spend |
 | Percentage | `50%` | Percentage of your balance |
 | Exact input | `0.1 ETH` | Specific amount to sell |
-| Exact output | `exactly 1,000 PEPE` | Specific amount to **receive** — Bankr sizes the input for you |
+| Exact output | `exactly 1,000 PEPE` | Target amount to **receive** — Bankr sizes the input for you |
 
-**Exact-output orders** work on same-chain EVM and same-chain Solana. On Solana the input is sized from the output token's USD price rather than a reverse quote, so treat the amount you spend as an estimate — the received quantity is the side being pinned.
+**Exact-output orders** work on same-chain EVM and same-chain Solana. They **target** the output rather than guaranteeing it: on both chains the input is sized from a theoretical price (the output token's USD price on Solana, a reverse quote with fees and slippage zeroed on EVM), and pool price impact then applies to the actual fill. Expect the delivered quantity to land close to your target, not exactly on it. If you need a hard floor on what you receive, use the Wallet API's `minBuyAmount` instead.
 
 ## Prompt Examples
 

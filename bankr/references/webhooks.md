@@ -97,6 +97,7 @@ All routes require API key authentication (`X-API-Key`). The public trigger endp
 |----------|-------|
 | Raw handler source | 1 MB |
 | Name format | Letters, digits, `-` and `_` only |
+| Name length | 47 characters |
 
 ## Common Issues
 
@@ -105,4 +106,4 @@ All routes require API key authentication (`X-API-Key`). The public trigger endp
 | Agent never runs | Handler returned a non-JSON response or failed verification — check `bankr webhooks logs <name>` |
 | `401` on every trigger | Signing secret missing or wrong; check `bankr webhooks env list` and the provider's configured secret |
 | Unexpected agent runs | The URL leaked and your handler doesn't verify — pause the webhook, add a verifier, redeploy |
-| Deploy rejected | Name has characters outside `[a-zA-Z0-9_-]`, or the bundle exceeds 1 MB of source |
+| Deploy rejected | Name is over 47 characters or has characters outside `[a-zA-Z0-9_-]`, or the bundle exceeds 1 MB of source |

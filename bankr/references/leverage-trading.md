@@ -16,7 +16,7 @@ Two leverage platforms are available:
 **Chain**: Base
 **Protocol**: [Avantis](https://docs.avantisfi.com/) (v2)
 
-Bankr trades Avantis v2. The pair catalogue — roughly **118 named pairs** — is sourced from the Avantis data API rather than read pair-by-pair on chain, so lookups are fast and a transient refresh failure serves the last-known catalogue instead of breaking every symbol lookup.
+Bankr trades Avantis v2. The pair catalogue — **100+ named pairs**, and it changes as Avantis lists and delists — is fetched live from the Avantis data API rather than read pair-by-pair on chain, so lookups are fast and a transient refresh failure serves the last-known catalogue instead of breaking every symbol lookup. Ask for the current list rather than assuming a pair exists.
 
 **Take profit and stop loss are signed intents, not transactions.** Setting a level signs an EIP-712 request that Avantis executes through its operator; there is no on-chain transaction to wait on. Two consequences worth knowing:
 

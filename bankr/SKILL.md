@@ -626,7 +626,7 @@ bankr llm models --zdr                                   # which models have a Z
 
 ### Daily Spend Budget
 
-An optional per-UTC-day cap across **all metered LLM spend on the wallet** — every API key it owns, plus Max Mode and app-invoked agent runs. Gateway requests over budget are refused; an agent run ends early once the day's spend reaches the cap.
+An optional per-UTC-day cap across **all metered LLM spend on the wallet** — every API key it owns, plus Max Mode agent runs (wherever they're invoked from). Gateway requests over budget are refused; a Max Mode agent run ends early once the day's spend reaches the cap. Ordinary non-Max agent runs don't spend LLM credits, so they aren't affected.
 
 ```bash
 curl -s https://llm.bankr.bot/v1/credits -H "X-API-Key: $BANKR_LLM_KEY"
@@ -637,7 +637,7 @@ curl -s https://llm.bankr.bot/v1/credits -H "X-API-Key: $BANKR_LLM_KEY"
 
 - `dailyBudget` is **omitted entirely** when the wallet is uncapped, so its presence is the answer to "am I capped?" — no sentinel value to test for.
 - Over budget, spend requests return `402` with error `type: "daily_budget_exceeded"` — distinct from the `insufficient_credits` you get when the balance itself runs out. Read-only `GET` endpoints (`/v1/credits`, `/v1/usage`, `/v1/models`) keep working, so you can still read `remainingUsd` and `resetsAt` to find out when you'll be unblocked.
-- Budget changes reach the gateway within ~60s (it caches auth state), and each instance caches independently — so spend can overshoot slightly under a sustained burst. Treat it as a guardrail; your credit balance is still the hard limit on total spend.
+- Budget changes take effect within ~60s and enforcement is eventually consistent, so spend can overshoot the cap slightly under a sustained burst. Treat it as a guardrail; your credit balance is still the hard limit on total spend.
 
 ### Max Mode — Pick the Agent's Model
 
@@ -699,7 +699,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 ### Trading Operations
 
 - **Token Swaps**: Buy/sell/swap tokens across chains
-- **Exact-output orders**: pin the quantity you want to *receive* ("buy exactly 1,000 PEPE"), not just the amount to spend — supported on same-chain EVM and same-chain Solana
+- **Exact-output orders**: name the quantity you want to *receive* ("buy exactly 1,000 PEPE") and Bankr sizes the input — supported on same-chain EVM and same-chain Solana. The output is a target, not a guarantee: price impact means the delivered amount lands close to it, not exactly on it
 - **Cross-Chain**: Bridge tokens between chains
 - **Limit Orders**: Execute at target prices
 - **Stop Loss**: Automatic sell protection
@@ -749,13 +749,13 @@ For full details — setup paths, model list, provider config, SDK examples, key
 
 ### NFT Operations
 
-Buy, sell, bid, and manage NFTs through OpenSea on **every supported EVM chain** — Base, Ethereum, Polygon, Unichain, World Chain, Arbitrum, BNB Chain, and Robinhood Chain.
+Buy, sell, bid, and manage NFTs through OpenSea on **Base, Ethereum, Polygon, Unichain, Arbitrum, and Robinhood Chain**. World Chain and BNB Chain are supported for trading but not for NFTs — Bankr has no marketplace coverage there.
 
 - Browse and search collections
 - View floor prices and listings
 - Purchase NFTs via OpenSea — including listings priced in an **ERC-20** rather than the native token (e.g. USDG on Robinhood Chain). The token approval, the payment-currency balance check, and decimals-aware pricing are all handled for you
 - **List your NFTs for sale**, see your own live listings, and cancel them
-- **Check the best offer** on any NFT (a collection with no live offers is a normal "no offers" answer, not an error) and accept offers on NFTs you own
+- **Check the best offer** on any NFT (one with no live offers is a normal "no offers" answer, not an error) and accept offers on NFTs you own
 - **Make collection-wide bids** — an offer good for any token in a collection — see the bids you've made, and retract them
 - View your NFT portfolio
 - Transfer NFTs
@@ -778,7 +778,7 @@ Bids are always paid in an **ERC-20**, never native ETH — WETH on most chains,
 ### Leverage Trading
 
 - **Hyperliquid** (primary) — Perpetual futures on Hyperliquid L1 with on-chain order book. Crypto, stocks (TSLA, AAPL, NVDA via HIP-3), spot trading. Up to 50x leverage.
-- **Avantis** (secondary) — Perpetuals on Base for crypto, equities (NVDA, TSLA, AAPL, HOOD, and more), forex, and commodities, across ~118 pairs. Equity, forex, and commodity pairs trade during their underlying market hours only.
+- **Avantis** (secondary) — Perpetuals on Base for crypto, equities (NVDA, TSLA, AAPL, HOOD, and more), forex, and commodities, across 100+ pairs. Equity, forex, and commodity pairs trade during their underlying market hours only.
 - Stop loss, take profit, and position management on both platforms
 - On Avantis, a stop loss or take profit set on the wrong side of the trade — an SL past your liquidation price, or a TP the wrong side of entry — is **refused up front with the liquidation price in the message**, rather than accepted and silently dropped. Setting a level also waits until it is actually visible on the position before reporting success, so "set" means set. Avantis TP/SL is not available in wallet (connected-wallet) mode, which returns a clear unsupported error
 - Funding Hyperliquid is a **venue** deposit/withdraw, not a bridge: a deposit only reaches Hyperliquid, a withdrawal only lands on Arbitrum. Name the venue ("deposit $500 to hyperliquid") rather than saying "bridge"; to move withdrawn funds onward, chain a cross-chain swap after the withdrawal
@@ -1146,7 +1146,7 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Swap 0.1 ETH for USDC"
 - "Sell 50% of my PEPE"
 - "Bridge 100 USDC from Polygon to Base"
-- "Buy exactly 1,000 PEPE on Base" (exact-output — pins what you receive)
+- "Buy exactly 1,000 PEPE on Base" (exact-output — targets what you receive)
 - "Buy exactly 500 BONK on Solana"
 
 ### Tokenized Stocks
