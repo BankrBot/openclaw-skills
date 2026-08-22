@@ -113,8 +113,6 @@ bankr x402 call https://api.molty.cash/a2a \
 
 `token_contract` is **required** here (SPL mint on Solana or ERC-20 address on Base) — the payout chain is inferred from the address format, no `payout_chain` param needed.
 
-**There is no `ticker` param.** molty always resolves the display ticker itself from `token_contract` (on-chain `symbol()` for Base — works even for a token with zero DEX liquidity; DexScreener's indexed symbol as a fallback for Solana or if the on-chain read fails). This isn't optional-with-a-default — it's not an accepted input at all, so don't send it.
-
 ### Shared params (both options)
 
 `description` is required in both. `cpm_rate` and `max_payout_per_submission` are **raw token units** (e.g. `cpm_rate: 5` means 5 of the payout token per 1,000 views — for a non-USDC token, that is *not* $5). They're optional together — pass both, or omit both to auto-price `cpm_rate` at $1 worth of the payout token (`max_payout_per_submission` then defaults to `cpm_rate` × 10); passing `max_payout_per_submission` without `cpm_rate` is rejected.
