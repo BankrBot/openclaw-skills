@@ -50,7 +50,8 @@ bankr config get llmKey
 | `claude-sonnet-4.6` | Anthropic | Previous generation Sonnet (1M context) |
 | `claude-sonnet-4.5` | Anthropic | Earlier Sonnet (1M context) |
 | `claude-haiku-4.5` | Anthropic | Fast, cost-effective (200K context) |
-| `gemini-3.6-flash` | Google | Latest Flash — the Bankr agent's default model (1M, image input) |
+| `gemini-3.7-flash` | Google | Latest Flash — the Bankr agent's default model (1M, image input) |
+| `gemini-3.6-flash` | Google | Previous Flash, coding and agents (1M, image input) |
 | `gemini-3.5-flash` | Google | Fast general-purpose (1M) |
 | `gemini-3.5-flash-lite` | Google | Ultra-fast, lowest cost (1M) |
 | `gemini-3.1-pro` | Google | Long context, reasoning (1M) |
@@ -177,7 +178,7 @@ Only a **trailing** tier token counts as the opt-in, so unrelated model IDs cont
 
 ### Max Mode — Choose the Agent's Model
 
-Max Mode replaces the Bankr agent's default model (`gemini-3.6-flash`) with any gateway model, billed per token from your **LLM credit balance**. It's the pay-per-use alternative to a Bankr Club subscription for unlimited terminal messages, and unlike Club checkout it works with external/connected wallets.
+Max Mode replaces the Bankr agent's default model (`gemini-3.7-flash`) with any gateway model, billed per token from your **LLM credit balance**. It's the pay-per-use alternative to a Bankr Club subscription for unlimited terminal messages, and unlike Club checkout it works with external/connected wallets.
 
 ```bash
 bankr agent "analyze my portfolio" --model claude-opus-5
@@ -243,6 +244,54 @@ spend order = expiring grants first (soonest-expiring), then the permanent pool
 ```
 
 Expired grants drop off automatically — there is no manual cleanup. The Credits page and `/llm/usage` show a breakdown of your permanent pool vs. each grant and its expiry, and your credit history labels grant rows.
+
+### Sending Credits to Another Bankr User
+
+Purchased credit is transferable peer-to-peer. Ask the agent, or call the API directly:
+
+```bash
+bankr agent prompt "Send $20 of LLM credits to @alice"
+bankr agent prompt "Transfer 5 dollars of my LLM credits to 0xRecipient"
+```
+
+```bash
+curl -X POST "https://api.bankr.bot/llm/credits/transfer" \
+  -H "X-API-Key: $BANKR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"recipientAddress":"0xRecipient","amountUsd":20,"transferId":"my-unique-id"}'
+```
+
+The key needs **LLM Gateway** access enabled, like the top-up endpoint.
+
+The sender is debited and the recipient credited atomically — there is no pending state to reconcile.
+
+| Rule | Detail |
+|------|--------|
+| **Recipient** | Must already be a Bankr user. The agent accepts an X (Twitter) username or a `0x` address; the API takes the resolved EVM address. ENS names are not supported on this path. |
+| **Only purchased credit moves** | Grant credit (promotional, developer, partner) is **not** transferable — your sendable figure is the purchased slice of your pool, minus usage that's metered but not yet deducted. |
+| **Minimum** | $1 per transfer. |
+| **Rolling cap** | $500 gross sent per wallet per **trailing 24 hours** (shared with the same window the daily spend budget uses). Over it, the call returns `429`. |
+| **Write scope** | Read-only API keys are refused (`403`). If the key has an `--allowed-recipients` allowlist, the recipient must be on it. |
+| **Wallet controls apply** | A paused wallet can't send, and a wallet-level permitted-recipients list gates credit transfers exactly as it gates on-chain sends. |
+| **Idempotency** | Pass your own `transferId`; a retry with the same value never double-sends. |
+
+Failure codes are explicit rather than generic: `self-transfer` / `amount-too-small` (`400`), `insufficient-credit` (`402`), `wallet-paused` / `recipient-not-permitted` (`403`), `recipient-invalid` (`404`), `transfer-conflict` (`409`), `daily-cap-exceeded` / `daily-budget-exceeded` (`429`).
+
+`GET /llm/usage` returns `transferableUsd` — the sendable figure, already clamped by the remaining 24h cap and by any daily spend budget — so a client can offer a "Max" the transfer endpoint won't then reject.
+
+### Daily Spend Budget
+
+You can cap what the gateway may spend on your behalf, independently of your balance. The cap is measured over a **trailing 24 hours**, not a calendar day — nothing resets at midnight; capacity returns as individual charges age out of the window.
+
+```bash
+# Read or set from the web console at bankr.bot/llm
+GET  /llm/daily-budget      # { config: { limitUsd }, spentUsd }
+POST /llm/daily-budget      # { "limitUsd": 25 }   — null clears the cap
+```
+
+- Over budget, spending requests are rejected with `402 Payment Required` and error `type: daily_budget_exceeded` — distinct from `insufficient_credits`, which means the balance itself ran out.
+- **Only requests that spend are blocked.** Every read-only `GET` keeps working — `/v1/credits`, `/v1/usage`, `/v1/models` among them — so poll `exceeded` on `/v1/credits` to learn when you're unblocked, and `/v1/usage` for what consumed the budget. There is no reset time to schedule against.
+- The same budget also ends Max Mode agent runs early, so a capped wallet sees it on the agent surface too.
 
 ### Agent Credit Top-Up
 

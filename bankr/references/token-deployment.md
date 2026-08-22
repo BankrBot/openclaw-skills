@@ -6,9 +6,11 @@ Deploy and manage tokens on Base and Robinhood Chain (via Doppler / Uniswap V4) 
 
 | Chain | Protocol | Token Standard | Best For |
 |-------|----------|----------------|----------|
-| **Base** (default) | Doppler (Uniswap V4) | ERC20 | Memecoins, social/agent tokens |
-| **Robinhood Chain** | Doppler (Uniswap V4) | ERC20 | Memecoins alongside tokenized stocks |
+| **Base** (CLI / web default) | Doppler (Uniswap V4) | ERC20 | Memecoins, social/agent tokens |
+| **Robinhood Chain** (agent / deploy-API default) | Doppler (Uniswap V4) | ERC20 | Memecoins alongside tokenized stocks |
 | **Solana** | Raydium LaunchLab | SPL | High-speed trading, bonding curves |
+
+> **The EVM default differs by surface.** `bankr launch` and the web launch form preselect **Base**; the AI agent and `POST /token-launches/deploy` fall back to **Robinhood Chain** when the request names no chain. Name the chain explicitly whenever it matters.
 
 > **Builder exits:** selling a token you earn creator fees on through Bankr's ordinary swap/limit/stop/DCA/TWAP tools is intentionally restricted (buying and transferring still work). To take profit, builders use a **Glidepath** — a capped, AI-paced gradual sell managed from the token page at [bankr.bot](https://bankr.bot). Glidepath is a web feature, not a CLI/API action. Details: https://docs.bankr.bot/token-launching/glidepath
 
@@ -189,7 +191,7 @@ Users can launch additional tokens beyond sponsored limits by paying ~0.01 SOL g
 
 ## EVM Token Launches (Base & Robinhood Chain, via Doppler)
 
-Launch ERC20 tokens on Base or Robinhood Chain. New launches create a Uniswap V4 pool via Doppler with a fixed supply and a single swap-fee tier shared between you and the protocol. Tokens deploy to **Base by default**; pass a chain to launch on Robinhood Chain instead (`bankr launch --chain robinhood`, or "launch a token on robinhood"). Robinhood Chain memecoin launches need no location verification — that gate only applies to Robinhood-issued tokenized stocks.
+Launch ERC20 tokens on Base or Robinhood Chain. New launches create a Uniswap V4 pool via Doppler with a fixed supply and a single swap-fee tier shared between you and the protocol. The default chain differs by surface (see [Supported Chains](#supported-chains)), so name it explicitly — `bankr launch --chain robinhood`, `"chain": "base"`, or "launch a token on robinhood". Robinhood Chain memecoin launches need no location verification — that gate only applies to Robinhood-issued tokenized stocks.
 
 ### Token Economics
 
@@ -232,6 +234,21 @@ Two knock-on effects for anyone integrating against a quote-only token:
 
 Like the fee schedule, this option cannot be changed after launch.
 
+### Degen Mode (optional, fixed at launch)
+
+Degen mode starts the token at a **$2,500 market cap** instead of the standard starting cap, so the curve's early range is far more volatile. Everything else about the launch — supply, fee schedule, curve shape, vesting — is unchanged.
+
+| How | Syntax |
+|-----|--------|
+| Natural language | "launch MOON in degen mode" |
+| Deploy API | `"degenMode": true` |
+| Web | toggle in the launch form |
+
+- **Explicit opt-in only.** You have to ask for the mode by name. A token *called* DEGEN, or generic "make it risky" phrasing, does not turn it on.
+- **The figure is fixed at $2,500.** There is no custom starting market cap to request.
+- **Not available on partner deploys** — those are rejected with a `400` rather than quietly launched at the standard cap.
+- No `bankr launch` flag yet; use the agent or the deploy API from the command line.
+
 ### Deployment Parameters
 
 | Parameter | Required | Description | Example |
@@ -245,6 +262,7 @@ Like the fee schedule, this option cannot be changed after launch.
 | **Telegram** | No | Telegram group | "@mytoken" |
 | **Fee Recipient** | No | Route creator fees to a wallet, ENS, or social handle | "@partner" |
 | **Quote-only fees** | No | Collect all creator fees in the quote token; fixed at launch | `quoteOnlyFees: true` |
+| **Degen mode** | No | Start at a $2,500 market cap; explicit opt-in, not on partner deploys | `degenMode: true` |
 
 ### Prompt Examples
 
@@ -253,6 +271,7 @@ Like the fee schedule, this option cannot be changed after launch.
 - "Create a memecoin: name=DogeKiller, symbol=DOGEK"
 - "Deploy token with website myproject.com and Twitter @myproject"
 - "Create a token on Base"
+- "Launch MOON in degen mode"
 - "Launch a token called CoolBot on robinhood"
 - "Launch a token called CoolBot and route fees to @partner"
 - "Launch a token with quote-only fees"
@@ -289,7 +308,7 @@ bankr agent prompt "Launch a token called Semis paired with NVDA on base"
 ```
 
 ```json
-POST /token/deploy
+POST /token-launches/deploy
 { "name": "Semis", "symbol": "SEMIS", "chain": "base", "pairedStockAddress": "0x..." }
 ```
 
