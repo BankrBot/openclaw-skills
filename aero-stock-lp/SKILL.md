@@ -1,9 +1,9 @@
 ---
-name: stock-lp
-description: LP tokenized stocks onchain — range-LP Coinbase tokenized equities (NVDA, AAPL, GOOGL, META) and AERO/USDC on Aerodrome Slipstream (Base) for trading-fee + AERO emission yield. Use when the user wants to LP stocks or Aerodrome pools on Base, open/recenter/exit a Slipstream position, check pool status, NAV, or yields, get a portfolio overview ("how are my LP positions doing?") with P&L and projected APR, compare the staked (emissions) vs unstaked (fees) route, or run scheduled LP management passes. Sets up an hourly manage automation and builds a live position dashboard app on request. Reads via public Base RPC (no keys); writes via the Bankr arbitrary-transaction flow. NOT for perps, spot trading, or Uniswap.
+name: aero-stock-lp
+description: LP tokenized stocks onchain — range-LP Coinbase tokenized equities (NVDA, AAPL, GOOGL, META) and AERO/USDC on Aerodrome Slipstream (Base) for trading-fee + AERO emission yield. Use when the user wants to LP stocks or Aerodrome pools on Base, open/recenter/exit a Slipstream position, check pool status, NAV, or yields, get a portfolio overview ("how are my LP positions doing?") with P&L and projected APR, compare the staked (emissions) vs unstaked (fees) route, or run a manage pass on request. Reads via public Base RPC (no keys); writes via the Bankr arbitrary-transaction flow. NOT for perps, spot trading, or Uniswap.
 ---
 
-# stock-lp — LP onchain equities on Aerodrome (Base)
+# aero-stock-lp — LP onchain equities on Aerodrome (Base)
 
 Concentrated-liquidity market making on Aerodrome Slipstream (Base, chain
 8453). You place a price band around the market, the pool pays you trading
@@ -15,9 +15,9 @@ with real money.
 never hold keys. Reads are free `eth_call`s against public RPCs. Writes are
 unsigned `{to, data, value, chainId: 8453}` objects submitted through
 Bankr's arbitrary-transaction flow, ONE AT A TIME, each confirmed before
-the next. Management runs as scheduled passes (cron): every pass is
-idempotent and safe to repeat — it reads the chain, decides, and either
-acts or reports "holding".
+the next. Management runs as on-demand manage passes ("check my LPs"):
+every pass is idempotent and safe to repeat — it reads the chain,
+decides, and either acts or reports "holding".
 
 **Talking to the user.** Short answers, plain language, lead with the
 outcome. Rules:
@@ -222,7 +222,7 @@ Three widths, all built from the asset's 5-session expected move `w`:
 | Choice | Width | For |
 |---|---|---|
 | wide | ±2w | set-and-forget, fewest recenters |
-| **standard** (default) | ±w | balanced; assumes the cron pass manages it |
+| **standard** (default) | ±w | balanced; assumes regular manage passes |
 | tight | ±w/2 | max yield share; expect frequent recenters |
 
 Default to standard without asking; mention the choice only if the user
@@ -288,8 +288,8 @@ next):
    `deposit(tokenId)`. If fees win, done — the NFT stays in the wallet.
 6. Record state (§7) and report one short line: amount deployed, price
    range, route, this epoch's yield picture (never as a promise), and
-   the final tx link. If no manage automation exists yet, offer §12
-   (and the §13 dashboard) in the same breath — one line, no lecture.
+   the final tx link. After the first entry, mention once that "check
+   my LPs" runs a management pass (§8) any time.
 
 ## 6. Route: staked (emissions) vs unstaked (fees)
 
@@ -326,7 +326,7 @@ state over that read.
 
 ## 7. State and chain recovery
 
-Keep a small state file (e.g. `~/.stock-lp/state.json`):
+Keep a small state file (e.g. `~/.aero-stock-lp/state.json`):
 
 ```json
 { "compound": "sell",
@@ -347,29 +347,27 @@ ESTIMATED at current value, tell the user loudly, and ask for the real
 entry figure. Never let a lost file make the book lie — **the chain is
 the memory; the file is a cache.**
 
-Once the §13 dashboard app exists, the basis store of record is its
-`recordEntry` KV — same two guarded fields, same recovery rules; keep
-any file only as a secondary cache.
-
 **User memory file.** Where the runtime gives you a persistent user
 memory file (the Bankr console does), keep ONE line in it about this
-book — future sessions and automation runs start with no conversation
-history, and the memory line is how they learn positions exist at all:
+book — future sessions start with no conversation history, and the
+memory line is how they learn positions exist at all:
 
-> stock-lp: active Aerodrome LP positions on Base — NVDA #123456
-> (staked), AAPL #123789 (unstaked); basis in ~/.stock-lp/state.json;
-> hourly manage automation active. Manage with the stock-lp skill.
+> aero-stock-lp: active Aerodrome LP positions on Base — NVDA #123456
+> (staked), AAPL #123789 (unstaked); basis in
+> ~/.aero-stock-lp/state.json. Manage with the aero-stock-lp skill.
 
 Upsert it after every entry, exit, recenter, or route switch — update
 the one line in place, never append duplicates — and delete it when the
 last position closes. The memory line is a POINTER, not a store: basis
-lives in the state file / app KV, and the chain stays the truth.
+lives in the state file, and the chain stays the truth.
 
-## 8. MANAGE PASS — the cron procedure
+## 8. MANAGE PASS — run on request
 
-Designed for a scheduled automation. Recommended cadence: every 30–60
-min for bands at the 5-session width; at least daily is mandatory.
-Idempotent: running it twice does nothing twice.
+Runs whenever the user asks ("check my LPs", "how are my positions?",
+"run a manage pass"). A band at the 5-session width assumes passes
+every hour or so; encourage a daily check-in at minimum, and say so
+when reporting a fresh entry. Idempotent: running it twice does
+nothing twice.
 
 For each recorded position:
 
@@ -382,9 +380,11 @@ For each recorded position:
    clearly crossed; otherwise HOLD. Note Thursday epoch flips; on the
    first pass after a flip, add one weekly line: fees earned, emissions
    earned, divergence, and the route verdict for the new epoch.
-   **Compound**: only per the state file's `compound` preference, set
-   with the user at automation setup (§12). `sell` + staked + `earned()`
-   ≥ ~$10 of AERO + `minStakeTimes` elapsed since staking →
+   **Compound**: only per the state file's `compound` preference. If
+   unset when compounding first becomes possible, ask once in chat —
+   "claim and sell earned AERO to USDC once it tops $10, or hold the
+   AERO?" — and record `compound: sell|hold` (§7). `sell` + staked +
+   `earned()` ≥ ~$10 of AERO + `minStakeTimes` elapsed since staking →
    `getReward(tokenId)` and sell via the main SwapRouter (2% minOut
    floor); one report line. `hold` or unset → leave it accruing (any
    unstake claims it anyway). Below the threshold, don't churn. Never
@@ -408,12 +408,6 @@ For each recorded position:
 6. **Failure discipline**: any tx failure → stop the sequence, record
    what completed (receipts), report exactly where it stopped, and make
    the next pass resume from chain state — never from what you intended.
-7. **Dashboard sync**: if the §13 app exists, end the pass by running
-   its `refreshPositions` script (`run_app_script`) so the dashboard
-   shows what this pass just saw and did — passing
-   `{automation: {runsRemaining, expiresAt}}` read from
-   `get_automations`, so the dashboard can warn before the manage
-   automation lapses.
 
 ## 9. Honest P&L — every report, no exceptions
 
@@ -489,149 +483,7 @@ Example shape (match it, don't pad it):
 6. Report final cash, and the full decomposed P&L for the position's
    life.
 
-## 12. Automation — set up the manage pass, don't just describe it
-
-The manage pass (§8) only protects the user if it actually runs. After
-every successful entry, if no manage automation exists, offer it in one
-line: "Want me to check this position every hour and recenter when
-needed?" Strictly OPT-IN — like the dashboard (§13), it is created only
-on a clear yes in this conversation (asking for "managed" or "automated"
-LP counts as yes). A no stands: don't re-offer on later entries; say
-once that "manage my LPs automatically" turns it on any time, and
-chat-driven passes ("check my LPs") always work without it. On yes,
-create it with `automate_agent_command`:
-
-- `humanReadableName`: `stock-lp manage pass`
-- `conditionType`: `"time"`, `schedule`: `"0 * * * *"` (hourly, UTC)
-- `maxExecutions`: **720** — NEVER omit it. The platform default is 10,
-  which silently kills an hourly automation after ten hours and leaves
-  the user unmanaged while believing they're covered. 720 hourly runs =
-  the 30-day default expiry; set `expiresAt` too if the user wants
-  longer.
-- `command`, verbatim (automation runs start with NO conversation
-  history and NO open skills — the command must name this skill so the
-  run re-loads it, and must stand entirely alone):
-
-  `Use the stock-lp skill and run its MANAGE PASS on all recorded positions: read chain state, report value and range status, and recenter or switch route per the skill's rules.`
-
-Platform rules that bite:
-
-- **One automation covers ALL positions** (the pass iterates the book).
-  Check `get_automations` for an existing "stock-lp manage pass" before
-  creating — setup is idempotent too. Never one automation per position.
-- An automation run CANNOT create automations (platform recursion
-  block). Setup happens in chat, never inside a pass. When a pass sees
-  the run budget getting low, it says so: "~30 hourly checks left — say
-  'renew my LP automation' to extend."
-- Terminal/X/Farcaster users need **Bankr Club** for automations. If the
-  tool returns the paywall, relay it in one line with the upgrade link
-  and fall back to: "I'll check whenever you ask — say 'check my LPs'."
-- Say "every hour" — **never show the user a cron string.**
-- Phrase the automation as position MANAGEMENT, never as a recurring
-  buy/sell — recurring-purchase wording routes to DCA orders, the wrong
-  tool entirely.
-- Scheduled results land in the Automations panel, not as a push. If the
-  user wants pings and has Telegram linked, pass
-  `notificationPlatform: "telegram"`; otherwise skip it.
-- In the same setup message, get compound consent and record it:
-  "I'll also auto-claim and sell earned AERO to USDC once it tops $10 —
-  say 'hold AERO' to keep it instead." Write `compound: sell|hold` to
-  the state file (§7); the pass obeys it (§8). Never default to selling
-  without this line having been said.
-- **Crash brake** (offer for AERO positions, or on request): one extra
-  automation with `conditionType: "price"`, `priceTriggerToken` = the
-  position's token, `priceChain: "base"`, `pricePercentage: -0.15`
-  (decimal = −15% from now), command = the same manage-pass command —
-  fires a pass immediately instead of waiting out the hour; the hourly
-  cadence is the weak point in a fast move. Price triggers are
-  one-shot: if it fired, re-arm it in chat (a pass can't — recursion
-  block).
-- After creating, offer the smoke test: run one manage pass right now
-  in chat instead of waiting an hour.
-- "Stop managing" = `cancel_automations` AND the question "exit the
-  positions too, or leave them unmanaged?" — cancelling the watcher does
-  not exit the book; say so.
-
-## 13. Dashboard app — the position screen
-
-Offer once, right after the first successful entry (same breath as the
-automation offer, §12) — and like it, strictly OPT-IN: build only on a
-clear yes, or when the user asks to see their positions/dashboard. A no
-stands; mention once that "make me a dashboard" works any time later. The platform's app-authoring directive is the
-authority on app mechanics — it auto-loads when you build; if apps tools
-aren't bound, `request_additional_tools("apps create update run
-schedule share")`, and load `read_system_directive(["apps-authoring"])`
-if it hasn't appeared. This section is only the domain layer.
-
-Ground rules:
-
-- **`list_apps` first.** If `stock-lp-dashboard` exists, iterate with
-  `update_app` (prefer `htmlPatches`) — NEVER create a second app; a new
-  app cannot see the first one's stored data.
-- Free tier is ONE app per wallet. If creation is refused on the cap,
-  relay that in one line and move on — nothing else in this skill
-  depends on the app.
-- The app page (iframe) CANNOT fetch external URLs — no RPC calls from
-  the page. ALL chain/API reads live in app scripts; the page only
-  reads stored snapshots and invokes scripts.
-
-`create_app` manifest: slug `stock-lp-dashboard`, title
-`Stock LP Dashboard`, `sourceSkillSlug: "stock-lp"`,
-`frontendIdentity: "owner"`, permissions
-`["read:chain", "fetch:http", "read:wallet", "read:appdata",
-"write:appdata"]`. Keep it PRIVATE; `share_app` only if the user asks.
-Declare `dataSchemas` (array of `{name, schema}` pairs, NOT a map):
-`positions_snapshot` = ARRAY of `{market, tokenId, inRange, valueUsd,
-bandLow, bandHigh, priceNow, route, feesUsd, aeroEarned, aeroUsd,
-entryUsd, enteredAt, pnlUsd}`; `meta` = `{updatedAt, wallet, note, automation}`.
-
-Scripts (top-level statements ending in `return`; they smoke-run at
-create — fix what fails):
-
-1. `refreshPositions` — the only data path. Wallet from
-   `bankr.wallet.me()`; discover positions per §7 (staked:
-   `gauge.stakedValues(wallet)` per market; unstaked: NPM enumeration);
-   then `slot0`, `positions(tokenId)`, `ownerOf`, `earned()` via
-   `bankr.chain.multicall` on chain `base` (≤50 calls per batch,
-   human-readable ABI strings). Claimable fees need the simulated
-   `collect` with `"from"` (§2) — do those as raw `eth_call` POSTs via
-   `http.fetch` to the §2 RPC list (`http.fetch` returns the parsed
-   body directly). Value positions at POOL price (§2 math, labeled
-   "pool price"); AERO at Coinbase spot via `http.fetch`. Merge basis
-   from `appKV.get("record:basis:" + tokenId)`, compute `pnlUsd` per §9
-   (loose balances included), then `appKV.set("positions_snapshot", …)`
-   + `appKV.set("meta", …)` (merge an `automation` arg into meta when
-   the caller passes one) and return the snapshot. Also upsert today's
-   point `record:history:YYYY-MM-DD` = `{totalUsd, pnlUsd}` — a daily
-   value series (same-day runs overwrite) the page can chart.
-2. `recordEntry` — args `{market, tokenId, entryUsd, enteredAt}` →
-   `appKV.set("record:basis:" + tokenId, args)`. Call it via
-   `run_app_script` right after every mint; remove the record on exit.
-
-Freshness: `set_app_schedule` → `refreshPositions` every 30 minutes
-(`*/30 * * * *`). That cron is a direct script run — cheap, no LLM, and
-it NEVER trades; the §8 manage pass owns decisions. The page also gets
-a Refresh button invoking `refreshPositions`.
-
-Page: one self-contained HTML document, inline CSS/JS, dark, no
-external assets. Header: total value, "updated Xm ago" from
-`meta.updatedAt`, Refresh button, and a one-line stale warning when the
-snapshot is older than 2 hours. One card per position: market, value,
-a big IN RANGE / OUT OF RANGE badge, band and current price in DOLLARS
-(house rule: prices, never ticks), route as plain words ("earning
-AERO" / "earning fees"), earnings, and P&L per §9 — labeled, never
-annualized. A small value-over-time line from the history series makes
-divergence loss visible instead of abstract. When `meta.automation`
-shows under ~48 hours of runs left, show one warning strip: "manage
-automation expires soon — say 'renew my LP automation'". Empty state:
-"No LP positions yet — say 'LP $50 into AAPL'."
-
-After creating: run `refreshPositions` once via `run_app_script` (so
-the first open isn't blank), then give the user the app URL from the
-tool result. (`dry_run_app_script` has no persistent KV — verify KV
-wiring with a real `run_app_script`.)
-
-## 14. What this skill refuses to do
+## 12. What this skill refuses to do
 
 - Enter a pool that fails ANY gate in §5 — including "the user is
   excited". Report the failing gate and the number it needs.
@@ -639,11 +491,7 @@ wiring with a real `run_app_script`.)
   CLOSED.
 - Promise or guarantee yields. The only projection allowed is the §10
   form, explicitly labeled "at this epoch's rate".
-- Auto-sell without consent: compounding sells AERO only after the §12
-  setup line was said and `compound: sell` recorded.
-- Create an automation or an app unbidden: both are offered once and
-  built only on the user's yes (§12, §13).
+- Auto-sell without consent: compounding sells AERO only after the
+  user's in-chat yes was recorded as `compound: sell` (§8).
 - Silence a failure: every skipped step, estimated basis, degraded input,
   or stopped sequence is reported to the user in plain language.
-- Trade from the dashboard cron: `refreshPositions` reads and displays,
-  never transacts. Only the §8 manage pass (or the user in chat) acts.

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aero-stock-lp",
+  "provider": "Bankr",
+  "providerUrl": "https://bankr.bot",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "lp-session.txt",
+    "language": "text",
+    "code": "You:   LP $50 into the AAPL pool\nBankr: Deposit $50 into the AAPL pool at $296 – $318? (yes/no)\nYou:   yes\nBankr: Done — $50 in AAPL/USDC at $296 – $318, staked for AERO\n       emissions. Tx: basescan.org/tx/0x…\n       Say \"check my LPs\" any time for a management pass.\n\n— later —\nYou:   how are my LPs doing?\nBankr: AAPL: $51.20 (+$1.20, +2.4%), in range ($296 – $318, now $307),\n       earning AERO — ~38% APR at this epoch's rate."
+  },
+  "setup": [
+    "Install the skill with the button below",
+    "Fund your Bankr wallet with USDC on Base",
+    "Say: \"LP $50 into the AAPL pool\" — one confirmation, then it executes",
+    "Say \"check my LPs\" any time for value, range status, and P&L"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aero-stock-lp",
+    "command": "install the aero-stock-lp skill from https://github.com/BankrBot/skills/tree/main/aero-stock-lp"
+  }
+}
