@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Spectrum">
+  <defs>
+    <linearGradient id="s" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#35e0ff"/>
+      <stop offset="0.5" stop-color="#7b5cff"/>
+      <stop offset="1" stop-color="#ff4db8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#07070b"/>
+  <g fill="none" stroke="url(#s)" stroke-width="4" stroke-linecap="round">
+    <path d="M16 40 A20 20 0 0 1 48 40"/>
+  </g>
+  <circle cx="32" cy="42" r="4" fill="url(#s)"/>
+</svg>
