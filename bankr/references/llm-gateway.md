@@ -261,7 +261,7 @@ curl -X POST "https://api.bankr.bot/llm/credits/transfer" \
   -d '{"recipientAddress":"0xRecipient","amountUsd":20,"transferId":"my-unique-id"}'
 ```
 
-The key needs **LLM Gateway** access enabled, like the top-up endpoint.
+Auth matches the other credit endpoints: a Bankr API key — `X-API-Key`, or `Authorization: Bearer` — with **LLM Gateway** access enabled, or a signed-in web session. Whichever you use, the transfer is a write, so read-only keys are refused.
 
 The sender is debited and the recipient credited atomically — there is no pending state to reconcile.
 
