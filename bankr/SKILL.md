@@ -1,6 +1,6 @@
 ---
 name: bankr
-description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, trade tokenized stocks and ETFs (spot or leveraged), check portfolio balances (with PnL and NFTs), view token prices, search tokens, research token holders, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, call or deploy x402 paid API endpoints, browse the web, store and query files on their wallet's filesystem, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet — including zero-data-retention and TEE-private inference tiers. Supports Base, Ethereum, Polygon, Solana, Unichain, World Chain, Arbitrum, BNB Chain, and Robinhood Chain.
+description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, trade tokenized stocks and ETFs (spot or leveraged), check portfolio balances (with PnL and NFTs), view token prices, search tokens, research token holders, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, call or deploy x402 paid API endpoints, browse the web, store and query files on their wallet's filesystem, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet — including zero-data-retention and TEE-private inference tiers, plus topping up and sending LLM credits to another Bankr user. Supports Base, Ethereum, Polygon, Solana, Unichain, World Chain, Arbitrum, BNB Chain, and Robinhood Chain.
 metadata:
   {
     "clawdbot":
@@ -623,6 +623,10 @@ bankr agent prompt "How many LLM credits do I have left?"
 
 The agent can also report your current LLM credit balance in conversation — including any expiring grants and when they lapse — without needing the `bankr llm credits` command.
 
+**Sending credits to another Bankr user.** Purchased credit is transferable peer-to-peer — ask the agent ("send $20 of LLM credits to @alice") or `POST /llm/credits/transfer`. The recipient must already be a Bankr user (X username or `0x` address; no ENS on this path), only purchased credit moves (grants are not transferable), the minimum is $1, and a wallet may send at most **$500 per trailing 24 hours**. Read-only API keys are refused; pass your own `transferId` so a retry can't double-send.
+
+**Daily spend budget.** You can cap what the gateway spends on your behalf, independently of your balance. The window is a **trailing 24 hours**, not a calendar day — nothing resets at midnight, capacity returns as charges age out. Over budget, spending requests return `402` with `type: daily_budget_exceeded` (distinct from `insufficient_credits`), while read-only `GET` endpoints keep working so you can poll for when you're unblocked. The same budget also ends Max Mode agent runs early.
+
 1 credit = $1 USD. Multi-chain: pay with USDC or USDT directly on Base, Polygon, Ethereum, Arbitrum, or BNB Chain, or with any other ERC-20 (auto-swapped to the chain's preferred stablecoin — USDC on most chains, USDT on BNB). When using `--token`, the CLI picks the chain with the highest USD balance of that token. Maximum $1,000 per top-up.
 
 ### Model Deprecation
@@ -732,9 +736,10 @@ Spot stocks work with swaps, transfers, limit orders, and DCA. Only issuer-token
 
 ### Token Deployment
 
-- **EVM (Base default, or Robinhood Chain)**: Launch ERC20 tokens via Doppler on a Uniswap V4 pool with customizable metadata and social links. Fixed **100 billion** supply. Every trade pays a **0.7% swap fee on the pool and 95% of it goes to you** (0.665% of volume, claimable anytime); the hook adds the Bankr protocol fee + BNKR buyback and LP fee on top, for **1.75% all-in**. The **0.285% LP fee is creator-side too** — it compounds as locked liquidity in your own pool, strengthening your token's liquidity on every swap, so the creator side totals **0.95% of volume**. Tokens deploy to Base by default; pass a chain (`bankr launch --chain robinhood`) to launch on Robinhood Chain instead. Legacy Clanker tokens remain claimable (claims auto-detect Doppler vs Clanker).
+- **EVM (Base or Robinhood Chain)**: Launch ERC20 tokens via Doppler on a Uniswap V4 pool with customizable metadata and social links. Fixed **100 billion** supply. Every trade pays a **0.7% swap fee on the pool and 95% of it goes to you** (0.665% of volume, claimable anytime); the hook adds the Bankr protocol fee + BNKR buyback and LP fee on top, for **1.75% all-in**. The **0.285% LP fee is creator-side too** — it compounds as locked liquidity in your own pool, strengthening your token's liquidity on every swap, so the creator side totals **0.95% of volume**. **The default chain depends on the surface**: the CLI (`bankr launch`) and the web launch form preselect **Base**, while the AI agent and the deploy API fall back to **Robinhood Chain** when no chain is named. Name the chain explicitly (`bankr launch --chain robinhood`, `"chain": "base"`, or "launch it on Base") whenever it matters. Legacy Clanker tokens remain claimable (claims auto-detect Doppler vs Clanker).
 - **Stock-paired launches** (EVM, optional): pair the new token's pool with a registry tokenized stock instead of WETH, so the token trades against equity exposure. Available on Base (B20 equities) and Robinhood Chain — pass `pairedStockAddress` to the deploy API, or ask the agent to pair the launch with a ticker. Only stocks Bankr can price are offered, since launch-curve math needs a USD price.
 - **Quote-only fees** (EVM, optional): opt in at launch to collect all creator fees in the quote token (e.g. WETH) instead of a mix of the launched token and quote token — your total take is identical either way. Ask for "quote-only fees", pass `quoteOnlyFees: true` to the deploy API, or use `bankr launch --quote-only-fees`. Fixed at launch, like the fee schedule itself.
+- **Degen mode** (EVM, optional): start the token at a **$2,500 market cap** instead of the standard starting cap, for maximum early volatility. Explicit opt-in only — ask for "degen mode" by name, or pass `degenMode: true` to the deploy API. The figure is fixed; there is no custom starting market cap, a token *named* DEGEN does not opt you in, and the mode is unavailable on partner deploys.
 - **Solana**: Launch SPL tokens via Raydium LaunchLab with bonding curve and auto-migration to CPMM
 - Creator fee claiming on both chains
 - Fee Key NFTs for Solana (50% LP trading fees post-migration)
@@ -790,6 +795,7 @@ Every Bankr wallet has a persistent filesystem, shared across the CLI, web termi
 - Create, read, edit, search, move, rename, and delete files by asking the agent — a path (`/research/notes.md`) works anywhere a file ID does
 - `bankr files ls|upload|download|cat|edit|write|search|mkdir|rm|storage` from the CLI; `/user/files/*` over REST
 - **Ask questions about a file without loading it** — the agent runs a read-only `jq`/`grep`/`awk`-style pipeline in a sandbox and returns only the answer, so a 4 MB CSV never enters the conversation. Available on every wallet, no Club subscription needed
+- **Run outputs (`/runs`)** — a separate, conversation-scoped scratch namespace. Deliverables a sandboxed run writes to `./output/` persist there automatically and stay readable by path in later turns, and oversized tool results are stored there instead of crowding the conversation. Text only, ~14 days, 10 MB per file / 100 MB per conversation. Save anything that matters longer into your own filesystem
 - Quotas: 1 GB / 10 MB per file / 10 GB monthly downloads on the free tier; 10 GB / 50 MB / 100 GB on Bankr Club. Checked at write time, resolved live from your current Club status
 - Deletion is soft — files are recoverable via support for 24 hours, then permanently gone
 
@@ -853,6 +859,12 @@ One side effect worth knowing: the price-impact limit also fails closed on venue
 ### Protected-Token Swap Guard
 
 Bankr blocks **swaps** of a small set of protected tokens where swapping is almost always a costly mistake — for example staked positions that should be unwound through their own redeem flow. The block is swap-only: the token stays visible in your portfolio, transferable, and usable with the relevant staking/redeem tools. When a swap is blocked, the agent returns a clear reason pointing you to the correct exit path. This guard applies across the swap/limit/stop/DCA/TWAP tools on the EVM swap paths.
+
+### Impostor-Token Screening
+
+A common attack is to airdrop dust that reports a **canonical currency's ticker** — `USDG`, `USDC`, `USDT`, `EURC`, a chain's native or wrapped symbol — from an address that isn't the real one, hoping an agent copies the address straight out of a balance listing and trades into it. Bankr treats a negative security verdict on that shape as decisive: the token drops out of your portfolio listing rather than reaching the agent as a clean-looking `symbol: "USDG"` entry.
+
+The screen is narrow on purpose. Genuine canonical tokens match on address and are unaffected, fresh launches with real liquidity keep the more forgiving classification they need, and **a token you actually bought through Bankr is never hidden by a spam verdict** — only unsolicited dust drops. When you mean a specific asset, naming the ticker (not an address pasted from a balance list) lets Bankr resolve it to the vetted contract.
 
 ### BNKR Staking Is Withdraw-Only
 
@@ -1157,6 +1169,7 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 
 - "Deploy a token called BankrFan with symbol BFAN on Base"
 - "Launch a token with quote-only fees" (all creator fees collected in the quote token)
+- "Launch MOON in degen mode" (starts at a $2,500 market cap)
 - "Claim fees for my token MTK"
 
 ### LLM Credits
@@ -1167,6 +1180,8 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Top up LLM credits using my ETH"
 - "Top up my LLM credits with $25 using USDT on Polygon"
 - "Add $10 of LLM credits paid in USDT on BNB"
+- "Send $20 of LLM credits to @alice"
+- "Transfer 5 dollars of my LLM credits to 0xRecipient"
 
 ### x402 Paid API Calls
 
@@ -1213,8 +1228,9 @@ Venue selection is automatic and the Wallet API now covers the same edge cases t
 
 - **Same-chain EVM** goes through the DEX aggregator, with a direct-pool venue preferred on thin-liquidity chains; **cross-chain and any Solana leg** goes through the bridge/swap aggregator
 - **Brand-new Solana tokens** still on their Raydium LaunchLab bonding curve fall back to the curve when no aggregator route exists yet, instead of failing with "no route". The fallback is narrow: both legs on Solana, a SOL ↔ token pair with an un-migrated curve, a genuine no-route from the aggregator, and **no price-impact limit set on the wallet** — the curve exposes no impact figure to check, so Bankr fails closed rather than fill an unguardable venue. With price-impact protection on, these swaps are rejected by design (the `minBuyAmount` floor still applies inside the fill)
-- **Polygon `pUSD` → `USDC.e`** uses the 1:1 on-chain Offramp unwrap rather than a DEX quote: no fee, no slippage, no price impact. The reverse direction (`USDC.e` → `pUSD`) is quoted like any ordinary pair. The unwrap settles to your own wallet, so a **swap-and-send** naming a different recipient routes through the normal venues instead — it never silently settles to you
+- **Polygon `pUSD` → `USDC.e`** uses the 1:1 on-chain Offramp unwrap rather than a DEX quote: no fee, no slippage, no price impact. Asking the agent to convert pUSD to plain "USDC" on Polygon resolves to `USDC.e` and takes this path — the request is read as the one routable thing it can mean, so the quote, the signing card, and the confirmation all name `USDC.e` rather than the pair failing to route. The reverse direction (`USDC.e` → `pUSD`) is quoted like any ordinary pair, and **buying** pUSD is untouched — the Offramp can only unwrap. The unwrap settles to your own wallet, so a **swap-and-send** naming a different recipient routes through the normal venues instead — it never silently settles to you
 - **Robinhood Chain tokenized stocks** are quoted and filled through the aggregator's RFQ makers, settling against USDG, while ordinary Robinhood Chain pairs keep their thin-pool protection
+- **Wallet-mode swaps** — where you sign from an external/connected wallet rather than a Bankr-custodied one — now walk the same venue order as every other swap, so a thin-liquidity pair reaches its direct-pool venue instead of being diverted to the bridge aggregator. Practical effects: a route that used to need an approval plus a router call can now come back as a single transaction to sign, and a leg whose build fails is reported as **failed** rather than handed to you as something to sign under a success message
 
 ```bash
 # CLI — quote only (no execution)

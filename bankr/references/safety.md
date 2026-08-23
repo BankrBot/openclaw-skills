@@ -324,6 +324,7 @@ Blockchain transactions are **irreversible** once confirmed. Key safety rules:
 - **Wait for confirmation** — Use `waitForConfirmation: true` with `/agent/submit` to ensure transactions are confirmed before proceeding. See [sign-submit-api.md](sign-submit-api.md).
 - **Immediate execution** — `/agent/submit` executes transactions immediately with no confirmation prompt. For safety with the prompt API, the AI agent may ask for confirmation on large or unusual operations.
 - **Understand calldata** — When using arbitrary transactions, verify the calldata source is trusted. See [arbitrary-transaction.md](arbitrary-transaction.md).
+- **Never trade an address you copied out of a balance listing.** Airdropped dust that reports a canonical ticker (`USDG`, `USDC`, `USDT`, `EURC`, a native or wrapped symbol) from the wrong address is a standing attack against agents. Bankr keeps a negative security verdict decisive for that shape, so impostor dust drops out of the portfolio listing instead of reaching the agent as a clean-looking entry — but the durable habit is to name the **ticker** and let Bankr resolve it to the vetted contract. Genuine canonical tokens and tokens you bought through Bankr are never hidden.
 
 ## Key Management
 
