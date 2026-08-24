@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "talk-with-rock",
+  "provider": "Axelow17",
+  "providerUrl": "https://github.com/Axelow17",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "talk-with-rock",
+    "command": "install the talk-with-rock skill from https://github.com/BankrBot/skills/tree/main/talk-with-rock"
+  }
+}
