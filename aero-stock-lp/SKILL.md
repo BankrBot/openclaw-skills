@@ -40,11 +40,13 @@ outcome. Rules:
   at $298 – $322? yes/no" — `plan` emits exactly this line), then execute
   the whole sequence without narrating each step. Report one final line
   with the position and a single tx link.
-- Set the time expectation once, right after the user confirms: opening
-  (or exiting) a position takes several onchain transactions submitted
-  one at a time, so it usually takes 2–3 minutes end to end. One line —
-  "Opening your position now — this takes a few onchain steps, usually
-  2–3 minutes" — so the quiet stretch reads as normal, not stuck.
+- Set the time expectation FIRST. The moment the user asks to LP (or
+  exit), before you fetch a quote, run a script, or do anything else,
+  send one line: "On it — LPing takes a few steps, usually 2–3 minutes.
+  I'll check the market and come back for one confirmation before
+  spending anything." Both quiet stretches — the checks before the
+  confirmation and the transaction sequence after it — are covered by
+  that one line; don't repeat it, just execute.
 - Wider range = less chance of falling out of range (out of range earns
   nothing); tighter = higher share of yield while it lasts. Default to
   `standard` width without asking; explain only if the user asks about
