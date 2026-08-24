@@ -1,6 +1,6 @@
 ---
 name: aero-stock-lp
-description: LP tokenized stocks onchain — range-LP Coinbase tokenized equities (NVDA, AAPL, GOOGL, META) and AERO/USDC on Aerodrome Slipstream (Base) for trading-fee + AERO emission yield. Use when the user wants to LP stocks or Aerodrome pools on Base, open/recenter/exit a Slipstream position, check pool status, NAV, or yields, get a portfolio overview ("how are my LP positions doing?") with P&L and projected APR, compare the staked (emissions) vs unstaked (fees) route, or run a manage pass on request. Bundled node scripts do the chain reads, gate checks, and calldata; writes go via the Bankr arbitrary-transaction flow. NOT for perps, spot trading, or Uniswap.
+description: LP tokenized stocks onchain — range-LP Coinbase tokenized equities (NVDA, AAPL, GOOGL, META) and AERO/USDC on Aerodrome Slipstream (Base) for trading-fee + AERO emission yield. Use when the user wants to LP stocks or Aerodrome pools on Base, open/recenter/exit a Slipstream position, check pool status, NAV, or yields, get a portfolio overview ("how are my LP positions doing?") with P&L and projected APR, or run a manage pass on request. Auto-routes every position to the higher-yielding side — staked (AERO emissions) vs unstaked (trading fees) — at entry and re-checks on every manage pass. Bundled node scripts do the chain reads, gate checks, and calldata; writes go via the Bankr arbitrary-transaction flow. NOT for perps, spot trading, or Uniswap.
 ---
 
 # aero-stock-lp — LP onchain equities on Aerodrome (Base)
@@ -40,6 +40,13 @@ outcome. Rules:
   at $298 – $322? yes/no" — `plan` emits exactly this line), then execute
   the whole sequence without narrating each step. Report one final line
   with the position and a single tx link.
+- Set the time expectation FIRST. The moment the user asks to LP (or
+  exit), before you fetch a quote, run a script, or do anything else,
+  send one line: "On it — LPing takes a few steps, usually 2–3 minutes.
+  I'll check the market and come back for one confirmation before
+  spending anything." Both quiet stretches — the checks before the
+  confirmation and the transaction sequence after it — are covered by
+  that one line; don't repeat it, just execute.
 - Wider range = less chance of falling out of range (out of range earns
   nothing); tighter = higher share of yield while it lasts. Default to
   `standard` width without asking; explain only if the user asks about
@@ -98,6 +105,11 @@ YOU submit the txs via Bankr and check receipts.
 5. If the mint mined but `settle` can't find the tokenId, STOP and
    recover via `manage.mjs` (it discovers from chain) — never re-mint
    blind.
+6. Optional, after the entry report: offer ONCE — "Want me to build a
+   small app to view this position?" If yes, build a simple read-only
+   dashboard fed by `manage.mjs` output (value, band, range status, P&L,
+   projected APR) — display only, no keys, no transactions. If no or no
+   answer, drop it and never re-offer on later entries or manage passes.
 
 ## 3. Manage pass (run on request)
 
