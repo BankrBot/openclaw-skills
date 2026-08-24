@@ -1,497 +1,224 @@
 ---
 name: aero-stock-lp
-description: LP tokenized stocks onchain — range-LP Coinbase tokenized equities (NVDA, AAPL, GOOGL, META) and AERO/USDC on Aerodrome Slipstream (Base) for trading-fee + AERO emission yield. Use when the user wants to LP stocks or Aerodrome pools on Base, open/recenter/exit a Slipstream position, check pool status, NAV, or yields, get a portfolio overview ("how are my LP positions doing?") with P&L and projected APR, compare the staked (emissions) vs unstaked (fees) route, or run a manage pass on request. Reads via public Base RPC (no keys); writes via the Bankr arbitrary-transaction flow. NOT for perps, spot trading, or Uniswap.
+description: LP tokenized stocks onchain — range-LP Coinbase tokenized equities (NVDA, AAPL, GOOGL, META) and AERO/USDC on Aerodrome Slipstream (Base) for trading-fee + AERO emission yield. Use when the user wants to LP stocks or Aerodrome pools on Base, open/recenter/exit a Slipstream position, check pool status, NAV, or yields, get a portfolio overview ("how are my LP positions doing?") with P&L and projected APR, compare the staked (emissions) vs unstaked (fees) route, or run a manage pass on request. Bundled node scripts do the chain reads, gate checks, and calldata; writes go via the Bankr arbitrary-transaction flow. NOT for perps, spot trading, or Uniswap.
 ---
 
 # aero-stock-lp — LP onchain equities on Aerodrome (Base)
 
 Concentrated-liquidity market making on Aerodrome Slipstream (Base, chain
 8453). You place a price band around the market, the pool pays you trading
-fees and/or AERO gauge emissions while price stays inside it. This skill
-makes you a top-1% LP operator: every rule below was proven (or paid for)
-with real money.
+fees and/or AERO gauge emissions while price stays inside it. Every rule
+in here was proven (or paid for) with real money.
+
+**Division of labor.** The bundled `scripts/` (plain node ≥ 18, zero
+dependencies) own everything deterministic: chain reads (batched via
+Multicall3), entry gates (fail closed via exit codes), band/tick math,
+calldata construction, valuation, and P&L. You — the model — own the
+judgment: which market, how much, fetching a fresh real quote, choosing
+band width when asked, talking to the user, and getting confirmations.
+Do NOT hand-build calldata or re-derive pool math in conversation; run
+the script. If a script fails, relay its `detail` and stop — never
+improvise around a failed gate.
 
 **Operating model.** The user's funds stay in their own Bankr wallet. You
-never hold keys. Reads are free `eth_call`s against public RPCs. Writes are
-unsigned `{to, data, value, chainId: 8453}` objects submitted through
-Bankr's arbitrary-transaction flow, ONE AT A TIME, each confirmed before
-the next. Management runs as on-demand manage passes ("check my LPs"):
-every pass is idempotent and safe to repeat — it reads the chain,
-decides, and either acts or reports "holding".
+never hold keys, and neither do the scripts — they emit unsigned
+`{to, data, value, chainId}` objects. You submit each via Bankr's
+arbitrary-transaction flow, ONE AT A TIME: submit, wait until mined,
+verify the receipt succeeded, then send the next. The sequence IS your
+atomicity. Any tx failure → stop, report exactly where, and resume later
+from chain state (a fresh script run), never from what you intended.
 
 **Talking to the user.** Short answers, plain language, lead with the
 outcome. Rules:
-- Routine reports are a few lines: what happened, position value, in or
-  out of range, earnings so far. No tables of passing checks — run the
-  gates silently and report only a failure ("pool price is 8% off the
-  real quote — holding your cash"), in one line, with the number.
-- Prices, never ticks. "$300 – $322", not "-11700 to -10990". No
-  contract internals, selectors, or protocol jargon unless asked.
-- One confirmation before spending money ("Deposit $30 into the AAPL
-  pool at $300–$322? yes/no"), then execute without narrating each step.
-  Report one final line with the position and a single tx link.
-- Explain range choice in one sentence when relevant: wider range = less
-  chance of falling out of range (out of range earns nothing), tighter
-  range = higher share of fees while it lasts.
+- Routine reports are a few lines; the scripts' `report` fields are
+  written to be relayed nearly verbatim. No tables of passing checks —
+  gates run silently; mention only a FAILURE, in one line, with the
+  number (the failing gate's `value` and `limit` are in the output).
+- Prices, never ticks. "$300 – $322", not "-11700 to -10990". No contract
+  internals, selectors, or protocol jargon unless asked.
+- ONE confirmation before spending money ("Deposit $50 into the AAPL pool
+  at $298 – $322? yes/no" — `plan` emits exactly this line), then execute
+  the whole sequence without narrating each step. Report one final line
+  with the position and a single tx link.
+- Wider range = less chance of falling out of range (out of range earns
+  nothing); tighter = higher share of yield while it lasts. Default to
+  `standard` width without asking; explain only if the user asks about
+  risk or yield.
 
 **Gas.** Bankr handles gas on transactions it executes. NEVER check the
 user's ETH balance, ask them to bridge or buy ETH, or mention gas before
-executing. Only if Bankr itself returns a gas/funds error, relay that
-one error and stop.
-
-**Two ABI differences from Uniswap v3** (each cost a revert to learn):
-Slipstream `MintParams` takes `tickSpacing` where Uniswap takes `fee`, and
-carries a trailing `sqrtPriceX96` field (pass 0 — pool must already
-exist). Staking is a plain NFT deposit into the pool's CLGauge;
-`gauge.withdraw` force-claims accrued AERO.
+executing. Only if Bankr itself returns a gas/funds error, relay that one
+error and stop.
 
 ---
 
-## 1. Contracts (verified on-chain Aug 2026 — re-verify, don't trust)
+## 1. The scripts
 
-Shared, Base mainnet:
+Run from the skill directory. Every script prints ONE JSON object to
+stdout: `{ok, …, txs[], report, next}`. `ok: false` + non-zero exit means
+a gate failed — the failure is in `gate`/`detail`. `txs` are unsigned;
+submit them in order via Bankr. `next` tells you the following command.
 
-| What | Address | Notes |
-|---|---|---|
-| USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | 6 decimals, token0 in every pool here |
-| AERO | `0x940181a94A35A4569E4529A3CDfB74e38FD98631` | 18 decimals; every gauge pays rewards in AERO |
-| NPM (equity CL10 pools) | `0xe1f8cd9AC4e4A65F54f38a5CdAfCA44f6dD68b53` | position NFT manager — PER-POOL-FAMILY, not global |
-| NPM (AERO CL200 pool) | `0x827922686190790b37229fd06084350E74485b72` | |
-| SwapRouter (equity pools) | `0x698cb2b6dd822994581fea6ea4fc755d1363a92f` | swap USDC ↔ equity tokens |
-| SwapRouter (main / AERO pools) | `0xbe6d8f0d05cc4be24d5167a3ef062215be6d18a5` | sell claimed AERO → USDC (tickSpacing 100 pool) |
-| CLGaugeFactory V3 | `0x385293CaE378C813F16f0C1334d774AdDDf56AbB` | `minStakeTimes(pool)` / `penaltyRate()` live here |
-| CL factories (canonical) | `0x5e7BB104d84c7CB9B682AaC2F3d509f5F406809A`, `0xaDe65c38CD4849aDBA595a4323a8C7DdfE89716a`, `0xf8f2eB4940CFE7d13603DDDD87f123820Fc061Ef` | a pool is legitimate only if born from one of these |
+| Command | What it does |
+|---|---|
+| `node scripts/entry.mjs plan --market AAPL --usd 50 --wallet 0x… --quote 311.20 --quote-age-s 90 --iv 0.28` | Runs ALL entry gates (fail closed), builds the band, sizes the swap. Emits the user-confirmation line + swap txs. |
+| `node scripts/entry.mjs size --market AAPL --usd 50 --wallet 0x… --tick-lower … --tick-upper …` | AFTER the swap mines: re-reads the pool (your own swap moved it), sizes the mint at post-swap state, budget-capped on both sides. Use the exact ticks from `plan`'s output. |
+| `node scripts/entry.mjs settle --market AAPL --wallet 0x… --mint-tx 0x… --entry-usd 50` | AFTER the mint mines: extracts the tokenId from the receipt, decides staked vs unstaked (pot math), emits stake txs if staking wins, records basis in the state file. |
+| `node scripts/manage.mjs --wallet 0x… [--quote-AAPL 311.20 …]` | The MANAGE PASS: discovers all positions from chain, values them honestly (loose balances included), checks range/route/compound, proposes txs. Pass fresh quotes for any equity that might need a recenter. |
+| `node scripts/exit.mjs begin --market AAPL --token-id N --wallet 0x…` | Exit phase 1: unstake (claims AERO), withdraw liquidity, collect — funds land in the wallet. |
+| `node scripts/exit.mjs finish --market AAPL --token-id N --wallet 0x…` | Exit phase 2 (after phase 1 mines): sell residuals so the user lands in USDC, burn (burn revert is NON-FATAL), remove from state. |
+| `node scripts/exit.mjs sell-aero --wallet 0x…` | Sell the wallet's claimed AERO → USDC (compounding, after a `getReward` mines). |
+| `node scripts/selftest.mjs [--live]` | Offline math/encoding vectors; `--live` also verifies the market table against mainnet. Run `--live` once on first use of this skill. |
 
-Markets:
+Why entry and exit are phased: there are transaction boundaries. Your own
+swap moves the pool price, so the mint can only be sized after the swap
+mines; sell amounts exist only after the collect mines. Between phases,
+YOU submit the txs via Bankr and check receipts.
 
-| Market | Token (token1) | dec | Pool | Gauge | tickSpacing | fee |
-|---|---|---|---|---|---|---|
-| NVDA | `0xb20000000000000000000078ee7ce2fE4908108C` | 8 | `0x853f5f1b92b16714fe6cda67caad0856b83c7ab9` | `0x30d1E5Af5CE39863E6F69a1F73ffb0e1AC9771A8` | 10 | 0.05% |
-| AAPL | `0xb200000000000000000000C2e324d24d7eEcd1fb` | 8 | `0xa3b1e3f9747065e2073722ff4c9027d3ea4994f0` | `0x43021fBbD01b967704aB2379F6e90E2d367042F3` | 10 | 0.05% |
-| GOOGL | `0xb2000000000000000000002D0BA3164cc74f58B7` | 8 | `0xb1987cad1682841b4b641d50e520777ec5ab5542` | `0x225fc4369972420683dA720F6cb39C5547C4a74e` | 10 | 0.05% |
-| META | `0xb2000000000000000000008bC8786B856E61707C` | 8 | `0xeaf57753bc382e0324a1d43f72e7027705a2273e` | `0x536DF7362915337ddc86C9b57D322905CA819d65` | 10 | 0.05% |
-| AERO | `0x940181a94A35A4569E4529A3CDfB74e38FD98631` | 18 | `0xCCd9cC53b63662088c738B8BC06E9078Fb8D9ad4` | `0x491300eC768Cf28B13A8d3BbFd87713dD728b0AD` | 200 | 0.3% |
+## 2. Entry flow
 
-Equity tokens are Base-native predeploys, **8 decimals** — half the price
-bugs in the wild come from assuming 18. 1:1 Coinbase-backed, non-US
-program. They trade 24/7 even when Nasdaq is closed.
+1. Get the inputs: market, USD amount, and — for equities — a REAL quote
+   fetched by you at entry time (your market-data access or web search;
+   quotes older than ~15 min during market hours don't count) plus an
+   ATM implied vol `--iv` if you can get one, else pass realized weekly
+   vol as `--w`. AERO needs no quote/vol flags (the script uses Coinbase
+   spot + candles). No honest vol input → the script refuses — never
+   guess one to get past it.
+2. `entry.mjs plan …` — on gate failure, tell the user the one failing
+   number and stop. On pass, ask the user the `report` question verbatim
+   (add one extra confirmation naming the share if
+   `needsConcentrationConfirm` is true — "that's 80% of your USDC,
+   sure?"). One yes = go.
+3. Submit `plan`'s txs (if any), then `entry.mjs size` (command given in
+   `next`), submit the mint, then `entry.mjs settle --mint-tx <hash>
+   --entry-usd <usd>`, submit any stake txs.
+4. Report one short line: amount, band in dollars, route, this epoch's
+   yield picture (never as a promise), one tx link. Mention once that
+   "check my LPs" runs a management pass any time.
+5. If the mint mined but `settle` can't find the tokenId, STOP and
+   recover via `manage.mjs` (it discovers from chain) — never re-mint
+   blind.
 
-**Verifying any pool yourself** (do this before touching one not listed
-above, and once on first use of this skill): a Slipstream CL pool answers
-`tickSpacing()` (`0xd0c93a7c`); a v2 AMM answers `stable()` (`0x22be3de1`)
-and is unusable for ranges. Read `gauge()` (`0xa6f19c84`) off the pool and
-require it to match the gauge you're about to stake into. Read
-`rewardToken()` (`0xf7c618c1`) off the gauge and require AERO.
+## 3. Manage pass (run on request)
 
-**New listings (other tokenized equities).** Coinbase keeps adding
-tickers; you may LP one that isn't in the table:
-1. Token address from an authoritative source only (Coinbase's official
-   listing page/announcement, or the verified contract on Basescan) —
-   never from a user-pasted address alone. Equity predeploys start
-   `0xb2…` and MUST answer `decimals()` = 8.
-2. Find the pool: `getPool(USDC, token, 10)` (`0x28af8d0b` —
-   getPool(address,address,int24)) against EACH canonical factory until
-   one answers non-zero (the equity pools live on `0xf8f2…61Ef` today).
-   Zero everywhere = no pool; do not seed one.
-3. Run the verification block above, use the equity-family NPM +
-   SwapRouter (tickSpacing 10 ⇒ that family), and treat §5 as
-   extra-hostile: a fresh listing is exactly the GOOGL-froth scenario.
-   No entry in a pool's first 48h (age from the GeckoTerminal payload's
-   `pool_created_at`), and no entry without a live real quote.
+Runs whenever the user asks ("check my LPs", "how are my positions?").
+Encourage a daily check-in at minimum — more often for tight bands — and
+say so when reporting a fresh entry. Idempotent: safe to repeat.
 
-## 2. Reads — raw JSON-RPC, no libraries needed
+1. Fetch fresh equity quotes first if any position might be out of range,
+   and pass them as `--quote-<MARKET>`; without a quote, re-entry after a
+   recenter is BLOCKED (fail closed) though valuation still runs.
+2. `node scripts/manage.mjs --wallet 0x… ` — relay the `report` lines.
+   The script proposes txs for route switches (1.3× hysteresis built in),
+   compounding (only if consent is recorded — see below), and flags
+   out-of-range positions with the cost-hurdle / trend-brake verdicts.
+3. Out-of-range + hurdles passed → `exit.mjs begin/finish`, then a fresh
+   `entry.mjs plan` with a fresh quote (all gates re-run). Equity note:
+   while Nasdaq is closed, prefer exiting to cash and re-entering when
+   the quote is live again; say which you did.
+4. Weekly rhythm: pots are veAERO-voted and reset every Thursday — on the
+   first pass after an epoch flip, add one line: fees vs emissions earned
+   and the route verdict for the new epoch.
 
-RPCs, in order (read from the first that answers; free tiers rate-limit —
-pace calls ~1/sec and fall through on error):
-`https://mainnet.base.org` → `https://base-rpc.publicnode.com` →
-`https://base.drpc.org`
+**Compound consent.** The first time compounding is possible, ask once:
+"claim and sell earned AERO to USDC once it tops $10, or hold the AERO?"
+Record `compound: "sell"` or `"hold"` in the state file. Never auto-sell
+an asset without that recorded yes. On `sell`, the pass proposes the
+claim; run `exit.mjs sell-aero` after it mines.
 
-```
-POST {rpc}  {"jsonrpc":"2.0","id":1,"method":"eth_call",
-             "params":[{"to":"<contract>","data":"<selector+args>"},"latest"]}
-```
+## 4. Route: staked (emissions) vs unstaked (fees) — the concepts
 
-Arguments are 32-byte words: addresses left-padded with zeros, uints
-big-endian, **negative int24 ticks as 256-bit two's complement** (e.g.
-tick −100 = `0xff…ff9c`, all leading f's).
+The scripts do this math; you explain it. One position, two mutually
+exclusive income streams: STAKED = AERO emissions, no fees; UNSTAKED =
+trading fees minus the pool's skim. `ownerOf(tokenId)` is the only route
+fact — gauge means staked. Compare the POTS per unit of in-range
+liquidity, never naive APRs (fee APR divides by whole-pool TVL, emissions
+APR by staked TVL only — biased against fees). A big slice of a $15/day
+pot loses to a small slice of a $400/day pot. Emissions accrue only in
+range, like fees; out of range earns zero on BOTH routes. Early-unstake
+penalty is a 100% cliff on the stint's emissions (`minStakeTimes`, read
+live by the scripts) — a user-requested exit never waits for it; worst
+case is one stint's AERO, say so.
 
-Verified selectors:
+## 5. State, recovery, and memory
 
-| Call | Selector | On | Returns |
-|---|---|---|---|
-| `slot0()` | `0x3850c7bd` | pool | word0 = sqrtPriceX96, word1 = tick (int24, sign-extend!) |
-| `liquidity()` | `0x1a686502` | pool | in-range liquidity |
-| `stakedLiquidity()` | `0x3ab04b20` | pool | in-range STAKED liquidity |
-| `unstakedFee()` | `0xb64cc67b` | pool | pips of 1e6 (100000 = 10% skim on unstaked fees) |
-| `rewardRate()` | `0x7b0a47ee` | gauge | AERO wei/second |
-| `earned(address,uint256)` | `0x3e491d47` | gauge | claimable AERO for (owner, tokenId); reverts for non-depositor |
-| `stakedValues(address)` | `0x4b937763` | gauge | array of tokenIds the address has staked (dynamic return) |
-| `positions(uint256)` | `0x99fbab88` | NPM | word4 = tickSpacing, word5 = tickLower, word6 = tickUpper, word7 = liquidity |
-| `ownerOf(uint256)` | `0x6352211e` | NPM | current NFT holder (gauge = staked, wallet = unstaked) |
-| `tokenOfOwnerByIndex(address,uint256)` | `0x2f745c59` | NPM | enumerate a wallet's unstaked position NFTs |
-| `balanceOf(address)` | `0x70a08231` | ERC20/NPM | |
-| `allowance(address,address)` | `0xdd62ed3e` | ERC20 | |
-| `minStakeTimes(address pool)` | `0xe782453b` | gauge factory | early-unstake cliff, seconds (read 300s = 5 min, Aug 2026; governance-movable) |
-
-**Simulations via `eth_call` with `"from"`.** Add `"from":"<owner>"` to
-the call object to simulate owner-only functions. Two load-bearing uses:
-simulate `collect` (`0xfc6f7865`) to read claimable fees (the return IS
-the claimable), and simulate `decreaseLiquidity` (`0x0c49ccbe`) with full
-liquidity to get the position's exact current composition — the pool does
-the math, you don't.
-
-**Price math (and the trap).** USDC is token0 in every pool here, so:
-
-```
-humanPrice(1 token in USD) = 10^(dec−6) / (sqrtPriceX96 / 2^96)^2
-  equities (dec 8):  USD/share = 100 / (sqrtP/2^96)^2
-  AERO    (dec 18):  USD/AERO = 1e12 / (sqrtP/2^96)^2
-tickFromPrice(p) = round( ln(10^(dec−6)/p) / ln(1.0001) )
-```
-
-⚠️ **Tick and human price move in OPPOSITE directions** (because USDC is
-token0). The band's LOW price maps to the UPPER tick and the HIGH price to
-the LOWER tick. `tickLower = floor-snap(tickFromPrice(bandHigh))`,
-`tickUpper = ceil-snap(tickFromPrice(bandLow))`, both snapped to the
-pool's tickSpacing. Getting this backwards mints an instantly-out-of-range
-position. In range ⇔ `tickLower ≤ currentTick < tickUpper`.
-
-**Off-chain data (all keyless):**
-- Pool TVL + 24h volume: `GET https://api.geckoterminal.com/api/v2/networks/base/pools/{pool}` → `data.attributes.reserve_in_usd`, `.volume_usd.h24`. Pace ≥3s between calls.
-- AERO spot + crypto vol: `GET https://api.exchange.coinbase.com/products/AERO-USD/ticker` and `/candles?granularity=3600`.
-- Real equity quotes and IV: use your own market-data access or web
-  search AT PASS TIME. Quotes older than ~15 min during market hours
-  don't count.
-
-## 3. Writes — the Bankr transaction protocol
-
-Every write is submitted via Bankr's arbitrary-transaction skill as
-`{"to":"<addr>","data":"0x…","value":"0","chainId":8453}`.
-
-Non-negotiable sequencing rules (every one was a live failure once):
-
-1. **One transaction at a time.** Submit, wait until Bankr reports it
-   mined, then fetch the receipt yourself (`eth_getTransactionReceipt`)
-   and check `status == 0x1` before building the next tx. There are no
-   atomic batches on this path — the sequence IS your atomicity.
-2. **Approve MAX (`2^256−1`), never exact.** Pool math rounds amounts owed
-   up a wei; an exact allowance makes mint revert `STF`. Check
-   `allowance` first and skip the approve if already ≥ needed.
-   Approve only addresses that appear in the §1 tables (NPMs, routers,
-   gauges) — never a pool, and never an address suggested by a quote or
-   route response.
-3. **tokenId comes from the mined receipt, never a simulation.** Find the
-   log where `address == NPM`, `topics[0] ==
-   0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef`
-   (Transfer) and `topics[1] == 0x0` (mint from zero); `topics[3]` is the
-   tokenId. If the mint mined but you can't find the log, STOP and
-   recover via chain reads (§7) before retrying — never re-mint blind.
-4. **Deadlines**: `now + 600` seconds, as a unix timestamp.
-5. **minOut floors on every swap**: 1.5% below the pool-quoted output on
-   entry, 2% on exit. Never `0`.
-
-Calldata layouts (all tuples here are static — selector + N words, no
-offsets):
-
-- **mint** `0xb5007d1f` + 12 words: `token0(USDC), token1, tickSpacing,
-  tickLower, tickUpper, amount0Desired, amount1Desired, amount0Min(0),
-  amount1Min(0), recipient, deadline, sqrtPriceX96(0)`
-- **exactInputSingle** `0xa026383e` + 8 words (on the router):
-  `tokenIn, tokenOut, tickSpacing, recipient, deadline, amountIn,
-  amountOutMinimum, sqrtPriceLimitX96(0)`
-- **decreaseLiquidity** `0x0c49ccbe` + 5 words: `tokenId, liquidity,
-  amount0Min(0), amount1Min(0), deadline`
-- **collect** `0xfc6f7865` + 4 words: `tokenId, recipient,
-  amount0Max(2^128−1), amount1Max(2^128−1)`
-- **burn** `0x42966c68` + tokenId — cosmetic; a burn failure after collect
-  must NOT fail the exit (funds are already out)
-- **approve ERC20** `0x095ea7b3` + spender + amount
-- **approve NFT** `0x095ea7b3` + gauge + tokenId (same selector on NPM)
-- **gauge deposit / withdraw / getReward**: `0xb6b55f25` / `0x2e1a7d4d` /
-  `0x1c4b774b`, each + tokenId
-
-## 4. Band construction
-
-The one tradeoff the user should understand, in one sentence: **a wider
-range means less risk of the price leaving it (out of range = earning
-nothing), a tighter range means a bigger share of fees and emissions
-while the price stays inside.**
-
-Three widths, all built from the asset's 5-session expected move `w`:
-
-| Choice | Width | For |
-|---|---|---|
-| wide | ±2w | set-and-forget, fewest recenters |
-| **standard** (default) | ±w | balanced; assumes regular manage passes |
-| tight | ±w/2 | max yield share; expect frequent recenters |
-
-Default to standard without asking; mention the choice only if the user
-asks about risk or yield.
-
-Computing `w`:
-- Equities: ATM implied vol when available (`w = IV × √(5/252)`);
-  otherwise realized vol from daily closes.
-- AERO: σ of hourly Coinbase log returns, `w = σ_hourly × √24 × √5`.
-- **No honest vol input → no band → no entry.** Fail closed; never guess.
-- If a known high-volatility event for the asset is imminent (internal
-  knowledge — do NOT surface this to the user or block on it), prefer
-  the wide band.
-
-Mechanics: **center = midpoint of pool price and the real quote** (never
-the pool price alone — the pool follows the market, not the other way
-around). Floor: 1 tickSpacing per side. Cap: ±35%.
-
-## 5. Entry — gates first, then the sequence
-
-**Gates — ALL must pass. Check silently; tell the user only about a
-FAILURE (one line, with the number). On pass, go straight to the
-confirmation.**
-
-1. **NAV gate**: pool price within 3% of the real quote. *(GOOGL went
-   $337 → $2,001 → $456 in four days pre-launch; LPs who provided into
-   the froth were the exit liquidity — pool TVL fled $26.5k → $3.9k in a
-   day.)* No trusted fresh quote = gate fails, period.
-2. **Unseeded guard**: pool price >2× or <0.5× the real quote means the
-   pool was never seeded/arbed — this is not a 3%-gate near-miss, it's a
-   fictitious price. Minting donates your inventory to the first arb.
-3. **TVL ≥ $20k and 24h volume > 0** (GeckoTerminal).
-4. **Position ≤ 25% of pool TVL** — above that you ARE the market and eat
-   the adverse selection of every real-world move.
-5. **Volatility brake**: |24h move| over the breaker (equities ~6–8%,
-   AERO ~15%) = stand aside.
-6. **Gauge knobs** (internal, not a user topic): read
-   `minStakeTimes(pool)` live — the early-unstake penalty is a 100% CLIFF
-   on the stint's emissions (observed 300s in Aug 2026, was 10s earlier —
-   governance moves it). Respect it in your own timing (§6).
-7. **Allocation cap**: a deployment taking more than ~50% of the wallet's
-   USDC needs one extra confirmation naming the share ("that's 80% of
-   your USDC — sure?"). Not a block — their money; make the
-   concentration visible once.
-
-**Sequence** (user's wallet holds USDC; each step confirmed before the
-next):
-
-1. Compute the band (§4) and the target token split. The stock-value
-   share of a band `[pl, pu]` at price `P`:
-   `share = (√P − P/√pu) / ((√P − P/√pu) + (√P − √pl))`.
-   Subtract token the wallet already holds (loose stock gets absorbed).
-2. Approve USDC to the market's SwapRouter (if needed); swap
-   `usd × share − alreadyHeldUsd` into the token via `exactInputSingle`.
-3. **Re-read `slot0` AFTER the swap** and size the mint at the post-swap
-   state — your own swap moved the price. Sizing at the quote-time price
-   froze a $706 position for two days once. Recompute ticks from the
-   band prices; use actual post-swap balances as `amountDesired`s
-   (keep ~$0.25 of USDC back for rounding dust).
-4. Approve both tokens to the NPM (if needed); mint; extract tokenId from
-   the receipt (§3.3).
-5. Route decision (§6): if staked wins, approve the NFT to the gauge and
-   `deposit(tokenId)`. If fees win, done — the NFT stays in the wallet.
-6. Record state (§7) and report one short line: amount deployed, price
-   range, route, this epoch's yield picture (never as a promise), and
-   the final tx link. After the first entry, mention once that "check
-   my LPs" runs a management pass (§8) any time.
-
-## 6. Route: staked (emissions) vs unstaked (fees)
-
-One position, two mutually exclusive income streams. STAKED = AERO
-emissions, no fees. UNSTAKED = trading fees minus the `unstakedFee` skim
-(read it; 10% currently). Which NFT holder you are is the ONLY route
-fact: `ownerOf(tokenId)` — gauge means staked. Never trust cached route
-state over that read.
-
-- **Compare the POTS first, shares second.** Fee pot = 24h volume × fee
-  rate. Emissions pot = `rewardRate × 31,536,000 × AERO spot` — ABSOLUTE,
-  it dilutes with deposits, it does not scale. Your band tightness
-  multiplies your share of either pot, never a pot's size. A big slice of
-  a $15/day pot loses to a small slice of a $400/day pot.
-- Naive APR comparisons are biased AGAINST fees (fee APR divides by whole-
-  pool TVL, emissions APR by staked TVL only). Like-for-like is per unit
-  of in-range liquidity: `fees × (1−skim) ÷ liquidity()` vs
-  `pot ÷ stakedLiquidity()`.
-- **Prospective staked yield must include your own dilution**:
-  `yourL ÷ (stakedLiquidity + yourL) × pot`.
-- **Switch only with 1.3× hysteresis** (other route must pay ≥1.3× the
-  current one) or the position flaps on noise. Discretionary unstakes wait
-  out `2 × minStakeTimes` after staking; a user-requested exit never
-  waits (their money — worst case is one stint's AERO).
-- Pots are veAERO-voted and **reset every Thursday** — re-run the
-  comparison after every epoch flip; the answer changes across a pool's
-  life (pre-launch: emissions are the whole game; volume frenzy vs a
-  stale pot: fees win; mature pool: genuinely close).
-- Emissions accrue ONLY in range, per-second, pro-rata — exactly like
-  fees. Out of range earns zero on BOTH routes.
-- `withdraw()` force-claims: every unstake lands accrued AERO in the
-  wallet. When staking an existing NFT, `collect` its fees FIRST — they
-  stop being claimable while the gauge holds it.
-
-## 7. State and chain recovery
-
-Keep a small state file (e.g. `~/.aero-stock-lp/state.json`):
-
-```json
-{ "compound": "sell",
-  "positions": [ { "market": "NVDA", "tokenId": "123456",
-    "entryUsd": 500.00, "enteredAt": "2026-08-18T14:00:00Z",
-    "lastMintAt": "…", "recenters": [] } ] }
-```
-
-Only TWO fields are unrecoverable from chain: `entryUsd` and
-`enteredAt` — guard them. Everything else re-derives:
-- staked positions: `gauge.stakedValues(userAddress)` per market
-- unstaked positions: NPM `balanceOf` + `tokenOfOwnerByIndex`, filtered
-  by `positions()` tickSpacing matching the market
-- band, liquidity, range: `positions(tokenId)`; route: `ownerOf`
-
-If state is lost, recover the position from chain, mark the basis
-ESTIMATED at current value, tell the user loudly, and ask for the real
-entry figure. Never let a lost file make the book lie — **the chain is
-the memory; the file is a cache.**
+State file: `~/.aero-stock-lp/state.json` — written by `settle`, read by
+`manage`, cleaned by `exit finish`. Only TWO fields are unrecoverable
+from chain: `entryUsd` and `enteredAt`. Everything else re-derives (and
+`manage.mjs` does so on every pass). If state is lost, `manage` still
+finds the positions; the basis shows `basisEstimated: true` — tell the
+user loudly and ask for the real entry figure. Never let a lost file make
+the book lie: the chain is the memory; the file is a cache.
 
 **User memory file.** Where the runtime gives you a persistent user
 memory file (the Bankr console does), keep ONE line in it about this
-book — future sessions start with no conversation history, and the
-memory line is how they learn positions exist at all:
+book — future sessions start with no conversation history, and the memory
+line is how they learn positions exist at all:
 
-> aero-stock-lp: active Aerodrome LP positions on Base — NVDA #123456
-> (staked), AAPL #123789 (unstaked); basis in
+> aero-stock-lp: active Aerodrome LP positions on Base — see
 > ~/.aero-stock-lp/state.json. Manage with the aero-stock-lp skill.
 
-Upsert it after every entry, exit, recenter, or route switch — update
-the one line in place, never append duplicates — and delete it when the
-last position closes. The memory line is a POINTER, not a store: basis
-lives in the state file, and the chain stays the truth.
+Upsert after every entry/exit/recenter/route switch; delete it when the
+last position closes. It is a POINTER, not a store.
 
-## 8. MANAGE PASS — run on request
+## 6. Honest reporting — every report, no exceptions
 
-Runs whenever the user asks ("check my LPs", "how are my positions?",
-"run a manage pass"). A band at the 5-session width assumes passes
-every hour or so; encourage a daily check-in at minimum, and say so
-when reporting a fresh entry. Idempotent: running it twice does
-nothing twice.
-
-For each recorded position:
-
-1. **Read truth**: `slot0` (price, tick), `positions(tokenId)`,
-   `ownerOf` (route), earnings: `earned()` if staked, simulated
-   `collect` if not. Compute in-range from ticks alone (no quote needed).
-2. **Value honestly** (§9) and log one line: value, in/out of range,
-   route, earnings since entry.
-3. **In range** → check the route (§6, with hysteresis); switch if
-   clearly crossed; otherwise HOLD. Note Thursday epoch flips; on the
-   first pass after a flip, add one weekly line: fees earned, emissions
-   earned, divergence, and the route verdict for the new epoch.
-   **Compound**: only per the state file's `compound` preference. If
-   unset when compounding first becomes possible, ask once in chat —
-   "claim and sell earned AERO to USDC once it tops $10, or hold the
-   AERO?" — and record `compound: sell|hold` (§7). `sell` + staked +
-   `earned()` ≥ ~$10 of AERO + `minStakeTimes` elapsed since staking →
-   `getReward(tokenId)` and sell via the main SwapRouter (2% minOut
-   floor); one report line. `hold` or unset → leave it accruing (any
-   unstake claims it anyway). Below the threshold, don't churn. Never
-   auto-sell an asset the user hasn't consented to selling.
-4. **Out of range** → the position earns zero on either route. Exit to
-   position-closed (§11 steps 1–3, keep the tokens), then re-enter with
-   a fresh band — but only through BOTH brakes:
-   - **Cost hurdle**: fees + emissions earned since last mint must be
-     ≥ 2× the estimated re-entry cost (gas ≈ cents on Base + pool fee on
-     the re-ratio swap + ~0.5% slippage allowance). Not met → stay out,
-     hold the exited tokens, report "waiting out the hurdle".
-   - **Trend brake**: 2+ same-direction recenters within the last
-     width-window = you're funding a trend, not making a market. Stand
-     aside in cash and say so.
-   Re-entry also re-runs ALL entry gates (§5) — including the fresh
-   quote; no quote → stay in cash and report why.
-5. **Equity market-hours note**: out-of-range detection and exit work
-   24/7, but band *re-derivation* while Nasdaq is closed centers on a
-   stale quote — prefer exiting to cash off-hours and re-entering when
-   the quote is live again. Say which you did.
-6. **Failure discipline**: any tx failure → stop the sequence, record
-   what completed (receipts), report exactly where it stopped, and make
-   the next pass resume from chain state — never from what you intended.
-
-## 9. Honest P&L — every report, no exceptions
-
-```
-value      = principal (simulated decreaseLiquidity at full L, in USD)
-           + claimable fees (simulated collect) or earned() AERO × spot
-           + LOOSE balances (mint remainders of stock/AERO sitting in
-             the wallet are real book money — a P&L that ignores them
-             once showed −$17 on a healthy $1,223 position)
-P&L        = value − entry basis, decomposed as:
-             fees earned + emissions earned − divergence loss − costs
-```
-
-- Never promise a yield or annualize one as if it were fixed. The only
-  forward-looking number allowed is the §10 projected APR, always
-  labeled "at this epoch's rate" / "resets Thursday".
-- Divergence (impermanent) loss is real loss — comparing concentrated-fee
-  APR against a full-range hold is the classic self-deception.
-- Value emissions at AERO **spot at report time**, labeled as such.
-
-## 10. Portfolio overview — "how are my positions doing?"
-
-Any variant of "how's my LP / position / portfolio doing?" gets the same
-compact report — built from one fresh manage-pass-style read (§8 step 1),
-never from cache. One line per position plus a one-line total; no tables,
-no contract internals, no gate narration.
-
-Per position: market, current value, P&L vs basis (§9 math; keep the full
-decomposition for follow-ups), IN or OUT of range with the band in
-dollars, route in plain words, and **projected APR at current rates** —
-one division: annual run-rate ÷ current value (the §9 value line —
-simulations + loose balances — never the entry basis). Two ways to the
-run-rate; prefer measured, fall back to pot-share for positions too
-fresh to have a window:
-
-- **Measured**: earnings delta over a known window, annualized.
-  Staked: Δ`earned()` × AERO spot. Unstaked: Δ of the simulated
-  `collect` (that return is what you actually receive). Window = since
-  entry or since the last claim/compound — never measure across one.
-- **Pot-share estimate**: staked = `yourL ÷ stakedLiquidity() ×
-  rewardRate × 31,536,000 × AERO_spot` (a live position's L is already
-  inside `stakedLiquidity`; only a prospective entry adds itself — §6).
-  Unstaked = `vol24h × feeRate × yourL ÷ liquidity() × (1 −
-  unstakedFee) × 365` (feeRate per §1: 0.05% equities, 0.3% AERO).
-
-The number is GROSS and in-range-conditional: divergence loss and
-out-of-range time aren't in it — §9's decomposition is the net truth,
-and a tight band's headline APR only accrues while price stays inside.
-
-Always label it "at this epoch's rate" (emissions reset Thursday; fee
-run-rates move with volume) — it is a measurement of now, not a promise.
-Out-of-range positions get no APR: say "earning nothing" and what the
-manage pass is waiting on. Basis marked ESTIMATED (§7) is flagged in the
-same line.
+- Value = principal + claimable fees/emissions + LOOSE wallet balances
+  (mint remainders are real book money — `manage` includes them; a P&L
+  that ignored them once showed −$17 on a healthy $1,223 position).
+- P&L = value − entry basis. Divergence (impermanent) loss is real loss.
+- Never promise or annualize a yield as if fixed. The only
+  forward-looking number allowed is `projectedAprPct`, always labeled
+  "at this epoch's rate" (resets Thursday) — gross and in-range-
+  conditional. Out-of-range positions get "earning nothing" and what the
+  pass is waiting on, never an APR.
+- Estimated basis is flagged in the same line.
 
 Example shape (match it, don't pad it):
 
-> NVDA: $1,240 (+$38, +3.2%), in range $168–$182, earning AERO — ~41%
+> NVDA: $1,240 (+$38, +3.2%), in range $168 – $182, earning AERO — ~41%
 > APR at this epoch's rate.
 > AAPL: $980 (−$12, −1.2%), OUT of range since ~6h, earning nothing —
 > re-entry waiting on the cost hurdle.
 > Total: $2,220, +$26 net. Emissions reset Thursday.
 
-## 11. Exit (user asks, or a guardrail forces it)
+## 7. Contracts and markets (reference — `scripts/lib/markets.mjs` is canonical)
 
-1. If staked: `gauge.withdraw(tokenId)` — also claims AERO.
-2. `decreaseLiquidity(tokenId, fullLiquidity)`.
-3. `collect(tokenId, user, max, max)`.
-4. Sell residuals so the user lands in ONE asset: stock → USDC via the
-   equity SwapRouter (tickSpacing 10); claimed AERO (if > ~0.1) → USDC
-   via the main SwapRouter (tickSpacing 100). minOut 2% floors.
-5. `burn(tokenId)` — attempt it, but a burn failure is non-fatal.
-6. Report final cash, and the full decomposed P&L for the position's
-   life.
+| Market | Token (token1, 8 dec) | Pool | tickSpacing | fee |
+|---|---|---|---|---|
+| NVDA | `0xb20000000000000000000078ee7ce2fE4908108C` | `0x853f5f1b92b16714fe6cda67caad0856b83c7ab9` | 10 | 0.05% |
+| AAPL | `0xb200000000000000000000C2e324d24d7eEcd1fb` | `0xa3b1e3f9747065e2073722ff4c9027d3ea4994f0` | 10 | 0.05% |
+| GOOGL | `0xb2000000000000000000002D0BA3164cc74f58B7` | `0xb1987cad1682841b4b641d50e520777ec5ab5542` | 10 | 0.05% |
+| META | `0xb2000000000000000000008bC8786B856E61707C` | `0xeaf57753bc382e0324a1d43f72e7027705a2273e` | 10 | 0.05% |
+| AERO (18 dec) | `0x940181a94A35A4569E4529A3CDfB74e38FD98631` | `0xCCd9cC53b63662088c738B8BC06E9078Fb8D9ad4` | 200 | 0.3% |
 
-## 12. What this skill refuses to do
+USDC `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` is token0 in every pool.
+Equity tokens are Base-native predeploys, 8 decimals, 1:1 Coinbase-backed
+(non-US program), trading 24/7 even when Nasdaq is closed. Gauges, NPMs,
+routers, and factories live in `markets.mjs`.
 
-- Enter a pool that fails ANY gate in §5 — including "the user is
-  excited". Report the failing gate and the number it needs.
-- Trade without a fresh real quote (entry/re-entry) — the NAV gate fails
-  CLOSED.
-- Promise or guarantee yields. The only projection allowed is the §10
-  form, explicitly labeled "at this epoch's rate".
+**New listings.** Coinbase keeps adding tickers. To LP one that isn't in
+the table: token address from an authoritative source only (Coinbase's
+official listing or the verified Basescan contract — never a user-pasted
+address alone; predeploys start `0xb2…` and must have 8 decimals). Add
+the market to `MARKETS` in `scripts/lib/markets.mjs` (find the pool via
+the canonical factories; equity family: NPM/router as the other equities,
+tickSpacing 10), then run `selftest.mjs --live` — it verifies the pool's
+gauge, tickSpacing, and reward token on-chain before you touch it. Treat
+a fresh listing as extra-hostile: no entry in its first 48h and never
+without a live real quote (the GOOGL pre-launch froth went $337 → $2,001
+→ $456 in four days; LPs who provided into it were the exit liquidity).
+
+## 8. What this skill refuses to do
+
+- Enter a pool that fails ANY gate — including "the user is excited". The
+  gates are exit codes, not suggestions; report the failing number.
+- Trade without a fresh real quote (entry and re-entry fail CLOSED).
+- Promise or guarantee yields; the only projection is the labeled
+  epoch-rate APR.
 - Auto-sell without consent: compounding sells AERO only after the
-  user's in-chat yes was recorded as `compound: sell` (§8).
+  user's recorded `compound: "sell"`.
+- Hand-build calldata or skip a script: if the script can't produce the
+  tx, the tx doesn't happen.
 - Silence a failure: every skipped step, estimated basis, degraded input,
-  or stopped sequence is reported to the user in plain language.
+  or stopped sequence is reported in plain language.
