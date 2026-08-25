@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "walcert",
+  "provider": "Global Score Agent",
+  "providerUrl": "https://globalscoreagent.com",
+  "demo": {
+    "title": "preview-origins.sh",
+    "language": "bash",
+    "code": "curl -sS -X POST https://walcert.globalscoreagent.com/v1/preview/origins \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"wallet_address\":\"0x0000000000000000000000000000000000000001\"}'"
+  },
+  "setup": [
+    "Install this skill from the Walcert GitHub folder (source of truth; Bankr Discover PR is optional).",
+    "For a signed certificate, the host wallet needs USDC on Base for x402 ($0.05).",
+    "Do not wrap Walcert on x402 Cloud. Call walcert.globalscoreagent.com directly."
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Global Score Agent",
+    "command": "install the walcert skill from https://github.com/GlobalScoreAgent/walcert-agent/tree/main/skills/walcert",
+    "reference": null
+  }
+}
