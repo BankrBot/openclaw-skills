@@ -36,9 +36,9 @@ Use `read_contract` on Base before fetching or submitting a proof. Read:
 - Airdrop `claimDeadline() view returns (uint64)`; require `1795397419` and ensure it has not passed.
 - Airdrop `hasClaimed(address) view returns (bool)` for the connected wallet; stop if `true`.
 - Airdrop `claimedCount() view returns (uint256)`.
-- WOLF `balanceOf(address) view returns (uint256)` for the airdrop address; require it to equal `(500 - claimedCount) * 6000000000000000000000000` exactly.
+- WOLF `balanceOf(address) view returns (uint256)` for the airdrop address; require it to be at least `(500 - claimedCount) * 6000000000000000000000000`.
 
-If the WOLF balance differs from the exact outstanding liability, tell the user the airdrop is not fully funded or is awaiting reconciliation. Do not call `claim` and do not retry blindly. Before the first claim, the required balance is exactly `3000000000000000000000000000` raw WOLF.
+If the WOLF balance is below the outstanding liability, tell the user the airdrop is not fully funded or is awaiting reconciliation. Do not call `claim` and do not retry blindly. A surplus does not block claims; anyone can transfer extra WOLF to the distributor. Before the first claim, the minimum required balance is `3000000000000000000000000000` raw WOLF.
 
 ### 2. Fetch the connected wallet's proof
 

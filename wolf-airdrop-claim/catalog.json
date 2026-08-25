@@ -14,7 +14,7 @@
     "Base mainnet only — WOLF token: `0x73AC2806C40AB4741ea7a35B7328ACA957755ba3`",
     "Verified distributor: `0xA9C8829c74618b8B245AD8140658A75Aa19043de`",
     "Each eligible Bankr Club Top-500 wallet can claim 6,000,000 WOLF once",
-    "Claims remain blocked until the distributor holds the exact outstanding WOLF liability"
+    "Claims remain blocked until the distributor holds at least the outstanding WOLF liability"
   ],
   "install": {
     "type": "bankr",
