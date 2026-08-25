@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "wolf-airdrop-claim",
+  "provider": "Bankr",
+  "providerUrl": "https://bankr.bot",
+  "logo": null,
+  "demo": {
+    "title": "claim-wolf.sh",
+    "language": "bash",
+    "code": "# Check eligibility and funding without sending a transaction\nbankr prompt \"Check whether my wallet is eligible for the WOLF Top-500 airdrop\"\n\n# Claim after the distributor is fully funded\nbankr prompt \"Claim my WOLF airdrop\""
+  },
+  "setup": [
+    "Install: `install the wolf-airdrop-claim skill from https://github.com/BankrBot/skills/tree/main/wolf-airdrop-claim`",
+    "Base mainnet only — WOLF token: `0x73AC2806C40AB4741ea7a35B7328ACA957755ba3`",
+    "Verified distributor: `0xA9C8829c74618b8B245AD8140658A75Aa19043de`",
+    "Each eligible Bankr Club Top-500 wallet can claim 6,000,000 WOLF once",
+    "Claims remain blocked until the distributor holds the exact outstanding WOLF liability"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "wolf-airdrop-claim",
+    "command": "install the wolf-airdrop-claim skill from https://github.com/BankrBot/skills/tree/main/wolf-airdrop-claim"
+  }
+}
