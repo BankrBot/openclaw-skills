@@ -9,13 +9,13 @@ client, use `references/vanilla-x402-flow.md`.
 
 - Wallet provisioning is already handled in typical Bankr setups.
 - Signing and submission tooling is streamlined for agents.
-- Bankr signing path requires `X-API-Key` credentials for Bankr Agent API calls (for example, `/agent/sign`).
+- Bankr signing path requires `X-API-Key` credentials for Bankr Wallet API calls (for example, `/wallet/sign`). The legacy `/agent/sign` and `/agent/submit` endpoints were removed upstream.
 
 ## What `bankr x402 call` Will and Won't Do — Cap It
 
 `bankr x402 call <url>` pays **whatever the endpoint's challenge requires**, in whatever
 supported token/chain the Bankr wallet holds, and its only client-side guard is
-`--max-payment` (CLI default **$1**, max $10 — 40×–400× any Quotient route price). The
+`--max-payment` (CLI default **$1**, max $10 — above every published Quotient route price). The
 Bankr wallet signs internally, so on this path nothing can inspect the typed data before it
 is signed. Consequences:
 
@@ -40,12 +40,13 @@ is signed. Consequences:
   reporting) has authorized the spend. Never call `bankr x402 call -y` directly.
 - For pre-sign validation of the full payment tuple (chain, asset contract, payee, amount,
   expiry), use the Bankr signer **adapter** path in `references/vanilla-x402-flow.md`,
-  where the checklist can run before `/agent/sign` is invoked.
+  where the checklist can run before `/wallet/sign` is invoked.
 
 ## Runtime Requirements
 
-- Runtime can call Bankr Agent API endpoints with `X-API-Key`.
-- API key has Agent API access enabled and is not read-only, so typed-data signing is permitted.
+- Runtime can call Bankr Wallet API endpoints with `X-API-Key`.
+- API key has Wallet API access enabled (`walletApiEnabled`) and is not read-only, so
+  typed-data signing is permitted.
 - For USDG, the installed Bankr/x402 client supports the `exact` scheme on Robinhood Chain and
   the Bankr-controlled wallet holds the canonical USDG asset.
 

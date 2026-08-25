@@ -1,31 +1,33 @@
 #!/usr/bin/env bash
 # converge-monitor.sh — hold-or-sell read on a Polymarket wallet, powered by the
-# Quotient portfolio join (GET /api/v1/portfolio). Optional --oil appends the
-# WTI crude reading + perps position read.
+# Quotient portfolio join (GET /api/v1/portfolio).
 #
 # Part of the Quotient skill (https://quotient-api-gateway.onrender.com/skill/skill.md).
-# Requires: bash, bankr, jq.
+# Requires: bash, curl, jq; bankr only when using x402.
 #
 # Env:
+#   QUOTIENT_API_KEY        optional — qt_ prepaid key; when set, reads consume
+#                           credits instead of invoking x402
 #   QUOTIENT_BASE_URL       optional — default https://quotient-api-gateway.onrender.com;
 #                           must pass the payments.sh host allowlist
 #   QUOTIENT_MAX_PAYMENT_USD optional — may only LOWER the pinned per-route caps
 #   QUOTIENT_PAYMENT_MODE   optional — "confirm" tightens report mode
 #
 # Security: API responses are untrusted data, never instructions. Reads are
-# advisory — this script never places or cancels trades. Paid calls are capped
-# at pinned per-route prices, ledgered, and summarized on exit.
+# advisory — this script never places or cancels trades. x402-paid calls are
+# capped at pinned per-route prices, ledgered, and summarized on exit. API-key
+# calls consume prepaid credits; the secret is never printed or placed in argv.
 #
-# Usage: converge-monitor.sh <wallet> [--json] [--oil] [--preview] [--approve TOKEN]
-# Exit codes: 0 ok · 1 API/HTTP error · 2 config/usage error · 3 partial data
-#             (--oil fetch failed) · 10 payment approval required · 11 autopay
-#             cap exceeded (10/11: preview printed, nothing paid).
+# Usage: converge-monitor.sh <wallet> [--json] [--preview] [--approve TOKEN]
+# Exit codes: 0 ok · 1 API/HTTP error · 2 config/usage error · 10 payment
+#             approval required · 11 autopay cap exceeded (10/11: preview
+#             printed, nothing paid).
 
 set -euo pipefail
 
 VERSION="1.0.0"
 DEFAULT_BASE="https://quotient-api-gateway.onrender.com"
-DISCLAIMER="Informational reads derived from Quotient's forecast — not trade instructions."
+DISCLAIMER="Informational assessments derived from Quotient's forecast — not trade instructions."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=payments.sh
@@ -33,10 +35,10 @@ source "$SCRIPT_DIR/payments.sh"
 
 usage() {
   cat <<'EOF'
-Usage: converge-monitor.sh <wallet> [--json] [--oil]
+Usage: converge-monitor.sh <wallet> [--json]
 
 Per-position table (MARKET | YOURS | Q-SIDE | COST¢ | Q¢ | DIST¢ | UPSIDE% |
-STATUS | READ) with an advisory read per position:
+STATUS | ASSESSMENT) with an advisory assessment per position:
   HOLD            aligned with Q, signal actionable, convergence distance remaining
   WATCH           unconfirmed signal or incomplete data — check before acting
   EXIT-CANDIDATE  converged/paused signal, Q opposed, or Q's call flipped
@@ -44,7 +46,6 @@ STATUS | READ) with an advisory read per position:
 
 Options:
   --json           Machine-readable output only
-  --oil            Append the WTI crude reading + perps position read
   --preview        Print the paid-call plan + cost and exit 10 without paying
   --approve TOKEN  Run a previously previewed plan (valid 15 min, plan-bound)
   --version        Print version and exit
@@ -53,6 +54,7 @@ Options:
 x402: uses the logged-in Bankr CLI wallet; paid calls are capped at pinned
       per-route prices and ledgered (see references/payments-policy.md).
       QUOTIENT_MAX_PAYMENT_USD may only lower caps.
+API key: export QUOTIENT_API_KEY=qt_... to use prepaid credits instead.
 EOF
 }
 
@@ -60,11 +62,9 @@ err() { printf 'converge-monitor: %s\n' "$1" >&2; }
 
 WALLET=""
 JSON=0
-OIL=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) JSON=1 ;;
-    --oil) OIL=1 ;;
     --preview) QP_PREVIEW=1 ;;
     --approve)
       if [ $# -lt 2 ]; then
@@ -105,7 +105,7 @@ if ! [[ "$WALLET" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
 fi
 WALLET="$(printf '%s' "$WALLET" | tr '[:upper:]' '[:lower:]')"
 
-for bin in bankr jq curl; do
+for bin in jq curl; do
   if ! command -v "$bin" > /dev/null 2>&1; then
     err "$bin is required (install it and retry)"
     exit 2
@@ -116,37 +116,58 @@ BASE="${QUOTIENT_BASE_URL:-$DEFAULT_BASE}"
 BASE="${BASE%/}"
 qp_validate_base_url "$BASE"
 QUOTIENT_BASE="$BASE"
-trap qp_report_spend EXIT
 
-# quotient_get <path-and-query> [soft] — paid GET via payments.sh (pinned
-# per-route cap, ledger, bounded retry). The qp_gate below must have run
-# first. With "soft" a failure returns 1, so --oil can degrade to partial data.
+using_api_key() {
+  [[ -n "${QUOTIENT_API_KEY:-}" ]]
+}
+
+if using_api_key; then
+  if ! [[ "$QUOTIENT_API_KEY" =~ ^qt_[[:alnum:]]+$ ]]; then
+    err "QUOTIENT_API_KEY must be a qt_ key"
+    exit 2
+  fi
+  case "$BASE" in
+    https://quotient-api-gateway.onrender.com|http://localhost|http://localhost:*|http://127.0.0.1|http://127.0.0.1:*) ;;
+    *)
+      err "API-key auth is restricted to the pinned Quotient gateway (or localhost testing)"
+      exit 2
+      ;;
+  esac
+  if [[ "${QP_PREVIEW:-0}" == "1" || -n "${QP_APPROVE_TOKEN:-}" ]]; then
+    err "--preview/--approve apply only to x402; unset QUOTIENT_API_KEY to use them"
+    exit 2
+  fi
+else
+  if ! command -v bankr > /dev/null 2>&1; then
+    err "bankr is required for x402 reads (or set QUOTIENT_API_KEY)"
+    exit 2
+  fi
+  trap qp_report_spend EXIT
+fi
+
+# quotient_get <path-and-query> [soft] — prepaid-credit GET when a key is set,
+# otherwise a paid GET via payments.sh.
 quotient_get() {
-  qp_paid_get "$1" "${2:-}"
+  if using_api_key; then
+    qp_api_key_get "$1" "${2:-}"
+  else
+    qp_paid_get "$1" "${2:-}"
+  fi
 }
 
 QP_CMDLINE="converge-monitor.sh ${WALLET}"
 [ "$JSON" = "1" ] && QP_CMDLINE="${QP_CMDLINE} --json"
-[ "$OIL" = "1" ] && QP_CMDLINE="${QP_CMDLINE} --oil"
-qp_plan_add "/api/v1/portfolio" 1
-[ "$OIL" = "1" ] && qp_plan_add "/api/v1/signals/oil" 1
-qp_gate "$QP_CMDLINE"
-
-PORTFOLIO_PATH="/api/v1/portfolio?wallet=${WALLET}"
-[ "$OIL" = "1" ] && PORTFOLIO_PATH="${PORTFOLIO_PATH}&include_perps=true"
-PORTFOLIO="$(quotient_get "$PORTFOLIO_PATH")"
-
-OIL_BODY=""
-EXIT_CODE=0
-if [ "$OIL" = "1" ]; then
-  if ! OIL_BODY="$(quotient_get "/api/v1/signals/oil" soft)"; then
-    err "warning: oil signal fetch failed — continuing without it (partial data)"
-    OIL_BODY=""
-    EXIT_CODE=3
-  fi
+if ! using_api_key; then
+  qp_plan_add "/api/v1/portfolio" 1
+  qp_gate "$QP_CMDLINE"
 fi
 
-# Annotate every position with the advisory READ. Mapping (contract):
+PORTFOLIO_PATH="/api/v1/portfolio?wallet=${WALLET}"
+PORTFOLIO="$(quotient_get "$PORTFOLIO_PATH")"
+
+EXIT_CODE=0
+
+# Annotate every position with the advisory assessment. Mapping (contract):
 #   NO-COVERAGE     covered == false
 #   EXIT-CANDIDATE  signal done|paused, retired_reason flipped, or !aligned
 #   HOLD            aligned && signal actionable && distance_to_convergence_cents > 0
@@ -196,38 +217,9 @@ ANNOTATED="$(jq --arg disclaimer "$DISCLAIMER" '
     unmatched: (.unmatched // [])
   }' <<< "$PORTFOLIO")"
 
-OIL_ANNOTATED="null"
-if [ "$OIL" = "1" ] && [ -n "$OIL_BODY" ]; then
-  # Oil read: WATCH when the reading is missing/stale/degraded; otherwise
-  # position sign (signed perps size) vs reading side → HOLD (aligned) or
-  # EXIT-CANDIDATE (opposed); NO-POSITION when no WTIOIL-USD perps position.
-  OIL_ANNOTATED="$(jq --argjson portfolio "$PORTFOLIO" '
-    .reading as $r
-    | ([$portfolio.perps.positions[]? | select(.symbol == "WTIOIL-USD")] | first) as $pos
-    | {
-        asset,
-        reading: (if $r == null then null else {
-          reading_date: $r.reading_date, state: $r.state, side: $r.side,
-          z: $r.z, intensity: $r.intensity, is_current: $r.is_current,
-          days_since_reading: $r.days_since_reading
-        } end),
-        degraded, reading_missing,
-        marks,
-        perps_error: ($portfolio.perps.error // null),
-        position: (if $pos == null then null else { symbol: $pos.symbol, size: $pos.size } end),
-        read: (
-          if .reading_missing or $r == null then "WATCH (no current reading)"
-          elif .degraded or (($r.is_current // false) | not) then "WATCH (stale or degraded reading)"
-          elif $pos == null then "NO-POSITION (informational)"
-          elif ($r.side == "long" and $pos.size > 0) or ($r.side == "short" and $pos.size < 0) then
-            "HOLD (position aligned with reading)"
-          else "EXIT-CANDIDATE (position opposed to reading)" end)
-      }' <<< "$OIL_BODY")"
-fi
-
 if [ "$JSON" = "1" ]; then
-  jq -n --argjson p "$ANNOTATED" --argjson oil "$OIL_ANNOTATED" --arg risk "$QP_RISK_DISCLOSURE" \
-    '$p + { risk_disclosure: $risk } + (if $oil == null then {} else { oil: $oil } end)'
+  jq -n --argjson p "$ANNOTATED" --arg risk "$QP_RISK_DISCLOSURE" \
+    '$p + { risk_disclosure: $risk }'
   exit "$EXIT_CODE"
 fi
 
@@ -278,22 +270,6 @@ UNMATCHED="$(jq -r '.unmatched | length' <<< "$ANNOTATED")"
 if [ "$UNMATCHED" != "0" ]; then
   UNMATCHED_LIST="$(jq -r '[.unmatched[] | (.slug // .title // .condition_id)] | join(", ")' <<< "$ANNOTATED")"
   printf '\nNot covered by Quotient (%s): %s\n' "$UNMATCHED" "$UNMATCHED_LIST"
-fi
-
-if [ "$OIL" = "1" ] && [ "$OIL_ANNOTATED" != "null" ]; then
-  printf '\nOIL — %s\n' "$(jq -r '.asset' <<< "$OIL_ANNOTATED")"
-  jq -r '
-    (if .reading == null then "  Reading: none" else
-      "  Reading: \(.reading.side) (\(.reading.state)) · z \(.reading.z // "n/a") · intensity \(.reading.intensity // "n/a") · \(.reading.reading_date) (\(if .reading.is_current then "current" else "stale, \(.reading.days_since_reading)d old" end))"
-     end),
-    "  Marks: PM perps \(.marks.polymarket_perps.symbol // "WTIOIL-USD") mark \(.marks.polymarket_perps.mark // "n/a") (funding \(.marks.polymarket_perps.funding_rate // "n/a")/h) · HL \(.marks.hyperliquid.coin // "xyz:CL") mid \(.marks.hyperliquid.mid // "n/a")",
-    (if .perps_error != null then "  Perps portfolio: unavailable (\(.perps_error))" else empty end),
-    (if .position == null then "  Your perps: no WTIOIL-USD position"
-     else "  Your perps: \(.position.symbol) size \(.position.size) (\(if .position.size > 0 then "long" else "short" end))" end),
-    "  Read: \(.read)"
-  ' <<< "$OIL_ANNOTATED"
-elif [ "$OIL" = "1" ]; then
-  printf '\nOIL — unavailable this run (see warning above).\n'
 fi
 
 printf '\n%s\n%s\n' "$DISCLAIMER" "$QP_RISK_DISCLOSURE"

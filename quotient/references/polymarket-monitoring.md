@@ -87,11 +87,12 @@ Held-set key for idempotency checks: `conditionId:outcome`.
 
 ## 4. Polymarket perps (`https://api.perpetuals.polymarket.com`)
 
-Public `/v1/info/*` endpoints need no auth. WTI symbol: **`WTIOIL-USD`** (category commodity,
-20x max leverage, hourly funding). All quotes are **pUSD**.
+Public `/v1/info/*` endpoints need no auth. `/v1/info/tickers` lists every live
+instrument; filter by symbol (WTI is **`WTIOIL-USD`**, category commodity, 20x max
+leverage, hourly funding). All quotes are **pUSD**.
 
 ```bash
-# Marks + funding for all instruments; filter to WTI
+# Marks + funding for all instruments; filter to one symbol (WTI shown)
 curl -s "https://api.perpetuals.polymarket.com/v1/info/tickers" \
   | jq '.[] | select(.symbol=="WTIOIL-USD")
         | {mark_price, index_price, mid_price, funding_rate, next_funding, open_interest}'
@@ -104,14 +105,22 @@ curl -s "https://api.perpetuals.polymarket.com/v1/info/portfolio?address=0xWalle
 
 `size` is **signed**: positive = long, negative = short. `funding_rate` is the hourly rate.
 
-## 5. Hyperliquid — WTI on the HIP-3 dex `xyz`
+## 5. Hyperliquid — covered assets on the HIP-3 dex `xyz`
 
 All reads: `POST https://api.hyperliquid.xyz/info` with `Content-Type: application/json`.
-The WTI perp is **`xyz:CL`** on builder dex `xyz` — it does NOT exist in the default
-universe, so **every call must name the dex**.
+Quotient's covered commodities and equities trade on builder dex `xyz` — they do NOT
+exist in the default universe, so **every call must name the dex**. BTC and ETH live on
+the default universe (no `dex` field). The coin map:
+
+| Asset | Coin | Asset | Coin |
+|---|---|---|---|
+| wti | `xyz:CL` | natural-gas | `xyz:NATGAS` |
+| gold | `xyz:GOLD` | platinum | `xyz:PLATINUM` |
+| silver | `xyz:SILVER` | equities | `xyz:<TICKER>` (NVDA, INTC, META, TSLA, AAPL, ORCL, HOOD, PLTR) |
+| copper | `xyz:COPPER` | btc / eth | `BTC` / `ETH` (default dex) |
 
 ```bash
-# Mid price
+# Mid price (substitute any covered coin for xyz:CL)
 curl -s https://api.hyperliquid.xyz/info -H 'Content-Type: application/json' \
   -d '{"type":"allMids","dex":"xyz"}' | jq -r '."xyz:CL"'
 
@@ -136,8 +145,9 @@ curl -s https://api.hyperliquid.xyz/info -H 'Content-Type: application/json' \
   | $c[$i] | {funding, markPx, midPx, oraclePx, openInterest}'
 ```
 
-Cross-venue note: WTIOIL-USD and xyz:CL track the same underlying — marks and funding are
-directly comparable, both keyless.
+Cross-venue note: a Polymarket perps symbol and its `xyz` coin (WTIOIL-USD and xyz:CL)
+track the same underlying with separate marks and funding — directly comparable, both
+keyless.
 
 ## Gotchas
 
@@ -149,8 +159,9 @@ directly comparable, both keyless.
 - **JSON-in-JSON**: `clobTokenIds`, `outcomes`, `outcomePrices` are JSON-encoded strings —
   `fromjson` before indexing.
 - **The HIP-3 dex must be named in every Hyperliquid call** (`"dex":"xyz"`). Omit it and you
-  get the default universe, which has no CL — an empty result, not an error.
-- **Resolve `xyz:CL` by name, never by array index** — the universe index shifts as assets are
+  get the default universe, which has no commodity or equity coins — an empty result, not
+  an error.
+- **Resolve coins by name, never by array index** — the universe index shifts as assets are
   listed/delisted. Competing WTI perps (`flx:OIL`, `cash:WTI`, `km:USOIL`, `mkts:USOIL`) are
   delisted; `xyz:CL` is the live one.
 - **Signed sizes everywhere**: perps `size` and Hyperliquid `szi` are signed (+ long, − short).

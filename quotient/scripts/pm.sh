@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-VERSION="1.0.0"
+VERSION="1.1.0"
 readonly VERSION
 readonly GAMMA_HOST="https://gamma-api.polymarket.com"
 readonly CLOB_HOST="https://clob.polymarket.com"
@@ -38,11 +38,14 @@ Commands
                              2¢ of touch (the capacity read). NO trades must
                              check the NO book — pass --side no.
   positions <wallet>         Wallet's Polymarket positions (data-api, paginated)
-  perps [--wallet 0x..] [--all]
-                             Perps tickers (WTIOIL-USD by default; --all for
+  perps [--symbol S] [--wallet 0x..] [--all]
+                             Perps tickers (default symbol WTIOIL-USD; --all for
                              every instrument); --wallet adds open positions
-  hl [--wallet 0x..]         Hyperliquid xyz:CL mid (HIP-3 dex "xyz");
-                             --wallet adds the xyz:CL position
+  hl [--coin C] [--wallet 0x..]
+                             Hyperliquid mid for one coin (default xyz:CL;
+                             xyz:GOLD, xyz:NVDA, ... on the HIP-3 dex "xyz";
+                             BTC/ETH on the default dex); --wallet adds the
+                             coin's position
 
 Options
   --json      Print JSON (raw for single-call reads, synthesized for
@@ -378,10 +381,11 @@ cmd_positions() {
 # ── perps ────────────────────────────────────────────────────────────────────
 
 cmd_perps() {
-  local wallet="" all=0 json=0
+  local wallet="" all=0 json=0 symbol="WTIOIL-USD"
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --wallet) [[ $# -ge 2 ]] || die_usage "--wallet needs a value"; wallet="$2"; shift 2 ;;
+      --symbol) [[ $# -ge 2 ]] || die_usage "--symbol needs a value"; symbol="$2"; shift 2 ;;
       --all) all=1; shift ;;
       --json) json=1; shift ;;
       *) die_usage "unknown perps option: $1" ;;
@@ -393,7 +397,7 @@ cmd_perps() {
   tickers_raw="$(http_get "${PERPS_HOST}/v1/info/tickers")"
   tickers="$(jq -c 'if type == "array" then . else (.tickers // .data // []) end' <<<"$tickers_raw")"
   if [[ $all -eq 0 ]]; then
-    tickers="$(jq -c '[ .[] | select(.symbol == "WTIOIL-USD") ]' <<<"$tickers")"
+    tickers="$(jq -c --arg symbol "$symbol" '[ .[] | select(.symbol == $symbol) ]' <<<"$tickers")"
   fi
   if [[ -n "$wallet" ]]; then
     portfolio="$(http_get "${PERPS_HOST}/v1/info/portfolio?address=${wallet}")"
@@ -448,38 +452,44 @@ cmd_perps() {
 # ── hl (Hyperliquid) ─────────────────────────────────────────────────────────
 
 cmd_hl() {
-  local wallet="" json=0
+  local wallet="" json=0 coin="xyz:CL"
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --wallet) [[ $# -ge 2 ]] || die_usage "--wallet needs a value"; wallet="$2"; shift 2 ;;
+      --coin) [[ $# -ge 2 ]] || die_usage "--coin needs a value"; coin="$2"; shift 2 ;;
       --json) json=1; shift ;;
       *) die_usage "unknown hl option: $1" ;;
     esac
   done
   [[ -z "$wallet" ]] || check_wallet "$wallet"
 
+  # xyz:* coins live on the HIP-3 builder dex; bare coins (BTC, ETH) on the
+  # default universe, which is addressed by omitting the dex field.
+  local dex_field=""
+  [[ "$coin" == xyz:* ]] && dex_field=',"dex":"xyz"'
+
   local mids mid pos="null" state
-  mids="$(http_post_json "${HL_HOST}/info" '{"type":"allMids","dex":"xyz"}')"
-  mid="$(jq -r '."xyz:CL" // empty' <<<"$mids")"
+  mids="$(http_post_json "${HL_HOST}/info" "{\"type\":\"allMids\"${dex_field}}")"
+  mid="$(jq -r --arg coin "$coin" '.[$coin] // empty' <<<"$mids")"
   if [[ -n "$wallet" ]]; then
     state="$(http_post_json "${HL_HOST}/info" \
-      "{\"type\":\"clearinghouseState\",\"user\":\"${wallet}\",\"dex\":\"xyz\"}")"
-    pos="$(jq -c '
-      [.assetPositions[]? | .position | select(.coin == "xyz:CL")] | (.[0] // null)' <<<"$state")"
+      "{\"type\":\"clearinghouseState\",\"user\":\"${wallet}\"${dex_field}}")"
+    pos="$(jq -c --arg coin "$coin" '
+      [.assetPositions[]? | .position | select(.coin == $coin)] | (.[0] // null)' <<<"$state")"
   fi
 
   if [[ $json -eq 1 ]]; then
-    jq -n --arg mid "$mid" --argjson position "$pos" '
-      {coin: "xyz:CL",
+    jq -n --arg coin "$coin" --arg mid "$mid" --argjson position "$pos" '
+      {coin: $coin,
        mid: (if $mid == "" then null else ($mid | tonumber) end),
        position: $position}'
     return 0
   fi
 
-  echo "xyz:CL mid: ${mid:--}"
+  echo "${coin} mid: ${mid:--}"
   if [[ -n "$wallet" ]]; then
     if [[ "$pos" == "null" ]]; then
-      echo "(no xyz:CL position for ${wallet})"
+      echo "(no ${coin} position for ${wallet})"
     else
       {
         printf 'SZI\tENTRY_PX\tUPNL\tLIQ_PX\tMARGIN_USED\n'
