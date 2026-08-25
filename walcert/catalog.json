@@ -16,7 +16,7 @@
   "install": {
     "type": "external",
     "provider": "Global Score Agent",
-    "command": "install the walcert skill from https://github.com/GlobalScoreAgent/walcert-skill/tree/main/skills/walcert",
+    "command": "install the walcert skill from https://github.com/GlobalScoreAgent/walcert-skill",
     "reference": null
   }
 }
