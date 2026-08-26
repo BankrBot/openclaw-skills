@@ -256,14 +256,6 @@ function parseVersion(stdout) {
   return match.slice(1).map(Number);
 }
 
-function requireSupportedVersion(version) {
-  const [major, minor, patch] = version;
-  const supported = major > 4 || (major === 4 && (minor > 1 || (minor === 1 && patch >= 0)));
-  if (!supported) {
-    throw new Error(`Steer CLI ${version.join(".")} is below the required 4.1.0 floor.`);
-  }
-}
-
 function failedCliMessage(document, label) {
   if (document.ok !== false) {
     return null;
@@ -555,7 +547,6 @@ async function main() {
 
   const versionOutput = await runSteer(["--version"]);
   const version = parseVersion(versionOutput);
-  requireSupportedVersion(version);
   if (!process.env.STEER_SUBGRAPH_STUDIO_KEY) {
     throw new Error("markets history requires STEER_SUBGRAPH_STUDIO_KEY. Add it as a secure execute_cli environment variable; its value is never printed.");
   }

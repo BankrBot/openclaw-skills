@@ -8,7 +8,7 @@ Before any preparation, the request must identify the curated vault and chain, s
 
 If a required policy value, tool, source, or durable state check is absent, stop with `AUTOMATION_POLICY_INCOMPLETE`. Do not fill gaps with a heuristic.
 
-The CLI requirement must satisfy the skill floor of `4.1.0` or newer. Never downgrade to an incompatible exact version. Stop with `VERSION_POLICY_CONFLICT` when the request requires a lower version, or `VERSION_UNAVAILABLE` when the required compatible version cannot be installed and verified.
+Install or upgrade to `@steerprotocol/cli@latest` before the run and record the reported `steer --version`; at publication, npm latest is `4.3.0`. Never honor a pinned or minimum-version selector in an automation request. Stop with `VERSION_POLICY_CONFLICT` when the request requires a different version, or `VERSION_UNAVAILABLE` when npm latest cannot be installed and verified.
 
 ## Run sequence
 
