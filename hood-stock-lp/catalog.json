@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "hood-stock-lp",
+  "provider": "Bankr",
+  "providerUrl": "https://bankr.bot",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "lp-session.txt",
+    "language": "text",
+    "code": "You:   LP $50 into the TSLA pool on Robinhood Chain\nBankr: Deposit $50 into the TSLA pool at $324 – $369? (yes/no)\nYou:   yes\nBankr: Done — $50 in TSLA/USDG at $324 – $369, earning the pool's\n       0.3% trading fees. Tx: robinhoodchain.blockscout.com/tx/0x…\n       Say \"check my LPs\" any time for a management pass.\n\n— later —\nYou:   how are my LPs doing?\nBankr: TSLA: $51.40 (+$1.40, +2.8%), in range ($324 – $369, now $346),\n       earning fees — ~45% APR at today's volume."
+  },
+  "setup": [
+    "Install the skill with the button below",
+    "Fund your Bankr wallet with USDG on Robinhood Chain",
+    "Say: \"LP $50 into the TSLA pool\" — one confirmation, then it executes",
+    "Say \"check my LPs\" any time for value, range status, and P&L"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "hood-stock-lp",
+    "command": "install the hood-stock-lp skill from https://github.com/BankrBot/skills/tree/main/hood-stock-lp"
+  }
+}
