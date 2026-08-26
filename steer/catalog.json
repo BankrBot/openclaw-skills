@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "steer",
+  "provider": "Steer",
+  "providerUrl": "https://steer.finance",
+  "logo": null,
+  "demo": {
+    "title": "lp-vault-session.txt",
+    "language": "text",
+    "code": "You:   Create and curate a WETH/USDC LP vault on Uniswap V3, Base\nBankr: I verified the Base deployment, WETH/USDC pool, and current vault capability.\n       Create the curated vault with your Bankr wallet as direct manager? (yes/no)\nYou:   yes\nBankr: Vault created and ready for LP deposits. Tx: basescan.org/tx/0x…\n\nYou:   Deposit $5,000 into the vault\nBankr: Deposit $5,000 using the reviewed transaction? (yes/no)\nYou:   yes\nBankr: Deposit confirmed. Tx: basescan.org/tx/0x…\n\nYou:   Every hour, review this vault and notify me when a range update is worthwhile.\nBankr: Hourly review automation is active. It checks price, inventory, ranges,\n       and tend economics, then reports an actionable recommendation or a\n       specific skip reason. It never modifies the curated vault without your\n       specific approval."
+  },
+  "setup": [
+    "Set `STEER_RPC_URL` and `STEER_SUBGRAPH_STUDIO_KEY` as secure environment secrets. The rebalance-context helper requires the subgraph key; tend `quote` and `prepare` require `eth_getProof` support from the RPC.",
+    "In Bankr `execute_cli`, install or upgrade with `npm install -g '@steerprotocol/cli@>=4.1.0'`, then run `steer --version`. Stop if the installed version is below 4.1.0.",
+    "Resolve the Bankr EVM wallet address. Pass it as `--account` to account-aware quote and prepare commands so simulation can check the expected signer.",
+    "Review CLI stages as JSON: `steer <command> --format json --full-output`. Do not broadcast with the CLI; submit only the unchanged prepared request through `submit_raw_transaction` after specific approval or a valid bounded automation policy."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "steer",
+    "command": "install the skill at https://github.com/BankrBot/skills/tree/main/steer"
+  }
+}
