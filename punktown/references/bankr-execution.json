@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "chainId": 8453,
+  "policy": {
+    "defaultDeny": true,
+    "supportedModes": [
+      "direct-wallet-transaction",
+      "bankr-entrypoint-kernel-single"
+    ],
+    "requireExactlyOneUserOperationForActiveWallet": true,
+    "allowUnrelatedBundledUserOperations": true,
+    "requireSingleLogicalCall": true,
+    "requireFailOnError": true,
+    "rejectWalletBatch": true,
+    "rejectTryMode": true,
+    "rejectDelegatecall": true,
+    "rejectUnknownEntryPoint": true,
+    "rejectUnknownAccountImplementation": true,
+    "rejectLogicalSelfCall": true,
+    "requireTransactionAndReceiptBlockMembership": true,
+    "pinIdentitiesByBlockHash": true,
+    "requireTransactionOrderedDelegationProof": true,
+    "scopeReceiptLogsToSelectedUserOperation": true
+  },
+  "direct": {
+    "requireOuterFromEqualsActiveWallet": true,
+    "rejectType4OrNonemptyAuthorizationList": true,
+    "rejectLogicalTargetEqualsActiveWallet": true,
+    "logicalSender": "outer from",
+    "logicalTarget": "outer to",
+    "logicalValue": "outer value",
+    "logicalData": "outer input"
+  },
+  "sponsored": {
+    "entryPoint": {
+      "version": "0.7",
+      "address": "0x0000000071727de22e5e9d8BAf0edAc6f37da032",
+      "runtimeCodeHash": "0x8db5ff695839d655407cc8490bb7a5d82337a86a6b39c3f0258aa6c3b582fc58",
+      "handleOpsSelector": "0x765e827f",
+      "getUserOpHashSelector": "0x22cdde4c",
+      "beforeExecutionTopic0": "0xbb47ee3e183a558b1a2ff0874b079f3fc5478b7454eacf2bfc5af2ff5878f972",
+      "userOperationEventTopic0": "0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f"
+    },
+    "account": {
+      "kind": "EIP-7702 delegated EOA",
+      "delegationDesignator": "0xef0100d6cedde84be40893d153be9d467cd6ad37875b28",
+      "implementation": "0xd6cedde84be40893d153be9d467cd6ad37875b28",
+      "implementationRuntimeCodeHash": "0xe5b56d82025d2358308f77833fe29c3856b1a7a0f7a4b9f86b1fd77da3e3b4fb",
+      "validationStorageSlot": "0x7bcaa2ced2a71450ed5a9a1b4848e8e5206dbc3f06011e595f7f55428cc6f84f",
+      "rootValidatorSelector": "0xf1f7f0f9",
+      "requiredValidationMode": "0x00",
+      "requiredValidationType": "0x00",
+      "requireZeroRootValidatorAtParentAndReceiptEnd": true,
+      "requireEmptyParentValidationSlotForFirstUse": true,
+      "requireEmptyInitCode": true,
+      "requireEmptyPaymasterAndData": true,
+      "executeSelector": "0xe9ae5c53",
+      "executeSignature": "execute(bytes32,bytes)",
+      "executionMode": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "singleExecutionEncoding": "target:20 bytes || value:32 bytes || calldata:remaining bytes"
+    },
+    "delegation": {
+      "acceptedParentStates": ["empty", "reviewed Kernel designator"],
+      "scanAuthorizationsThroughTargetTransactionIndex": true,
+      "recoverActiveWalletAuthorizationAuthority": true,
+      "rejectNonReviewedActiveWalletAuthorization": true,
+      "rejectPriorSameBlockActiveWalletUserOperation": true,
+      "rejectPriorSameBlockActiveWalletSelfCall": true,
+      "firstUseRequiresOneReviewedTargetAuthorizationWithOrderedNonce": true
+    },
+    "receipt": {
+      "requireOuterStatusSuccess": true,
+      "recomputeUserOpHashAtReceiptBlock": true,
+      "requireMatchingUserOperationEvent": true,
+      "requireUserOperationSuccess": true,
+      "trustedLogWindow": "after BeforeExecution or the previous UserOperationEvent, and before the selected UserOperationEvent"
+    },
+    "liveRegressionFixtures": [
+      {
+        "transactionHash": "0xfdf361d11a6cb47861094961e289a9f9e5dbf8910a9a0cbbd48a916df35aa1bb",
+        "wallet": "0x3aa337f5d049859baf3b9e10ef990f8ceb25ef20",
+        "userOperationIndex": 0,
+        "bundleSize": 1,
+        "source": "Bankr public token-launch API activity matched to the Base transaction"
+      },
+      {
+        "transactionHash": "0x4913736cfafb2e269f33fe3e4507c879c4c09dbe927d8334c697528e337ae8a5",
+        "wallet": "0x3aa337f5d049859baf3b9e10ef990f8ceb25ef20",
+        "userOperationIndex": 1,
+        "bundleSize": 2,
+        "userOpHash": "0xb3f4906b3bef2921a8f314719ebdbbc2311460f5d08c2e0d7b8986dbab29e177",
+        "erc8021BuilderCode": "bc_i85qhgg2",
+        "source": "Bankr public token-launch API activity matched to the second UserOperation in the Base transaction"
+      },
+      {
+        "transactionHash": "0x8c7a851e34d3545001ff346a72986e90bdbee06e13e40cd587edad8171cb7c65",
+        "wallet": "0x5ba986ab1a9a239a57b1b83bbb7c6d7bac156681",
+        "transactionType": 4,
+        "authorizationTarget": "0xd6cedde84be40893d153be9d467cd6ad37875b28",
+        "authorizationChainId": 8453,
+        "authorizationNonce": 0,
+        "source": "Bankr public token-launch API activity matched to a first-use EIP-7702 authorization on Base"
+      }
+    ]
+  },
+  "acquisition": {
+    "provenSourceAssets": [
+      { "symbol": "ETH", "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "decimals": 18 },
+      { "symbol": "WETH", "address": "0x4200000000000000000000000000000000000006", "decimals": 18 },
+      { "symbol": "USDC", "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913", "decimals": 6 }
+    ],
+    "requireCanonicalTransferLogs": true,
+    "rejectOtherSourceAssets": true
+  }
+}

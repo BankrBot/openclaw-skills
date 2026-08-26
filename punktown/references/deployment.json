@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "chainId": 8453,
+  "network": {
+    "name": "Base",
+    "chainId": 8453,
+    "nativeSymbol": "ETH",
+    "explorer": "https://basescan.org"
+  },
+  "release": {
+    "commit": "2bbf9e3",
+    "blocks": [50188351, 50188375],
+    "sourceRepository": "https://github.com/panikadak/punkstreet",
+    "sourceCommit": "2bbf9e3",
+    "deployedAt": "2026-08-19T19:00:49Z",
+    "blockRange": {
+      "from": 50188351,
+      "to": 50188375
+    },
+    "compiler": "v0.8.30+commit.73712a01",
+    "optimizerRuns": 10000,
+    "configurationReadbackBlock": 50211582
+  },
+  "owner": "0x702ba46435D1E55B18440100BC81EB055574875e",
+  "contracts": {
+    "routeRegistry": {
+      "name": "RouteRegistry",
+      "address": "0xbfd3c7A16c06a0b936Af84735860A1c700dC2076",
+      "deployBlock": 50188351,
+      "runtimeCodeHash": "0x15a290615818e21df3434094b265468ba83eb154d95cea8ad9e54a26c0cb3cd8",
+      "codeHash": "0x15a290615818e21df3434094b265468ba83eb154d95cea8ad9e54a26c0cb3cd8",
+      "sourcePath": "packages/contracts/src/RouteRegistry.sol",
+      "manifestRoot": true
+    },
+    "punkAMM": {
+      "name": "PunkAMM",
+      "address": "0x555c246d004D2F24b5BaDDd186Fc773eB6fb8445",
+      "deployBlock": 50188353,
+      "runtimeCodeHash": "0xb42a8fcb7e2c507e90da484fc20a55ff7f922a15af9c1816a10b6857aa3ba455",
+      "codeHash": "0xb42a8fcb7e2c507e90da484fc20a55ff7f922a15af9c1816a10b6857aa3ba455",
+      "sourcePath": "packages/contracts/src/PunkAMM.sol",
+      "manifestRoot": true
+    },
+    "lockVault": {
+      "name": "LockVault",
+      "address": "0x69a60eae4Af0cAF965472f1268C723B1d60bcbE9",
+      "deployBlock": 50188355,
+      "runtimeCodeHash": "0x8485a62bb7ef9346e8f45562d705aca5047360931890dcc78e2117ff1e4f20dc",
+      "codeHash": "0x8485a62bb7ef9346e8f45562d705aca5047360931890dcc78e2117ff1e4f20dc",
+      "sourcePath": "packages/contracts/src/LockVault.sol",
+      "manifestRoot": true
+    },
+    "stockLock": {
+      "name": "StockLock",
+      "address": "0x4570F784d35ab06a0FA22F42bb6329fAA998a6BA",
+      "deployBlock": 50188357,
+      "runtimeCodeHash": "0x81782b61179aac15dcda6f1eb9370ea57844383c5fb8ddafc4ccd81863b3d425",
+      "codeHash": "0x81782b61179aac15dcda6f1eb9370ea57844383c5fb8ddafc4ccd81863b3d425",
+      "sourcePath": "packages/contracts/src/StockLock.sol",
+      "manifestRoot": true
+    },
+    "revenueRouter": {
+      "name": "RevenueRouter",
+      "address": "0xc755cf7De0Cf090ea7F42D3B98eB2b7d00f128Cd",
+      "deployBlock": 50188359,
+      "runtimeCodeHash": "0xc8069abf1bcc68bcb4d1c168c64894e260a3c2c3214f9bcf7d027245a72aa593",
+      "codeHash": "0xc8069abf1bcc68bcb4d1c168c64894e260a3c2c3214f9bcf7d027245a72aa593",
+      "sourcePath": "packages/contracts/src/RevenueRouter.sol",
+      "manifestRoot": true
+    },
+    "baseV4FeeRouter": {
+      "name": "BaseV4FeeRouter",
+      "address": "0x753bed09b3B39E750B48814BA7730034Df705fCf",
+      "deployBlock": 50188360,
+      "runtimeCodeHash": "0x1dcd961bff3088c7c4f8e57311c03cdfe196d9e51a19f73bfb6f3379a3df7f6d",
+      "codeHash": "0x1dcd961bff3088c7c4f8e57311c03cdfe196d9e51a19f73bfb6f3379a3df7f6d",
+      "sourcePath": "packages/contracts/src/adapters/BaseV4FeeRouter.sol",
+      "manifestRoot": true
+    },
+    "aerodromeStockAdapter": {
+      "name": "AerodromeStockAdapter",
+      "address": "0x3d3abC1569C260953a6f5D42102D2f330A41430c",
+      "deployBlock": 50188362,
+      "runtimeCodeHash": "0x2f6d070ddae41348d80620435e2b2db5a14073a59dc0f8a1884743ee8f68c279",
+      "codeHash": "0x2f6d070ddae41348d80620435e2b2db5a14073a59dc0f8a1884743ee8f68c279",
+      "sourcePath": "packages/contracts/src/adapters/AerodromeStockAdapter.sol",
+      "manifestRoot": false,
+      "discoveryOnly": true,
+      "discovery": "stockLock.stockAdapter()",
+      "discoveryRule": {
+        "fromContract": "stockLock",
+        "readSignature": "stockAdapter()",
+        "expectedAddress": "0x3d3abC1569C260953a6f5D42102D2f330A41430c",
+        "rule": "Discover from the live StockLock getter, then require this reviewed address and runtime code hash. Never derive it from a broadcast file or add it as a manifest root."
+      }
+    }
+  },
+  "tokens": {
+    "baes": {
+      "name": "BAES",
+      "standard": "ERC20",
+      "address": "0xa9F6d9EcA1F803854A13CECad0f21d43e007DB07",
+      "decimals": 18,
+      "runtimeCodeHash": "0x18f2d2584439e9bab947cba5f7cca0c78aec9c1b185b8c3df27518f73a059bf5",
+      "codeHash": "0x18f2d2584439e9bab947cba5f7cca0c78aec9c1b185b8c3df27518f73a059bf5",
+      "codeHashObservedAtBlock": 50477481
+    },
+    "punks": {
+      "name": "Bario Punks",
+      "standard": "ERC721-C",
+      "address": "0xDC1C20Df3F8EDeDF1466399C5d5D17d864bD3F0f",
+      "runtimeCodeHash": "0xe3e252831cdd0c11e1327d04a57ddd9bfa11ef49d50edb524040d98bfb228bc4",
+      "codeHash": "0xe3e252831cdd0c11e1327d04a57ddd9bfa11ef49d50edb524040d98bfb228bc4",
+      "codeHashObservedAtBlock": 50477481,
+      "transferValidatorRisk": "Every transfer invokes the collection's external validator. Its collection owner can repoint the validator or raise its security level, which can block PunkAMM buys, LockVault exits, and excess recovery even though punkAMM itself has no owner withdrawal path for tracked NFTs."
+    },
+    "weth": {
+      "name": "Wrapped Ether",
+      "symbol": "WETH",
+      "standard": "ERC20",
+      "address": "0x4200000000000000000000000000000000000006",
+      "decimals": 18,
+      "runtimeCodeHash": "0x8a3a1f6a9f9dce633117adee5b458245835a8645a8c8726a26382a4622508b1c",
+      "codeHash": "0x8a3a1f6a9f9dce633117adee5b458245835a8645a8c8726a26382a4622508b1c",
+      "codeHashObservedAtBlock": 50477481
+    }
+  },
+  "expectedWiring": {
+    "punkAMM.lockVault()": "0x69a60eae4Af0cAF965472f1268C723B1d60bcbE9",
+    "punkAMM.revenueRouter()": "0xc755cf7De0Cf090ea7F42D3B98eB2b7d00f128Cd",
+    "lockVault.punkAMM()": "0x555c246d004D2F24b5BaDDd186Fc773eB6fb8445",
+    "lockVault.stockLock()": "0x4570F784d35ab06a0FA22F42bb6329fAA998a6BA",
+    "stockLock.revenueRouter()": "0xc755cf7De0Cf090ea7F42D3B98eB2b7d00f128Cd",
+    "stockLock.lockVault()": "0x69a60eae4Af0cAF965472f1268C723B1d60bcbE9",
+    "stockLock.stockAdapter()": "0x3d3abC1569C260953a6f5D42102D2f330A41430c",
+    "revenueRouter.punkAMM()": "0x555c246d004D2F24b5BaDDd186Fc773eB6fb8445",
+    "revenueRouter.stockLock()": "0x4570F784d35ab06a0FA22F42bb6329fAA998a6BA",
+    "revenueRouter.feeAdapter()": "0x753bed09b3B39E750B48814BA7730034Df705fCf",
+    "aerodromeStockAdapter.stockLock()": "0x4570F784d35ab06a0FA22F42bb6329fAA998a6BA"
+  },
+  "feeRoute": {
+    "router": "0x753bed09b3B39E750B48814BA7730034Df705fCf",
+    "tokenIn": "0xa9F6d9EcA1F803854A13CECad0f21d43e007DB07",
+    "tokenOut": "0x4200000000000000000000000000000000000006",
+    "poolId": "0x01bc3d69468c878544d9f1289fd2cec1d70cec76159a355ddcc80bce185aa398",
+    "recipient": "0xc755cf7De0Cf090ea7F42D3B98eB2b7d00f128Cd",
+    "selector": "0xd07017fd",
+    "signature": "swapExactBAESForWETH(address,address,bytes32,uint24,bool,uint256,uint256,address,uint256)",
+    "routeHash": "0x0d7cd9d6f3f4809c082a637b60a6d5f9f215eae0bb2ee38e75b2165c49f3a06a",
+    "feeTier": 8388608,
+    "stable": false
+  },
+  "stockRosterAtRelease": [
+    {
+      "slot": 0,
+      "symbol": "GOOGLc",
+      "address": "0xb2000000000000000000002D0BA3164cc74f58B7",
+      "decimals": 8
+    },
+    {
+      "slot": 1,
+      "symbol": "AAPLc",
+      "address": "0xb200000000000000000000C2e324d24d7eEcd1fb",
+      "decimals": 8
+    },
+    {
+      "slot": 2,
+      "symbol": "METAc",
+      "address": "0xb2000000000000000000008bC8786B856E61707C",
+      "decimals": 8
+    },
+    {
+      "slot": 3,
+      "symbol": "NVDAc",
+      "address": "0xb20000000000000000000078ee7ce2fE4908108C",
+      "decimals": 8
+    }
+  ],
+  "liveValidation": {
+    "requiredBeforeEveryWritePlan": true,
+    "requirements": [
+      "eth_chainId equals 8453",
+      "Every signing target's eth_getCode keccak256 equals its pinned runtimeCodeHash",
+      "All four core contracts report systemOpen() true and peersLocked() true",
+      "All expectedWiring getters match",
+      "Apply operation-specific pause and readiness gates; RouteRegistry.isReady() is informational and is true only when both routes are ready, while exits, settlement, claims, top-ups, bootstrap pokes, and permissionless repair may remain valid without it",
+      "AerodromeStockAdapter is obtained from StockLock.stockAdapter(), not trusted from a broadcast name",
+      "Any mutable quote, allowance, approval, FIFO head, position, credit, route pause, pot, roster, deadline, or ownership value is freshly read"
+    ]
+  },
+  "denylistedAbortedDeployment": {
+    "reason": "Five inert contracts from an aborted first broadcast have code but zero peers and a closed system. Never sign against them.",
+    "addresses": [
+      "0x5BD108e43BfaCf4DA401Baa864588F60A7E980A9",
+      "0xDfdb6008490239f96d57624177ea5ce46CcA0B12",
+      "0xb009a1D1213e9b27122dE0C423030a98F9F28B61",
+      "0x879886500c4056C072FbB976843350bD53980250",
+      "0xD5870B19126ac9c703bF530Ac01fC64A5fCe5e92"
+    ]
+  }
+}
