@@ -1,0 +1,141 @@
+{
+  "version": "2.0.0",
+  "chainId": "8453",
+  "suiteDeployedEvent": "SuiteDeployed(bytes32,address,(address,address,address,address,address,address,address,address,address,address,address,address,address,address,address,address))",
+  "graphKeys": [
+    "observationOracle",
+    "twapAdapter",
+    "usdOracle",
+    "pricingPolicy",
+    "depositVault",
+    "escrowVault",
+    "reputationRegistry",
+    "verifierBondVault",
+    "stakingVault",
+    "treasuryRouter",
+    "taskRegistry",
+    "arbitrationModule",
+    "usdcWethLeg",
+    "exactInputExecutor",
+    "paymentGateway",
+    "taskScopeRegistry"
+  ],
+  "spenders": {
+    "azl": "escrowVault",
+    "usdc": "paymentGateway"
+  },
+  "targets": {
+    "taskRegistry": [
+      "post(uint256,uint64)",
+      "claim(uint256)",
+      "fund(uint256,uint256)",
+      "activate(uint256)",
+      "release(uint256,uint256)",
+      "complete(uint256)",
+      "cancel(uint256)",
+      "markDelivered(uint256)",
+      "expire(uint256)",
+      "openDispute(uint256,bytes32)"
+    ],
+    "taskScopeRegistry": [
+      "publish(uint256,string)"
+    ],
+    "paymentGateway": [
+      "fundWithUsdc(uint256,uint256,uint256)",
+      "fundWithEth(uint256,uint256)"
+    ],
+    "depositVault": [
+      "withdraw(uint256,address)",
+      "claimPayout(address)"
+    ],
+    "stakingVault": [
+      "stake(uint256)",
+      "unstake(uint256)",
+      "claim(address)",
+      "claimPayout(address)",
+      "activateStaking()"
+    ],
+    "verifierBondVault": [
+      "bond(uint256)",
+      "scheduleWithdrawal()",
+      "withdraw(uint256)",
+      "claimPayout(address)"
+    ],
+    "arbitrationModule": [
+      "submitEvidence(uint256,bytes32)",
+      "beginRuling(uint256)",
+      "rule(uint256,uint8,uint16)",
+      "timeout(uint256)"
+    ],
+    "azl": [
+      "approve(address,uint256)"
+    ],
+    "usdc": [
+      "approve(address,uint256)"
+    ]
+  },
+  "abis": {
+    "taskRegistry": [
+      "function post(uint256 totalAmount,uint64 deadline) returns (uint256)",
+      "function claim(uint256 taskId)",
+      "function fund(uint256 taskId,uint256 amount)",
+      "function activate(uint256 taskId)",
+      "function release(uint256 taskId,uint256 amount)",
+      "function complete(uint256 taskId)",
+      "function cancel(uint256 taskId)",
+      "function markDelivered(uint256 taskId)",
+      "function expire(uint256 taskId)",
+      "function openDispute(uint256 taskId,bytes32 evidenceHash)",
+      "function tasks(uint256 taskId) view returns (address poster,address worker,uint256 totalAmount,uint256 funded,uint256 released,uint64 deadline,uint64 fundingDeadline,uint64 deliveredAt,uint8 state)",
+      "function taskCount() view returns (uint256)",
+      "function validateGraph() view returns (bool)"
+    ],
+    "taskScopeRegistry": [
+      "function publish(uint256 taskId,string scope)",
+      "function scopeOf(uint256 taskId) view returns (string)"
+    ],
+    "paymentGateway": [
+      "function fundWithUsdc(uint256 exactUsdcIn,uint256 minAzlOut,uint256 deadline) returns (uint256)",
+      "function fundWithEth(uint256 minAzlOut,uint256 deadline) payable returns (uint256)",
+      "function intakePaused() view returns (bool)"
+    ],
+    "escrowVault": [
+      "function validateGraph() view returns (bool)"
+    ],
+    "depositVault": [
+      "function withdraw(uint256 amount,address recipient)",
+      "function claimPayout(address recipient)",
+      "function available(address) view returns (uint256)",
+      "function taskQuotes(uint256 taskId) view returns (uint256 entryDeposit,uint256 liveTaskReserve,uint256 accessFee,uint256 exitCompensation,uint256 exitProtocolShare)",
+      "function validateGraph() view returns (bool)"
+    ],
+    "stakingVault": [
+      "function stake(uint256 amount)",
+      "function unstake(uint256 amount)",
+      "function claim(address recipient)",
+      "function claimPayout(address recipient)",
+      "function activateStaking()",
+      "function stakingActive() view returns (bool)",
+      "function validateGraph() view returns (bool)"
+    ],
+    "verifierBondVault": [
+      "function bond(uint256 amount)",
+      "function scheduleWithdrawal()",
+      "function withdraw(uint256 amount)",
+      "function claimPayout(address recipient)"
+    ],
+    "arbitrationModule": [
+      "function submitEvidence(uint256 taskId,bytes32 evidenceHash)",
+      "function beginRuling(uint256 taskId)",
+      "function rule(uint256 taskId,uint8 outcome,uint16 workerBps)",
+      "function timeout(uint256 taskId)",
+      "function validateGraph() view returns (bool)"
+    ],
+    "azl": [
+      "function approve(address spender,uint256 amount) returns (bool)"
+    ],
+    "usdc": [
+      "function approve(address spender,uint256 amount) returns (bool)"
+    ]
+  }
+}

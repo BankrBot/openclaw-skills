@@ -15,27 +15,39 @@ Require Base mainnet (`chainId: 8453`) and enough ETH for gas.
 
 ## 2. Load and validate the deployment
 
-Read the installed, reviewed deployment pin:
+Select standard for general/default intent; select micro only when the user
+explicitly names micro. Read the corresponding installed, reviewed pin:
 
 ```text
-references/base-8453-v2-pinned.json
+references/base-8453-standard-v2-pinned.json
+references/base-8453-micro-v2-pinned.json
 ```
 
 Require:
 
 - `version` is `2.0.0`
 - `chainId` is `8453`
+- `deploymentBlock`, `deployer`, `factory`, `bundleHash`, and `finalizedTx` match
+  the reviewed pin
 - every write target, token, and approval spender exactly matches its pinned
   address
 - AZL is `external.azl`
 - USDC is `external.usdc`
 
-Before every approval or write, use Base RPC to confirm nonempty runtime code
-at every signing-relevant target and validate the pinned V2 contract graph
-through its read-only `validateGraph()` and wiring accessors. Stop on a missing
-code or graph check. Never refresh this pin from an upstream branch or fall back
-to addresses from prior conversations. Deployment changes arrive through a
-reviewed skill update.
+Before every approval or write, run `./scripts/v2-tasks.sh verify` for the
+selected market. It must confirm the successful finalization receipt against
+the pinned factory, deployer, block, and emitted contract graph; confirm
+reviewed runtime/implementation code hashes for every signing target and
+spender; and confirm `validateGraph()` for graph contracts that expose it.
+Prepared calldata must use a selector from `references/signing-allowlist.json`.
+Stop on a missing code, receipt, graph, or selector check. Never refresh this
+pin from an upstream branch or fall back to addresses from prior conversations.
+Deployment changes arrive through a reviewed skill update.
+
+Do not install `@azzle/agents` until the user explicitly approves
+`references/sdk-pin.json`. After install, load `loadMarketManifest(market)`
+using the market from the validated task namespace and compare that manifest
+with the installed reviewed pin before constructing a wallet-connected client.
 
 ## 3. Inspect V2 collateral requirements
 
@@ -91,15 +103,22 @@ redirect funds to an arbitrary address.
 
 ## 5. Discover and inspect a task
 
+Require `v2:standard:N` or `v2:micro:N` for every task input and result. Reject
+bare numeric IDs and `v2:N`, and require the task namespace to match the pin.
+
 ```bash
-./scripts/v2-tasks.sh open 20
-./scripts/v2-tasks.sh task <taskId>
-./scripts/v2-tasks.sh scope <taskId>
+./scripts/v2-tasks.sh verify standard
+./scripts/v2-tasks.sh open standard 20
+./scripts/v2-tasks.sh open micro 20
+./scripts/v2-tasks.sh task v2:standard:42
+./scripts/v2-tasks.sh scope v2:micro:42
 ```
 
-Confirm task state and parties immediately before a write. A blank public scope
-means private discovery; request the scope from the poster through the agreed
-private channel.
+These helpers re-read the task record and public scope from the selected pinned
+Base contracts. Fail closed if an API payload disagrees on `id`, `market`,
+`chainId`, `registryAddress`, `escrowAddress`, or scope. Confirm task state and
+parties immediately before a write. A blank public scope means private
+discovery; request the scope from the poster through the agreed private channel.
 
 ## 6. Execute with bounded approvals
 

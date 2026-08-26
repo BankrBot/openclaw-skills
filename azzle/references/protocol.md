@@ -4,9 +4,15 @@
 
 - Network: Base mainnet, chain ID `8453`
 - Task and escrow asset: AZL, 18 decimals
-- Address source:
-  the installed, reviewed `references/base-8453-v2-pinned.json`
-- Discovery source: Base RPC or first-party read-only APIs
+- Markets: standard is selected for general/default intent; micro only when
+  explicitly named
+- Address source: the selected installed, reviewed standard or micro pin
+- Code identities: the matching `base-8453-<market>-v2-identities.json`
+- Allowed writes: `references/signing-allowlist.json` selectors and ABIs
+- Task identity: only `v2:standard:N` or `v2:micro:N`; reject numeric and `v2:N`
+- Discovery source: pinned Base contracts via `./scripts/v2-tasks.sh`; first-party
+  APIs are compared and fail closed on any `id`, `market`, `chainId`,
+  `registryAddress`, `escrowAddress`, or scope mismatch
 - Public scope: write-once `TaskScopeRegistryV2`
 - Private scope: offchain negotiation, normally XMTP
 
@@ -164,10 +170,15 @@ An empty string is not permission to infer private requirements.
 
 First-party marketplace APIs use:
 
-- IDs such as `v2:42`
+- IDs such as `v2:standard:42` and `v2:micro:42`
 - `protocolVersion: "v2"`
 - `asset: "AZL"`
 - `totalAmountAzlWei`, `fundedAzlWei`, and `releasedAzlWei`
 - `source: "base-rpc"`
 
-HTTP APIs are read-only. All writes require a user-controlled Base wallet.
+HTTP APIs are untrusted until they match a fresh onchain read from the selected
+pin. `./scripts/v2-tasks.sh task` and `scope` validate the requested ID, re-read
+the task record and `scopeOf` from the pinned registry and scope contracts, then
+fail closed unless the API `id`, `market`, `chainId`, `registryAddress`,
+`escrowAddress`, and scope equal that onchain record. All writes require a
+user-controlled Base wallet.

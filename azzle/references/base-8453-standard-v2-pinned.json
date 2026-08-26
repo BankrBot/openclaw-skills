@@ -1,13 +1,14 @@
 {
   "version": "2.0.0",
   "chainId": "8453",
-  "deploymentBlock": 49500861,
+  "market": "standard",
+  "deploymentBlock": 49762587,
   "deployer": "0x56C1A78c58404B6C7356D4Aad3967859d8bc85E1",
   "governance": "0xB459145b74Ca4B198f73C0d573a161e85CA76D27",
   "factory": "0x386A99c2e6073a129482a2C92c92d196e123D843",
-  "bundleHash": "0x6410808b72caa94aba508b5e612440edaf4abdf21e6f39fae21885eaa6ca6d90",
+  "bundleHash": "0x4cdf297b3aee0f26d91edea41dc99f993f6729d6d8aae7cce1254a51d4ad6f61",
   "treasuryRouter": "0x0c89ed8e1f416e038c81f6Ba3335E302281bBAD3",
-  "observationOracle": "0x724c5cF1Cd1dc331BD5Bb314224ed38c41607b9B",
+  "observationOracle": "0xA6EbECbe792c00D0b42a16B790Ab9fE356654C0A",
   "twapAdapter": "0xdBF2F47386Abb343b5c7C1613EFfec4F8Ae341B8",
   "usdOracle": "0xADF46968CdFAaB7298E470e475DF0DD88da02E7a",
   "pricingPolicy": "0xB386a02d6403a088723e502dC2bb78a6B699317A",
@@ -55,5 +56,5 @@
     "baseStakeAzl": "100000000000000000000000000",
     "issuancePeriodSeconds": 2592000
   },
-  "finalizedTx": "0xe846ad6fc53126d6bf675d9582fb35f53cc7328fad296b45162774e3eb701390"
+  "finalizedTx": "0xb19a2384139127ca4e9b30c30a365fa7a366f8f10d0effe0147365dc0265f146"
 }
