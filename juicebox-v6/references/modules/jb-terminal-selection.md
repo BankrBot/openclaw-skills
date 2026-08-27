@@ -37,7 +37,15 @@ The native token is the sentinel `0x000000000000000000000000000000000000EEEe` (`
 Acceptance semantics per terminal:
 
 - `JBMultiTerminal.accountingContextForTokenOf` returns a non-empty context only for tokens the project explicitly registered.
-- `JBRouterTerminalRegistry.accountingContextForTokenOf` delegates to the project's resolved router terminal. `JBRouterTerminal` synthesizes a context for **any** token (probes `decimals()`, falls back to 18; `currency = uint32(uint160(token))`). So a project with the registry among its terminals resolves a terminal for effectively every token. The registry's discovery views fail open: if no router terminal has ever been set as the registry default on that chain, they return an empty context instead of reverting.
+- `JBRouterTerminalRegistry.accountingContextForTokenOf` delegates to the project's resolved router terminal. `JBRouterTerminal` synthesizes a context for **any** token (probes `decimals()`, falls back to 18; `currency = uint32(uint160(token))`). So a project with the registry among its terminals resolves a terminal for effectively every token. The registry's discovery views fail open: when no router terminal resolves for the project, they return an empty context instead of reverting.
+- Registry resolution is per project: `registry.terminalOf(projectId)` returns the project's explicitly set router terminal, else the default that was active when the project was created — projects with `id <= defaultTerminalProjectIdThreshold` resolve against `_defaultTerminalHistory`, not the live `defaultTerminal`. Never assume `defaultTerminal`; call `terminalOf(projectId)`.
+
+## Production route selection (juicebox.money `PayPanel`)
+
+1. `JBDirectory.terminalsOf(projectId)` — if neither the registry nor `JBRouterTerminal` is listed, only direct tokens are payable.
+2. `JBMultiTerminal.accountingContextsOf(projectId)` — each context's token is a direct pay; `primaryTerminalOf(projectId, token)` gives the terminal to call.
+3. For candidate tokens not in step 2 (native, USDC), probe `registry.previewPayFor(projectId, token, 10 ** decimals, beneficiary, "0x")`; a revert or a returned `ruleset.id == 0` means the route is dead — hide the token. Cache per `(chainId, projectId, token)`.
+4. Pay the direct terminal for direct tokens; pay the registry for probed tokens, with permit2 spender/ID = registry.
 
 ## Selection algorithm
 
@@ -107,7 +115,11 @@ function pay(
 - Entry ID: `bytes4(bytes20(routerTerminal) ^ bytes20(keccak256("pay")))` = `0xa27bedbd` for `0x0fbcbb3d10c8f524840d74ef81c1a9f161c418d7`.
 - Payload: `abi.encode(address quotedTokenOut, uint256 quotedMinAmountOut)`. A zero `quotedMinAmountOut` is treated as "not provided" and falls back to automatic quoting.
 
+If the destination project runs `JBBuybackHook`, its own `pay` entry (`0xda79b72d`) is a separate 3-word payload: `abi.encode(uint256 amountToSwapWith, uint256 minimumSwapAmountOut, bool skipSplits)` — `skipSplits = true` opts the swapped tokens out of the reserved split (see `jb-permit2-metadata`).
+
 `addToBalanceOf` through the router has no `minReturnedTokens` backstop, so a swap leg with no manipulation-resistant TWAP **requires** a `pay` quote — otherwise it reverts with `JBRouterTerminal_ManipulationResistantQuoteRequired`.
+
+Router cash-out legs call the downstream `cashOutTokensOf` with `minTokensReclaimed: 0` and enforce the caller's floor (the `cashOut` metadata entry `0x890df4c9`, payload `(uint256 minTokensReclaimed)`) against the measured balance delta, reverting `JBRouterTerminal_SlippageExceeded` — always supply that entry; the downstream terminal's own min check is not your guard.
 
 ## Permit2 integration
 
@@ -129,7 +141,7 @@ See `jb-permit2-metadata` for the full encoding.
 
 1. `primaryTerminalOf(projectId, NATIVE_TOKEN)` for a standard project → `JBMultiTerminal`.
 2. `primaryTerminalOf(projectId, <unregistered ERC-20>)` → either the registry (if the project registered it) or `address(0)`.
-3. Simulate the `pay` call; `JBMultiTerminal_TokenNotAccepted` means the token/terminal pairing is wrong.
+3. Simulate the `pay` call; `JBMultiTerminal_TokenNotAccepted` means the token/terminal pairing is wrong. A failed permit surfaces as `Permit2AllowanceFailed(token, owner, reason)` on `JBMultiTerminal` and `(token, owner, reason, caller)` on the registry/router — filter by the right shape.
 
 ## Common mistakes
 

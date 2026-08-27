@@ -121,12 +121,25 @@ currentTotalSurplusOf(projectId, decimals, currency) → uint256  // Across ALL 
 currentReclaimableSurplusOf(projectId, cashOutCount, totalSupply, surplus) → uint256
 currentReclaimableSurplusOf(projectId, cashOutCount, terminals[], tokens[], decimals, currency) → uint256
 currentTotalReclaimableSurplusOf(projectId, cashOutCount, decimals, currency) → uint256
-previewCashOutFrom(terminal, holder, projectId, cashOutCount, tokenToReclaim, metadata)
-    → (JBRuleset, reclaimAmount, cashOutTaxRate, hookSpecifications)
-previewPayFrom(terminal, payer, amount, projectId, beneficiary, metadata)
-    → (JBRuleset, tokenCount, hookSpecifications)
+previewCashOutFrom(terminal, holder, projectId, cashOutCount, tokenToReclaim, beneficiaryIsFeeless, metadata)
+    → (JBRuleset, reclaimAmount, cashOutTaxRate, hookSpecifications)   // pre-fee
+previewPayFrom(terminal, payer, JBTokenAmount amount, projectId, beneficiary, metadata)
+    → (JBRuleset, tokenCount, hookSpecifications)                       // tokenCount is pre-reserved-split
 usedPayoutLimitOf(terminal, projectId, token, rulesetCycleNumber, currency) → uint256
 usedSurplusAllowanceOf(terminal, projectId, token, rulesetId, currency) → uint256
+```
+
+`JBTokenAmount` is `(address token, uint8 decimals, uint32 currency, uint256 value)`.
+
+Prefer the terminal-level quotes, which take scalars and resolve feelessness themselves:
+
+```solidity
+// JBMultiTerminal
+previewCashOutFrom(holder, projectId, cashOutCount, tokenToReclaim, address payable beneficiary, metadata)
+    → (JBRuleset, reclaimAmount, cashOutTaxRate, hookSpecifications)   // pre-fee
+previewPayFor(projectId, token, amount, beneficiary, metadata)
+    → (JBRuleset, beneficiaryTokenCount, reservedTokenCount, hookSpecifications)
+feeFreeSurplusOf(projectId, token) → uint256                            // reclaim up to this is fee'd even at tax rate 0
 ```
 
 Note: the **used** payout limit / surplus allowance live on `JBTerminalStore`, not `JBFundAccessLimits`. Used payout limits are keyed by ruleset **cycle number**; used surplus allowances by ruleset **ID**.
@@ -169,7 +182,7 @@ permissionsOf(operator, account, projectId) → uint256   // packed bitmap
 pricePerUnitOf(projectId, pricingCurrency, unitCurrency, decimals) → uint256
 ```
 
-Use `JBCurrencyIds` (ETH=1, USD=2) for the currency args, and projectId `0` for the protocol-wide default feeds.
+Currency args mix `JBCurrencyIds` (ETH=1, USD=2) with token-derived IDs `uint32(uint160(token))` (native = 61166). Project `0` holds the protocol-wide default pairs: `(USD, 61166)`, `(USD, 1)`, `(1, 61166)`, `(USD, uint32(uint160(USDC)))`. Reverse pairs resolve by inversion.
 
 ## Ruleset Struct Fields
 
@@ -295,9 +308,13 @@ cast call $JB_TERMINAL_STORE "usedPayoutLimitOf(address,uint256,address,uint256,
 ### Cash-out quote
 
 ```bash
+cast call $JB_TERMINAL \
+    "previewCashOutFrom(address,uint256,uint256,address,address,bytes)" \
+    $HOLDER $PROJECT_ID $CASH_OUT_COUNT $NATIVE_TOKEN $BENEFICIARY 0x --rpc-url $RPC_URL
+# Store-level form needs the feeless flag:
 cast call $JB_TERMINAL_STORE \
-    "previewCashOutFrom(address,address,uint256,uint256,address,bytes)" \
-    $JB_TERMINAL $HOLDER $PROJECT_ID $CASH_OUT_COUNT $NATIVE_TOKEN 0x --rpc-url $RPC_URL
+    "previewCashOutFrom(address,address,uint256,uint256,address,bool,bytes)" \
+    $JB_TERMINAL $HOLDER $PROJECT_ID $CASH_OUT_COUNT $NATIVE_TOKEN false 0x --rpc-url $RPC_URL
 ```
 
 ## TypeScript (viem)
@@ -386,19 +403,20 @@ async function getProjectInfo(projectId: bigint) {
 
 ### "How much would a cash-out return?"
 
-`JBTerminalStore.previewCashOutFrom(terminal, holder, projectId, cashOutCount, tokenToReclaim, metadata)` — returns the reclaim amount after the cash-out tax curve. A 2.5% protocol fee applies on top whenever `cashOutTaxRate != 0`.
+`JBMultiTerminal.previewCashOutFrom(holder, projectId, cashOutCount, tokenToReclaim, beneficiary, metadata)` — returns the reclaim amount after the cash-out tax curve, before the protocol fee. Fee rule (`JBMultiTerminal._cashOutTokensOf`): no fee if the beneficiary is feeless; `cashOutTaxRate != 0` → 2.5% on the full reclaim; `cashOutTaxRate == 0` → 2.5% on `min(reclaim, feeFreeSurplusOf(projectId, token))` only.
 
 ## Network RPC URLs
 
 | Network | Chain ID | RPC URL |
 |---------|----------|---------|
-| Ethereum | 1 | `https://eth.llamarpc.com` |
+| Ethereum | 1 | `https://ethereum-rpc.publicnode.com` |
 | Optimism | 10 | `https://mainnet.optimism.io` |
 | Base | 8453 | `https://mainnet.base.org` |
 | Arbitrum | 42161 | `https://arb1.arbitrum.io/rpc` |
 | Sepolia | 11155111 | `https://ethereum-sepolia-rpc.publicnode.com` |
 | Optimism Sepolia | 11155420 | `https://sepolia.optimism.io` |
 | Base Sepolia | 84532 | `https://sepolia.base.org` |
+| Arbitrum Sepolia | 421614 | `https://sepolia-rollup.arbitrum.io/rpc` |
 
 ## Common mistakes
 
@@ -408,4 +426,4 @@ async function getProjectInfo(projectId: bigint) {
 - **Wrong split group for payouts.** Payout split groups are `uint256(uint160(token))`, not `0` — group `1` is reserved tokens only.
 - **Treating `tokenOf == address(0)` as an error.** It means no ERC-20 has been deployed; holders hold credits (`creditBalanceOf`). `totalBalanceOf` covers both.
 - **Reading surplus when you want balance.** `currentSurplusOf` subtracts remaining payout limits and can be 0 on a funded project; `JBTerminalStore.balanceOf` is the raw held amount.
-- **Empty fund access limits = zero payouts**, not unlimited. `sendPayoutsOf` also auto-caps at the available balance.
+- **Empty fund access limits = zero payouts**, not unlimited. `sendPayoutsOf` caps at the remaining payout limit but reverts `JBTerminalStore_InadequateTerminalStoreBalance` if that exceeds the terminal balance.

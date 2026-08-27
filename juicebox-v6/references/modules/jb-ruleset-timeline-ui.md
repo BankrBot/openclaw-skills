@@ -97,6 +97,8 @@ Data sources on `JBController`:
     .ruleset-status.upcoming { background: rgba(255,204,0,0.2); color: var(--jb-yellow); }
     .ruleset-status.past { background: rgba(136,136,136,0.2); color: var(--text-muted); }
     .ruleset-status.pending { background: var(--warning-bg); color: var(--warning); }
+    .ruleset-card.failed { border-left-color: var(--error); opacity: 0.7; }
+    .ruleset-status.failed { background: rgba(255,0,0,0.15); color: var(--error); }
 
     .ruleset-dates { display: flex; gap: 20px; margin-bottom: var(--space-md); font-size: 13px; color: var(--text-muted); }
     .params-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-md); }
@@ -177,7 +179,7 @@ Data sources on `JBController`:
   </div>
 
   <script type="module">
-    import { createPublicClient, http, getContract, zeroAddress } from 'https://esm.sh/viem';
+    import { createPublicClient, http, getContract, zeroAddress } from 'viem';
     import { CHAIN_CONFIGS, loadChainConfig } from '/references/shared/wallet-utils.js';
 
     // Exact V6 tuple shapes. Prefer loadABI('JBController') from references/shared/wallet-utils.js;
@@ -269,7 +271,7 @@ Data sources on `JBController`:
         const chainConfig = config.chains[chainId];
         const chain = CHAIN_CONFIGS[chainId];
 
-        const client = createPublicClient({ chain, transport: http(chainConfig.rpc) });
+        const client = createPublicClient({ chain, transport: http() });
         const controllerAddress = chainConfig.contracts.JBController;
 
         const controller = getContract({ address: controllerAddress, abi: CONTROLLER_ABI, client });
@@ -283,7 +285,8 @@ Data sources on `JBController`:
         const [currentRuleset, currentMetadata] = await controller.read.currentRulesetOf([BigInt(projectId)]);
         currentRulesetId = currentRuleset.id.toString();
 
-        // Load upcoming and queued rulesets
+        // Load upcoming and queued rulesets. upcomingRulesetOf already applies approval-hook logic;
+        // latestQueuedRulesetOf is the raw tail of the queue with its JBApprovalStatus.
         let upcomingRuleset = null, queuedRuleset = null;
         try {
           const [upcoming, upcomingMeta] = await controller.read.upcomingRulesetOf([BigInt(projectId)]);
@@ -296,7 +299,8 @@ Data sources on `JBController`:
           const [queued, queuedMeta, approvalStatus] = await controller.read.latestQueuedRulesetOf([BigInt(projectId)]);
           const queuedId = queued.id.toString();
           if (queued.id !== 0n && queuedId !== currentRulesetId && (!upcomingRuleset || queuedId !== upcomingRuleset.ruleset.id.toString())) {
-            queuedRuleset = { ruleset: queued, metadata: queuedMeta, approvalStatus, status: 'pending' };
+            // approvalStatus 5 (Failed): rejected by the approval hook; it will never activate.
+            queuedRuleset = { ruleset: queued, metadata: queuedMeta, approvalStatus, status: Number(approvalStatus) === 5 ? 'failed' : 'pending' };
           }
         } catch (e) {}
 
@@ -340,7 +344,7 @@ Data sources on `JBController`:
         const { ruleset, metadata, status, approvalStatus } = rs;
         const startDate = new Date(Number(ruleset.start) * 1000);
         const endDate = ruleset.duration > 0 ? new Date((Number(ruleset.start) + Number(ruleset.duration)) * 1000) : null;
-        const statusLabel = status === 'pending' ? getApprovalStatusLabel(approvalStatus) : status;
+        const statusLabel = approvalStatus !== undefined ? getApprovalStatusLabel(approvalStatus) : status;
 
         html += `
           <div class="card ruleset-card ${status}">
@@ -471,6 +475,7 @@ Data sources on `JBController`:
 - **Percent scales**: `weightCutPercent` is out of 1e9 (display: `/1e7` for percent); `reservedPercent` and `cashOutTaxRate` are out of 10,000 (display: `/100` for percent).
 - **Metadata field names**: V6 metadata has `pauseCreditTransfers` (not a transfer-pause plus a cash-out-pause pair), `allowSetCustomToken`, `allowAddAccountingContext` (singular), and `scopeCashOutsToLocalBalances`. Decoding with wrong names/count breaks tuple decoding.
 - **`upcomingRulesetOf` returns an all-zero struct** (not a revert) when nothing is queued — check `id !== 0n` before rendering.
+- **A queued ruleset with `approvalStatus == 5` (Failed) is dead**, not pending — render it as failed; `upcomingRulesetOf` already excludes it.
 - **`allRulesetsOf` pagination**: `startingId = 0` means "start from the latest"; results are newest-first.
 - **Weight display**: `weight` is a `uint112` 18-decimal fixed point — tokens per unit of `baseCurrency`, not wei of ETH.
 

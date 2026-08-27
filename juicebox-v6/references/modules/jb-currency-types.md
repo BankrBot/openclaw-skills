@@ -23,7 +23,7 @@ Every currency in Juicebox is a `uint32` ID. Two namespaces share that space:
 
 Both namespaces feed the same `JBPrices` lookups. They are distinct: `JBCurrencyIds.ETH` (1) is **not** the native-token currency (61166) — converting between them goes through a registered 1:1 feed, not through ID equality.
 
-Currency `0` is invalid everywhere: `JBPrices.addPriceFeedFor` rejects it, and `JBMultiTerminal` treats an accounting context with `currency == 0` as "token not accepted".
+Currency `0` is invalid everywhere: `JBPrices.addPriceFeedFor` rejects it. `JBMultiTerminal.migrateBalanceOf` reads a destination context with `currency == 0` as "terminal does not accept the token" (`JBMultiTerminal_TerminalTokensIncompatible`); the pay / add-to-balance path checks `context.token == address(0)` instead (`JBMultiTerminal_TokenNotAccepted`).
 
 ## NATIVE_TOKEN sentinel
 
@@ -106,7 +106,7 @@ uint256 weightRatio = amount.currency == ruleset.baseCurrency()
 tokenCount = mulDiv(amount.value, weight, weightRatio); // weight is 18-decimal fixed point
 ```
 
-Payout limits and surplus allowances (`JBTerminalStore.recordPayoutFor` / `recordUsedAllowanceOf`): a limit denominated in `currency` converts to the terminal token via `pricePerUnitOf(projectId, currency, accountingContext.currency, 18)` at 18-decimal fidelity. If the limit currency equals the accounting-context currency exactly, no feed is consulted. A conversion that rounds to zero returns zero paid out without consuming the limit.
+Payout limits and surplus allowances (`JBTerminalStore.recordPayoutFor` / `recordUsedAllowanceOf`): a limit denominated in `currency` converts to the terminal token via `pricePerUnitOf(projectId, currency, accountingContext.currency, 18)` at 18-decimal fidelity. If the limit currency equals the accounting-context currency exactly, no feed is consulted. A conversion that rounds to zero returns zero paid out without consuming the limit. Conversion only succeeds when a project-level or project-0 feed exists for the pair; there is no default ETH/native <-> USDC feed (see below).
 
 Decimals rules:
 
@@ -143,6 +143,8 @@ Default (project 0) feed registrations on every chain:
 
 Inverse directions (e.g. pricing in 61166 per unit of USD) derive automatically from these at read time.
 
+There is no default feed between `NATIVE_TOKEN_CURRENCY` (61166) / ETH (1) and USDC. Every registered pair has USD on one side, and `JBPrices` resolves only direct or inverse pairs (no two-hop routing). Consequences for a project that accepts both native ETH and USDC: `baseCurrency = 2` (USD) is the only base currency for which both payments resolve; with `baseCurrency = 1` or `61166` a USDC payment reverts `JBPrices_PriceFeedNotFound`, and an ETH-denominated payout limit on a USDC terminal reverts the same way. A project may add its own feed under its `projectId` (`ADD_PRICE_FEED`, ID 20), but revnets cannot.
+
 ## Example: USD-based omnichain project accepting native ETH and USDC
 
 ```javascript
@@ -176,6 +178,6 @@ A payment of native ETH resolves issuance through the default `(USD, 61166)` fee
 | Reusing one USDC currency ID across chains | Token-derived IDs come from the local token address; every chain's USDC ID is different (see table). Only well-known IDs (1, 2) are chain-invariant. |
 | Setting a token-derived `baseCurrency` on an omnichain project and expecting identical issuance everywhere | The ID differs per chain, so each chain's ruleset references a different currency. Use `JBCurrencyIds.ETH`/`USD` for chain-invariant interpretation. |
 | Denominating a USD payout limit with 18 decimals on a USDC terminal | Limit amounts use the terminal token's accounting-context decimals: 5 USD on a USDC terminal is `5_000_000` (6 decimals), not `5e18`. |
-| Using currency `0` | Rejected by `JBPrices.addPriceFeedFor`; `JBMultiTerminal` reads `currency == 0` as "no accounting context / token not accepted". |
+| Using currency `0` | Rejected by `JBPrices.addPriceFeedFor`; `migrateBalanceOf` reads `currency == 0` as "destination does not accept the token". The pay path's "token not accepted" check is `context.token == address(0)`, not the currency. |
 | Replacing a bad price feed | Feeds are append-only and immutable once added. A later feed for the same exact pair is only a backup, consulted when earlier feeds revert or return zero. |
 | Expecting `USDC ↔ USD` to be hardcoded 1:1 | USDC's ID is token-derived and distinct from USD (2); conversion uses the chain's USDC/USD Chainlink feed, so a depeg changes the rate. A `baseCurrency = 2` project issues per actual dollar, not per USDC. |

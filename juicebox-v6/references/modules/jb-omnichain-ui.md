@@ -38,8 +38,8 @@ Verified against `nana-omnichain-deployers-v6`, `nana-suckers-v6`, and `nana-cor
 | Launch (default 721 config) | Same name, without `deploy721Config` — deploys an empty-tier hook using the first ruleset's `baseCurrency` |
 | Creation fee | `payable` — `msg.value` MUST equal `JBProjects.creationFee()` EXACTLY (capped at 0.001 ether; can be 0) |
 | Add suckers to existing project | `deploySuckersFor(uint256 projectId, JBSuckerDeploymentConfig suckerDeploymentConfiguration)` — requires `DEPLOY_SUCKERS` permission from the project owner |
-| Deterministic sucker addresses | The registry salt is `keccak256(abi.encode(config.salt, msgSender))` — the SAME sender must submit on every chain for sucker addresses to match, which is what makes each sucker find its cross-chain peer |
-| 721 hook lookup | `JBOmnichainDeployer.tiered721HookOf(projectId, rulesetId)` — the deployer is the project's data hook and proxies to the real 721 hook |
+| Deterministic sucker addresses | The registry salt is `keccak256(abi.encode(msgSender, config.salt))` (`JBSuckerRegistry.sol`) — the SAME sender must submit on every chain for sucker addresses to match, which is what makes each sucker find its cross-chain peer |
+| 721 hook lookup | `JBOmnichainDeployer.tiered721HookOf(projectId, rulesetId)` returns `(IJB721TiersHook hook, bool useDataHookForCashOut)` (viem: `[hook, bool]`) — the deployer is the project's data hook and proxies to the real 721 hook; its other data hook (buyback etc.) is `extraDataHookOf(projectId, rulesetId)` |
 | Meta-tx support | `JBOmnichainDeployer`, `JBController`, and `JBMultiTerminal` are `ERC2771Context` contracts trusting the canonical `ERC2771Forwarder` |
 
 Sucker config structs (ABI order):
@@ -61,7 +61,7 @@ struct JBTokenMapping {
 }
 ```
 
-Sucker deployers are per chain-pair; read them from `references/shared/chain-config.json`: `JBOptimismSuckerDeployer` / `JBBaseSuckerDeployer` / `JBArbitrumSuckerDeployer` (native bridges, on both endpoints of each pair) and `JBCCIPSuckerDeployer__{ETH,OP,BASE,ARB}` (CCIP, keyed by the remote chain). Chain-specific — never assume one address across chains.
+Sucker deployers are per chain-pair. Chain config is read-only discovery; writes must use the reviewed manifest and verify each deployer on its exact chain. Native and CCIP lane keys are chain-specific—never assume one address across chains.
 
 Lane selection is asset-specific. Route canonical USDC through the corresponding CCIP deployer. Native-bridge deployers are the default for native ETH only; an OP Stack or Arbitrum ERC-20 route must map the exact token the live bridge delivers or burns in both directions, and the destination terminal must account for that token. Registry approval and same-address mapping do not validate the bridge pair.
 
@@ -98,7 +98,7 @@ const RELAYR_API = 'https://api.relayr.ba5ed.com';
 ### Bendystraw (data)
 
 ```javascript
-// Mainnet chains: https://bendystraw.xyz/{API_KEY}/graphql
+// Mainnet chains: https://bendystraw.up.railway.app/{API_KEY}/graphql (production host; bendystraw.xyz lags)
 // Testnet chains: https://testnet.bendystraw.xyz/{API_KEY}/graphql
 // The keyed route is REQUIRED in browsers — the keyless /graphql endpoint is CORS-locked.
 // Contact @peripheralist on X for a key. Use a server-side proxy to keep it secret.
@@ -166,10 +166,27 @@ const RELAYR_API = 'https://api.relayr.ba5ed.com';
   </div>
 
   <script type="module">
-    import { createPublicClient, createWalletClient, custom, http, formatEther, encodeFunctionData } from 'https://esm.sh/viem';
-    import { CHAIN_CONFIGS, getContractAddress, truncateAddress } from '/references/shared/wallet-utils.js';
+    import {
+      createPublicClient, createWalletClient, custom, http, formatEther, encodeFunctionData,
+      decodeFunctionData, getAddress, keccak256, toFunctionSelector
+    } from 'viem';
+    import {
+      CHAIN_CONFIGS, getContractAddress, truncateAddress, verifyWriteTarget
+    } from '/references/shared/wallet-utils.js';
 
     const RELAYR_API = 'https://api.relayr.ba5ed.com';
+    const NATIVE_TOKEN = '0x000000000000000000000000000000000000EEEe';
+    const RELAYR_PAYMENT = '0x1c05f7841379d4393574c0ffa17908ec40ffd97d';
+    const RELAYR_PAYMENT_CODE_HASH = '0x6006b5acadb4cd60aa5c00cb844c34563e182dff83d4f4ff4fde226f7df16fa6';
+    const RELAYR_PAYMENT_SELECTOR = '0x103903a7';
+    const RELAYR_PAYMENT_CHAINS = new Set([1, 10, 8453, 42161]);
+    const MAX_PAYMENT_WEI = 50_000_000_000_000_000n;
+    const MAX_PAYMENT_AUTH_SECONDS = 20 * 60;
+
+    const PAYMENT_ABI = [{
+      name: 'prepayment', type: 'function', stateMutability: 'payable',
+      inputs: [{ name: 'bundleId', type: 'bytes16' }, { name: 'deadline', type: 'uint40' }], outputs: []
+    }];
 
     const FORWARDER_ABI = [
       { name: 'nonces', type: 'function', stateMutability: 'view',
@@ -191,6 +208,7 @@ const RELAYR_API = 'https://api.relayr.ba5ed.com';
     let walletClient, address;
     let selectedChains = new Set();
     let currentQuote = null;
+    let reviewedBundle = [];
 
     window.toggleChain = function(el) {
       const chainId = el.dataset.chain;
@@ -230,15 +248,20 @@ const RELAYR_API = 'https://api.relayr.ba5ed.com';
           btn.textContent = `Signing for ${CHAIN_CONFIGS[chainId].name}...`;
 
           const publicClient = createPublicClient({ chain: CHAIN_CONFIGS[chainId], transport: http() });
-          const forwarder = getContractAddress(chainId, 'ERC2771Forwarder');
-          const deployer = getContractAddress(chainId, 'JBOmnichainDeployer');
+          const forwarder = await getContractAddress(chainId, 'ERC2771Forwarder', { write: true });
+          const deployer = await getContractAddress(chainId, 'JBOmnichainDeployer', { write: true });
 
           // launchProjectFor is payable: the forward request value must equal the creation fee.
           const creationFee = await publicClient.readContract({
-            address: getContractAddress(chainId, 'JBProjects'), abi: PROJECTS_ABI, functionName: 'creationFee'
+            address: await getContractAddress(chainId, 'JBProjects'), abi: PROJECTS_ABI, functionName: 'creationFee'
           });
 
           const calldata = buildLaunchCalldata(chainId);
+          if (calldata === '0x') throw new Error('Build and review the chain-specific launch calldata before signing.');
+          await verifyWriteTarget(publicClient, 'JBOmnichainDeployer', { selector: calldata.slice(0, 10), keccak256 });
+          await verifyWriteTarget(publicClient, 'ERC2771Forwarder', {
+            selector: toFunctionSelector('execute((address,address,uint256,uint256,uint48,bytes,bytes))'), keccak256
+          });
           const { requestData } = await signForwardRequest({
             publicClient, chainId, forwarder, target: deployer, calldata, value: creationFee
           });
@@ -251,8 +274,9 @@ const RELAYR_API = 'https://api.relayr.ba5ed.com';
           });
         }
 
+        reviewedBundle = signedRequests.map(normalizeBundleEntry);
         btn.textContent = 'Getting quote...';
-        currentQuote = await getRelayrQuote(signedRequests);
+        currentQuote = await getRelayrQuote(reviewedBundle);
 
         showPaymentOptions(currentQuote);
         btn.textContent = 'Step 2: Select Payment Chain';
@@ -270,7 +294,7 @@ const RELAYR_API = 'https://api.relayr.ba5ed.com';
         address: forwarder, abi: FORWARDER_ABI, functionName: 'nonces', args: [address]
       });
 
-      const deadline = Math.floor(Date.now() / 1000) + 48 * 60 * 60;
+      const deadline = Math.floor(Date.now() / 1000) + 47 * 60 * 60;
 
       const message = {
         from: address,
@@ -373,11 +397,41 @@ const RELAYR_API = 'https://api.relayr.ba5ed.com';
       btn.textContent = 'Confirm in wallet...';
 
       try {
+        // Relayr fields are untrusted. Re-fetch and bind the service record to the exact locally
+        // constructed ordered bundle before interpreting the payment calldata.
+        await assertOrderedBundle(currentQuote.bundle_uuid, reviewedBundle);
+        if (!RELAYR_PAYMENT_CHAINS.has(Number(payment.chain))) throw new Error(`Unsupported payment chain ${payment.chain}`);
+        if (getAddress(payment.target) !== getAddress(RELAYR_PAYMENT)) throw new Error('Unpinned Relayr payment target');
+        const nativeTokens = new Set([NATIVE_TOKEN.toLowerCase(), '0x0000000000000000000000000000000000000000']);
+        if (!nativeTokens.has(String(payment.token).toLowerCase())) throw new Error('Only the pinned native payment token is supported');
+        if (String(payment.calldata).slice(0, 10).toLowerCase() !== RELAYR_PAYMENT_SELECTOR) throw new Error('Unexpected Relayr payment selector');
+
+        const { functionName, args: [bundleId, deadline] } = decodeFunctionData({ abi: PAYMENT_ABI, data: payment.calldata });
+        const expectedBundleId = `0x${currentQuote.bundle_uuid.replaceAll('-', '').toLowerCase()}`;
+        if (functionName !== 'prepayment' || bundleId.toLowerCase() !== expectedBundleId) throw new Error('Payment calldata is not bound to this bundle');
+        const now = Math.floor(Date.now() / 1000);
+        if (Number(deadline) <= now || Number(deadline) > now + MAX_PAYMENT_AUTH_SECONDS) throw new Error('Payment authorization lifetime is stale or too long');
+
+        const amount = BigInt(payment.amount);
+        if (amount <= 0n || amount > MAX_PAYMENT_WEI) throw new Error(`Payment ${formatEther(amount)} ETH is outside the approved cap`);
+        const paymentClient = createPublicClient({ chain: CHAIN_CONFIGS[Number(payment.chain)], transport: http() });
+        const paymentCode = await paymentClient.getBytecode({ address: RELAYR_PAYMENT });
+        if (!paymentCode || keccak256(paymentCode) !== RELAYR_PAYMENT_CODE_HASH) throw new Error('Relayr payment contract code mismatch');
+        await paymentClient.call({ account: address, to: RELAYR_PAYMENT, value: amount, data: payment.calldata });
+
+        const destinations = reviewedBundle.map((entry, i) =>
+          `${i + 1}. chain ${entry.chain}: ${entry.target} ${entry.data.slice(0, 10)}, value ${entry.value}`
+        ).join('\n');
+        const review = `${destinations}\n\nPayment: ${formatEther(amount)} ETH on chain ${payment.chain}`
+          + ` to ${RELAYR_PAYMENT}, ${functionName}(${bundleId}, ${deadline})\n\n`
+          + 'Each destination can settle independently. Partial completion requires manual reconciliation. Continue?';
+        if (!confirm(review)) throw new Error('Cancelled');
+
         await walletClient.switchChain({ id: payment.chain });
         const hash = await walletClient.sendTransaction({
           account: address,
-          to: payment.target,
-          value: BigInt(payment.amount),
+          to: RELAYR_PAYMENT,
+          value: amount,
           data: payment.calldata,
           chain: CHAIN_CONFIGS[payment.chain]
         });
@@ -391,6 +445,27 @@ const RELAYR_API = 'https://api.relayr.ba5ed.com';
         btn.textContent = 'Error - Try Again';
         btn.disabled = false;
       }
+    }
+
+    function normalizeBundleEntry(entry) {
+      return {
+        chain: Number(entry.chain),
+        target: getAddress(entry.target),
+        data: String(entry.data).toLowerCase(),
+        value: BigInt(entry.value).toString(),
+        virtual_nonce: Number(entry.virtual_nonce || 0)
+      };
+    }
+
+    async function assertOrderedBundle(bundleUuid, expected) {
+      const response = await fetch(`${RELAYR_API}/v1/bundle/${bundleUuid}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Cannot verify Relayr bundle; refusing payment');
+      const body = await response.json();
+      if (!Array.isArray(body.transactions) || body.transactions.length !== expected.length) throw new Error('Relayr bundle length changed');
+      body.transactions.forEach((row, index) => {
+        const actual = normalizeBundleEntry(row.request || row.transaction || row);
+        if (JSON.stringify(actual) !== JSON.stringify(expected[index])) throw new Error(`Relayr bundle entry ${index} changed or reordered`);
+      });
     }
 
     function showStatusPanel() {
@@ -413,25 +488,38 @@ const RELAYR_API = 'https://api.relayr.ba5ed.com';
           const response = await fetch(`${RELAYR_API}/v1/bundle/${bundleUuid}`);
           const status = await response.json();
 
-          status.transactions.forEach((tx, i) => {
-            const chainId = Array.from(selectedChains)[i];
-            const statusEl = document.querySelector(`#status-${chainId} .status-badge`);
-            if (!statusEl) return;
+          const chainIds = Array.from(selectedChains);
+          const results = await Promise.all(status.transactions.map(async (tx, i) => {
+            const state = tx.status?.state;
+            if (state !== 'Success') return state;
+            // Relayr says Success; independently prove the exact destination transaction and post-state.
+            const chainId = parseInt(chainIds[i]);
+            const client = createPublicClient({ chain: CHAIN_CONFIGS[chainId], transport: http() });
+            const receipt = await client.getTransactionReceipt({ hash: tx.status.data.hash });
+            if (receipt.status !== 'success') return 'Failed';
+            const landed = await client.getTransaction({ hash: tx.status.data.hash });
+            const expected = reviewedBundle[i];
+            if (Number(landed.chainId) !== expected.chain
+              || getAddress(landed.to) !== expected.target
+              || landed.input.toLowerCase() !== expected.data
+              || landed.value.toString() !== expected.value) return 'Failed';
+            return await verifyLaunchPostState(client, chainId, receipt, expected) ? 'Verified' : 'Uncertain';
+          }));
 
-            if (tx.status === 'Success' || tx.status === 'Completed') {
-              statusEl.textContent = 'Complete';
-              statusEl.style.color = 'var(--success)';
-            } else if (tx.status === 'Failed') {
-              statusEl.textContent = 'Failed';
-              statusEl.style.color = 'var(--error)';
-            } else {
-              statusEl.textContent = tx.status;
-            }
+          results.forEach((state, i) => {
+            const statusEl = document.querySelector(`#status-${chainIds[i]} .status-badge`);
+            if (!statusEl) return;
+            if (state === 'Verified') { statusEl.textContent = 'Verified'; statusEl.style.color = 'var(--success)'; }
+            else if (state === 'Failed') { statusEl.textContent = 'Failed'; statusEl.style.color = 'var(--error)'; }
+            else statusEl.textContent = state || 'Pending';
           });
 
-          const allDone = status.transactions.every(tx => ['Success', 'Completed', 'Failed'].includes(tx.status));
-          if (!allDone) setTimeout(poll, 2000);
-          else document.getElementById('deploy-btn').textContent = 'Deployment Complete!';
+          const failed = results.filter(r => r === 'Failed' || r === 'Uncertain').length;
+          const allDone = results.every(r => r === 'Verified' || r === 'Failed' || r === 'Uncertain');
+          if (!allDone) setTimeout(poll, 2500);
+          else document.getElementById('deploy-btn').textContent = failed
+            ? `Unverified on ${failed} chain(s) — partial deployment, reconcile before use`
+            : 'Deployment verified on every chain';
 
         } catch (error) {
           console.error('Poll error:', error);
@@ -440,6 +528,14 @@ const RELAYR_API = 'https://api.relayr.ba5ed.com';
       };
 
       poll();
+    }
+
+    async function verifyLaunchPostState(client, chainId, receipt, expected) {
+      // Implement with the decoded launch plan before enabling this template: require the expected
+      // project-launch event, derive the created project ID/address from that event, then verify
+      // ownerOf, controllerOf, isTerminalOf, accounting contexts, ruleset/hook config, sucker peers,
+      // and deployed bytecode against the reviewed plan. Missing or mismatched evidence returns false.
+      throw new Error(`Operation-specific launch proof is not configured for chain ${chainId}`);
     }
   </script>
 </body>
@@ -532,7 +628,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const response = await fetch(
-    `https://bendystraw.xyz/${process.env.BENDYSTRAW_API_KEY}/graphql`,
+    `https://bendystraw.up.railway.app/${process.env.BENDYSTRAW_API_KEY}/graphql`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

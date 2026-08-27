@@ -19,7 +19,7 @@ Generate single-file frontends for deploying Juicebox projects, 721 collections,
 - Single HTML file, no build step
 - viem from ESM CDN
 - Shared CSS from `references/shared/styles.css`
-- Addresses from `references/shared/chain-config.json` (core contracts share one address on all 8 chains)
+- Read-only discovery from `references/shared/chain-config.json`; write targets only from the reviewed deployment manifest, with live code/selector verification
 - ABIs from `references/shared/abis/*.json` — never hand-write nested tuple ABIs
 
 ## Deployment facts
@@ -104,6 +104,8 @@ Currency IDs (`JBCurrencyIds`) — used for `baseCurrency` and price-feed lookup
 | `terminal` | `address` (`JBMultiTerminal` from chain-config) |
 | `accountingContextsToAccept` | `JBAccountingContext[]` |
 
+To let the project accept any token by swap, add a second entry `{ terminal: JBRouterTerminalRegistry, accountingContextsToAccept: [] }` (the SDK's `buildTerminalConfigurations` emits exactly this pair; the production create flow gates it on an "allow any token" option). Production launches go through `JB721TiersHookProjectDeployer.launchProjectFor` rather than `JBController.launchProjectFor` directly so a 721 store hook exists from day one.
+
 `JBAccountingContext`: `{ token: address, decimals: uint8, currency: uint32 }`
 
 `JBSplitGroup`: `{ groupId: uint256, splits: JBSplit[] }`
@@ -167,22 +169,36 @@ Currency IDs (`JBCurrencyIds`) — used for `baseCurrency` and price-feed lookup
   </div>
 
   <script type="module">
-    import { createWalletClient, createPublicClient, custom, http, parseEther, zeroAddress } from 'https://esm.sh/viem';
-    import { CHAIN_CONFIGS, loadChainConfig, loadABI, truncateAddress, getTxUrl } from '/references/shared/wallet-utils.js';
+    import {
+      createWalletClient, createPublicClient, custom, http, parseEther, zeroAddress,
+      parseEventLogs, encodeFunctionData, decodeFunctionData, keccak256
+    } from 'viem';
+    import {
+      CHAIN_CONFIGS, loadABI, getContractAddress, verifyWriteTarget,
+      truncateAddress, getTxUrl, waitForSuccess
+    } from '/references/shared/wallet-utils.js';
 
     const NATIVE_TOKEN = '0x000000000000000000000000000000000000EEEe';
     const NATIVE_TOKEN_CURRENCY = 61166; // uint32(uint160(NATIVE_TOKEN))
     const ETH_CURRENCY = 1;              // JBCurrencyIds.ETH (baseCurrency)
 
     const PROJECTS_ABI = [
-      { name: 'creationFee', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] }
+      { name: 'creationFee', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+      { name: 'ownerOf', type: 'function', stateMutability: 'view', inputs: [{ type: 'uint256' }], outputs: [{ type: 'address' }] },
+      { name: 'Transfer', type: 'event', inputs: [
+        { name: 'from', type: 'address', indexed: true }, { name: 'to', type: 'address', indexed: true }, { name: 'tokenId', type: 'uint256', indexed: true }
+      ] }
+    ];
+    const DIRECTORY_ABI = [
+      { name: 'controllerOf', type: 'function', stateMutability: 'view', inputs: [{ type: 'uint256' }], outputs: [{ type: 'address' }] },
+      { name: 'isTerminalOf', type: 'function', stateMutability: 'view', inputs: [{ type: 'uint256' }, { type: 'address' }], outputs: [{ type: 'bool' }] }
     ];
 
     let walletClient = null;
     let publicClient = null;
     let connectedAddress = null;
     let chainId = 1;
-    let chainConfig = null;
+    let addresses = null;
     let controllerAbi = null;
 
     window.connectWallet = async function() {
@@ -195,8 +211,13 @@ Currency IDs (`JBCurrencyIds`) — used for `baseCurrency` and price-feed lookup
 
         walletClient = createWalletClient({ chain: CHAIN_CONFIGS[chainId], transport: custom(window.ethereum) });
         publicClient = createPublicClient({ chain: CHAIN_CONFIGS[chainId], transport: http() });
-        chainConfig = await loadChainConfig();
         controllerAbi = await loadABI('JBController'); // exact nested tuple ABI — do not hand-write
+        addresses = {
+          JBController: await getContractAddress(chainId, 'JBController', { write: true }),
+          JBProjects: await getContractAddress(chainId, 'JBProjects'),
+          JBDirectory: await getContractAddress(chainId, 'JBDirectory'),
+          JBMultiTerminal: await getContractAddress(chainId, 'JBMultiTerminal')
+        };
 
         document.getElementById('wallet-address').textContent = truncateAddress(address);
         document.getElementById('network-name').textContent = CHAIN_CONFIGS[chainId]?.name || `Chain ${chainId}`;
@@ -232,7 +253,6 @@ Currency IDs (`JBCurrencyIds`) — used for `baseCurrency` and price-feed lookup
 
     window.deploy = async function() {
       const config = getConfig();
-      const addresses = chainConfig?.chains[chainId]?.contracts;
       if (!addresses) { alert('Unsupported network'); return; }
 
       showStatus('info', 'Please confirm in wallet...');
@@ -273,18 +293,43 @@ Currency IDs (`JBCurrencyIds`) — used for `baseCurrency` and price-feed lookup
           accountingContextsToAccept: [{ token: NATIVE_TOKEN, decimals: 18, currency: NATIVE_TOKEN_CURRENCY }]
         };
 
-        const hash = await walletClient.writeContract({
+        const call = {
           address: addresses.JBController,
           abi: controllerAbi,
           functionName: 'launchProjectFor',
           args: [config.owner, config.projectUri, [rulesetConfig], [terminalConfig], 'Deployed via Juicebox UI'],
           value: creationFee,
           account: connectedAddress
-        });
+        };
+        const calldata = encodeFunctionData(call);
+        await verifyWriteTarget(publicClient, 'JBController', { selector: calldata.slice(0, 10), keccak256 });
+        const decoded = decodeFunctionData({ abi: controllerAbi, data: calldata });
+        if (!confirm(`Chain ${chainId}\nTarget ${addresses.JBController}\nFunction ${decoded.functionName}\nOwner ${config.owner}\nCreation fee ${creationFee} wei\nProceed?`)) return;
+        const { request } = await publicClient.simulateContract(call);
+        const hash = await walletClient.writeContract(request);
 
         showStatus('info', `Transaction sent: ${truncateAddress(hash)}`);
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
-        showStatus('success', `Project deployed! <a href="${getTxUrl(chainId, hash)}" target="_blank">View tx</a>`);
+        const receipt = await waitForSuccess(publicClient, hash, { prove: async (candidate) => {
+          const [event] = parseEventLogs({
+            abi: PROJECTS_ABI, eventName: 'Transfer',
+            logs: candidate.logs.filter(l => l.address.toLowerCase() === addresses.JBProjects.toLowerCase())
+          });
+          if (!event || event.args.to.toLowerCase() !== config.owner.toLowerCase()) return false;
+          const [owner, controller, isTerminal] = await Promise.all([
+            publicClient.readContract({ address: addresses.JBProjects, abi: PROJECTS_ABI, functionName: 'ownerOf', args: [event.args.tokenId], blockNumber: candidate.blockNumber }),
+            publicClient.readContract({ address: addresses.JBDirectory, abi: DIRECTORY_ABI, functionName: 'controllerOf', args: [event.args.tokenId], blockNumber: candidate.blockNumber }),
+            publicClient.readContract({ address: addresses.JBDirectory, abi: DIRECTORY_ABI, functionName: 'isTerminalOf', args: [event.args.tokenId, addresses.JBMultiTerminal], blockNumber: candidate.blockNumber })
+          ]);
+          return owner.toLowerCase() === config.owner.toLowerCase()
+            && controller.toLowerCase() === addresses.JBController.toLowerCase() && isTerminal;
+        }});
+
+        // Prove the project exists: JBProjects mints the project NFT (Transfer from 0x0) to `owner`.
+        const [minted] = parseEventLogs({
+          abi: PROJECTS_ABI, eventName: 'Transfer', logs: receipt.logs.filter(l => l.address.toLowerCase() === addresses.JBProjects.toLowerCase())
+        });
+        if (!minted || minted.args.to.toLowerCase() !== config.owner.toLowerCase()) throw new Error('No project NFT minted to owner in receipt');
+        showStatus('success', `Project #${minted.args.tokenId} deployed! <a href="${getTxUrl(chainId, hash)}" target="_blank">View tx</a>`);
       } catch (error) {
         showStatus('error', `Failed: ${error.message}`);
       }
@@ -339,12 +384,12 @@ function encodeIpfsUri(cid) {
 
 ## Revnet deployment
 
-`REVDeployer` is in `chain-config.json` `contracts` (same address on all 8 chains). `REVDeployer.deployFor` is `payable`:
+Resolve `REVDeployer` from the reviewed deployment manifest with write authorization and verify it live. `REVDeployer.deployFor` is `payable`:
 
 - New revnet: pass `revnetId = 0` and `msg.value = JBProjects.creationFee()`.
 - Pre-reserved project ID: pass the ID and `msg.value = 0` (non-zero reverts with `REVDeployer_ProjectCreationFeeNotNeeded`).
 
-Overloads: a base variant `deployFor(revnetId, configuration, accountingContextsToAccept, suckerDeploymentConfiguration)` and a 721 variant adding `tiered721HookConfiguration` and `allowedPosts`. Load the exact structs with `loadABI('REVDeployer')`. Revnet configuration is permanent after deployment — surface a warning in the UI.
+Overloads: a base variant `deployFor(revnetId, configuration, accountingContextsToAccept, suckerDeploymentConfiguration)` and a 721 variant adding `tiered721HookConfiguration` and `allowedPosts`. Production always uses the 721 variant with its own `tiered721Config`: the base variant deploys an empty hook that hardcodes 18 price decimals (mis-prices USD/USDC stores) and grants the operator all four 721 permissions (`ADJUST_721_TIERS`, `SET_721_METADATA`, `MINT_721`, `SET_721_DISCOUNT_PERCENT`). Load the exact structs with `loadABI('REVDeployer')`, then filter the ABI to the one overload you encode — viem mis-disambiguates the two tuple-heavy `deployFor`s. Revnet configuration is permanent after deployment — surface a warning in the UI.
 
 ## Common mistakes
 

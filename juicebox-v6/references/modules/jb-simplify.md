@@ -48,7 +48,7 @@ Every level of abstraction you can avoid:
 | Burn NFT to redeem | Use `nana-721-hook-v6` - it already does this |
 | Pro-rata redemption against surplus | Set `cashOutTaxRate: 0` - native behavior |
 | Partial redemption (bonding curve) | Set `cashOutTaxRate` to desired value (1–9999) |
-| Disable cash outs entirely | Set `cashOutTaxRate: 10_000` (`MAX_CASH_OUT_TAX_RATE`) — reclaim amount is 0 |
+| Disable cash outs entirely | Set `cashOutTaxRate: 10_000` (`MAX_CASH_OUT_TAX_RATE`) — reclaim amount is 0; `cashOutTokensOf` still burns the tokens and runs the data hook, it does not revert |
 | Time-locked redemptions | Current ruleset with `cashOutTaxRate: 10_000`, queue a future ruleset with a lower rate |
 | Redemption against external pool | This might actually need a custom hook |
 

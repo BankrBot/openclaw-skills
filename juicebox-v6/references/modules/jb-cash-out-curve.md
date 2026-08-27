@@ -33,7 +33,7 @@ Edge cases handled on-chain:
 
 - `count == 0` → 0
 - `r == 10_000` (100% tax) → 0 — cash outs effectively disabled
-- `count >= supply` → entire surplus
+- `count == supply` → entire surplus; `count > supply` → the library returns the entire surplus but `JBTerminalStore.currentReclaimableSurplusOf` returns `0`
 - `r == 0` → pure proportional: `surplus × count / supply`
 
 Normalized (with `f = count/supply` and `r` as a 0–1 decimal): `reclaimFraction = f × ((1 − r) + r × f)`.
@@ -66,7 +66,8 @@ function calculateCashOutReturn(
   cashOutTaxRate: number // 0-10000 basis points
 ): number {
   if (tokensToCashOut === 0 || cashOutTaxRate >= 10000) return 0
-  if (tokensToCashOut >= totalSupply) return surplus
+  if (tokensToCashOut > totalSupply) return 0 // JBTerminalStore view; JBCashOuts library returns surplus
+  if (tokensToCashOut === totalSupply) return surplus
   const r = cashOutTaxRate / 10000
   const f = tokensToCashOut / totalSupply
   return surplus * f * ((1 - r) + r * f)
@@ -87,7 +88,9 @@ Verification values:
 `JBTerminalStore` (`0x7497ae014a60561925b51c0a3b4ade7460b9927c`):
 
 ```solidity
-// Pure curve math against explicit inputs (does NOT run data hooks):
+// Curve math against caller-supplied supply/surplus; reads the tax rate from RULESETS.currentOf(projectId);
+// does NOT run data hooks. Pass totalSupply = JBController.totalTokenSupplyWithReservedTokensOf(projectId).
+// Returns 0 when surplus == 0 or cashOutCount > totalSupply.
 function currentReclaimableSurplusOf(uint256 projectId, uint256 cashOutCount, uint256 totalSupply, uint256 surplus)
     external view returns (uint256);
 
@@ -108,7 +111,7 @@ Use `previewCashOutFrom` for revnets — their data hook overrides supply/surplu
 
 The curve output is not what the user receives:
 
-- Protocol fee: 2.5% off the reclaim when `cashOutTaxRate != 0` and the beneficiary isn't feeless (zero-tax cash outs are fee-free except for the round-trip `feeFreeSurplusOf` guard).
+- Protocol fee: 2.5% off the reclaim when `cashOutTaxRate != 0` and the beneficiary isn't feeless. Zero tax: fee only on `min(reclaim, JBMultiTerminal.feeFreeSurplusOf(projectId, token))` — read that getter for the exact figure.
 - Revnets additionally carve 2.5% of the cash-out **token count** for REV before the curve applies to the rest.
 
 See `jb-protocol-fees`.

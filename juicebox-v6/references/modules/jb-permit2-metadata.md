@@ -53,7 +53,7 @@ Precomputed IDs for the canonical deployments (same addresses on all chains):
 | `JBRouterTerminal` | `cashOut` | `0x890df4c9` | `(uint256 minTokensReclaimed)` reclaim floor |
 | `JB721TiersHook` implementation `0xf4a58871…b5ab` | `pay` | `0x5962def1` | `(bool allowOverspending, uint16[] tierIds)` |
 | `JB721TiersHook` implementation | `cashOut` | `0x7214c785` | `(uint256[] tokenIds)` NFTs to burn |
-| `JBBuybackHook` `0x77bee1ad…4948` | `pay` | `0xda79b72d` | `(uint256 amountToSwapWith, uint256 minimumSwapAmountOut)` |
+| `JBBuybackHook` `0x77bee1ad…4948` | `pay` | `0xda79b72d` | `(uint256 amountToSwapWith, uint256 minimumSwapAmountOut, bool skipSplits)` — 96 bytes; a 2-word payload makes `abi.decode` revert. `skipSplits = true` opts the swapped tokens out of the project's reserved split; `minimumSwapAmountOut = 0` means "no user quote" (TWAP floor applies) |
 | `JBBuybackHook` | `cashOut` | `0xf10fae59` | `(uint256 minimumSwapAmountOut, bool skip)` |
 
 ```typescript
@@ -70,8 +70,8 @@ function computeMetadataId(purpose: string, target: Address): `0x${string}` {
 
 The terminal consumes a `permit2` entry inside `_acceptFundsFor`. Behavior verified in `JBMultiTerminal` / `JBRouterTerminalRegistry`:
 
-- `amount > allowance.amount` reverts `…_PermitAllowanceNotEnough(amount, allowance)`.
-- The `PERMIT2.permit` call is wrapped in try/catch — a failed permit emits `Permit2AllowanceFailed` and the transfer falls back to (a) an existing ERC-20 approval to the terminal, then (b) an existing Permit2 allowance.
+- `amount > allowance.amount` reverts `JBMultiTerminal_PermitAllowanceNotEnough(amount, allowanceAmount)` / `JBRouterTerminalRegistry_PermitAllowanceNotEnough(amount, allowanceAmount)`.
+- The `PERMIT2.permit` call is wrapped in try/catch — a failed permit emits `Permit2AllowanceFailed(token, owner, reason)` on `JBMultiTerminal`, `Permit2AllowanceFailed(token, owner, reason, caller)` on the registry/router — and the transfer falls back to (a) an existing ERC-20 approval to the terminal, then (b) an existing Permit2 allowance.
 - The permit's `spender` is `address(this)` — **the contract you call directly**. Paying via the registry means the registry is the spender and the ID target.
 
 ### 1. Encode `JBSingleAllowance` as a tuple
@@ -163,10 +163,22 @@ const metadata = createMetadata(
   [padTo32(allowanceData)]
 ) as Hex
 
-await walletClient.writeContract({
+const previewCall = {
   address: terminalAddress, abi: terminalAbi, functionName: 'pay',
   args: [projectId, tokenAddress, amount, beneficiary, 0n, memo, metadata],
-})
+  account,
+}
+const { result: expectedTokens } = await publicClient.simulateContract(previewCall)
+if (expectedTokens <= 0n) throw new Error('Payment preview returned zero; refusing a floorless payment.')
+const computedFloor = expectedTokens * 99n / 100n
+const minReturnedTokens = computedFloor > 0n ? computedFloor : 1n
+const exactCall = { ...previewCall, args: [projectId, tokenAddress, amount, beneficiary, minReturnedTokens, memo, metadata] }
+const { request } = await publicClient.simulateContract(exactCall)
+// Decode/review request calldata and require explicit confirmation before this wallet prompt.
+const hash = await walletClient.writeContract(request)
+const receipt = await publicClient.waitForTransactionReceipt({ hash })
+if (receipt.status !== 'success') throw new Error(`Permit2 payment reverted: ${hash}`)
+// Also verify the expected pay event and beneficiary token/post-state changes before reporting success.
 ```
 
 ## 721 hook (NFT tier selection on pay)

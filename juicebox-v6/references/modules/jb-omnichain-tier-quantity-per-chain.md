@@ -51,8 +51,8 @@ struct JB721TierConfig {
 
 **For physical goods with true limited inventory:**
 
-- **Option 1 — one chain only (recommended).** Include the tier only in the host chain's tier list; omit it from every other chain's config. Buyers on other chains mint on the host chain (each chain's hook is independent, so omission is just a per-chain config difference).
-- **Option 2 — divide the quantity.** 10 items across 4 chains → `initialSupply: 3` per chain (12 slots for 10 items). Creates uneven distribution and race dynamics; the user must track fulfillment manually. Adding supply later is possible (`adjustTiers` adds new tiers), but removing unsold slots on other chains requires operator action per chain.
+- **Option 1 — one chain only (recommended).** Include the tier only in the host chain's tier list; omit it from every other chain's config. Buyers on other chains mint on the host chain. Tier IDs are assigned sequentially per chain (`maxTierId + i + 1`), so an omitted tier shifts the IDs of every tier after it on the non-host chains — put single-chain tiers LAST in the array so shared tiers keep matching IDs everywhere.
+- **Option 2 — divide the quantity.** 10 items across 4 chains → `initialSupply: 3` per chain (12 slots for 10 items). Creates uneven distribution and race dynamics; the user must track fulfillment manually. Adding supply later is possible (`adjustTiers` adds new tiers), but tier fields are write-once: supply cannot be decremented, and the only per-chain fix is removing the whole tier via `adjustTiers` (then adding a replacement tier with a new ID).
 
 **For digital exclusivity (no physical fulfillment):** per-chain limits can be intentional — "first 10 on each chain" creates per-chain collector sets. State the real total and let the user decide.
 
@@ -67,8 +67,8 @@ Wrong — "only 10 signed copies", deployed to 4 chains:
 Correct — single-chain hosting:
 
 ```json
-// Ethereum config: tier present with { "initialSupply": 10 }
-// Optimism / Base / Arbitrum configs: tier omitted entirely
+// Ethereum config: tier present with { "initialSupply": 10 }, placed LAST in the array
+// Optimism / Base / Arbitrum configs: tier omitted entirely (earlier tiers keep the same IDs)
 ```
 
 Correct — divided:
@@ -87,7 +87,8 @@ Correct — divided:
 - **Treating `initialSupply` as a global cap.** It's per chain, per hook.
 - **Using `4294967295` for "unlimited".** The store caps at `999_999_999`; uint32 max reverts. Use `999999999`.
 - **Setting `initialSupply: 0` to exclude a tier from a chain.** Zero reverts — omit the tier from that chain's config instead.
-- **Forgetting cash-outs are per-chain too.** Each chain's hook redeems against its own chain's balances and supplies.
+- **Forgetting cash-outs are per-chain too.** Each chain's hook redeems against its own chain's balances and supplies: `JB721Hook` prices NFT cash outs from `context.surplus.value` and its local `totalCashOutWeight`, and requires `cashOutCount == 0`.
+- **Omitting a single-chain tier from the middle of the array.** Later tier IDs shift on that chain; keep single-chain tiers last.
 
 ## Related skills
 

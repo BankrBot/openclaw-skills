@@ -95,7 +95,7 @@ Validation rules enforced on-chain (`setFundAccessLimitsFor`):
 
 | | Payout limit | Surplus allowance |
 |---|---|---|
-| Withdrawn via | `sendPayoutsOf` (anyone, to splits) | `useAllowanceOf` (owner / `USE_ALLOWANCE` permission, to a beneficiary) |
+| Withdrawn via | `sendPayoutsOf` (anyone, unless `ownerMustSendPayouts` is set — then `SEND_PAYOUTS` permission from the owner; to splits) | `useAllowanceOf` (owner / `USE_ALLOWANCE` permission, to a beneficiary) |
 | Effect on cash outs | Reserves funds — reduces surplus, so reduces cash-out value immediately | Preserves cash-out value until actually used; owner and holders share the surplus first-come-first-served |
 | Resets | Every ruleset cycle | Per ruleset ID |
 | Typical use | Recurring distributions, guaranteed owner access | Owner escape hatch, revnet loans (REVLoans borrows via allowance) |
@@ -120,7 +120,7 @@ function surplusAllowanceOf(uint256 projectId, uint256 rulesetId, address termin
 
 Query discipline:
 
-1. **`rulesetId`** must be the ID of the ruleset the limits were queued with. Use `JBController.currentRulesetOf(projectId).id` — cycled rulesets keep the queued ruleset's ID. If a project queued a new ruleset without new limits, walk back via `ruleset.basedOnId` until a ruleset with limits is found.
+1. **`rulesetId`** must be the ID of the ruleset the limits were queued with. Use `JBController.currentRulesetOf(projectId).id` — cycled rulesets keep the queued ruleset's ID. `JBTerminalStore` looks limits up by `RULESETS.currentOf(projectId).id` only — a newly queued ruleset with empty `fundAccessLimitGroups` has zero limits; never walk back via `basedOnId`.
 2. **`token`** must match the accounting token. ERC-20-accounting projects (e.g. USDC) return nothing when queried with the native token. Read the project's accounting contexts (`JBMultiTerminal.accountingContextsOf(projectId)`) and query per token.
 3. **Detect unlimited** by comparing against `uint224.max`, or use a threshold (`> 10^30`) for display purposes.
 

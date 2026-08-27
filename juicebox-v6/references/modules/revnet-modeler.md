@@ -20,17 +20,21 @@ https://github.com/mejango/rev-sim  (open index.html in a browser; runs fully cl
 
 ## Economic levers per stage
 
-Each simulated stage maps 1:1 to a `REVStageConfig` in the deployment:
+Each simulated stage maps to a `REVStageConfig` in the deployment. Rows are in ABI field order (encode `deployFor` in this order):
 
 | Lever | Contract field | Unit |
 |-------|----------------|------|
-| Stage start | `startsAtOrAfter` | unix timestamp (strictly increasing across stages) |
-| Initial issuance rate | `initialIssuance` | tokens per base-currency unit, 18-decimal fixed point |
-| Issuance cut % | `issuanceCutPercent` | out of 1,000,000,000 (`JBConstants.MAX_WEIGHT_CUT_PERCENT`) |
-| Issuance cut frequency | `issuanceCutFrequency` | seconds (becomes the ruleset duration; keep ≥ 24h) |
-| Split % | `splitPercent` | out of 10,000 (becomes the ruleset `reservedPercent`) |
-| Cash-out tax rate | `cashOutTaxRate` | out of 10,000; must be < 10,000 |
-| Auto-issuances | `autoIssuances[]` | per-chain `{chainId, count, beneficiary}` premints, claimable once the stage starts |
+| Stage start | `uint48 startsAtOrAfter` | unix timestamp (strictly increasing across stages) |
+| Auto-issuances | `REVAutoIssuance[] autoIssuances` | per-chain `{uint32 chainId, uint104 count, address beneficiary}` premints, claimable once the stage starts |
+| Split % | `uint16 splitPercent` | out of 10,000 (becomes the ruleset `reservedPercent`) |
+| Split recipients | `JBSplit[] splits` | reserved-token split group; must be non-empty whenever `splitPercent > 0` (`REVDeployer_MustHaveSplits`). Not simulated — the modeler treats the split as one "operator" bucket |
+| Initial issuance rate | `uint112 initialIssuance` | tokens per base-currency unit, 18-decimal fixed point |
+| Issuance cut frequency | `uint32 issuanceCutFrequency` | seconds (becomes the ruleset duration; keep ≥ 24h) |
+| Issuance cut % | `uint32 issuanceCutPercent` | out of 1,000,000,000 (`JBConstants.MAX_WEIGHT_CUT_PERCENT`) |
+| Cash-out tax rate | `uint16 cashOutTaxRate` | out of 10,000; must be < 10,000 |
+| Extra metadata | `uint16 extraMetadata` | ruleset metadata bits: 0 = 721 `pauseTransfers`, 1 = 721 `pauseMintPendingReserves`, 2 = allow `deploySuckersFor`. Not simulated, but part of the config hash |
+
+`REVConfig` wraps the stages: `{REVDescription description {name, ticker, uri, salt}, uint32 baseCurrency, address operator, bool scopeCashOutsToLocalBalances, REVStageConfig[] stageConfigurations}`.
 
 ## Event types
 

@@ -126,10 +126,12 @@ Verified against `nana-721-hook-v6`.
   </div>
 
   <script type="module">
-    import { createPublicClient, http, formatUnits, isAddress, createWalletClient, custom, encodeAbiParameters, keccak256, parseAbiItem } from 'https://esm.sh/viem';
-    import { CHAIN_CONFIGS, getContractAddress, truncateAddress } from '/references/shared/wallet-utils.js';
+    import { createPublicClient, http, formatUnits, isAddress, createWalletClient, custom, encodeAbiParameters, keccak256, parseAbiItem } from 'viem';
+    import { CHAIN_CONFIGS, DEPLOY_BLOCKS, getContractAddress, resolveTerminal, truncateAddress, waitForSuccess } from '/references/shared/wallet-utils.js';
 
     const NATIVE_TOKEN = '0x000000000000000000000000000000000000EEEe';
+    const NATIVE_TOKEN_CURRENCY = 61166n; // uint32(uint160(NATIVE_TOKEN))
+    const IPFS_GATEWAY = 'https://juicebox.center/ipfs/'; // the gateway production reads through
 
     const TIER_FLAGS = { name: 'flags', type: 'tuple', components: [
       { name: 'allowOwnerMint', type: 'bool' }, { name: 'transfersPausable', type: 'bool' },
@@ -170,6 +172,16 @@ Verified against `nana-721-hook-v6`.
       { name: 'totalSupplyOf', type: 'function', stateMutability: 'view', inputs: [{ name: 'hook', type: 'address' }], outputs: [{ type: 'uint256' }] }
     ];
 
+    const PRICES_ABI = [
+      { name: 'pricePerUnitOf', type: 'function', stateMutability: 'view',
+        inputs: [
+          { name: 'projectId', type: 'uint256' }, { name: 'pricingCurrency', type: 'uint256' },
+          { name: 'unitCurrency', type: 'uint256' }, { name: 'decimals', type: 'uint256' }
+        ],
+        outputs: [{ type: 'uint256' }]
+      }
+    ];
+
     const TERMINAL_ABI = [
       { name: 'pay', type: 'function', stateMutability: 'payable',
         inputs: [
@@ -186,7 +198,7 @@ Verified against `nana-721-hook-v6`.
     let allTiers = [], ownedNFTs = [];
     let currentTab = 'tiers', selectedCategory = null;
     let hookAddress = '', chainId = 1, connectedAddress = null;
-    let priceDecimals = 18, metadataIdTarget = null, projectId = null;
+    let priceDecimals = 18, priceCurrency = NATIVE_TOKEN_CURRENCY, metadataIdTarget = null, projectId = null;
 
     window.loadGallery = async function() {
       hookAddress = document.getElementById('hookAddress').value;
@@ -208,6 +220,7 @@ Verified against `nana-721-hook-v6`.
         ]);
         projectId = pid;
         metadataIdTarget = idTarget;
+        priceCurrency = pricing[0];
         priceDecimals = Number(pricing[1]);
 
         allTiers = await publicClient.readContract({
@@ -274,15 +287,18 @@ Verified against `nana-721-hook-v6`.
 
     // The 721 hook is NOT enumerable (no tokenOfOwnerByIndex).
     // Enumerate owned NFTs from Transfer logs; tier ID = tokenId / 1e9.
-    // Prefer the Bendystraw `nfts` query when an API key is available (see below).
+    // Public RPCs cap eth_getLogs ranges (publicnode returns 403 for wide archive scans), so scan from the
+    // V6 deployment block in fixed windows. Prefer the Bendystraw `nfts` query when an API key is available.
+    const LOG_WINDOW = 45_000n;
     async function loadOwnedNFTs(ownerAddress) {
       try {
-        const logs = await publicClient.getLogs({
-          address: hookAddress,
-          event: parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)'),
-          args: { to: ownerAddress },
-          fromBlock: 0n
-        });
+        const event = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)');
+        const latest = await publicClient.getBlockNumber();
+        const logs = [];
+        for (let from = DEPLOY_BLOCKS[chainId]; from <= latest; from += LOG_WINDOW) {
+          const to = from + LOG_WINDOW - 1n < latest ? from + LOG_WINDOW - 1n : latest;
+          logs.push(...await publicClient.getLogs({ address: hookAddress, event, args: { to: ownerAddress }, fromBlock: from, toBlock: to }));
+        }
 
         ownedNFTs = [];
         const seen = new Set();
@@ -305,7 +321,7 @@ Verified against `nana-721-hook-v6`.
           try {
             const uri = await publicClient.readContract({ address: hookAddress, abi: HOOK_ABI, functionName: 'tokenURI', args: [tokenId] });
             if (uri) {
-              const metadataUrl = uri.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${uri.slice(7)}` : uri;
+              const metadataUrl = resolveUri(uri);
               if (uri.startsWith('data:application/json')) {
                 metadata = JSON.parse(atob(uri.split(',')[1]));
               } else {
@@ -425,23 +441,43 @@ Verified against `nana-721-hook-v6`.
       return '0x' + '00'.repeat(32) + id + '02' + '00'.repeat(27) + data.slice(2);
     }
 
+    // Convert a tier price (hook pricingContext currency/decimals) into wei of the paid token, rounded up.
+    // pricePerUnitOf(projectId, payCurrency, pricingCurrency, payDecimals) = paid-token units per 1 pricing unit.
+    async function tierPriceInPayToken(effectivePrice, payContext) {
+      if (BigInt(priceCurrency) === BigInt(payContext.currency)) return effectivePrice;
+      const price = await publicClient.readContract({
+        address: await getContractAddress(chainId, 'JBPrices'), abi: PRICES_ABI, functionName: 'pricePerUnitOf',
+        args: [projectId, BigInt(payContext.currency), BigInt(priceCurrency), BigInt(payContext.decimals)]
+      });
+      const unit = 10n ** BigInt(priceDecimals);
+      return (effectivePrice * price + unit - 1n) / unit;
+    }
+
     window.mintTier = async function(tierId, priceWei) {
       if (!connectedAddress) { alert('Please connect your wallet first'); return; }
       try {
         const metadata = buildTierMintMetadata(metadataIdTarget, [tierId]);
-        const terminal = getContractAddress(chainId, 'JBMultiTerminal');
-        const value = BigInt(priceWei);
+        // Resolve the terminal that accepts ETH for this project; throws (no mint) if none does.
+        const { terminal, context } = await resolveTerminal(publicClient, projectId, NATIVE_TOKEN);
+        const value = await tierPriceInPayToken(BigInt(priceWei), context);
 
-        // Assumes an ETH-priced hook (pricingContext currency = native). For other pricing
-        // currencies, convert the tier price to the payment terminal's token first.
-        const hash = await walletClient.writeContract({
-          address: terminal, abi: TERMINAL_ABI, functionName: 'pay',
-          args: [projectId, NATIVE_TOKEN, value, connectedAddress, 0n, '', metadata],
-          value,
-          account: connectedAddress
+        // Simulate first: a sold-out tier, wrong envelope, or wrong price aborts before the wallet
+        // prompt, and the simulated token count sets a nonzero floor for the real call.
+        // allowOverspending is sent as true; set it to !flags.preventOverspending (JB721TiersHookStore.flagsOf)
+        // when the store disallows overspending, or rounding dust reverts the mint.
+        const call = { address: terminal, abi: TERMINAL_ABI, functionName: 'pay', value, account: connectedAddress };
+        const { result: expectedTokens } = await publicClient.simulateContract({
+          ...call, args: [projectId, NATIVE_TOKEN, value, connectedAddress, 0n, '', metadata]
         });
+        if (expectedTokens <= 0n) throw new Error('Mint preview returned zero; refusing a floorless payment.');
+        const computedFloor = expectedTokens * 95n / 100n;
+        const minReturnedTokens = computedFloor > 0n ? computedFloor : 1n;
+        const { request } = await publicClient.simulateContract({
+          ...call, args: [projectId, NATIVE_TOKEN, value, connectedAddress, minReturnedTokens, '', metadata]
+        });
+        const hash = await walletClient.writeContract(request);
         alert('Mint transaction sent: ' + hash);
-        await publicClient.waitForTransactionReceipt({ hash });
+        await waitForSuccess(publicClient, hash);
         alert('NFT minted!');
         await loadOwnedNFTs(connectedAddress);
       } catch (error) { console.error(error); alert('Minting failed: ' + (error.shortMessage || error.message)); }
@@ -457,7 +493,7 @@ Verified against `nana-721-hook-v6`.
           address: hookAddress, abi: HOOK_ABI, functionName: 'transferFrom',
           args: [connectedAddress, recipient, BigInt(tokenId)], account: connectedAddress
         });
-        await publicClient.waitForTransactionReceipt({ hash });
+        await waitForSuccess(publicClient, hash);
         alert('Transfer successful!');
         await loadOwnedNFTs(connectedAddress);
       } catch (error) { console.error(error); alert('Transfer failed: ' + (error.shortMessage || error.message)); }
@@ -465,7 +501,7 @@ Verified against `nana-721-hook-v6`.
 
     function resolveUri(uri) {
       if (!uri) return '';
-      if (uri.startsWith('ipfs://')) return `https://ipfs.io/ipfs/${uri.slice(7)}`;
+      if (uri.startsWith('ipfs://')) return IPFS_GATEWAY + uri.slice(7);
       return uri;
     }
   </script>
@@ -475,7 +511,7 @@ Verified against `nana-721-hook-v6`.
 
 ## Owned NFTs via Bendystraw (preferred)
 
-The indexer tracks every 721-hook NFT with owner, tier, and resolved metadata — one query instead of a log scan. Keyed endpoint required (`https://bendystraw.xyz/{API_KEY}/graphql`; testnets: `https://testnet.bendystraw.xyz/{API_KEY}/graphql`).
+The indexer tracks every 721-hook NFT with owner, tier, and resolved metadata — one query instead of a log scan. Keyed endpoint required (`https://bendystraw.up.railway.app/{API_KEY}/graphql`; testnets: `https://testnet.bendystraw.xyz/{API_KEY}/graphql`). Numeric argument types differ per field (root-level args are `Float!`, `where` inputs vary) — introspect `__type(name: "Query")` rather than assuming.
 
 ```graphql
 query($owner: String!, $hook: String!, $chainId: Int!) {
@@ -490,7 +526,7 @@ query($owner: String!, $hook: String!, $chainId: Int!) {
 The hook address for a project is not a fixed getter — resolution order:
 
 1. Read `JBController.currentRulesetOf(projectId)`; if `metadata.useDataHookForPay` and `metadata.dataHook != address(0)`:
-   - If `dataHook == JBOmnichainDeployer` (omnichain projects), read `JBOmnichainDeployer.tiered721HookOf(projectId, ruleset.id)` — the deployer proxies to the real hook.
+   - If `dataHook == JBOmnichainDeployer` (omnichain projects), read `JBOmnichainDeployer.tiered721HookOf(projectId, ruleset.id)` — returns `(hook, bool useDataHookForCashOut)`; viem gives `[hook, bool]`. The project's other data hook (buyback etc.) lives in `extraDataHookOf(projectId, rulesetId)`.
    - Otherwise the `dataHook` is the 721 hook itself (verify by calling `STORE()` on it).
 2. For revnets, `REVOwner.tiered721HookOf(projectId)` tracks the hook directly.
 
@@ -499,7 +535,7 @@ The hook address for a project is not a fixed getter — resolution order:
 - **Assuming ERC721Enumerable** — `tokenOfOwnerByIndex` does not exist; use Bendystraw or Transfer logs.
 - **`PROJECT_ID` vs `projectId`** — the hook's project getter is lowercase `projectId()`.
 - **Mint metadata keyed to the clone address** — key it to `METADATA_ID_TARGET()` (the implementation). Wrong key = payment succeeds, no NFT mints.
-- **Prices assumed to be ETH** — tier prices are in the hook's `pricingContext()` currency and decimals; format with those decimals and convert if the pricing currency differs from the paid token.
+- **Prices assumed to be ETH** — tier prices are in the hook's `pricingContext()` currency and decimals; format with those decimals and convert via `JBPrices.pricePerUnitOf` (rounded up) when the pricing currency differs from the paid token. Sending the USD price as wei under/over-pays and, with `allowOverspending`, the terminal keeps the ETH and mints nothing.
 - **Wrong tier tuple** — V6 tiers pack flags into a nested 5-bool tuple (`allowOwnerMint, transfersPausable, cantBeRemoved, cantIncreaseDiscountPercent, cantBuyWithCredits`) and include `discountPercent` (denominator 200) and `splitPercent`. Using a flat tuple mis-decodes every tier.
 - **Ignoring `discountPercent`** — the amount needed to mint is `price - price * discountPercent / 200`, not the listed price.
 

@@ -1,16 +1,15 @@
 ---
 name: jb-explorer-ui
 description: |
-  Etherscan-like contract explorer UI for Juicebox V6. Use when: (1) building admin
+  Read-only Etherscan-like contract explorer UI for Juicebox V6. Use when: (1) building
   tools to inspect project state, (2) creating debug interfaces for contract reads,
-  (3) need write transaction forms for project operations, (4) exploring events
-  and historical data for a project.
+  and (3) exploring events and historical data for a project.
 version: 6.0.0
 ---
 
 # Juicebox V6 Contract Explorer UI
 
-Build Etherscan-like interfaces for reading contract state, executing transactions, and exploring Juicebox project data.
+Build Etherscan-like interfaces for reading contract state and exploring Juicebox project data. Generic ABI-driven writes are intentionally excluded: use a contract-specific module that can preview the operation, apply user-approved bounds, verify the project graph, simulate the exact calldata, and prove its post-state.
 
 ## Uses shared components
 
@@ -26,7 +25,6 @@ Core contracts share the same address on every chain (CREATE2), so a single look
 ## Features
 
 - **Read Tab**: Call any view/pure function, auto-decode results
-- **Write Tab**: Submit transactions with wallet signing
 - **Events Tab**: Browse contract event definitions
 - **Quick Actions**: One-click project overview, ruleset info
 
@@ -48,7 +46,7 @@ Core contracts share the same address on every chain (CREATE2), so a single look
 ├─────────────────────────────────────────┤
 │ Wallet: [Connect] / 0x1234...5678       │
 ├─────────────────────────────────────────┤
-│ [Read] [Write] [Events]                 │
+│ [Read] [Events]                         │
 ├─────────────────────────────────────────┤
 │ Quick Actions:                          │
 │ [Project Overview] [Current Ruleset]    │
@@ -72,7 +70,6 @@ Core contracts share the same address on every chain (CREATE2), so a single look
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Juicebox Contract Explorer</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.umd.min.js"></script>
   <style>
     :root {
       --jb-yellow: #ffcc00; --bg-primary: #0d0d0d; --bg-secondary: #1a1a1a;
@@ -127,42 +124,46 @@ Core contracts share the same address on every chain (CREATE2), so a single look
       </div>
     </div>
 
-    <div class="card" id="walletSection" style="display:none;">
-      <div class="row" style="justify-content: space-between; align-items: center;">
-        <span id="walletStatus">Not connected</span>
-        <button class="secondary" id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
-      </div>
-    </div>
-
     <div id="quickActions" class="quick-actions" style="display:none;"></div>
 
     <div class="tabs" id="tabs" style="display:none;">
       <button class="tab active" onclick="showTab('read')">Read</button>
-      <button class="tab" onclick="showTab('write')">Write</button>
       <button class="tab" onclick="showTab('events')">Events</button>
     </div>
 
     <div id="content"></div>
   </div>
 
-  <script>
-    // Generated from references/shared/chain-config.json. Core contracts share one address on all chains.
-    const CORE_CONTRACTS = {
-      JBController: '0x3fcec3572e84b624477bcff4e2cf1f7deab648f1',
-      JBDirectory: '0x5aff29060e023e6fb87be5596652b33c65af535b',
-      JBMultiTerminal: '0x130f5dd2bd8805443cf41755253d778a75a67f53',
-      JBProjects: '0x6017d1fba9dc279bfa0b03fd931c22e242ab3691',
-      JBRulesets: '0x26f2228a4e8b0079ed1c2a3d22f12ff7f83cdfba',
-      JBTokens: '0x1f80d8f057ee36b4c2656d107e4e4558b71ba7d9',
-      JBPermissions: '0xf92ac1ab5a00033e35a3975739124f61928c36b0',
-      JBTerminalStore: '0x7497ae014a60561925b51c0a3b4ade7460b9927c'
-    };
+  <script type="module">
+    // Bundle this local dependency; never replace it with a CDN script.
+    import * as ethers from 'ethers';
 
+    let reviewedManifest;
+    async function loadReviewedManifest() {
+      if (reviewedManifest) return reviewedManifest;
+      const response = await fetch('/references/shared/deployment-manifest.json', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Reviewed deployment manifest unavailable; writes disabled.');
+      reviewedManifest = await response.json();
+      if (reviewedManifest.schemaVersion !== 1) throw new Error('Unknown deployment manifest; writes disabled.');
+      return reviewedManifest;
+    }
+
+    async function manifestAddress(chainId, name, { write = false } = {}) {
+      const manifest = await loadReviewedManifest();
+      const entry = manifest.chains?.[String(chainId)]?.contracts?.[name];
+      if (!entry?.address || (write && !entry.writeEnabled)) throw new Error(`${name} is not pinned for this action.`);
+      return entry.address;
+    }
+
+    // Etherscan V2 requires an API key (keyless calls return "Missing/Invalid API Key"). One key serves all chains.
+    const ETHERSCAN_API_KEY = '';
+
+    // Keyless, CORS-open public RPCs (same set as references/shared/wallet-utils.js CHAIN_CONFIGS).
     const CHAIN_RPC = {
-      1: 'https://eth.llamarpc.com',
-      10: 'https://mainnet.optimism.io',
-      8453: 'https://mainnet.base.org',
-      42161: 'https://arb1.arbitrum.io/rpc',
+      1: 'https://ethereum-rpc.publicnode.com',
+      10: 'https://optimism-rpc.publicnode.com',
+      8453: 'https://base-rpc.publicnode.com',
+      42161: 'https://arbitrum-one-rpc.publicnode.com',
       11155111: 'https://ethereum-sepolia-rpc.publicnode.com',
       11155420: 'https://sepolia.optimism.io',
       84532: 'https://sepolia.base.org',
@@ -175,14 +176,6 @@ Core contracts share the same address on every chain (CREATE2), so a single look
 
     class ContractExplorer {
       constructor() {
-        this.wallet = { signer: null, address: null, connect: async (chainId) => {
-          if (!window.ethereum) throw new Error('No wallet found');
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          await provider.send('eth_requestAccounts', []);
-          try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x' + chainId.toString(16) }] }); } catch(e) {}
-          this.wallet.signer = await provider.getSigner();
-          this.wallet.address = await this.wallet.signer.getAddress();
-        }};
         this.provider = null; this.contract = null; this.abi = null; this.chainId = 1;
       }
       async load(address, chainId) {
@@ -194,7 +187,9 @@ Core contracts share the same address on every chain (CREATE2), so a single look
       }
       async fetchABI(address, chainId) {
         // Known JB contract? Load the verified ABI from references/shared/abis.
-        for (const [name, addr] of Object.entries(CORE_CONTRACTS)) {
+        const manifest = await loadReviewedManifest();
+        for (const [name, pin] of Object.entries(manifest.chains?.[String(chainId)]?.contracts || {})) {
+          const addr = pin.address;
           if (addr.toLowerCase() === address.toLowerCase()) {
             try {
               const res = await fetch(`/references/shared/abis/${name}.json`);
@@ -202,8 +197,9 @@ Core contracts share the same address on every chain (CREATE2), so a single look
             } catch (e) {}
           }
         }
-        // Fallback: Etherscan multichain V2 API (one host, chainid parameter; API key recommended).
-        const url = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=contract&action=getabi&address=${address}`;
+        // Fallback: Etherscan multichain V2 API (one host, chainid parameter). Fails closed without a key.
+        if (!ETHERSCAN_API_KEY) throw new Error('ABI not in references/shared/abis and no ETHERSCAN_API_KEY set');
+        const url = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=contract&action=getabi&address=${address}&apikey=${ETHERSCAN_API_KEY}`;
         const data = await (await fetch(url)).json();
         if (data.status === '1') return JSON.parse(data.result);
         throw new Error('ABI not found - contract may not be verified');
@@ -212,17 +208,10 @@ Core contracts share the same address on every chain (CREATE2), so a single look
         const items = this.abi.filter(x => x.type === 'function');
         return {
           read: items.filter(f => ['view', 'pure'].includes(f.stateMutability)),
-          write: items.filter(f => !['view', 'pure'].includes(f.stateMutability)),
           events: this.abi.filter(x => x.type === 'event')
         };
       }
       async call(fnName, args = []) { return await this.contract[fnName](...args); }
-      async send(fnName, args = [], value = '0') {
-        if (!this.wallet.signer) await this.wallet.connect(this.chainId);
-        const connected = this.contract.connect(this.wallet.signer);
-        const opts = value !== '0' ? { value: ethers.parseEther(value) } : {};
-        return await connected[fnName](...args, opts);
-      }
       format(result) {
         if (typeof result === 'bigint') return result.toString();
         if (Array.isArray(result)) return result.map(r => this.format(r));
@@ -252,7 +241,6 @@ Core contracts share the same address on every chain (CREATE2), so a single look
         explorer = new ContractExplorer();
         functions = await explorer.load(address, chainId);
 
-        document.getElementById('walletSection').style.display = 'block';
         document.getElementById('tabs').style.display = 'flex';
         renderQuickActions();
         showTab('read');
@@ -276,7 +264,7 @@ Core contracts share the same address on every chain (CREATE2), so a single look
       const projectId = document.getElementById('quickProjectId').value;
       if (!projectId) return alert('Enter a project ID');
 
-      const addr = CORE_CONTRACTS[action.contract];
+      const addr = await manifestAddress(explorer.chainId, action.contract);
       const tempExplorer = new ContractExplorer();
       await tempExplorer.load(addr, explorer.chainId);
 
@@ -291,7 +279,7 @@ Core contracts share the same address on every chain (CREATE2), so a single look
     function showTab(tab) {
       currentTab = tab;
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelector(`.tab:nth-child(${tab === 'read' ? 1 : tab === 'write' ? 2 : 3})`).classList.add('active');
+      document.querySelector(`.tab:nth-child(${tab === 'read' ? 1 : 2})`).classList.add('active');
       renderFunctions();
     }
 
@@ -318,13 +306,7 @@ Core contracts share the same address on every chain (CREATE2), so a single look
               <input type="text" data-fn="${idx}" data-param="${i}" placeholder="${inp.type}">
             `).join('')}
           </div>` : ''}
-          ${currentTab === 'write' && fn.stateMutability === 'payable' ? `
-            <div class="label">ETH Value</div>
-            <input type="text" data-fn="${idx}" data-value="true" placeholder="0.0">
-          ` : ''}
-          <button ${currentTab === 'write' ? '' : 'class="secondary"'} onclick="callFn(${idx})">
-            ${currentTab === 'write' ? 'Write' : 'Query'}
-          </button>
+          <button class="secondary" onclick="callFn(${idx})">Query</button>
           <div class="result" id="result-${idx}" style="display:none;"></div>
         </div>
       `).join('') || '<div class="loading">No functions found</div>';
@@ -333,37 +315,19 @@ Core contracts share the same address on every chain (CREATE2), so a single look
     async function callFn(idx) {
       const fn = functions[currentTab][idx];
       const inputs = [...document.querySelectorAll(`[data-fn="${idx}"][data-param]`)].map(el => el.value);
-      const valueEl = document.querySelector(`[data-fn="${idx}"][data-value]`);
-      const value = valueEl?.value || '0';
       const resultEl = document.getElementById(`result-${idx}`);
 
       resultEl.style.display = 'block';
       resultEl.textContent = 'Loading...';
 
       try {
-        if (currentTab === 'write') {
-          const tx = await explorer.send(fn.name, inputs, value);
-          resultEl.innerHTML = `<span class="badge success">TX: ${tx.hash}</span>`;
-          await tx.wait();
-          resultEl.innerHTML += `<br><span class="badge success">Confirmed!</span>`;
-        } else {
-          const result = await explorer.call(fn.name, inputs);
-          resultEl.textContent = JSON.stringify(explorer.format(result), null, 2);
-        }
+        const result = await explorer.call(fn.name, inputs);
+        resultEl.textContent = JSON.stringify(explorer.format(result), null, 2);
       } catch (e) {
         resultEl.innerHTML = `<span class="badge error">${e.message}</span>`;
       }
     }
 
-    async function connectWallet() {
-      try {
-        await explorer.wallet.connect(explorer.chainId);
-        document.getElementById('walletStatus').textContent = `Connected: ${explorer.wallet.address.slice(0,6)}...${explorer.wallet.address.slice(-4)}`;
-        document.getElementById('connectBtn').textContent = 'Connected';
-      } catch (e) {
-        alert(e.message);
-      }
-    }
   </script>
 </body>
 </html>
@@ -380,8 +344,8 @@ Core contracts share the same address on every chain (CREATE2), so a single look
 
 ## Common mistakes
 
-- **Deprecated per-chain Etherscan hosts**: `api-optimistic.etherscan.io`-style V1 hosts are retired. Use the multichain V2 endpoint `https://api.etherscan.io/v2/api?chainid={chainId}&...` (API key recommended for reliability).
-- **Payable writes to `launchProjectFor`**: `msg.value` must equal `JBProjects.creationFee()` exactly — surface a value input for payable functions.
+- **Deprecated per-chain Etherscan hosts**: `api-optimistic.etherscan.io`-style V1 hosts are retired. Use the multichain V2 endpoint `https://api.etherscan.io/v2/api?chainid={chainId}&...&apikey=...` — the key is required, not optional (keyless requests return `Missing/Invalid API Key`).
+- **Adding generic writes to the explorer**: do not. Route the user to a contract-specific module that can enforce the full `jb-tx-safety` preflight and completion proof.
 - **`pendingReservedTokenBalanceOf` is a mapping getter**: it takes `uint256 projectId` and returns `uint256`; there is no separate "reserved token balance" function.
 
 ## See also

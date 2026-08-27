@@ -15,7 +15,7 @@ version: 6.0.0
 | Fee | Rate | Defined in | Recipient |
 |-----|------|-----------|-----------|
 | Protocol fee | 2.5% (`STANDARD_FEE = 25` / `MAX_FEE = 1000`) | `JBConstants` (nana-core-v6) | Project #1 — NANA (`JBConstants.FEE_BENEFICIARY_PROJECT_ID = 1`) |
-| Revnet cash-out fee | 2.5% of the **token count** being cashed out | `JBFees.standardFeeAmountFrom` used in `REVOwner.beforeCashOutRecordedWith` | REV revnet (project #3, `FEE_REVNET_ID`) |
+| Revnet cash-out fee | 2.5% of the **token count** being cashed out | `JBFees.standardFeeAmountFrom` used in `REVOwner.beforeCashOutRecordedWith` | REV revnet (`REVDeployer.FEE_REVNET_ID`, a constructor immutable; deployed value 3) |
 | REV loan fee | 1% of borrowed amount (`REV_PREPAID_FEE_PERCENT = 10` / 1000) | `REVLoans` | REV revnet (project #3) |
 | Loan prepaid source fee | 2.5%–50% of borrowed amount, borrower's choice (`MIN_PREPAID_FEE_PERCENT = 25`, `MAX_PREPAID_FEE_PERCENT = 500`, / 1000) | `REVLoans` | Source revnet (paid back into its treasury via `pay`) |
 | Loan variable source fee | 0–100% of the un-prepaid remainder, linear ramp after the prepaid window until 10 years (`LOAN_LIQUIDATION_DURATION = 3650 days`) | `REVLoansSourceFees` | Source revnet |
@@ -48,27 +48,39 @@ const gross = (net: number)   => net * 40 / 39       // amount needed to net `ne
 | Payouts to split hooks | Yes, unless the hook is feeless |
 | Payouts to another project whose resolved terminal is the **same** terminal contract | **No** — funds never leave the terminal (intra-terminal `pay`/`addToBalance`) |
 | Payouts to another project on a **different** terminal | Yes, unless the recipient terminal is feeless |
-| Surplus allowance (`useAllowanceOf`) | Yes, unless the caller resolves feeless |
+| Surplus allowance (`useAllowanceOf`) | Yes, unless the project **owner** or the `beneficiary` is feeless (the caller's own status is not checked) |
 | Cash outs with `cashOutTaxRate != 0` | Yes — on the full reclaim amount, unless the beneficiary is feeless |
 | Cash outs with `cashOutTaxRate == 0` | Only up to the project's `feeFreeSurplusOf[projectId][token]` balance — a round-trip-prevention accumulator, not a routine fee |
-| Cash-out hook payloads | Yes, unless the hook is feeless |
+| Cash-out hook payloads (`specification.amount` diverted to the hook) | Yes, unless the hook is feeless |
 | Terminal migration (`migrateBalanceOf`) to a non-feeless terminal | Yes (project #1 exempt) |
 
 Feeless status lives in `JBFeelessAddresses` (`0x657d0e588fca6f8c49394c9ca8a1cf6505b10314`), managed by the protocol multisig, and is **per-project**: `isFeelessFor(addr, projectId, caller)`. `projectId = 0` is the all-projects wildcard. An optional owner-set `feelessHook` can widen (never shrink) the feeless set and may scope grants by the outer caller.
 
 ## What the fee buys
 
-The fee is paid into project #1's primary terminal for the token via `pay`, with the operation's beneficiary as the pay beneficiary — **the fee payer receives NANA (project #1) tokens** per NANA's current ruleset. If the beneficiary is `address(0)`, the fee is added to project #1's balance without minting.
+The fee is paid into project #1's primary terminal for the token via `pay`; **NANA (project #1) tokens are minted to the pay beneficiary** per NANA's current ruleset. If the beneficiary is `address(0)`, the fee is added to project #1's balance without minting. Who that beneficiary is depends on the operation:
+
+| Operation | NANA beneficiary |
+|-----------|------------------|
+| `sendPayoutsOf` | project owner |
+| `useAllowanceOf` | the explicit `feeBeneficiary` argument (REVLoans passes the borrower's `beneficiary`) |
+| `cashOutTokensOf` | the cash-out `beneficiary` |
+| `migrateBalanceOf` | project owner |
+| Held fee processed later | the beneficiary recorded at hold time (`JBFee.beneficiary`) |
 
 Fee processing is fail-open: if the fee route reverts, the fee is forgiven, credited back to the paying project's balance, tracked in `feeFreeSurplusOf`, and surfaced via a `FeeReverted` event. Payouts never get stuck on a broken fee route.
 
 ## Held fees
 
-- If the ruleset's `holdFees` metadata flag is set, fees on payouts and allowance usage are recorded (`JBFee { uint224 amount; address beneficiary; uint48 unlockTimestamp }`) instead of processed.
+- If the ruleset's `holdFees` metadata flag is set, fees on payouts and allowance usage are recorded (`JBFee { uint224 amount; address beneficiary; uint48 unlockTimestamp }`) instead of processed. Cash-out and migration fees are never held (`shouldHoldFees: false`) regardless of the flag.
 - Hold duration: 28 days (`_FEE_HOLDING_SECONDS = 2_419_200`).
 - `processHeldFeesOf(projectId, token, count)` is permissionless once unlocked; it finalizes the fee payment to project #1.
 - `addToBalanceOf(..., shouldReturnHeldFees: true, ...)` returns held fees proportional to the amount added — projects that bring funds back before processing don't pay fees on the round trip.
 - `heldFeesOf(projectId, token, count)` reads pending records.
+
+## `feeFreeSurplusOf` (zero-tax fee scope)
+
+`JBMultiTerminal.feeFreeSurplusOf(projectId, token)` is a public getter. For a `cashOutTaxRate == 0` project the fee on a cash out is `standardFeeAmountFrom(min(reclaimAmount, feeFreeSurplusOf))`; read it to compute the exact fee. Every outflow runs `_capFeeFreeSurplus`, which shrinks the accumulator to the remaining balance — re-read it after any payout, allowance use, or cash out; a cached value goes stale.
 
 ## Revnet cash-out fee (revnet-core-v6)
 
@@ -105,7 +117,8 @@ At 10 years the loan expires (`REVLoans_LoanExpired`) and the collateral is liqu
 ```
 Payout:   100.00 → "97.50 after 2.5% protocol fee" (fee payer receives NANA tokens)
 Cash out: quote via JBTerminalStore.previewCashOutFrom (runs data hooks; revnet fee included),
-          then apply the 2.5% protocol fee to the returned reclaimAmount when cashOutTaxRate != 0.
+          then apply the 2.5% protocol fee to the returned reclaimAmount when cashOutTaxRate != 0
+          (zero tax: fee on min(reclaimAmount, feeFreeSurplusOf(projectId, token))).
 Loan:     borrow 1.0 → borrower receives 1.0 × 0.975 − 0.01 (REV) − prepaid; unlock cost grows
           linearly after the prepaid window.
 ```

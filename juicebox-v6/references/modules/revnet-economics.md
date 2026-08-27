@@ -89,16 +89,18 @@ Borrow when expected return on the borrowed capital exceeds `R > (1 − a) / a`,
 | Fee | Rate | Basis | Recipient |
 |-----|------|-------|-----------|
 | Protocol fee | 2.5% (`JBConstants.STANDARD_FEE = 25` / `MAX_FEE = 1000`) | funds leaving a treasury (loan draws via `useAllowanceOf`, payouts) | protocol fee project (NANA, project 1) |
-| Loan prepaid source fee | 2.5%–50%, borrower's choice (`prepaidFeePercent` 25–500 / 1000) | borrow amount | the source revnet's own treasury |
-| Loan $REV fee | 1% (`REV_PREPAID_FEE_PERCENT = 10` / 1000) | borrow amount | $REV revnet (`REVLoans.REV_ID`) |
-| Loan time-based source fee | ramps linearly from 0 (end of prepaid window) to 100% of the unprepaid portion at 10 years | unpaid principal | the source revnet's own treasury |
-| Cash-out fee | 2.5% of the cashed-out **token count** (`JBFees.standardFeeAmountFrom`) | tokens being cashed out | fee revnet (`REVOwner.FEE_REVNET_ID`); skipped entirely when `cashOutTaxRate == 0` or the beneficiary is feeless |
+| Loan prepaid source fee | 2.5%–50%, borrower's choice (`prepaidFeePercent` 25–500 / 1000) | borrow amount | **paid** into the source revnet (`_tryPayFee`): mints revnet tokens to the loan `beneficiary` at the stage's issuance (reserved split applies); if the pay fails, the fee amount is transferred to `beneficiary` instead |
+| Loan $REV fee | 1% (`REV_PREPAID_FEE_PERCENT = 10` / 1000) | borrow amount | **paid** into the $REV revnet (`REVLoans.REV_ID`) with `beneficiary` as pay beneficiary; if $REV has no primary terminal for the token or the pay fails, the fee is 0 and the borrower keeps it |
+| Loan time-based source fee | ramps linearly from 0 (end of prepaid window) to 100% of the unprepaid portion at 10 years | unpaid principal | paid into the source revnet on repay, same `_tryPayFee` → transfer fallback |
+| Cash-out fee | 2.5% of the cashed-out **token count** (`JBFees.standardFeeAmountFrom`) | tokens being cashed out | fee revnet (`REVOwner.FEE_REVNET_ID`); skipped entirely when `cashOutTaxRate == 0`, the beneficiary is feeless, or the fee revnet has no primary terminal for the surplus token |
+
+The borrow draw reverts `REVLoans_FeeAmountExceedsNetPayout` if the protocol-fee-reduced payout cannot cover `revFee + sourceFee`.
 
 The prepaid fee buys a zero-extra-cost repayment window proportional to the percent paid: `prepaidDuration = prepaidFeePercent / 500 × 10 years` (2.5% → 6 months, 50% → the full 10 years). All loans liquidate at 10 years (`LOAN_LIQUIDATION_DURATION = 3650 days`), permanently destroying the collateral.
 
 ## Three revnet archetypes
 
-Stage parameters use `REVStageConfig` field names: `splitPercent` out of 10,000; `cashOutTaxRate` out of 10,000; `issuanceCutPercent` out of 1,000,000,000; `initialIssuance` is tokens per unit of base currency (18-decimal fixed point).
+Stage parameters use `REVStageConfig` field names: `splitPercent` out of 10,000; `cashOutTaxRate` out of 10,000; `issuanceCutPercent` out of 1,000,000,000; `initialIssuance` is tokens per unit of base currency (18-decimal fixed point). ABI order: `{uint48 startsAtOrAfter, REVAutoIssuance[] autoIssuances, uint16 splitPercent, JBSplit[] splits, uint112 initialIssuance, uint32 issuanceCutFrequency, uint32 issuanceCutPercent, uint16 cashOutTaxRate, uint16 extraMetadata}` — `splits` must be non-empty whenever `splitPercent > 0` (`REVDeployer_MustHaveSplits`).
 
 ### 1. Token launchpad (speculative)
 

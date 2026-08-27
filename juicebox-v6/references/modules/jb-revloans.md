@@ -42,10 +42,10 @@ Loan IDs are namespaced per revnet: `loanId = revnetId * 1e18 + loanNumber`. `re
 
 At **borrow** time, from the drawn amount:
 1. Terminal draw (`useAllowanceOf`) incurs the 2.5% protocol fee.
-2. $REV fee: 1% of the borrow amount, paid to the $REV revnet (skipped if $REV has no terminal for the token — then the borrower keeps it).
-3. Source fee: `prepaidFeePercent` (2.5%–50%) of the borrow amount, paid back into the source revnet itself.
+2. $REV fee: 1% of the borrow amount, **paid** (`pay`) into the $REV revnet with `beneficiary` as the pay beneficiary, so `beneficiary` receives $REV tokens. Skipped (fee = 0, borrower keeps it) if $REV has no primary terminal for the token or the pay fails.
+3. Source fee: `prepaidFeePercent` (2.5%–50%) of the borrow amount, **paid** into the source revnet itself — `beneficiary` receives revnet tokens at the stage's current issuance (reserved split applies). If that pay fails, the fee amount is transferred to `beneficiary` instead of being kept.
 
-The borrower receives `netPayout − revFee − sourceFee`; the recorded debt is the full borrow amount.
+The borrower receives `netPayout − revFee − sourceFee`; the recorded debt is the full borrow amount. Reverts `REVLoans_FeeAmountExceedsNetPayout` if the protocol-fee-reduced payout cannot cover both fees. The time-based source fee at repay uses the same pay-then-transfer fallback.
 
 At **repay** time (`determineSourceFeeAmount`):
 - Within `prepaidDuration`: zero extra cost — repay exactly the proportional debt.

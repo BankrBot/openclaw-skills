@@ -46,7 +46,8 @@ function mintFrom(
     IJB721TiersHook hook,
     CTPost[] calldata posts,
     address token,               // terminal token to pay with (0x…EEEe for native)
-    uint256 amount,              // total supplied: post prices + 5% fee (must equal msg.value for native)
+    uint256 amount,              // total supplied: post prices (converted to the pay token's accounting units,
+                                 // rounded up) + 5% fee; must equal msg.value for native
     address nftBeneficiary,      // receives the minted NFTs
     address feeBeneficiary,      // receives the fee project's tokens (must not be address(0))
     bytes calldata additionalPayMetadata // optional permit2 entry; must NOT already contain a pay metadata ID
@@ -57,10 +58,11 @@ function mintFrom(
 
 Mechanics:
 - Each new post creates a tier on the hook: `price`, `initialSupply = totalSupply`, poster's `splitPercent`/`splits`; everything else zeroed (no votes, no reserves, no discount, transfers unpausable).
-- **Duplicate content reuses the tier**: `tierIdForEncodedIpfsUriOf[hook][encodedIpfsUri]` maps content to its tier. Re-posting the same URI mints from the existing tier at the **actual tier price** (a caller-supplied `price: 0` cannot dodge payment). Duplicate URIs within one batch revert.
+- **Duplicate content reuses the tier**: `tierIdForEncodedIpfsUriOf[hook][encodedIpfsUri]` maps content to its tier. Re-posting the same URI mints from the existing tier at the **actual tier price** (a caller-supplied `price: 0` cannot dodge payment). If the cached tier was removed via `adjustTiers` or its URI changed via `setMetadata`, the mapping is cleared and a new tier is created and re-validated; posted tiers are created with `cantBeRemoved: false`, and `tiersFor` can return stale/empty tiers. Duplicate URIs within one batch revert.
+- **Re-mints skip every criterion**: allowlist, `minimumPrice`, supply bounds and split checks run only when a new tier is created. Anyone can re-mint existing content at the tier price regardless of the category's allowlist.
 - **Pricing**: `price` is denominated in the hook's pricing context (`hook.pricingContext()` → currency, decimals). The publisher converts to the payment token's accounting context via the price feed, rounding up. No feed → revert.
 - **Fee**: `fee = totalPrice / FEE_DIVISOR` (`FEE_DIVISOR = 20` → 5%), required **on top** of the price: send `totalPrice + fee`. Skipped when posting to the fee project itself (`FEE_PROJECT_ID`). The fee is paid into the fee project's terminal with `feeBeneficiary` receiving the resulting tokens; if the fee project can't accept it, the fee is refunded to the caller.
-- The remainder (`amount − fee`) is paid into the project's terminal with metadata instructing the 721 hook to mint the posted tier IDs to `nftBeneficiary`. Overpayment above the tier prices is still a payment — it buys project tokens for the beneficiary. The publisher verifies the NFT balance actually increased by the post count.
+- The remainder (`amount − fee`) is paid into the project's terminal with metadata instructing the 721 hook to mint the posted tier IDs to `nftBeneficiary`. Overpayment above the tier prices is accepted only if the hook's `preventOverspending` flag is `false` (CTDeployer hooks set it `false`; other hooks may revert on leftover) — it then buys project tokens for the beneficiary. The publisher verifies the NFT balance actually increased by the post count.
 - ERC-20 payments: direct approval to the publisher or a permit2 entry inside `additionalPayMetadata` (id `"permit2"`). Native: `amount == msg.value` exactly.
 
 Look up tiers for known content with `tiersFor(hook, encodedIpfsUris[])`.
@@ -70,40 +72,42 @@ Look up tiers for known content with `tiersFor(hook, encodedIpfsUris[])`.
 ```solidity
 function deployProjectFor(
     address owner,
-    CTProjectConfig calldata projectConfig,        // terminals, projectUri, allowedPosts, 721 name/symbol/contractUri, salt
+    CTProjectConfig calldata projectConfig,        // terminals, projectUri, allowedPosts (CTDeployerAllowedPost[] — CTAllowedPost minus `hook`), 721 name/symbol/contractUri, salt
     CTSuckerDeploymentConfig calldata suckerDeploymentConfiguration,
     IJBController controller
 ) external payable returns (uint256 projectId, IJB721TiersHook hook);
 ```
 
 What it sets up:
-- A project with one ruleset: `weight = 1_000_000e18`, base currency ETH, `cashOutTaxRate = MAX` (cash-outs disabled for holders), `dataHook = CTDeployer` — which grants suckers 0% cash-out tax and mint permission, and forwards pay/cash-out logic to the 721 hook.
-- A tiered 721 hook (no initial tiers) owned by `CTDeployer`, with the publisher permitted to add tiers.
+- A project with one ruleset: `weight = 1_000_000e18`, base currency ETH, `cashOutTaxRate = MAX` (holders can call cash out but reclaim zero), `dataHook = CTDeployer` — which grants suckers 0% cash-out tax and mint permission, and forwards pay/cash-out logic to the 721 hook.
+- A tiered 721 hook (no initial tiers, priced in ETH / 18 decimals, `baseUri "ipfs://"`, no resolver — `minimumPrice`/`price` are wei) owned by `CTDeployer`, with the publisher permitted to add tiers.
 - The supplied `allowedPosts` configured on the publisher.
-- Optional suckers (non-zero salt); sucker deployment failure emits an event instead of reverting the launch.
-- The project NFT transferred to `owner`, who also gets direct hook permissions (`ADJUST_721_TIERS`, `SET_721_METADATA`, `MINT_721`, `SET_721_DISCOUNT_PERCENT`) scoped on the deployer's account.
+- Optional suckers (non-zero salt; effective salt `keccak256(salt, msg.sender)`). Registry failure emits `CTDeployer_SuckerDeploymentFailed` instead of reverting, but any non-zero `deployerConfigurations[i].peer` requires `owner` to hold `SET_SUCKER_PEER` (34) and reverts before that try/catch.
+- The project NFT transferred to `owner` via `safeTransferFrom` (a contract owner must implement `onERC721Received` or the deploy reverts). `owner` also gets direct hook permissions (`ADJUST_721_TIERS`, `SET_721_METADATA`, `MINT_721`, `SET_721_DISCOUNT_PERCENT`) scoped on the deployer's account.
 
 `msg.value` covers the project creation fee, attributed to the true payer via the payer-tracker.
 
 ### Claiming full hook ownership
 
 `CTDeployer.claimCollectionOwnershipOf(hook)` — callable by the project owner. Two steps, only the first is atomic:
-1. The call revokes the launch-time deployer-scoped permissions and transfers hook ownership to the project (`transferOwnershipToProject`).
+1. The call revokes the deployer-scoped permissions of the **caller only** and transfers hook ownership to the project (`transferOwnershipToProject`). If the project NFT changed hands after launch, the original launch `owner` keeps `ADJUST_721_TIERS`, `SET_721_METADATA`, `MINT_721`, `SET_721_DISCOUNT_PERCENT` under `CTDeployer`'s account for that project — those grants only stop mattering once the hook's owner is no longer `CTDeployer` (after this call), so claim before selling the project.
 2. **The owner must then grant `CTPublisher` the `ADJUST_721_TIERS` permission for the project** — otherwise every subsequent `mintFrom` reverts.
 
 ## Locking ownership (`CTProjectOwner`)
 
-`safeTransferFrom` the project NFT to `CTProjectOwner` to burn ownership while keeping posting alive: on receipt it grants the publisher `ADJUST_721_TIERS` for that project and has no transfer-out function. Configure posting criteria **before** transferring — criteria become immutable afterwards.
+`safeTransferFrom` the project NFT to `CTProjectOwner` to burn ownership while keeping posting alive: on receipt it grants the publisher `ADJUST_721_TIERS` for that project and has no transfer-out function. Configure posting criteria **before** transferring — criteria become immutable afterwards, provided hook ownership was already claimed to the project. While `CTDeployer` still owns the hook, `configurePostingCriteriaFor` checks `ADJUST_721_TIERS` against `CTDeployer`'s account, where the launch owner still holds it and can keep reconfiguring criteria, adjusting tiers, minting and setting discounts.
 
 ## Croptop in revnets
 
-`REVDeployer.deployFor` accepts `REVCroptopAllowedPost[]` (same fields as `CTAllowedPost` minus `hook`). It configures them on the publisher during deployment and grants the publisher `ADJUST_721_TIERS` on the revnet, so posts work on revnet 721 hooks with no extra setup.
+`REVDeployer.deployFor` accepts `REVCroptopAllowedPost[]` (same fields as `CTAllowedPost` minus `hook`). When `allowedPosts` is non-empty it configures them on the publisher during deployment and grants the publisher `ADJUST_721_TIERS` on the revnet, so posts work on revnet 721 hooks with no extra setup. With an empty `allowedPosts` no grant is made.
 
 ## Common mistakes
 
-- Sending exactly `totalPrice` — the 5% fee is additive; the required amount is `totalPrice + totalPrice / 20`.
+- Sending exactly `totalPrice` — the 5% fee is additive; the required amount is `totalPrice + totalPrice / 20`, where `totalPrice` has first been converted into the payment token's accounting units (the literal sum only holds when currency and decimals match).
 - Passing `price: 0` for content that already has a tier expecting a free mint — the publisher charges the stored tier's actual price.
 - Configuring a category with `minimumTotalSupply: 0` — that's the "closed" sentinel; configuration reverts.
 - After `claimCollectionOwnershipOf`, forgetting the `ADJUST_721_TIERS` grant to the publisher — all posting reverts.
 - Including a pay-metadata entry for the hook's metadata ID target inside `additionalPayMetadata` — reverts (`CTPublisher_DuplicatePayMetadata`) to prevent tier-selection shadowing.
 - Setting `feeBeneficiary` to `address(0)` — reverts.
+- Selling the project before `claimCollectionOwnershipOf` — the previous owner keeps deployer-scoped mint/tier/metadata/discount powers.
+- Expecting the category allowlist to block re-mints of existing content — criteria apply only to new tiers.

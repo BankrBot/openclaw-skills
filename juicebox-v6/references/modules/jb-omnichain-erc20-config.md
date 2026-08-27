@@ -69,6 +69,28 @@ struct JBSuckerDeploymentConfig {
 
 There is no `minBridgeAmount` field. Currency by convention is `uint32(uint160(tokenAddress))` — do not reuse one chain's currency number on another chain.
 
+## Entry points (`JBOmnichainDeployer`, same address on every chain)
+
+```solidity
+// Launch + optional 721 hook + suckers in one call. Both overloads payable (project-creation fee), both
+// return (uint256 projectId, IJB721TiersHook hook, address[] suckers). Suckers deploy only if
+// suckerDeploymentConfiguration.salt != 0.
+function launchProjectFor(address owner, string projectUri, JBOmnichain721Config deploy721Config,
+    JBRulesetConfig[] rulesetConfigurations, JBTerminalConfig[] terminalConfigurations, string memo,
+    JBSuckerDeploymentConfig suckerDeploymentConfiguration) external payable;
+function launchProjectFor(address owner, string projectUri, JBRulesetConfig[] rulesetConfigurations,
+    JBTerminalConfig[] terminalConfigurations, string memo, JBSuckerDeploymentConfig suckerDeploymentConfiguration)
+    external payable;   // no 721 hook
+// Add suckers to an existing project. Caller needs DEPLOY_SUCKERS (33) from the owner; a nonzero peer also
+// needs SET_SUCKER_PEER (34). Registry salt = keccak256(abi.encode(config.salt, msgSender)).
+function deploySuckersFor(uint256 projectId, JBSuckerDeploymentConfig suckerDeploymentConfiguration)
+    external returns (address[] suckers);
+// Also: launchRulesetsFor(projectId, projectUri, [deploy721Config,] rulesetConfigurations, terminalConfigurations, memo)
+//       queueRulesetsOf(projectId, [deploy721Config,] rulesetConfigurations, memo) — both return (rulesetId, hook).
+```
+
+`JBOmnichain721Config` is `{JBDeploy721TiersHookConfig deployTiersHookConfig, bool useDataHookForCashOut, bytes32 salt}`.
+
 ## The registry mapping allowlist
 
 `JBSucker.mapTokens` (called during `deploySuckersFor`) enforces `JBSuckerRegistry.requireTokenMappingAllowed`:
@@ -145,8 +167,8 @@ Project IDs differ per chain. Read them from each chain's receipt (the project-c
 - **`minBridgeAmount` in the mapping.** The field does not exist; `JBTokenMapping` is `{localToken, minGas, remoteToken}`.
 - **`remoteToken` as `address`.** It's `bytes32` (left-padded).
 - **Canonical USDC over a native-bridge sucker.** Mapping and allowlist checks do not validate the bridge pair. OP Stack delivery can reject after source escrow, and Arbitrum can select a legacy paired token. Use the CCIP lane deployer.
-- **Different senders or salts per chain.** `deploySuckersFor` hashes `(sender, salt)` into the CREATE2 salt; mismatches break the same-address peer assumption.
-- **Fixing a wrong mapping in place.** Once a token's outbox has entries, the mapping can only be disabled, never remapped — a misconfigured lane requires a new sucker.
+- **Different senders or salts per chain.** The sender is hashed into the salt at every layer — `JBOmnichainDeployer` pre-hashes `keccak256(abi.encode(salt, userSender))`, the registry hashes `(registryCaller, salt)`, and the deployer hashes again for CREATE2; mismatches break the same-address peer assumption.
+- **Fixing a wrong mapping in place.** Once a token's outbox has entries, the mapping can only be disabled, never remapped — a misconfigured lane requires a new sucker. Disabling flushes the outbox with `msg.value` as transport payment: send `0` on OP-stack and Arbitrum L2→L1 lanes (nonzero reverts `JBSucker_UnexpectedMsgValue`); only CCIP and Arbitrum L1→L2 take value.
 
 ## Related skills
 

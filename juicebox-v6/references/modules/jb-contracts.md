@@ -16,7 +16,7 @@ Juicebox V6 has a single contract set: one `JBController`, one `JBMultiTerminal`
 **Address rules:**
 - Core contracts are deployed via CREATE2 and share **one address on every chain**. Tables below marked "chain-same" list that single address once.
 - Chain-specific contracts (CCIP suckers, Chainlink price feeds, `JBUniswapV4Hook`, testnet project instances) differ per chain — per-chain tables or a pointer to the config are given below.
-- The only address source is `references/shared/chain-config.json`. Never hand-type addresses from docs, explorers, or memory.
+- Use `references/shared/chain-config.json` only for read-only discovery. For writes, the only authority is `references/shared/deployment-manifest.json`, followed by live code, selector, proxy, and project-graph verification. Never hand-type addresses from docs, explorers, or memory.
 
 ## Chains
 
@@ -50,6 +50,7 @@ Juicebox V6 has a single contract set: one `JBController`, one `JBMultiTerminal`
 | JBMultiTerminal | `0x130f5dd2bd8805443cf41755253d778a75a67f53` | Main money terminal: pay, cash out, payouts, surplus allowance; 2.5% fee held 28 days; Permit2 support |
 | JBHeldFees | `0x62e77076b6e902e7aec8b2925acc9b46058e3d38` | External library (DELEGATECALL from JBMultiTerminal) for held-fee storage; not a standalone contract |
 | ERC2771Forwarder | `0x3ba60b60933916a7c87d0860dcee62a0ce34e3e2` | OpenZeppelin trusted forwarder for meta-transactions across the protocol |
+| Permit2 | `0x000000000022d473030f116ddee9f6b43ac78ba3` | Canonical Uniswap Permit2; `JBMultiTerminal` pulls ERC-20 payments through it when `pay` metadata carries a Permit2 allowance |
 | JBOmnichainDeployer | `0xb853758a70a6b4216c09f1d071ea2344aba0a34f` | One-transaction deployer for omnichain projects (project + 721 hook + suckers); inserts itself as ruleset data hook to coordinate cross-chain supply/surplus |
 
 ## Terminals, registries, periphery (chain-same)
@@ -102,10 +103,10 @@ Juicebox V6 has a single contract set: one `JBController`, one `JBMultiTerminal`
 
 | Contract | Address | Role |
 |---|---|---|
-| JBUniswapV4LPSplitHook | `0xaf2d8a027955871cd2f3c4d2f32338e574e69bc0` | Split-hook implementation that turns reserved-token distributions into a Uniswap V4 LP position; cloned per project. Absent on OP Sepolia |
-| JBUniswapV4LPSplitHookDeployer | `0x1b79a25ee77a79469f20c98fa410f85f6027f4cf` | Deploys LP split hook clones (optional CREATE2 salt). Absent on OP Sepolia |
-| JBUniswapV4LPSplitHookMath | `0xef2242dc7e8a082ce00c943548e414598896c4f4` | Linked library: Juicebox-price → Uniswap-tick math kept outside the hook's bytecode; not standalone |
-| BannyLPSplitHook | `0xae6705c33c8b46f56878a1d4f1ce4d75fcfb6f62` | The LP split hook clone deployed for the BAN project (fee project 0, fee 0). Absent on OP Sepolia |
+| JBUniswapV4LPSplitHook | `0xfcdbabd7b8de07c6e4ca7d79790e235848edc251` | Split-hook implementation that turns reserved-token distributions into a Uniswap V4 LP position; cloned per project. Absent on OP Sepolia |
+| JBUniswapV4LPSplitHookDeployer | `0xee49b9c6938c31c223e49272bb0a3810bc39f3da` | Deploys LP split hook clones (optional CREATE2 salt). Absent on OP Sepolia |
+| JBUniswapV4LPSplitHookMath | `0x734bfc66606dfe7943bcf541cf5dcbc5312e695b` | Linked library: Juicebox-price → Uniswap-tick math kept outside the hook's bytecode; not standalone. On OP Sepolia (the only LP artifact there) it is `0xef2242dc7e8a082ce00c943548e414598896c4f4` |
+| JBP6FeeLPSplitHook | `0xe9493bc776699714a89aa982cf828d843f040d2a` | The shared LP split hook clone projects point reserved splits at (clone of the implementation above; `feeProjectId` 1, `feePercent` 2000 bps = 20%). Absent on OP Sepolia |
 
 ## Suckers (cross-chain bridging)
 
@@ -197,7 +198,7 @@ Live clone instances for well-known projects. Each has one address across all ma
 
 ## Chain gaps
 
-- **Optimism Sepolia** lacks all Uniswap V4-dependent contracts: `JBUniswapV4Hook`, `JBUniswapV4LPSplitHook`, `JBUniswapV4LPSplitHookDeployer`, `BannyLPSplitHook`, `JBBuybackHook`, and also `JBRouterTerminal`. It still has `JBBuybackHookRegistry`, `JBRouterTerminalRegistry`, and `JBUniswapV4LPSplitHookMath`.
+- **Optimism Sepolia** lacks all Uniswap V4-dependent contracts: `JBUniswapV4Hook`, `JBUniswapV4LPSplitHook`, `JBUniswapV4LPSplitHookDeployer`, `JBP6FeeLPSplitHook`, `JBBuybackHook`, and also `JBRouterTerminal`. It still has `JBBuybackHookRegistry`, `JBRouterTerminalRegistry`, and `JBUniswapV4LPSplitHookMath`.
 - **JBERC20__ProjectART** exists only on Base and Base Sepolia.
 - Native suckers exist only on the chain pairs they bridge (see table above). CCIP suckers exist on each chain only for its actual peers.
 
@@ -213,13 +214,13 @@ Live clone instances for well-known projects. Each has one address across all ma
 
 ## Common mistakes
 
-- **Hand-typing addresses.** `references/shared/chain-config.json` is the only source. Docs pages, explorers, and remembered addresses drift.
+- **Hand-typing addresses.** Use chain config for reads and the reviewed deployment manifest for writes. Docs pages, explorers, and remembered addresses drift.
 - **Assuming `JBUniswapV4Hook` is chain-same.** It is the only member of the shared suite with a different address on every chain (Uniswap V4 hook addresses encode permission flags). Always look it up per chain.
 - **Using a mainnet address on a testnet** for `DefifaDeployer`, `DefifaHook`, `JBERC20__Project*`, or `JB721TiersHook__Project*` — these all have separate mainnet/testnet addresses.
 - **Expecting Uniswap-dependent contracts on OP Sepolia.** `JBUniswapV4Hook`, LP split hooks, `JBBuybackHook`, and `JBRouterTerminal` are not deployed there.
 - **Misreading CCIP sucker names.** The suffix names the *remote* chain: `JBCCIPSucker__ETH` on Optimism bridges Optimism↔Ethereum. Its address differs on each local chain.
 - **Calling implementations instead of instances.** `JBERC20`, `JB721TiersHook`, `JB721Checkpoints`, `JBProjectPayer`, `JBUniswapV4LPSplitHook`, and `DefifaHook` at the addresses above are implementations that get cloned. A live project's token is at `JBTokens.tokenOf(projectId)`, not at the `JBERC20` implementation address.
-- **Calling libraries as contracts.** `JBHeldFees`, `JBUniswapV4LPSplitHookMath`, and `CCIPHelper` are DELEGATECALL-linked libraries, not standalone entry points.
+- **Calling libraries as contracts.** `JBHeldFees`, `JBUniswapV4LPSplitHookMath`, `CCIPHelper`, `JBPayoutSplitGroupLib`, `JBSuckerLib`, `JBCCIPLib`, `JB721TiersHookLib`, and `DefifaHookLib` are DELEGATECALL-linked libraries, not standalone entry points.
 - **Paying `JBMultiTerminal` without checking the directory.** Resolve `JBDirectory.primaryTerminalOf(projectId, token)` first — a project may route through `JBRouterTerminalRegistry` or accept different tokens per terminal.
 - **Using `address(0)` for native ETH.** The protocol's native-token sentinel is `0x…EEEe` (`JBConstants.NATIVE_TOKEN`).
 - **Sending the wrong creation fee.** `JBProjects.createFor` reverts unless `msg.value` equals `creationFee()` exactly — query it first.

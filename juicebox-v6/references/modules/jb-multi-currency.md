@@ -120,8 +120,9 @@ All feeds implement one function: `currentUnitPrice(uint256 decimals) → uint25
 | Contract | Behavior |
 |----------|----------|
 | `JBChainlinkV3PriceFeed` | Reads `FEED.latestRoundData()`. Reverts if the round is incomplete (`updatedAt == 0` or `answeredInRound < roundId`), the update is older than `THRESHOLD` seconds, or the price is `<= 0`. Rescales from the Chainlink feed's decimals to the requested `decimals` via `JBFixedPointNumber.adjustDecimals` |
-| `JBChainlinkV3SequencerPriceFeed` | Extends the above for L2s: first reads `SEQUENCER_FEED.latestRoundData()` and reverts if the round is uninitialized (`startedAt == 0`), the sequencer is down (`answer != 0`), or it came back up less than `GRACE_PERIOD_TIME` seconds ago. Deployed on OP/Base/Arb mainnets; the testnets use the plain feed |
+| `JBChainlinkV3SequencerPriceFeed` | Extends the above for L2s: first reads `SEQUENCER_FEED.latestRoundData()` and reverts if the round is uninitialized (`startedAt == 0`), the sequencer is down (`answer != 0`), or it came back up `GRACE_PERIOD_TIME` seconds ago or less (`block.timestamp <= startedAt + GRACE_PERIOD_TIME`). Deployed on OP/Base/Arb mainnets; the testnets use the plain feed |
 | `JBMatchingPriceFeed` | Always returns `10 ** decimals` (1:1). Registered for pairs where no conversion is needed, e.g. `(ETH, NATIVE_TOKEN_CURRENCY)` |
+| `JBRatioPriceFeed` | Composes two feeds: `NUMERATOR.currentUnitPrice / DENOMINATOR.currentUnitPrice`. Prices a pair neither leg covers directly, e.g. USDC/ETH from USD/USDC and USD/ETH (`src/periphery/JBRatioPriceFeed.sol`) |
 
 Deployed staleness thresholds (from `nana-core-v6/script/DeployPeriphery.s.sol`): ETH/USD
 adapters use `THRESHOLD = 3600` seconds; USDC/USD adapters use `THRESHOLD = 86400` seconds.
@@ -288,6 +289,9 @@ denominated in `currency` with the token's accounting-context decimals (trap abo
 3. If the conversion rounds to zero, returns 0 **without consuming any payout limit**.
 4. Reverts if `amountPaidOut` exceeds the terminal balance; otherwise consumes `amount`
    (in the limit currency) from the cycle's used counter.
+5. `JBMultiTerminal` then takes the 2.5% protocol fee from each split paid to a non-project,
+   non-feeless recipient, and from the leftover sent to the owner (unless the owner is feeless).
+   `holdFees` defers the fee; the worked examples below are pre-fee.
 
 Use `minTokensPaidOut` (terminal-token units) as the slippage guard — the exchange rate
 between the limit currency and the token moves between simulation and execution.
@@ -308,8 +312,12 @@ just resolves 1:1 through the matching feed.
 Same conversion shape (`recordUsedAllowanceOf`), but: requires `USE_ALLOWANCE` permission
 from the owner; the converted amount must fit within the token's **surplus** (balance
 minus all remaining payout limits, each converted to the token's currency); usage is
-checked against `surplusAllowanceOf` for that exact currency and reverts (rather than
-caps) when exceeded.
+checked against `surplusAllowanceOf` for that exact currency and reverts
+`JBTerminalStore_InadequateControllerAllowance` when exceeded **or when no allowance is
+configured in that currency** (`surplusAllowance == 0`) — no silent 0 like payouts.
+`JBMultiTerminal._useAllowanceOf` then takes the 2.5% protocol fee from the withdrawn
+amount unless the owner or beneficiary is feeless; `netAmountPaidOut` is post-fee and
+`minTokensPaidOut` is compared against it.
 
 ### Surplus and cash outs
 

@@ -25,13 +25,13 @@ Unlike a standard token bridge:
 | Contract | Purpose | Address source |
 |----------|---------|----------------|
 | `JBSucker` | Abstract base: outbox/inbox merkle trees, claims, emergency hatch, accounting gossip | — |
-| `JBOptimismSucker` | ETH(1)↔OP(10), Sepolia(11155111)↔OP Sepolia(11155420), via OP CrossDomainMessenger + StandardBridge | `JBOptimismSucker` in `references/shared/chain-config.json` (same address on both ends) |
+| `JBOptimismSucker` | ETH(1)↔OP(10), Sepolia(11155111)↔OP Sepolia(11155420), via OP CrossDomainMessenger + StandardBridge | discover via chain config for reads; use a reviewed manifest pin plus live project-graph verification for writes |
 | `JBBaseSucker` | ETH(1)↔Base(8453), Sepolia↔Base Sepolia(84532); OP-stack implementation | `JBBaseSucker` |
 | `JBArbitrumSucker` | ETH(1)↔Arb(42161), Sepolia↔Arb Sepolia(421614), via Arbitrum Inbox/Bridge/Outbox | `JBArbitrumSucker` |
 | `JBCCIPSucker` | Any CCIP-supported pair; used for L2↔L2 (OP↔Base, OP↔Arb, Base↔Arb) | `JBCCIPSucker__{PEER}` — **chain-specific**: each singleton and deployer targets one lane |
 | `JBSuckerRegistry` | Deploys/tracks suckers, mapping allowlist, `toRemoteFee`, cross-chain value aggregation | `JBSuckerRegistry` (same address on all chains) |
 
-CCIP deployers/singletons are keyed by lane in `references/shared/chain-config.json` (e.g. on Ethereum: `JBCCIPSuckerDeployer__OP`, `JBCCIPSuckerDeployer__BASE`, `JBCCIPSuckerDeployer__ARB`). Each lane's deployer shares one address on both ends of the pair (e.g. Ethereum's `JBCCIPSuckerDeployer__ARB` == Arbitrum's `JBCCIPSuckerDeployer__ETH`), but the address differs between lanes and chains — always read the exact key for the chain you're on.
+CCIP deployers/singletons are keyed by lane. Chain config describes the keys for read-only discovery; the reviewed deployment manifest must authorize and live-verify any deployer used in a write. The address differs between lanes and chains, so resolve the exact chain/lane entry and never infer it from the peer chain.
 
 Suckers are ERC-2771-aware (trusted forwarder: `ERC2771Forwarder` in chain-config), so all user-facing calls work through Relayr meta-transactions. `fromRemote`/`fromRemoteAccounting` authenticate the raw `msg.sender` (bridge messenger), never the forwarder.
 
@@ -64,11 +64,11 @@ function toRemote(address token) external payable
 
 Anyone can call once the outbox has unsent entries. `msg.value` must cover two things:
 
-1. **Registry fee**: `JBSuckerRegistry.toRemoteFee()` (wei). Capped at `MAX_TO_REMOTE_FEE = 0.001 ether`; initialized at the cap; owner can lower it. The fee is paid into the fee project's (project 1) native terminal with the caller as pay beneficiary. If that pay fails, the fee is retained as a refundable credit — claim via `claimRetainedToRemoteFee(beneficiary)`.
+1. **Registry fee**: `JBSuckerRegistry.toRemoteFee()` (wei). Capped at `MAX_TO_REMOTE_FEE = 0.001 ether`; initialized at the cap; the registry owner can set it to any value `<= MAX_TO_REMOTE_FEE` (`setToRemoteFee`), so a lowered fee can be raised back to the cap. The fee is paid into the fee project's (project 1) native terminal with the caller as pay beneficiary. If that pay fails, the fee is retained as a refundable credit — claim via `claimRetainedToRemoteFee(beneficiary)`.
 2. **Bridge transport payment** = `msg.value - toRemoteFee`:
    - **Zero-cost lanes (OP-stack both directions; Arbitrum L2→L1)**: the transport payment must be exactly 0, so `msg.value` must EQUAL `toRemoteFee()`. Any excess reverts.
    - **Arbitrum L1→L2**: requires transport payment to fund the retryable ticket (submission cost + destination gas); insufficient payment reverts.
-   - **CCIP suckers**: transport payment must cover the CCIP messaging fee in native ETH. If transport payment is 0, the sucker switches to LINK-fee mode and tries `transferFrom` LINK from the caller (reverts without approval). Discover the needed value by simulating `toRemote` at escalating `msg.value` tiers — the contract computes `getFee()` internally and refunds excess, so the smallest working tier is safe.
+   - **CCIP suckers**: transport payment must cover the CCIP messaging fee in native ETH. If transport payment is 0, the sucker switches to LINK-fee mode and tries `transferFrom` LINK from the caller (reverts without approval). Discover the needed value by simulating `toRemote` at escalating `msg.value` tiers — the contract computes `getFee()` internally and refunds excess, so the smallest working tier is safe. If the excess refund transfer fails, the ETH is retained as caller credit — claim via `claimRetainedTransportPaymentRefund(beneficiary)`.
 
 The call sends the outbox root plus locked funds (`JBMessageRoot`) across the AMB: OP messenger `sendMessage` + `bridgeERC20To`, Arbitrum retryable tickets, or `ccipSend`.
 
@@ -140,7 +140,7 @@ function mapTokens(JBTokenMapping[] calldata maps) external payable;
   - Arbitrum's gateway router chooses the counterpart independently of `remoteToken`: L1→L2 can deliver a legacy bridged token while the root names a canonical token, and L2→L1 can try to burn the paired legacy token while the sucker holds the canonical token.
 - Bridge canonical USDC over a CCIP sucker. Use native-bridge suckers for native ETH unless an ERC-20's exact bridge pair and destination terminal accounting have been verified explicitly.
 - Native token (`0xEeee…EEeE`) may only map to the native token or `bytes32(0)`.
-- Once a token's outbox tree has entries it can never be remapped to a different remote token — only disabled (mapping to `bytes32(0)` triggers a final root flush; attach transport payment via `msg.value`). A misconfigured mapping requires deploying a new sucker.
+- Once a token's outbox tree has entries it can never be remapped to a different remote token — only disabled (mapping to `bytes32(0)` triggers a final root flush via `_sendRoot` with `msg.value` as the transport payment — same lane rules as `toRemote`: `msg.value` must be 0 on OP-stack lanes and Arbitrum L2→L1 or the call reverts `JBSucker_UnexpectedMsgValue`; only CCIP and Arbitrum L1→L2 take value). A misconfigured mapping requires deploying a new sucker.
 - One remote token can back only one local token per sucker (reverse reservation).
 
 ## JBSuckerRegistry
@@ -162,7 +162,7 @@ function toRemoteFee() external view returns (uint256);
 ```
 
 - `deploySuckersFor` requires `DEPLOY_SUCKERS` (ID 33). A nonzero `peer` additionally requires `SET_SUCKER_PEER` (ID 34).
-- The effective CREATE2 salt is `keccak256(abi.encode(msgSender, salt))` — **the same sender must call with the same salt on both chains** or the default same-address peer symmetry breaks.
+- Salt derivation is layered: the registry computes `keccak256(abi.encode(msgSender, salt))`, then `JBSuckerDeployer.createForSender` re-hashes `keccak256(abi.encodePacked(registry, thatSalt))` for CREATE2. Wrappers pre-hash before calling the registry — `JBOmnichainDeployer`: `keccak256(abi.encode(salt, userSender))`; `REVDeployer`: `keccak256(abi.encode(encodedConfigurationHash, salt, userSender))` — so the registry-level `sender` is the wrapper contract and the user-level sender is what varies. **The same sender must call with the same salt on both chains** or the default same-address peer symmetry breaks.
 - Deployment also applies the initial token mappings in the same call, so a wrong per-chain token address reverts here (see `jb-omnichain-erc20-config`).
 - Cross-chain value aggregation (fed by accounting gossip): `totalRemoteSurplusOf(projectId, currency, decimals)`, `totalRemoteBalanceOf(...)`, `remoteTotalSupplyOf(projectId)`. These drive cross-chain cash-out taxation so a holder dominating one chain's local supply can't bypass the tax.
 
@@ -180,14 +180,14 @@ Every root message carries a bundle of peer-chain accounting records (total supp
 function setDeprecation(uint40 timestamp) external  // 0 cancels
 ```
 
-Requires `SET_SUCKER_DEPRECATION` (ID 36). Timestamp must be at least 14 days out (`_maxMessagingDelay`) so in-flight messages can land.
+Requires `SET_SUCKER_DEPRECATION` (ID 36). `timestamp` must be `> block.timestamp + 14 days` (`_maxMessagingDelay`). Sending stops 14 days BEFORE `timestamp`, not at it — so a timestamp at the minimum enters `SENDING_DISABLED` immediately. `setDeprecation` (including `0` to cancel) requires sending to still be enabled: once the sucker is in `SENDING_DISABLED` or `DEPRECATED`, the deprecation can no longer be cancelled or moved.
 
-| `state()` | Meaning |
-|-----------|---------|
-| `ENABLED` (0) | Fully functional |
-| `DEPRECATION_PENDING` (1) | Deprecation scheduled; still fully functional (warning window) |
-| `SENDING_DISABLED` (2) | No new `prepare`/`toRemote`/`syncAccountingData`; incoming roots and claims still work |
-| `DEPRECATED` (3) | No new outbound sends; incoming roots are STILL accepted and claims still work, so bridged tokens are never stranded |
+| `state()` | When | Meaning |
+|-----------|------|---------|
+| `ENABLED` (0) | `deprecatedAfter == 0` | Fully functional |
+| `DEPRECATION_PENDING` (1) | `now < deprecatedAfter - 14 days` | Deprecation scheduled; still fully functional (warning window) |
+| `SENDING_DISABLED` (2) | `deprecatedAfter - 14 days <= now < deprecatedAfter` | No new `prepare`/`toRemote`/`syncAccountingData`/`setDeprecation`; incoming roots and claims still work; emergency exit is open for every token (no `enableEmergencyHatchFor` needed) |
+| `DEPRECATED` (3) | `now >= deprecatedAfter` | No new outbound sends; incoming roots are STILL accepted and claims still work, so bridged tokens are never stranded; emergency exit open |
 
 `removeDeprecatedSucker(projectId, sucker)` (anyone, once `DEPRECATED`) removes it from active listings; it keeps mint permission so pending claims settle.
 
@@ -205,6 +205,11 @@ function exitThroughEmergencyHatch(JBClaim calldata claimData) external;
 ```
 
 Opening the hatch sets `enabled = false` for the token (no new prepares); `toRemote` for that token reverts.
+
+Reachability rules (`_validateForEmergencyExit`):
+- The hatch check passes when the token's hatch is enabled OR `state()` is `SENDING_DISABLED`/`DEPRECATED` — deprecation opens the exit for all tokens without `enableEmergencyHatchFor`.
+- **Only prepared-but-unsent leaves are recoverable**: `index` must be `>= outboxOf(token).numberOfClaimsSent`, otherwise `JBSucker_LeafAlreadyExecuted`. Once `toRemote` (or a disabling `mapToken` flush) has shipped a root, those leaves' funds are across the bridge and the only recovery is `claim` on the destination.
+- The exit debits `outboxOf(token).balance`, so it can only return funds still held locally.
 
 ## Querying bridge status (Bendystraw)
 

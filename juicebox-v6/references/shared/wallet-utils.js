@@ -3,15 +3,16 @@
  * Common wallet connection and chain switching helpers
  * Requires: viem (https://viem.sh)
  *
- * Usage in HTML:
- * <script type="module">
- *   import { createPublicClient, http } from 'https://esm.sh/viem'
- *   import { mainnet, optimism, base, arbitrum, sepolia } from 'https://esm.sh/viem/chains'
- * </script>
+ * Install the reviewed dependency only after user approval:
+ *   npm install --save-exact viem@2.55.19
+ * The lockfile integrity must equal the value pinned in deployment-manifest.json.
+ * Import from the installed local package; never execute wallet-adjacent CDN code.
  */
 
 /**
- * Chain configurations for viem (all 8 supported chains)
+ * Chain configurations for viem (all 8 supported chains).
+ * Mainnet RPCs are the keyless CORS-open publicnode endpoints the production
+ * webclients use for browser reads; testnets use the chains' own public nodes.
  */
 const CHAIN_CONFIGS = {
   1: {
@@ -20,8 +21,8 @@ const CHAIN_CONFIGS = {
     network: 'mainnet',
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
     rpcUrls: {
-      default: { http: ['https://eth.llamarpc.com'] },
-      public: { http: ['https://eth.llamarpc.com'] }
+      default: { http: ['https://ethereum-rpc.publicnode.com'] },
+      public: { http: ['https://ethereum-rpc.publicnode.com'] }
     },
     blockExplorers: {
       default: { name: 'Etherscan', url: 'https://etherscan.io' }
@@ -33,8 +34,8 @@ const CHAIN_CONFIGS = {
     network: 'optimism',
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
     rpcUrls: {
-      default: { http: ['https://mainnet.optimism.io'] },
-      public: { http: ['https://mainnet.optimism.io'] }
+      default: { http: ['https://optimism-rpc.publicnode.com'] },
+      public: { http: ['https://optimism-rpc.publicnode.com'] }
     },
     blockExplorers: {
       default: { name: 'Optimistic Etherscan', url: 'https://optimistic.etherscan.io' }
@@ -46,8 +47,8 @@ const CHAIN_CONFIGS = {
     network: 'base',
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
     rpcUrls: {
-      default: { http: ['https://mainnet.base.org'] },
-      public: { http: ['https://mainnet.base.org'] }
+      default: { http: ['https://base-rpc.publicnode.com'] },
+      public: { http: ['https://base-rpc.publicnode.com'] }
     },
     blockExplorers: {
       default: { name: 'Basescan', url: 'https://basescan.org' }
@@ -59,8 +60,8 @@ const CHAIN_CONFIGS = {
     network: 'arbitrum',
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
     rpcUrls: {
-      default: { http: ['https://arb1.arbitrum.io/rpc'] },
-      public: { http: ['https://arb1.arbitrum.io/rpc'] }
+      default: { http: ['https://arbitrum-one-rpc.publicnode.com'] },
+      public: { http: ['https://arbitrum-one-rpc.publicnode.com'] }
     },
     blockExplorers: {
       default: { name: 'Arbiscan', url: 'https://arbiscan.io' }
@@ -135,31 +136,18 @@ const CHAINS = {
 };
 
 /**
- * Core V6 contract addresses. Deployed with CREATE2: the same address on every
- * supported chain. Source of truth: shared/chain-config.json (generated from
- * deploy-all-v6/deployments). Only contracts present on ALL 8 chains belong here;
- * chain-specific contracts (price feeds, CCIP suckers, JBUniswapV4Hook) must be
- * read from chain-config.json per chain.
+ * Block in which JBDirectory was deployed on each chain (deploy-all-v6/deployments/<chain>/JBDirectory.json).
+ * No V6 event exists before this block; use it as the `fromBlock` floor for eth_getLogs scans.
  */
-const CORE_CONTRACTS = {
-  JBController: '0x3fcec3572e84b624477bcff4e2cf1f7deab648f1',
-  JBDirectory: '0x5aff29060e023e6fb87be5596652b33c65af535b',
-  JBFundAccessLimits: '0xc93360158f187fc8fc8f1062a1b31d06f185dbab',
-  JBMultiTerminal: '0x130f5dd2bd8805443cf41755253d778a75a67f53',
-  JBOmnichainDeployer: '0xb853758a70a6b4216c09f1d071ea2344aba0a34f',
-  JBPermissions: '0xf92ac1ab5a00033e35a3975739124f61928c36b0',
-  JBPrices: '0xad45e4627f068d1e6b21e5301870d807543a8401',
-  JBProjects: '0x6017d1fba9dc279bfa0b03fd931c22e242ab3691',
-  JBRulesets: '0x26f2228a4e8b0079ed1c2a3d22f12ff7f83cdfba',
-  JBSplits: '0x28b3d11fcb8d2ad0a143c5b193cd9f2e4d43f4c3',
-  JBSuckerRegistry: '0x7903a854ae91eaf635430d120a1a434085cef297',
-  JBTerminalStore: '0x7497ae014a60561925b51c0a3b4ade7460b9927c',
-  JBTokens: '0x1f80d8f057ee36b4c2656d107e4e4558b71ba7d9',
-  JB721TiersHookDeployer: '0xb7b8ec35e2dd84afff04ee769c6189e7a4d44a78',
-  JB721TiersHookProjectDeployer: '0x3ffdc94e7f1de4b74c52158ec9dd3b965585f451',
-  JB721TiersHookStore: '0x69913acf79dbba170d9efafe605ee62b42164f9c',
-  REVDeployer: '0xb552eb94284f94b833837d4b2cbb237128415d4e',
-  REVLoans: '0x056265c31157748818f0910d1859acd2f7d427de'
+const DEPLOY_BLOCKS = {
+  1: 25327949n,
+  10: 152994072n,
+  8453: 47398796n,
+  42161: 473988207n,
+  11155111: 11070541n,
+  11155420: 44892064n,
+  84532: 42909187n,
+  421614: 277724223n
 };
 
 /**
@@ -194,9 +182,8 @@ class JBWallet {
       throw new Error('No wallet found. Please install MetaMask or another Web3 wallet.');
     }
 
-    // Dynamic import if viem not passed
     if (!viem) {
-      viem = await import('https://esm.sh/viem');
+      throw new Error('Pass the locally installed viem@2.55.19 module. Dynamic remote imports are forbidden.');
     }
 
     const { createWalletClient, createPublicClient, custom, http } = viem;
@@ -393,7 +380,7 @@ function formatDate(timestamp) {
  */
 async function createReadClient(chainId, viem = null) {
   if (!viem) {
-    viem = await import('https://esm.sh/viem');
+    throw new Error('Pass the locally installed viem@2.55.19 module. Dynamic remote imports are forbidden.');
   }
 
   const { createPublicClient, http } = viem;
@@ -433,45 +420,132 @@ async function loadABI(contractName) {
 }
 
 /**
- * Get contract address from chain config
- * @param {number} chainId - Chain ID
- * @param {string} contractName - Contract name
- * @returns {string|null} Contract address or null if not found
+ * Load chain configuration from shared config.
+ * This is descriptive data only. Never use it as write-target authority.
  */
-function getContractAddress(chainId, contractName) {
-  if (!CHAINS[chainId]) return null;
-  return CORE_CONTRACTS[contractName] || null;
+async function loadChainConfig() {
+  for (const url of [new URL('./chain-config.json', import.meta.url), '/shared/chain-config.json']) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return res.json();
+    } catch (e) { /* try next */ }
+  }
+  throw new Error('chain-config.json could not be loaded. Refusing to fall back to inline addresses.');
+}
+
+let deploymentManifestPromise;
+
+/**
+ * Load the reviewed write-target manifest. Module-relative first; no network fallback.
+ */
+async function loadDeploymentManifest() {
+  if (!deploymentManifestPromise) {
+    deploymentManifestPromise = (async () => {
+      const res = await fetch(new URL('./deployment-manifest.json', import.meta.url), { cache: 'no-store' });
+      if (!res.ok) throw new Error(`deployment-manifest.json unavailable (${res.status}). Writes are disabled.`);
+      const manifest = await res.json();
+      if (manifest.schemaVersion !== 1 || manifest.protocol !== 'juicebox-v6') {
+        throw new Error('Unrecognized deployment manifest. Writes are disabled.');
+      }
+      return manifest;
+    })();
+  }
+  return deploymentManifestPromise;
 }
 
 /**
- * Load chain configuration from shared config
+ * Resolve an address from the reviewed manifest. Unknown or non-write-enabled entries fail closed.
  */
-async function loadChainConfig() {
-  try {
-    const res = await fetch(new URL('./chain-config.json', import.meta.url));
-    if (res.ok) return res.json();
-  } catch (e) {
-    // Try relative path
-    try {
-      const res = await fetch('/shared/chain-config.json');
-      if (res.ok) return res.json();
-    } catch (e2) {
-      // Fall through to inline config
-    }
-  }
+async function getContractAddress(chainId, contractName, { write = false } = {}) {
+  const manifest = await loadDeploymentManifest();
+  const entry = manifest.chains?.[String(chainId)]?.contracts?.[contractName];
+  if (!entry?.address) throw new Error(`${contractName} is not pinned for chain ${chainId}.`);
+  if (write && !entry.writeEnabled) throw new Error(`${contractName} is not approved as a write target on chain ${chainId}.`);
+  return entry.address;
+}
 
-  // Inline fallback: core contracts share the same address on every chain
-  const chains = {};
-  for (const [chainId, info] of Object.entries(CHAINS)) {
-    chains[chainId] = {
-      name: info.name,
-      rpc: CHAIN_CONFIGS[chainId].rpcUrls.default.http[0],
-      explorer: info.explorer,
-      testnet: info.testnet,
-      contracts: { ...CORE_CONTRACTS }
-    };
+/**
+ * Verify chain, bytecode, selector and clone/proxy pins immediately before a write.
+ * @param {object} publicClient viem public client
+ * @param {string} contractName manifest contract name
+ * @param {{selector:string, keccak256:function}} options
+ */
+async function verifyWriteTarget(publicClient, contractName, { selector, keccak256 }) {
+  const chainId = await publicClient.getChainId();
+  const manifest = await loadDeploymentManifest();
+  if (!manifest.policy.supportedChainIds.includes(chainId)) throw new Error(`Unsupported chain ${chainId}.`);
+  const entry = manifest.chains?.[String(chainId)]?.contracts?.[contractName];
+  if (!entry?.writeEnabled) throw new Error(`${contractName} is not an allowed write target on chain ${chainId}.`);
+  const code = await publicClient.getCode({ address: entry.address });
+  if (!code || code === '0x') throw new Error(`No code at ${entry.address} on chain ${chainId}.`);
+  const liveHash = keccak256(code).toLowerCase();
+  if (liveHash !== entry.runtimeCodeHash) throw new Error(`Runtime code mismatch for ${contractName} on chain ${chainId}.`);
+  const allowed = manifest.abis?.[entry.abi]?.allowedWrites || [];
+  if (!selector || !allowed.some((item) => item.selector === selector.toLowerCase())) {
+    throw new Error(`Selector ${selector || '<missing>'} is not approved for ${contractName}.`);
   }
-  return { _version: '6', chains };
+  if (entry.proxy.kind === 'minimal-clone' && !entry.proxy.implementationAddress) {
+    throw new Error(`Unpinned clone implementation for ${contractName}.`);
+  }
+  return { chainId, entry };
+}
+
+const DIRECTORY_ABI = [
+  { name: 'primaryTerminalOf', type: 'function', stateMutability: 'view',
+    inputs: [{ name: 'projectId', type: 'uint256' }, { name: 'token', type: 'address' }],
+    outputs: [{ type: 'address' }] }
+];
+const ACCOUNTING_CONTEXT_ABI = [
+  { name: 'accountingContextForTokenOf', type: 'function', stateMutability: 'view',
+    inputs: [{ name: 'projectId', type: 'uint256' }, { name: 'token', type: 'address' }],
+    outputs: [{ type: 'tuple', components: [
+      { name: 'token', type: 'address' }, { name: 'decimals', type: 'uint8' }, { name: 'currency', type: 'uint32' }
+    ] }] }
+];
+
+/**
+ * Resolve the terminal a project accepts `token` through. Never hardcode JBMultiTerminal:
+ * projects can use custom terminals, and a project whose accounting context is USDC rejects
+ * native ETH on the multi terminal (`JBMultiTerminal_TokenNotAccepted`).
+ * @param {object} publicClient - viem public client
+ * @param {bigint} projectId
+ * @param {`0x${string}`} token - NATIVE_TOKEN (0x...EEEe) or an ERC-20
+ * @returns {Promise<{terminal: string, context: {token: string, decimals: number, currency: number}}>}
+ */
+async function resolveTerminal(publicClient, projectId, token) {
+  const chainId = publicClient.chain?.id ?? await publicClient.getChainId();
+  const directory = await getContractAddress(chainId, 'JBDirectory');
+  const terminal = await publicClient.readContract({
+    address: directory, abi: DIRECTORY_ABI,
+    functionName: 'primaryTerminalOf', args: [projectId, token]
+  });
+  if (!terminal || /^0x0{40}$/.test(terminal)) throw new Error(`Project ${projectId} has no terminal accepting ${token}`);
+  const context = await publicClient.readContract({
+    address: terminal, abi: ACCOUNTING_CONTEXT_ABI, functionName: 'accountingContextForTokenOf', args: [projectId, token]
+  });
+  if (/^0x0{40}$/.test(context.token)) throw new Error(`Terminal ${terminal} has no accounting context for ${token}`);
+  return { terminal, context };
+}
+
+/**
+ * Wait for a receipt and require it to have succeeded.
+ * A mined transaction can still have reverted; never report success on a bare receipt.
+ * @param {object} publicClient - viem public client
+ * @param {`0x${string}`} hash - Transaction hash
+ * @param {{prove:function}} options - Operation-specific event/post-state verifier
+ * @returns {Promise<object>} The successful, independently proven receipt
+ */
+async function waitForSuccess(publicClient, hash, { prove } = {}) {
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (receipt.status !== 'success') throw new Error(`Transaction reverted on-chain: ${hash}`);
+  if (typeof prove !== 'function') {
+    throw new Error(`Transaction mined but completion proof was not configured: ${hash}. State is uncertain; do not retry.`);
+  }
+  const evidence = await prove(receipt);
+  if (!evidence) {
+    throw new Error(`Transaction mined but expected event/post-state proof failed: ${hash}. State is uncertain; do not retry.`);
+  }
+  return receipt;
 }
 
 // Export for ES modules
@@ -479,7 +553,7 @@ export {
   JBWallet,
   CHAINS,
   CHAIN_CONFIGS,
-  CORE_CONTRACTS,
+  DEPLOY_BLOCKS,
   getTxUrl,
   getAddressUrl,
   truncateAddress,
@@ -489,8 +563,12 @@ export {
   formatDate,
   createReadClient,
   loadChainConfig,
+  loadDeploymentManifest,
   loadABI,
-  getContractAddress
+  getContractAddress,
+  verifyWriteTarget,
+  resolveTerminal,
+  waitForSuccess
 };
 
 // Also expose on window for script tag usage
@@ -499,7 +577,7 @@ if (typeof window !== 'undefined') {
     JBWallet,
     CHAINS,
     CHAIN_CONFIGS,
-    CORE_CONTRACTS,
+    DEPLOY_BLOCKS,
     getTxUrl,
     getAddressUrl,
     truncateAddress,
@@ -509,7 +587,11 @@ if (typeof window !== 'undefined') {
     formatDate,
     createReadClient,
     loadChainConfig,
+    loadDeploymentManifest,
     loadABI,
-    getContractAddress
+    getContractAddress,
+    verifyWriteTarget,
+    resolveTerminal,
+    waitForSuccess
   };
 }

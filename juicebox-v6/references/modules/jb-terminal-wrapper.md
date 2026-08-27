@@ -47,18 +47,18 @@ Anyone can always call `JBMultiTerminal.pay()` directly. A wrapper cannot restri
 function _acceptFundsFor(address token, uint256 amount, bytes calldata metadata) internal returns (uint256) {
     // Native token: use msg.value.
     if (token == JBConstants.NATIVE_TOKEN) return msg.value;
-    if (msg.value != 0) revert NoMsgValueAllowed(msg.value);
+    if (msg.value != 0) revert JBRouterTerminalRegistry_NoMsgValueAllowed(msg.value);
 
     // Consume an optional permit2 allowance keyed to THIS contract's address.
     (bool exists, bytes memory parsedMetadata) =
         JBMetadataResolver.getDataFor({id: JBMetadataResolver.getId("permit2"), metadata: metadata});
     if (exists) {
         JBSingleAllowance memory allowance = abi.decode(parsedMetadata, (JBSingleAllowance));
-        if (amount > allowance.amount) revert PermitAllowanceNotEnough(amount, allowance.amount);
+        if (amount > allowance.amount) revert JBRouterTerminalRegistry_PermitAllowanceNotEnough(amount, allowance.amount);
         // spender: address(this). A failed permit is caught (event), then the transfer below
         // falls back to any pre-existing approval or permit2 allowance.
         try PERMIT2.permit({owner: _msgSender(), permitSingle: permitSingle, signature: allowance.signature}) {}
-        catch (bytes memory reason) { emit Permit2AllowanceFailed(token, _msgSender(), reason); }
+        catch (bytes memory reason) { emit Permit2AllowanceFailed(token, _msgSender(), reason, _msgSender()); } // JBMultiTerminal's event has no 4th `caller` arg
     }
 
     // Measure the received balance delta so lossy ERC-20s stay in sync.
@@ -120,7 +120,7 @@ reclaimAmount = TERMINAL.cashOutTokensOf({
 // ...swap, bridge, stake, or LP the reclaimed funds...
 ```
 
-`cashOutTokensOf` requires the caller to be the `holder` or hold `JBPermissionIds.CASH_OUT_TOKENS` (ID 4) permission from the holder. Note the beneficiary's feeless status determines the protocol fee on the reclaim — a non-feeless wrapper beneficiary incurs the 2.5% fee (see `jb-protocol-fees`).
+`cashOutTokensOf` requires the caller to be the `holder` or hold `JBPermissionIds.CASH_OUT_TOKENS` (ID 4) permission from the holder. Note the beneficiary's feeless status determines the protocol fee on the reclaim — a non-feeless wrapper beneficiary incurs the 2.5% fee (see `jb-protocol-fees`). The same applies to cash-out hook payloads: `specification.amount` diverted to a non-feeless hook is fee'd at 2.5% before delivery.
 
 ## Wrapper use cases
 

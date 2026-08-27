@@ -28,7 +28,9 @@ Custom pay hooks extend a terminal's `pay(...)` flow. Before writing one, check 
 
 One contract can implement both (`JBBuybackHook` and `JB721TiersHook` do). A pay hook with no data hook is never called — the data hook is what routes execution to pay hooks.
 
-Both interfaces extend `IERC165`; implement `supportsInterface` for `type(IJBRulesetDataHook).interfaceId` / `type(IJBPayHook).interfaceId`.
+Both interfaces extend `IERC165`; implement `supportsInterface` for `type(IJBRulesetDataHook).interfaceId` / `type(IJBPayHook).interfaceId`. When inheriting OpenZeppelin `ERC165`, the override list must be `override(ERC165, IERC165)` or solc rejects the contract.
+
+`beforePayRecordedWith` is `view`, so the terminal store reaches it through `staticcall`: any state write inside it reverts the payment.
 
 ## IJBRulesetDataHook (nana-core-v6/src/interfaces/IJBRulesetDataHook.sol)
 
@@ -59,7 +61,9 @@ function hasMintPermissionFor(
     returns (bool flag);
 ```
 
-The returned `weight` overrides the ruleset's weight for this payment. `hasMintPermissionFor` grants on-demand mint rights per address per ruleset — return `false` unless the hook itself must mint.
+The returned `weight` overrides the ruleset's weight for this payment.
+
+The data hook itself can always call `JBController.mintTokensOf` for its project: `sender == ruleset.dataHook()` satisfies the `MINT_TOKENS` check and bypasses `allowOwnerMinting`. `hasMintPermissionFor` is consulted only for other senders — return `true` to extend those same mint rights to a companion contract, `false` otherwise.
 
 ## Context structs (fields in ABI order)
 
@@ -123,11 +127,13 @@ The returned `weight` overrides the ruleset's weight for this payment. `hasMintP
 Delivery differs by token type (`JBMultiTerminal`):
 
 - **Native token** (`JBConstants.NATIVE_TOKEN` = `0x000000000000000000000000000000000000EEEe`): sent as `msg.value` on the `afterPayRecordedWith` call.
-- **ERC-20**: the terminal grants the hook a temporary allowance for `forwardedAmount.value`. The hook MUST `transferFrom` the full amount during the call. If any allowance remains when the hook returns, the entire payment reverts with `JBMultiTerminal_TemporaryAllowanceNotConsumed`.
+- **ERC-20**: the terminal grants the hook a temporary allowance for `forwardedAmount.value`. The hook MUST `transferFrom` the full amount during the call (use `SafeERC20.safeTransferFrom`). If any allowance remains when the hook returns, the entire payment reverts with `JBMultiTerminal_TemporaryAllowanceNotConsumed`.
+- **Fee**: a direct `pay()` forwards the spec amount in full. When the payment is a same-terminal split pay (a payout split routed to another project on the same `JBMultiTerminal`), a non-feeless hook's spec amount is netted by the 2.5% fee before the call; `forwardedAmount.value` reflects the net. Feeless status is set only by the protocol owner (`JBFeelessAddresses` setters are `onlyOwner`).
+- **Reentrancy**: `pay` has no reentrancy guard. Hooks run after the payment is recorded and tokens are minted, and may reenter the terminal. Add `nonReentrant` when the hook holds state or funds.
 
 ## Access control (required)
 
-`afterPayRecordedWith` is an open external function. Validate the caller and the value, following `JB721Hook`:
+`afterPayRecordedWith` is an open external function. Validate the caller and the value. The caller checks follow `JB721Hook`; the ERC-20 pull is this skill's addition (`JB721Hook` forwards `amount: 0` and never pulls):
 
 ```solidity
 function afterPayRecordedWith(JBAfterPayRecordedContext calldata context) external payable override {
@@ -142,9 +148,14 @@ function afterPayRecordedWith(JBAfterPayRecordedContext calldata context) extern
         context.forwardedAmount.token == JBConstants.NATIVE_TOKEN ? context.forwardedAmount.value : 0;
     if (msg.value != expected) revert InvalidPayValue();
 
-    // Pull ERC-20 funds if any were forwarded.
+    // Pull forwarded ERC-20 funds from the terminal's temporary allowance.
     if (context.forwardedAmount.token != JBConstants.NATIVE_TOKEN && context.forwardedAmount.value != 0) {
-        IERC20(context.forwardedAmount.token).transferFrom(msg.sender, address(this), context.forwardedAmount.value);
+        SafeERC20.safeTransferFrom({
+            token: IERC20(context.forwardedAmount.token),
+            from: msg.sender,
+            to: address(this),
+            value: context.forwardedAmount.value
+        });
     }
 
     // Custom logic here.
@@ -153,8 +164,37 @@ function afterPayRecordedWith(JBAfterPayRecordedContext calldata context) extern
 
 ## Full data hook + pay hook skeleton
 
+Compiles as-is against nana-core-v6 with solc 0.8.28.
+
 ```solidity
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IJBDirectory} from "@bananapus/core-v6/src/interfaces/IJBDirectory.sol";
+import {IJBPayHook} from "@bananapus/core-v6/src/interfaces/IJBPayHook.sol";
+import {IJBRulesetDataHook} from "@bananapus/core-v6/src/interfaces/IJBRulesetDataHook.sol";
+import {IJBTerminal} from "@bananapus/core-v6/src/interfaces/IJBTerminal.sol";
+import {JBConstants} from "@bananapus/core-v6/src/libraries/JBConstants.sol";
+import {JBAfterPayRecordedContext} from "@bananapus/core-v6/src/structs/JBAfterPayRecordedContext.sol";
+import {JBBeforeCashOutRecordedContext} from "@bananapus/core-v6/src/structs/JBBeforeCashOutRecordedContext.sol";
+import {JBBeforePayRecordedContext} from "@bananapus/core-v6/src/structs/JBBeforePayRecordedContext.sol";
+import {JBCashOutHookSpecification} from "@bananapus/core-v6/src/structs/JBCashOutHookSpecification.sol";
+import {JBPayHookSpecification} from "@bananapus/core-v6/src/structs/JBPayHookSpecification.sol";
+import {JBRuleset} from "@bananapus/core-v6/src/structs/JBRuleset.sol";
+
 contract MyPayHook is IJBRulesetDataHook, IJBPayHook, ERC165 {
+    error InvalidPay();
+    error InvalidPayValue();
+
+    IJBDirectory public immutable DIRECTORY;
+    uint256 public immutable PROJECT_ID;
+
+    constructor(IJBDirectory directory, uint256 projectId) {
+        DIRECTORY = directory;
+        PROJECT_ID = projectId;
+    }
+
     function beforePayRecordedWith(JBBeforePayRecordedContext calldata context)
         external
         view
@@ -173,7 +213,28 @@ contract MyPayHook is IJBRulesetDataHook, IJBPayHook, ERC165 {
     }
 
     function afterPayRecordedWith(JBAfterPayRecordedContext calldata context) external payable override {
-        // validate caller + msg.value, then custom logic
+        // Only project terminals may call, and only for this hook's project.
+        if (
+            !DIRECTORY.isTerminalOf({projectId: PROJECT_ID, terminal: IJBTerminal(msg.sender)})
+                || context.projectId != PROJECT_ID
+        ) revert InvalidPay();
+
+        // msg.value must match the forwarded amount for native-token payments, and be 0 otherwise.
+        uint256 expected =
+            context.forwardedAmount.token == JBConstants.NATIVE_TOKEN ? context.forwardedAmount.value : 0;
+        if (msg.value != expected) revert InvalidPayValue();
+
+        // Pull forwarded ERC-20 funds from the terminal's temporary allowance.
+        if (context.forwardedAmount.token != JBConstants.NATIVE_TOKEN && context.forwardedAmount.value != 0) {
+            SafeERC20.safeTransferFrom({
+                token: IERC20(context.forwardedAmount.token),
+                from: msg.sender,
+                to: address(this),
+                value: context.forwardedAmount.value
+            });
+        }
+
+        // Custom logic here.
     }
 
     // Pass-through: not handling cash outs.
@@ -192,11 +253,12 @@ contract MyPayHook is IJBRulesetDataHook, IJBPayHook, ERC165 {
         );
     }
 
+    // The data hook itself can always mint; this only delegates mint rights to other addresses.
     function hasMintPermissionFor(uint256, JBRuleset memory, address) external pure override returns (bool) {
         return false;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
         return interfaceId == type(IJBRulesetDataHook).interfaceId || interfaceId == type(IJBPayHook).interfaceId
             || super.supportsInterface(interfaceId);
     }
@@ -213,6 +275,12 @@ Set in the ruleset metadata when queueing rulesets (`JBRulesetMetadata`):
 | `useDataHookForPay` | `true` |
 | `useDataHookForCashOut` | `true` only if the same contract also handles cash outs |
 
+Deploy + register:
+
+1. Deploy the hook (constructor takes `IJBDirectory` + project ID; read the directory address from `references/shared/chain-config.json`).
+2. Optionally register it in `JBAddressRegistry` so indexers/frontends can attribute it: `registerAddress(deployer, nonce)` for CREATE or `registerAddress(deployer, salt, bytecode)` for CREATE2 (permissionless; `JB721TiersHookDeployer` and `JBUniswapV4LPSplitHookDeployer` do this automatically for the hooks they deploy).
+3. Queue a ruleset through `JBController.queueRulesetsOf` (or `launchRulesetsFor`) whose `metadata.dataHook` is the hook and `useDataHookForPay = true`. For a 721 hook, use `JB721TiersHookProjectDeployer` / `JBOmnichainDeployer` instead (see `jb-721-per-chain-config`).
+
 ## Metadata conventions
 
 `context.metadata` (payer-supplied) can carry entries for multiple consumers. Parse with `JBMetadataResolver` from nana-core-v6 rather than raw `abi.decode`:
@@ -224,6 +292,15 @@ Set in the ruleset metadata when queueing rulesets (`JBRulesetMetadata`):
 });
 ```
 
+Payer side: build the blob with `JBMetadataResolver.createMetadata(ids, datas)` or append to an existing one with `addToMetadata(metadata, id, data)`; `getId(purpose, target)` is `bytes4(bytes20(target) ^ bytes20(keccak256(bytes(purpose))))`. Known payloads:
+
+| Consumer | ID | Payload |
+|----------|----|---------|
+| `JB721TiersHook` pay | `getId("pay", hook.METADATA_ID_TARGET())` | `abi.encode(bool allowOverspending, uint16[] tierIds)` |
+| `JB721TiersHook` beneficiary override (sucker relays) | `JB721Constants.BENEFICIARY_METADATA_ID` = `bytes4(keccak256("JB_721_BENEFICIARY"))` | `abi.encode(address beneficiary)` |
+| `JB721TiersHook` cash out | `getId("cashOut", hook.METADATA_ID_TARGET())` | `abi.encode(uint256[] tokenIds)` |
+| Your hook | `getId("pay", address(hook))` | Any `abi.encode` shape you decode |
+
 ## Reference implementations
 
 - **nana-buyback-hook-v6** — data hook + pay hook, weight override, `noop` specs used as informational previews
@@ -233,6 +310,7 @@ Set in the ruleset metadata when queueing rulesets (`JBRulesetMetadata`):
 ## Common mistakes
 
 - **Leaving ERC-20 allowance unconsumed.** Forwarded ERC-20 amounts arrive as an allowance, not a transfer. Pull the full amount or the payment reverts.
+- **Assuming forwarded funds are always gross.** Same-terminal split pays net a non-feeless hook's spec amount by 2.5% before the call; read `forwardedAmount.value`, not `specification.amount`.
 - **Skipping caller validation.** Anyone can call `afterPayRecordedWith` with fabricated context unless you check `DIRECTORY.isTerminalOf` and `context.projectId`.
 - **Implementing only `IJBPayHook`.** Without a data hook returning a spec pointing at your pay hook, it never runs.
 - **Forgetting `beforeCashOutRecordedWith` returns 5 values.** The pass-through must return `context.surplus.value` as `effectiveSurplusValue`, not omit it.

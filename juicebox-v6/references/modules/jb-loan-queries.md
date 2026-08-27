@@ -10,18 +10,31 @@ version: 6.0.0
 
 # Querying REVLoans via Bendystraw
 
-Bendystraw indexes every REVLoans event into a `loan` entity per active loan. Loans that are fully repaid or liquidated are removed/burned on-chain; historical activity lives in `borrowLoanEvent`, `repayLoanEvent`, `reallocateLoanEvent`, and `liquidateLoanEvent` tables.
+Bendystraw indexes every REVLoans event into a `loan` entity, one row per loan ID ever minted. **Rows are never deleted** (`RevLoans6.ts` has no `db.delete`); historical activity lives in `borrowLoanEvent`, `repayLoanEvent`, `reallocateLoanEvent`, and `liquidateLoanEvent` tables.
+
+## Loan-row lifecycle (filter for it)
+
+| Event | Row effect |
+|-------|-----------|
+| `Borrow` | insert row, `owner = holder` |
+| `RepayLoan` full | same row: `borrowAmount = 0`, `collateral = 0`, `sourceFeeAmount` overwritten |
+| `RepayLoan` partial | new row for `paidOffLoanId`; the OLD row keeps its stale `borrowAmount`/`collateral` |
+| `ReallocateCollateral` | new row for the new loan (`sourceFeeAmount = 0`); the OLD row is not touched |
+| `Liquidate` | row rewritten with the event's (non-zero) `amount`/`collateral` |
+| ERC-721 `Transfer` | `owner = to` (burn ⇒ `owner = 0x000…000`) |
+
+An active loan is `owner != 0x0000000000000000000000000000000000000000 AND borrowAmount > 0` — add both to every `loans(where: …)` and never treat the raw `id` list as active loans. `owner` is set to the tx `caller` on `RepayLoan`/`ReallocateCollateral` (on-chain the new NFT goes to the loan owner), so after an operator-driven repay/reallocate `owner` is wrong until the next `Transfer`; confirm with `REVLoans.ownerOf(loanId)`.
 
 ## Endpoint
 
-Use the **keyed** route — the keyless `/graphql` endpoint is CORS-locked to one origin:
+Production indexer (what juicebox.money / revnet.money read):
 
 ```
-https://bendystraw.xyz/{API_KEY}/graphql          (mainnets)
-https://testnet.bendystraw.xyz/{API_KEY}/graphql  (testnets)
+https://bendystraw.up.railway.app/graphql          (mainnets)
+https://testnet.bendystraw.xyz/graphql             (testnets)
 ```
 
-Always pass `version: 6` in where-clauses.
+`bendystraw.xyz` is a lagging deploy of the same indexer — do not point mainnet builders at it. Both webclients read the host from `NEXT_PUBLIC_BENDYSTRAW_URL` / `NEXT_PUBLIC_TESTNET_BENDYSTRAW_URL` with the values above as defaults. Always pass `version: 6` in where-clauses.
 
 ## Loan entity fields (verified against the indexer schema)
 
@@ -34,10 +47,10 @@ Always pass `version: 6` in where-clauses.
 | `createdAt` | Int | unix timestamp (liquidation clock: `createdAt + 10 years`) |
 | `borrowAmount` | BigInt | debt in source-token units — includes fees taken at creation |
 | `collateral` | BigInt | revnet tokens burned as collateral |
-| `sourceFeeAmount` | BigInt | source fee taken at the last borrow event |
+| `sourceFeeAmount` | BigInt | source fee from the LAST event that wrote the row (borrow, or the repay's fee; `0` on a reallocated loan) |
 | `prepaidDuration` | Int | seconds of zero-extra-cost repayment from `createdAt` |
 | `prepaidFeePercent` | Int | 25–500 (out of 1000) |
-| `owner` | String | current loan NFT owner |
+| `owner` | String | loan NFT owner as last indexed (see lifecycle table; `0x0…0` = burned) |
 | `beneficiary` | String | recipient of the borrowed funds at creation |
 | `token` | String | source token (native = `0x000000000000000000000000000000000000eeee`) |
 | `terminal` | String | terminal the loan drew from |
@@ -47,11 +60,13 @@ Primary key is `(id, chainId, version)` — the same loan ID can exist on multip
 
 ## Queries
 
+Variable scalar types below are illustrative — the deployed Ponder schema uses `Float!` for single-row lookup args (`project(chainId, projectId, version)`), and where-input scalars can differ. Introspect (`__type(name: "loanFilter")`) before hardcoding `Int!`.
+
 ### All loans for a user
 
 ```graphql
 query LoansByAccount($owner: String!, $version: Int!) {
-  loans(where: { owner: $owner, version: $version }) {
+  loans(where: { owner: $owner, version: $version, borrowAmount_gt: "0" }) {
     items {
       id
       chainId
@@ -76,7 +91,7 @@ Add `projectId` (and `chainId` for a single chain) to the where-clause:
 
 ```graphql
 query LoansForRevnet($owner: String!, $projectId: Int!, $version: Int!) {
-  loans(where: { owner: $owner, projectId: $projectId, version: $version }) {
+  loans(where: { owner: $owner, projectId: $projectId, version: $version, borrowAmount_gt: "0" }) {
     items { id chainId borrowAmount collateral createdAt token }
   }
 }
@@ -98,7 +113,7 @@ group.projects.forEach(s => {
   const m = /^(\d+)-(\d+)-/.exec(String(s))
   if (m) byChain[Number(m[1])] = Number(m[2])
 })
-// then: loans(where: { projectId: byChain[chainId], chainId, version: 6 })
+// then: loans(where: { projectId: byChain[chainId], chainId, version: 6, borrowAmount_gt: "0", owner_not: "0x0000000000000000000000000000000000000000" })
 ```
 
 Get a project's `suckerGroupId` from `project(projectId, chainId, version) { suckerGroupId }`.
@@ -158,3 +173,5 @@ Get `decimals`/`currency` from the terminal's accounting context for `loan.token
 - Caching loan IDs across mutations: partial repayment and reallocation burn the old NFT and mint new IDs; re-query after any loan transaction.
 - Treating `borrowableAmountFrom` as single-valued, or using `borrowableNow` to value existing collateral (use `borrowableCapacity`).
 - Using the keyless Bendystraw endpoint in a browser app — it CORS-fails outside the allow-listed origin.
+- Treating every `loan` row as active. Rows persist after full repay (`borrowAmount = 0`), partial repay/reallocate (stale old row), and burn (`owner = 0x0`); filter `borrowAmount > 0` and `owner != 0x0`.
+- Reading mainnet data from `bendystraw.xyz` — it lags the production host `bendystraw.up.railway.app`.

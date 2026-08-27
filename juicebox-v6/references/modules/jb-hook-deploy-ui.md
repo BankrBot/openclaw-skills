@@ -225,15 +225,18 @@ import {IJBPayHook} from '@bananapus/core-v6/src/interfaces/IJBPayHook.sol';
   </div>
 
   <script type="module">
-    import { createWalletClient, custom } from 'https://esm.sh/viem';
+    import { createWalletClient, createPublicClient, custom, http, encodeDeployData, keccak256 } from 'viem';
     import { CHAIN_CONFIGS, truncateAddress } from '/references/shared/wallet-utils.js';
 
+    // Per-chain V1 API hosts (api-optimistic.etherscan.io, api.basescan.org, ...) are retired.
+    // Etherscan V2 is one host with a chainid parameter; one API key works for every chain.
+    const ETHERSCAN_V2_API = 'https://api.etherscan.io/v2/api';
     const EXPLORERS = {
-      1: { name: 'Etherscan', url: 'https://etherscan.io', api: 'https://api.etherscan.io' },
-      11155111: { name: 'Sepolia', url: 'https://sepolia.etherscan.io', api: 'https://api-sepolia.etherscan.io' },
-      10: { name: 'Optimism', url: 'https://optimistic.etherscan.io', api: 'https://api-optimistic.etherscan.io' },
-      8453: { name: 'Basescan', url: 'https://basescan.org', api: 'https://api.basescan.org' },
-      42161: { name: 'Arbiscan', url: 'https://arbiscan.io', api: 'https://api.arbiscan.io' }
+      1: { name: 'Etherscan', url: 'https://etherscan.io' },
+      11155111: { name: 'Sepolia', url: 'https://sepolia.etherscan.io' },
+      10: { name: 'Optimism', url: 'https://optimistic.etherscan.io' },
+      8453: { name: 'Basescan', url: 'https://basescan.org' },
+      42161: { name: 'Arbiscan', url: 'https://arbiscan.io' }
     };
 
     const HOOK_CATALOG = {
@@ -309,6 +312,7 @@ contract FeeExtractionHook is IJBCashOutHook {
     };
 
     let walletClient = null;
+    let publicClient = null;
     let connectedAddress = null;
     let compiledContracts = {};
     let selectedContract = null;
@@ -356,6 +360,7 @@ contract FeeExtractionHook is IJBCashOutHook {
         const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
         connectedAddress = address;
         walletClient = createWalletClient({ chain: CHAIN_CONFIGS[selectedChainId], transport: custom(window.ethereum) });
+        publicClient = createPublicClient({ chain: CHAIN_CONFIGS[selectedChainId], transport: http() });
 
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         document.getElementById('wallet-address').textContent = truncateAddress(address);
@@ -445,6 +450,7 @@ contract FeeExtractionHook is IJBCashOutHook {
         try {
           await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x' + selectedChainId.toString(16) }] });
           walletClient = createWalletClient({ chain: CHAIN_CONFIGS[selectedChainId], transport: custom(window.ethereum) });
+          publicClient = createPublicClient({ chain: CHAIN_CONFIGS[selectedChainId], transport: http() });
         } catch (e) { return; }
       }
 
@@ -461,17 +467,30 @@ contract FeeExtractionHook is IJBCashOutHook {
           });
         }
 
-        const hash = await walletClient.deployContract({
+        const deployCall = {
           abi: selectedContract.abi,
           bytecode: `0x${selectedContract.bytecode}`,
           args,
           account: connectedAddress
-        });
+        };
+        const deployData = encodeDeployData(deployCall);
+        await publicClient.call({ account: connectedAddress, data: deployData });
+        const gas = await publicClient.estimateGas({ account: connectedAddress, data: deployData });
+        if (!confirm(`Chain ${selectedChainId}\nDeploy bytecode hash ${keccak256(deployData)}\nConstructor args ${JSON.stringify(args, (_, v) => typeof v === 'bigint' ? v.toString() : v)}\nGas cap ${gas * 2n}\nProceed?`)) return;
+        const hash = await walletClient.deployContract({ ...deployCall, gas: gas * 2n });
 
         showStatus('deploy-status', 'info', 'Waiting for confirmation...');
 
         const receipt = await pollForReceipt(hash);
+        if (receipt.status !== '0x1' || !receipt.contractAddress) throw new Error(`Deployment reverted: ${hash}`);
         deployedAddress = receipt.contractAddress;
+        const liveCode = await publicClient.getBytecode({ address: deployedAddress, blockNumber: BigInt(receipt.blockNumber) });
+        if (!liveCode || liveCode === '0x') throw new Error(`Deployment mined without runtime code: ${hash}`);
+        const proven = await verifyHookPostState(publicClient, deployedAddress, selectedContract, args, BigInt(receipt.blockNumber));
+        if (!proven) {
+          showStatus('deploy-status', 'warning', `Mined at ${deployedAddress}, but ownership/configuration proof is incomplete. Do not attach or retry; reconcile ${hash}.`);
+          return;
+        }
 
         document.getElementById('deployed-address').textContent = deployedAddress;
         document.getElementById('deploy-result').classList.remove('hidden');
@@ -494,6 +513,13 @@ contract FeeExtractionHook is IJBCashOutHook {
       throw new Error('Transaction not confirmed');
     }
 
+    async function verifyHookPostState(client, address, contract, constructorArgs, blockNumber) {
+      // Replace this fail-closed stub with checks derived from the selected hook: verify the expected
+      // owner/permissions, immutable/config getters, ERC-165 hook interfaces, and project attachment
+      // state at `blockNumber`. A receipt and nonempty bytecode alone are not completion proof.
+      return false;
+    }
+
     function parseArg(value, type) {
       if (type.startsWith('uint') || type.startsWith('int')) return BigInt(value);
       if (type === 'bool') return value.toLowerCase() === 'true';
@@ -511,7 +537,7 @@ contract FeeExtractionHook is IJBCashOutHook {
       showStatus('verify-status', 'info', 'Submitting verification...');
 
       try {
-        const response = await fetch(`${EXPLORERS[selectedChainId].api}/api`, {
+        const response = await fetch(`${ETHERSCAN_V2_API}?chainid=${selectedChainId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
@@ -599,7 +625,7 @@ const IMPORT_MAPPINGS = {
   '@bananapus/core-v6/': 'https://raw.githubusercontent.com/Bananapus/nana-core-v6/main/',
   '@bananapus/721-hook-v6/': 'https://raw.githubusercontent.com/Bananapus/nana-721-hook-v6/main/',
   '@bananapus/suckers-v6/': 'https://raw.githubusercontent.com/Bananapus/nana-suckers-v6/main/',
-  '@openzeppelin/contracts/': 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-contracts/v5.0.0/contracts/'
+  '@openzeppelin/contracts/': 'https://raw.githubusercontent.com/OpenZeppelin/openzeppelin-contracts/v5.6.1/contracts/' // nana-core-v6 pins @openzeppelin/contracts 5.6.1
 };
 ```
 
@@ -619,7 +645,7 @@ Non-zero `salt` gives a deterministic clone address; the effective salt mixes in
 
 - **Attaching a pay/cash-out hook directly as `dataHook`** — the `dataHook` must implement `IJBRulesetDataHook`; it decides which pay/cash-out hooks run and with what amounts. A bare `IJBPayHook` set as `dataHook` reverts every pay. Either implement both interfaces in one contract (return itself as the hook specification) or write a small data hook that specifies your pay hook.
 - **Forgetting `useDataHookForPay` / `useDataHookForCashOut`** — with the flags false, the `dataHook` address is ignored.
-- **Missing `supportsInterface`** — terminals check ERC-165 support; hooks without it are rejected.
+- **ERC-165 is only checked for approval hooks (`JBRulesets`, `JBRulesets_InvalidRulesetApprovalHook`) and split hooks (`JBMultiTerminal`)** — pay and cash-out hooks are called without any interface check, so a wrong callback signature reverts at call time instead of at configuration time. Keep `supportsInterface` anyway; tooling relies on it.
 - **`payable` callbacks** — `afterPayRecordedWith`/`afterCashOutRecordedWith` must be `payable`: forwarded native token amounts arrive as `msg.value`.
 - **Trusting `context` without checking the caller** — anyone can call your hook. Validate `msg.sender` is a terminal registered in `JBDirectory` (`isTerminalOf(projectId, msg.sender)`) before acting on the context.
 

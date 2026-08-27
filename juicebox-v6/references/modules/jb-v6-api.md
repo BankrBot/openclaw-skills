@@ -66,14 +66,21 @@ uint32  NATIVE_TOKEN_CURRENCY      = uint32(uint160(NATIVE_TOKEN));
 uint32  SPLITS_TOTAL_PERCENT       = 1_000_000_000; // split percent denominator
 ```
 
-`JBCurrencyIds` (library) — used **only** as `baseCurrency` in ruleset metadata and for price-feed lookups in `JBPrices`:
+`JBCurrencyIds` (library):
 
 | ID | Currency |
 |----|----------|
 | 1 | ETH |
 | 2 | USD |
 
-Accounting-context currencies are a different namespace: `uint32(uint160(tokenAddress))`. Do not use `1`/`2` as an accounting-context currency, and do not use a token-derived currency as `baseCurrency` unless a price feed exists for it.
+Any `uint32` is a valid currency; `JBPrices` converts between them. Where each namespace is used:
+
+| Field | Value |
+|-------|-------|
+| `JBAccountingContext.currency` | `uint32(uint160(token))` by convention |
+| `baseCurrency` | `JBCurrencyIds` value or `uint32(uint160(token))`; must equal the accounting context's currency or have a `JBPrices` feed to it |
+| Payout limit / surplus allowance `currency` | Any currency: `JBCurrencyIds.USD` for USD-denominated limits, `uint32(uint160(token))` for token-denominated limits |
+| `sendPayoutsOf` / `useAllowanceOf` `currency` | The currency the limit was configured in — anything else reads a 0 limit and pays nothing |
 
 `JBSplitGroupIds` (library):
 
@@ -105,7 +112,7 @@ Accounting-context currencies are a different namespace: `uint32(uint160(tokenAd
 |-------|------|-------|
 | `reservedPercent` | `uint16` | Out of `MAX_RESERVED_PERCENT` (10,000) |
 | `cashOutTaxRate` | `uint16` | Out of `MAX_CASH_OUT_TAX_RATE` (10,000). 0 = full proportional reclaim; 10,000 = no reclaim |
-| `baseCurrency` | `uint32` | `JBCurrencyIds` value the weight is denominated in |
+| `baseCurrency` | `uint32` | Currency the weight is denominated in: `JBCurrencyIds` value or `uint32(uint160(token))` (no feed needed when it equals the accounting context's currency) |
 | `pausePay` | `bool` | Reverts `pay` while active |
 | `pauseCreditTransfers` | `bool` | Blocks `transferCreditsFrom` |
 | `allowOwnerMinting` | `bool` | Required for owner/operator `mintTokensOf` (terminals + data hook can always mint) |
@@ -243,7 +250,7 @@ function mintTokensOf(
     bool useReservedPercent
 ) external returns (uint256 beneficiaryTokenCount);
 
-// Burn tokens or credits. Gated: BURN_TOKENS (holder's permission).
+// Burn tokens or credits. Gated: BURN_TOKENS (holder's permission), with override for the project's terminals.
 function burnTokensOf(address holder, uint256 projectId, uint256 tokenCount, string calldata memo) external;
 
 // Deploy the project's ERC-20 (ERC-1167 clone of the JBERC20 implementation).
@@ -263,6 +270,7 @@ function claimTokensFor(address holder, uint256 projectId, uint256 tokenCount, a
 function transferCreditsFrom(address holder, uint256 projectId, address recipient, uint256 creditCount) external;
 
 // Distribute pending reserved tokens to the RESERVED_TOKENS (groupId 1) splits. Permissionless.
+// Reverts JBController_NoReservedTokens when the pending balance is 0.
 function sendReservedTokensToSplitsOf(uint256 projectId) external returns (uint256);
 ```
 
@@ -322,7 +330,7 @@ function uriOf(uint256 projectId) external view returns (string memory);
 // PRICES(), PROJECTS(), RULESETS(), SPLITS(), TOKENS().
 ```
 
-`OMNICHAIN_RULESET_OPERATOR` is an address that bypasses `QUEUE_RULESETS` / `LAUNCH_RULESETS` / `SET_TERMINALS` / `SET_PROJECT_URI` checks (used for cross-chain ruleset synchronization).
+`OMNICHAIN_RULESET_OPERATOR` is an address that bypasses the permission checks in `queueRulesetsOf` and `launchRulesetsFor` (incl. the `SET_TERMINALS` / `SET_PROJECT_URI` checks inside `launchRulesetsFor`); `setUriOf` itself has no override. Used for cross-chain ruleset synchronization.
 
 ---
 
@@ -402,7 +410,9 @@ function cashOutTokensOf(
 ```solidity
 // Send payouts to the token's payout splits, up to the ruleset's payout limit.
 // Permissionless unless the ruleset sets ownerMustSendPayouts (then gated: SEND_PAYOUTS).
-// amount is denominated in `currency`, NOT necessarily in the token.
+// `currency` must be the currency the payout limit was configured in (e.g. JBCurrencyIds.USD
+// for a USD limit); a different currency reads a 0 limit and pays nothing. `amount` is
+// denominated in `currency` and converted to the token via JBPrices when they differ.
 function sendPayoutsOf(
     uint256 projectId,
     address token,
@@ -430,7 +440,9 @@ function useAllowanceOf(
 ```solidity
 // Register tokens the terminal accepts for a project.
 // Gated: ADD_ACCOUNTING_CONTEXTS, with override for the project's controller.
-// Ruleset must allow (allowAddAccountingContext).
+// Ruleset must allow (allowAddAccountingContext); unconditional before the first ruleset.
+// Store validation: decimals == IERC20Metadata(token).decimals() (native: 18), decimals <= 36,
+// currency != 0, token not already added.
 function addAccountingContextsFor(uint256 projectId, JBAccountingContext[] calldata accountingContexts) external;
 
 // Move a token balance to another terminal. Gated: MIGRATE_TERMINAL.
@@ -543,7 +555,8 @@ function isAllowedToSetFirstController(address addr) external view returns (bool
 function setControllerOf(uint256 projectId, IERC165 controller) external;
 
 // Gated: SET_PRIMARY_TERMINAL. Terminal must accept the token. If the terminal
-// isn't in the project's list yet, additionally requires ADD_TERMINALS (implicit add).
+// isn't in the project's list yet, additionally requires ADD_TERMINALS and the ruleset's
+// allowSetTerminals (implicit add).
 function setPrimaryTerminalOf(uint256 projectId, address token, IJBTerminal terminal) external;
 
 // Replaces the whole terminal list. Gated: SET_TERMINALS, with override for the
@@ -788,11 +801,11 @@ Permission checks accept: the account itself, an operator with the specific ID, 
 
 - Fee rate: `STANDARD_FEE / MAX_FEE` = 25/1000 = **2.5%**. Fees are paid to project #1 (`FEE_BENEFICIARY_PROJECT_ID`) by paying its primary terminal for the token — the fee payer's beneficiary receives project-1 tokens.
 - Fee is charged on:
-  - Payouts (`sendPayoutsOf`) to recipients that are not projects and not feeless.
+  - Payouts (`sendPayoutsOf`) to non-feeless recipients, incl. project splits whose primary terminal for the token is a different terminal. Exempt: same-terminal project splits and feeless addresses.
   - Surplus allowance withdrawals (`useAllowanceOf`), unless feeless.
   - Cash outs with `cashOutTaxRate != 0` — the fee applies to **every** such cash out, on the full reclaim amount.
   - Cash outs with `cashOutTaxRate == 0` — fee applies only up to the project's accumulated `feeFreeSurplusOf` (prevents fee bypass via intra-terminal payout → zero-tax cash-out round trips); beyond that, zero-tax cash outs are fee-free.
-- `holdFees` ruleset flag: fees are recorded as `JBFee` entries instead of processed immediately; `addToBalanceOf(..., shouldReturnHeldFees: true, ...)` returns them proportionally before the `unlockTimestamp`; `processHeldFeesOf` processes them after.
+- `holdFees` ruleset flag: fees are recorded as `JBFee` entries instead of processed immediately; `addToBalanceOf(..., shouldReturnHeldFees: true, ...)` returns any not-yet-processed held fee against the deposit (unlocked or not); `processHeldFeesOf` processes fees past their `unlockTimestamp` (28 days).
 - Feeless addresses (`JBFeelessAddresses`) are exempt everywhere fees apply.
 
 ---
@@ -1012,7 +1025,7 @@ function launchProjectFor(
 
 ## Router Terminal (nana-router-terminal-v6): Pay With Any Token
 
-`JBRouterTerminalRegistry` (`0xe0427f250fdb0379c8e98e884ee4570521208cbc`, chain-invariant) is itself an `IJBTerminal` a project adds to its terminal list. It forwards `pay`/`addToBalanceOf` to the project's effective router terminal (`JBRouterTerminal`, chain-specific), which swaps the paid token through discovered Uniswap V3 pools and forwards proceeds to the project's primary terminal.
+`JBRouterTerminalRegistry` (`0xe0427f250fdb0379c8e98e884ee4570521208cbc`, chain-invariant) is itself an `IJBTerminal` a project adds to its terminal list. It forwards `pay`/`addToBalanceOf` to the project's effective router terminal (`JBRouterTerminal`, chain-specific), which swaps the paid token through discovered Uniswap V3 or V4 pools (`PoolInfo.isV4`) and forwards proceeds to the project's primary terminal.
 
 ```solidity
 // JBRouterTerminalRegistry — per-project routing. Gated: SET_ROUTER_TERMINAL.
@@ -1278,7 +1291,7 @@ terminal.pay{value: 1 ether}({
     token: JBConstants.NATIVE_TOKEN,
     amount: 1 ether,
     beneficiary: msg.sender,
-    minReturnedTokens: 0,
+    minReturnedTokens: minTokens,  // floor from a prior simulation; 0 accepts any execution
     memo: "",
     metadata: ""
 });
@@ -1290,7 +1303,7 @@ terminal.pay({
     token: usdc,
     amount: 1_000e6,      // in the token's decimals
     beneficiary: msg.sender,
-    minReturnedTokens: 0,
+    minReturnedTokens: minTokens,  // floor from a prior simulation; 0 accepts any execution
     memo: "",
     metadata: ""
 });
@@ -1325,14 +1338,15 @@ permissions.setPermissionsFor({
 ### Distribute payouts
 
 ```solidity
-// amount is denominated in `currency` — e.g. a USD-denominated payout limit paid in USDC.
-// Auto-capped to the remaining payout limit for the cycle.
+// A USD-denominated payout limit (JBCurrencyAmount{amount, currency: JBCurrencyIds.USD}) paid in USDC.
+// `currency` is the limit's currency; `amount` is $10,000 in the token's 6-decimal fixed point,
+// converted to USDC via JBPrices. Auto-capped to the remaining payout limit for the cycle.
 terminal.sendPayoutsOf({
     projectId: projectId,
     token: usdc,
     amount: 10_000e6,
-    currency: uint32(uint160(usdc)),
-    minTokensPaidOut: 0
+    currency: JBCurrencyIds.USD,   // = 2; for a token-denominated limit pass uint32(uint160(usdc))
+    minTokensPaidOut: minOut       // guards a moved price feed; 0 accepts any execution
 });
 ```
 
@@ -1342,7 +1356,9 @@ terminal.sendPayoutsOf({
 
 - **Sending the wrong creation fee.** `JBProjects.createFor` and `JBController.launchProjectFor` require `msg.value == creationFee()` **exactly** — both 0 and overpayment revert. Read `creationFee()` first; it can be 0 (disabled) up to `MAX_CREATION_FEE` (0.001 ether).
 - **Passing `amount` for native-token payments.** For `NATIVE_TOKEN`, `pay`/`addToBalanceOf` ignore the `amount` argument and use `msg.value`.
-- **Mixing the two currency namespaces.** `JBCurrencyIds.ETH = 1` / `USD = 2` are only for `baseCurrency` and price-feed lookups. Accounting contexts, payout limits, and `sendPayoutsOf` use `uint32(uint160(tokenAddress))` (native = `NATIVE_TOKEN_CURRENCY`). Passing `1` or `2` where a token-derived currency is expected silently references the wrong price context.
+- **Passing the wrong `currency` to `sendPayoutsOf` / `useAllowanceOf`.** Limits are keyed by currency; pass the currency the limit was configured in (`JBCurrencyIds.USD` for a USD limit, `uint32(uint160(token))` for a token-denominated one). Any other value reads a 0 limit and the call silently pays nothing. Accounting contexts use `uint32(uint160(tokenAddress))` (native = `NATIVE_TOKEN_CURRENCY`); a `baseCurrency` or limit currency that differs from the accounting context's currency needs a `JBPrices` feed or every pay/payout reverts `JBPrices_PriceFeedNotFound`.
+- **Not consuming the forwarded ERC-20 allowance in a hook.** Pay and cash-out hooks receive ERC-20 funds as an approval; the hook must `transferFrom` the full `forwardedAmount` inside the callback or the terminal reverts `JBMultiTerminal_TemporaryAllowanceNotConsumed` and the whole `pay`/`cashOutTokensOf` fails. Native funds arrive as `msg.value`. Split hooks differ: unconsumed allowance is refunded to the project (payouts) or burned (reserved tokens).
+- **Permit2 allowance smaller than the payment.** `JBSingleAllowance.amount` is `uint160`; `amount > allowance.amount` reverts `JBMultiTerminal_PermitAllowanceNotEnough` before the permit is attempted.
 - **`sendPayoutsOf` amount decimals.** The `amount` is denominated in the `currency` argument, not necessarily the token — a USD-denominated payout paid in 6-decimal USDC still uses the currency's fixed-point convention. It also auto-caps at the remaining payout limit rather than reverting.
 - **Empty `fundAccessLimitGroups` means zero payouts.** Payout limits and surplus allowances default to 0. A ruleset without fund access limits locks all funds in for that ruleset (cash outs still work).
 - **Calling state contracts directly.** `JBTokens`, `JBRulesets`, `JBSplits`, `JBFundAccessLimits`, and `JBPrices` (for nonzero projects) write functions are controller-only. Route writes through `JBController`.

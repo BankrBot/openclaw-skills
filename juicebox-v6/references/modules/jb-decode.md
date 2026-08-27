@@ -88,7 +88,7 @@ launchProjectFor(address,string,(uint48,uint32,uint112,uint32,address,(uint16,ui
 
 ### msg.value rules
 
-- `launchProjectFor` is payable: `msg.value` must equal `JBProjects.creationFee()` exactly, or it reverts with `JBController_InvalidCreationFee`. A launch transaction always carries a nonzero `value`.
+- `launchProjectFor` is payable: `msg.value` must equal `JBProjects.creationFee()` exactly, or it reverts with `JBController_InvalidCreationFee`. The fee can be 0 (`JBProjects.setCreationFee` allows it), so read `creationFee()` instead of assuming a nonzero `value`.
 - `pay` / `addToBalanceOf` carry `msg.value == amount` only when `token` is the native token `0x000000000000000000000000000000000000EEEe`; for ERC-20 payments `value` is 0 and the amount moves via `transferFrom` (or Permit2 metadata).
 
 ## Decoding with Cast
@@ -216,7 +216,7 @@ bytes4 id = bytes4(bytes20(target) ^ bytes20(keccak256(bytes(purpose))));
 
 | Hook | purpose | target | Entry payload |
 |---|---|---|---|
-| JBBuybackHook (pay) | `"pay"` | buyback hook address | `abi.encode(uint256 amountToSwapWith, uint256 minimumSwapAmountOut)` — `minimumSwapAmountOut == 0` means "no explicit quote", hook falls back to its TWAP oracle |
+| JBBuybackHook (pay) | `"pay"` | buyback hook address | `abi.encode(uint256 amountToSwapWith, uint256 minimumSwapAmountOut, bool skipSplits)` (three words, `@bananapus/buyback-hook-v6` 1.4.0) — `minimumSwapAmountOut == 0` means "no explicit quote", hook falls back to its TWAP oracle; `skipSplits` is the payer's opt-out of split normalization. The hook at `0x77bee1ad…4948` was built before the third word existed and ignores it (static `abi.decode` tolerates trailing words), so always encode three words |
 | JBBuybackHook (cash out) | `"cashOut"` | buyback hook address | `abi.encode(uint256 minimumSwapAmountOut, bool skip)` |
 | JB721TiersHook (pay) | `"pay"` | hook's `METADATA_ID_TARGET()` | `abi.encode(bool allowOverspending, uint16[] tierIdsToMint)` |
 | JB721TiersHook (cash out) | `"cashOut"` | hook's `METADATA_ID_TARGET()` | `abi.encode(uint256[] tokenIdsToBurn)` |

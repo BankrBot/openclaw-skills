@@ -29,14 +29,14 @@ LAYER 1: Juicebox protocol (nana-core-v6)
          the 2.5% protocol fee on qualifying outflows from every project.
 ```
 
-Both fee recipients are revnets: **NANA is project 1** and **REV is project 3** on every chain (`REVDeployer.FEE_REVNET_ID == 3`).
+Both fee recipients are revnets: **NANA is project 1** (`JBConstants.FEE_BENEFICIARY_PROJECT_ID`, a source constant) and **REV is project 3** on every chain (`REVDeployer.FEE_REVNET_ID`, a constructor immutable whose deployed value is 3).
 
 ## Layer 1: protocol fee → NANA
 
 - **Rate**: 2.5% (`STANDARD_FEE = 25` out of `MAX_FEE = 1000`, `JBConstants`).
 - **Applies to**: payouts to wallets/split hooks, cross-terminal project payouts, surplus allowance usage, cash outs with non-zero tax rate, terminal migration to non-feeless terminals.
-- **Exempt**: same-terminal project-to-project payouts, feeless addresses (`JBFeelessAddresses`, per-project with a project-0 wildcard), project 1 itself.
-- **Mechanism**: the terminal pays the fee into project 1's primary terminal for the token via `pay`. **The fee payer's beneficiary receives NANA tokens** minted per NANA's ruleset. Fees route through NANA's issuance machinery — value capture is via NANA token distribution (reserved splits, cash-out backing), not a separate treasury.
+- **Exempt**: same-terminal project-to-project payouts, feeless addresses (`JBFeelessAddresses`, per-project with a project-0 wildcard), and project 1 on `migrateBalanceOf` only (its payouts, allowance usage, and cash outs take the normal fee path).
+- **Mechanism**: the terminal pays the fee into project 1's primary terminal for the token via `pay`. **NANA tokens are minted per NANA's ruleset to a beneficiary that depends on the operation**: project owner for payouts and migration, the explicit `feeBeneficiary` argument for `useAllowanceOf` (REVLoans passes the borrower's beneficiary), the cash-out beneficiary for cash outs. Fees route through NANA's issuance machinery — value capture is via NANA token distribution (reserved splits, cash-out backing), not a separate treasury.
 - **Fail-open**: a broken fee route forgives the fee back to the paying project (`FeeReverted`) rather than blocking the operation.
 
 ## Layer 2: revnet fees → REV

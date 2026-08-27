@@ -15,9 +15,25 @@ Revnets are designed for network effects. Unless the user explicitly asks for si
 ## How omnichain revnets work
 
 - `REVDeployer` (same address on every chain: see `references/shared/chain-config.json`) deploys the revnet independently on each chain via `deployFor(...)`.
-- Passing a non-zero `REVSuckerDeploymentConfig.salt` deploys suckers in the same call. Sucker addresses derive from `keccak256(abi.encode(encodedConfigurationHash, suckerConfig.salt, msgSender))` — identical config + salt + sender on each chain produces matching peers.
+- Passing a non-zero `REVSuckerDeploymentConfig.salt` deploys suckers in the same call. `REVDeployer` pre-hashes the salt as `keccak256(abi.encode(encodedConfigurationHash, suckerConfig.salt, msgSender))` before the registry hashes it again with the deployer as caller and `JBSuckerDeployer` hashes once more for CREATE2 — identical config + salt + user sender on each chain produces matching peers.
 - The revnet's ERC-20 gets a deterministic address too (salted with `description.salt` + config hash + sender), so the token has the same address on every chain.
-- Holders bridge tokens through suckers; sucker cash-outs bypass tax and fees so cross-chain arbitrage equalizes per-chain backing.
+- Holders bridge tokens through suckers; sucker cash-outs bypass tax, fees, and the cash-out delay, and are priced against the chain's **local** supply + collateral and surplus + borrowed only (`REVOwner.beforeCashOutRecordedWith` never adds remote values for suckers, even on unscoped revnets). This local-denominator asymmetry is what drives the cross-chain rebalancing arbitrage that equalizes per-chain backing; do not add remote supply when modeling sucker exits.
+
+## `REVDeployer.deployFor` (both overloads `payable`; `revnetId == 0` creates a new project, non-zero initializes an existing blank project id)
+
+```solidity
+function deployFor(uint256 revnetId, REVConfig configuration, JBAccountingContext[] accountingContextsToAccept,
+    REVSuckerDeploymentConfig suckerDeploymentConfiguration) external payable returns (uint256 revnetId, IJB721TiersHook hook);
+function deployFor(uint256 revnetId, REVConfig configuration, JBAccountingContext[] accountingContextsToAccept,
+    REVSuckerDeploymentConfig suckerDeploymentConfiguration, REVDeploy721TiersHookConfig tiered721HookConfiguration,
+    REVCroptopAllowedPost[] allowedPosts) external payable returns (uint256 revnetId, IJB721TiersHook hook);
+function deploySuckersFor(uint256 revnetId, REVSuckerDeploymentConfig suckerDeploymentConfiguration)
+    external returns (address[] suckers);   // operator only; needs extraMetadata bit 2 on the current stage
+```
+
+Struct ABI order — `REVConfig {REVDescription description; uint32 baseCurrency; address operator; bool scopeCashOutsToLocalBalances; REVStageConfig[] stageConfigurations}`; `REVDescription {string name; string ticker; string uri; bytes32 salt}`; `REVStageConfig {uint48 startsAtOrAfter; REVAutoIssuance[] autoIssuances; uint16 splitPercent; JBSplit[] splits; uint112 initialIssuance; uint32 issuanceCutFrequency; uint32 issuanceCutPercent; uint16 cashOutTaxRate; uint16 extraMetadata}`; `REVAutoIssuance {uint32 chainId; uint104 count; address beneficiary}`; `REVSuckerDeploymentConfig {JBSuckerDeployerConfig[] deployerConfigurations; bytes32 salt}`.
+
+`extraMetadata` becomes the stage ruleset's 14-bit `metadata`: bit 0 = 721 hook `pauseTransfers`, bit 1 = 721 hook `pauseMintPendingReserves`, bit 2 = allow `REVDeployer.deploySuckersFor` on this stage. It is part of the config hash.
 
 ## Deployment checklist
 
@@ -27,7 +43,7 @@ Revnets are designed for network effects. Unless the user explicitly asks for si
 - [ ] Lane/token pairing: use CCIP deployers for canonical USDC. For any OP Stack or Arbitrum native-bridge ERC-20 lane, verify the exact token delivered and burned in both directions and use that token in both the sucker mapping and destination terminal. Registry approval does not validate the bridge pair.
 - [ ] Per-chain `autoIssuances`: each entry carries a `chainId` and only mints on the matching chain — include the full cross-chain list on every deployment (it is part of the config hash).
 - [ ] Deploying an existing revnet onto a new chain (first stage already started) triggers a 7-day cash-out delay (`REVDeployer.CASH_OUT_DELAY = 604_800`) on that chain. Bridging in via suckers stays open during the delay so the new treasury can be primed.
-- [ ] Later sucker expansion: only the revnet's operator can call `REVDeployer.deploySuckersFor`, and only if the stage's `extraMetadata` has bit 2 set (allow deploying suckers).
+- [ ] Later sucker expansion: only the revnet's operator can call `REVDeployer.deploySuckersFor`, and only if the current stage's `extraMetadata` has bit 2 set (`(extraMetadata >> 2) & 1 == 1`; otherwise `REVDeployer_RulesetDoesNotAllowDeployingSuckers`). Set it on every stage that should allow expansion — it is immutable after deploy.
 
 ## Verification
 

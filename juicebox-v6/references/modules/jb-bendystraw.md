@@ -17,27 +17,33 @@ Bendystraw is a GraphQL indexer (built on [Ponder](https://ponder.sh)) for Juice
 ## API Base URLs
 
 ```
-Mainnets: https://bendystraw.xyz/{API_KEY}/graphql
-Testnets: https://testnet.bendystraw.xyz/{API_KEY}/graphql
-Schema (no key): GET https://bendystraw.xyz/schema
-Playground: https://bendystraw.xyz/schema
+Mainnets: https://bendystraw.up.railway.app/graphql          (keyless)
+          https://bendystraw.up.railway.app/{API_KEY}/graphql (keyed)
+Testnets: https://testnet.bendystraw.xyz/graphql
+          https://testnet.bendystraw.xyz/{API_KEY}/graphql
+Schema / playground (no key, rate-limited): GET https://bendystraw.up.railway.app/schema
 ```
 
-**Always use the keyed route.** The keyless `/graphql` endpoint sends a fixed `Access-Control-Allow-Origin` header, so browser requests CORS-fail from any other origin. The keyed route (`/{API_KEY}/graphql`) works everywhere.
+`bendystraw.up.railway.app` is the production mainnet deployment every Juicebox webclient targets. `bendystraw.xyz` serves the same indexer but lags it; do not point new clients at it.
+
+**Two routes, same schema:**
+
+- Keyless `/graphql` and `/participants`: CORS is an origin allowlist (juicebox.money, revnet.app, and other first-party hosts). Server-side callers (Node, Next.js route handlers, scripts) are not subject to CORS and work keyless. Browsers on non-allowlisted origins are blocked.
+- Keyed `/{API_KEY}/graphql` and `/{API_KEY}/participants`: key verified per request, no origin restriction. Required for browser calls from a third-party origin (for example a static IPFS bundle).
 
 ## Authentication
 
-**API key required.** Contact [@peripheralist](https://x.com/peripheralist) on X to get one.
+Keys are only needed for the keyed route. Contact [@peripheralist](https://x.com/peripheralist) on X to get one.
 
 ```javascript
-const response = await fetch(`https://bendystraw.xyz/${API_KEY}/graphql`, {
+const response = await fetch(`https://bendystraw.up.railway.app/${API_KEY}/graphql`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ query: '...', variables: { /* ... */ } })
 });
 ```
 
-**Never expose API keys in frontend source you control server-side.** Use a server-side proxy when possible.
+**Never ship an API key in browser source.** Production clients use a same-origin server proxy that calls the keyless route and forwards only a registry of known operations (persisted-operation pattern), so neither a key nor a raw query document reaches the browser.
 
 ---
 
@@ -45,17 +51,18 @@ const response = await fetch(`https://bendystraw.xyz/${API_KEY}/graphql`, {
 
 | Database | Chains |
 |----------|--------|
-| Mainnets (`bendystraw.xyz`) | Ethereum (1), Optimism (10), Base (8453), Arbitrum (42161) |
+| Mainnets (`bendystraw.up.railway.app`) | Ethereum (1), Optimism (10), Base (8453), Arbitrum (42161) |
 | Testnets (`testnet.bendystraw.xyz`) | Sepolia (11155111), Optimism Sepolia (11155420), Base Sepolia (84532), Arbitrum Sepolia (421614) |
 
 ---
 
 ## The `version: 6` Rule
 
-**Every table row carries a `version` column. Juicebox V6 data is `version: 6`. Every query MUST filter on the literal `version: 6`** — the same database contains rows from other protocol deployments tagged with other version values, and mixing them produces garbage.
+**Every table row carries a `version` column. Juicebox V6 data is `version: 6`. Every query MUST filter on the literal `version: 6`** — the same database contains rows from other protocol deployments tagged with other version values, and mixing them produces garbage. The tag is decided by which contract address emitted the event; V6-only singletons (buyback hook, V4 hook, suckers registry) always write 6.
 
 - Plural queries: put `version: 6` in the `where` clause.
 - Singular queries: `version` is part of most compound primary keys — pass `version: 6` as the argument.
+- Ponder does not AND sibling fields into `OR` branches: when a `where` uses `OR: [...]`, repeat `version: 6` inside every branch.
 
 ```graphql
 # Plural — filter
@@ -65,7 +72,7 @@ projects(where: { version: 6, chainId: 1 }, ...) { items { ... } }
 project(projectId: 1, chainId: 1, version: 6) { ... }
 ```
 
-A project is uniquely identified by **`projectId + chainId + version`**. The same `projectId` on multiple chains with `version: 6` IS the same omnichain project (linked via suckers); the same `projectId` with a different `version` is a different thing entirely.
+A project is uniquely identified by **`projectId + chainId + version`**. `projectId` is a per-chain counter: the same number on two chains is two unrelated projects. An omnichain project is a set of per-chain projects with different ids linked by suckers; the link is `suckerGroupId`. Resolve the sibling on another chain through `suckerGroup.projects`, never by reusing the id.
 
 ---
 
@@ -87,7 +94,8 @@ Return one row by primary key. The PK columns are the arguments. **Integer PK ar
 | `nftHook` | `chainId: Float!, address: String!, version: Float!` |
 | `projectPayer` | `version: Float!, chainId: Float!, projectId: Float!, address: String!` |
 | `permissionHolder` | `version: Float!, chainId: Float!, account: String!, projectId: Float!, operator: String!` |
-| `projectMoment` | `version: Float!, chainId: Float!, projectId: Float!, block: Float!` |
+| `buybackPool` | `chainId: Float!, poolId: String!` |
+| `buybackPoolPosition` | `chainId: Float!, tokenId: BigInt!` |
 | `participantSnapshot` | `version: Float!, chainId: Float!, projectId: Float!, address: String!, block: Float!` |
 | `suckerGroupMoment` | `suckerGroupId: String!, version: Float!, timestamp: Float!` |
 | `suckerTransaction` | `index: Float!, token: String!, chainId: Float!, sucker: String!` |
@@ -110,9 +118,11 @@ entityName(
 ) {
   items { ... }
   pageInfo { startCursor endCursor hasNextPage hasPreviousPage }
-  totalCount
+  totalCount              # computed only when selected
 }
 ```
+
+`before` and `offset` cannot be combined. Nested relation pages (`suckerGroup.projects`, `project.participants`, `wallet.nfts`, …) take the same arguments; without `limit` a large relation silently truncates, so always pass one (production uses `projects(limit: 100)`).
 
 ### Filter operators (`where`)
 
@@ -122,7 +132,7 @@ Per column, depending on its type:
 |-------------|-----------|
 | all | `field`, `field_not`, `field_in`, `field_not_in` |
 | numeric (Int/BigInt) | `field_gt`, `field_gte`, `field_lt`, `field_lte` |
-| String | `field_contains`, `field_not_contains`, `field_starts_with`, `field_ends_with`, `field_not_starts_with`, `field_not_ends_with`, plus `_nocase` variants of each |
+| String | `field_contains`, `field_not_contains`, `field_starts_with`, `field_ends_with`, `field_not_starts_with`, `field_not_ends_with`, plus `_nocase` variants of each. `_nocase` is NOT generated for hex columns (addresses, `txHash`, `poolId`) — `address_contains_nocase` fails validation |
 | array (e.g. `tags`) | `field_has`, `field_not_has` |
 | combinators | `AND: [filter]`, `OR: [filter]` |
 
@@ -158,15 +168,17 @@ chainId: Int!
 version: Int!        # filter on 6
 txHash: String!
 timestamp: Int!
-caller: String!
-from: String!
+caller: String!      # the contract-level caller from the event args
+from: String!        # transaction sender — NOT the beneficiary
 logIndex: Int!
 projectId: Int!
-suckerGroupId: String!
+suckerGroupId: String!   # as of the event; see suckerGroup section
 project: project     # relation
 ```
 
-Exceptions: `burnEvent` / `manualBurnEvent` omit `caller` and `logIndex`; `projectTransferEvent` omits `caller`; `decorateBannyEvent` and `autoIssueEvent` / `storeAutoIssuanceAmountEvent` omit `suckerGroupId` (`decorateBannyEvent` also omits `projectId`).
+Exceptions: `burnEvent` / `manualBurnEvent` omit `caller` and `logIndex`; `projectTransferEvent` omits `caller`; `autoIssueEvent` / `storeAutoIssuanceAmountEvent` omit `suckerGroupId`; `decorateBannyEvent` omits `projectId` and `suckerGroupId` (it keeps `caller` and `logIndex`).
+
+**Relation naming rule.** When a relation shares a name with a column, the relation replaces the column in the GraphQL object type (`nft.hook`, `nftTier.hook`, `suckerGroup.projects`, `activityEvent.payEvent`, …). Select it as an object (`hook { address }`); the `where` filter still uses the underlying column's scalar type (`where: { hook: "0x…" }`). There are no `*_rel` fields.
 
 ### project
 
@@ -193,11 +205,12 @@ type project {
   nftsMintedCount: Int!
 
   # Financial (denominated in the project's accounting token)
-  volume: BigInt!
+  volume: BigInt!                 # payments only (payEvent); addToBalance is NOT counted
   volumeUsd: BigInt!
-  redeemVolume: BigInt!
+  redeemVolume: BigInt!           # accrues from cashOutTokensEvent only
   redeemVolumeUsd: BigInt!
-  balance: BigInt!
+  balance: BigInt!                # = volume + Σ addToBalance − cash-outs − payouts − allowances
+  balanceUsd: BigInt!             # live only (see note below)
   tokenSupply: BigInt!
   reservedTokenSupply: BigInt!
 
@@ -235,13 +248,17 @@ type project {
   participants: participantPage
   nfts: nftPage
   nftHooks: nftHookPage
-  projectMoments: projectMomentPage
+  buybackPools: buybackPoolPage
   projectPayers: projectPayerPage
   permissionHolders: permissionHolderPage
   activityEvents: activityEventPage
   # …plus a page relation for every event entity (payEvents, cashOutTokensEvents, …)
 }
 ```
+
+**Live only.** `balanceUsd` (on `project`, `suckerGroup`, `suckerGroupMoment`) and `addToBalanceEvent.amountUsd` are served by production and selected by juicebox-money, but are absent from the `bendystraw-v6` checkout this document was verified against. Everything else here is in the schema source.
+
+A "total raised" stat must add `addToBalanceEvents` to `volume`; `volume` alone under-reports projects funded through `addToBalance` (payouts from other projects with `preferAddToBalance`, sucker claims with `autoAddedToBalance`).
 
 ### suckerGroup (omnichain aggregation)
 
@@ -263,6 +280,7 @@ type suckerGroup {
   redeemVolumeUsd: BigInt!
   nftsMintedCount: Int!
   balance: BigInt!
+  balanceUsd: BigInt!             # live only
   tokenSupply: BigInt!
   reservedTokenSupply: BigInt!
   trendingScore: BigInt!
@@ -274,7 +292,11 @@ type suckerGroup {
 }
 ```
 
-Most tables carry a `suckerGroupId` column — filter any event/participant query on it to get cross-chain results in one query.
+**`suckerGroupId` is as-of-event.** Every project starts in its own single-member group. When suckers link projects, a NEW group id is created and only `project`, `projectCreateEvent`, `deployErc20Event` and `activityEvent` rows are re-pointed. `payEvents`, `cashOutTokensEvents`, `mintTokensEvents`, `swapEvents`, `participants`, `suckerGroupMoments`, `cashOutTaxSnapshots` and the rest keep the group id that was current when they were written. Consequences:
+
+- `activityEvents(where: { suckerGroupId })` is complete across the merge; the typed event tables are not.
+- For a complete historical list from a typed table, query by the group AND by each member's `(chainId, projectId)` (from `suckerGroup.projects`), merge, and de-duplicate by `id`.
+- `suckerGroupMoments` for the current group id begin at the merge; pre-merge history sits under the old ids.
 
 ### participant (token holder, per project per chain)
 
@@ -287,11 +309,11 @@ type participant {
   version: Int!
   isRevnet: Boolean
   address: String!
-  volume: BigInt!                 # total contributed
+  volume: BigInt!                 # accrues to the pay `payer` (tx caller)
   volumeUsd: BigInt!
   lastPaidTimestamp: Int!
-  paymentsCount: Int!
-  balance: BigInt!                # creditBalance + erc20Balance
+  paymentsCount: Int!             # also accrues to the payer
+  balance: BigInt!                # creditBalance + erc20Balance; accrues to the mint `beneficiary`
   creditBalance: BigInt!          # unclaimed credits
   erc20Balance: BigInt!           # claimed ERC-20 tokens
   wallet: wallet
@@ -301,6 +323,8 @@ type participant {
   loans: loanPage
 }
 ```
+
+Attribution trap: `volume`/`paymentsCount` credit the payer, `balance` credits the beneficiary. A checkout that pays from a smart wallet or router on behalf of a person produces two participant rows — one with volume and no balance, one with balance and no volume. "Top contributors" and "top holders" are different lists.
 
 ### wallet (cross-project aggregation per address)
 
@@ -323,7 +347,7 @@ Polymorphic row per protocol event. `type` discriminates; exactly one embedded e
 type activityEvent {
   id: String!
   chainId: Int!
-  from: String!
+  from: String!                   # tx sender; no beneficiary column on this row
   timestamp: Int!
   txHash: String!
   projectId: Int!
@@ -358,7 +382,7 @@ enum activityEventType {
 type payEvent {          # + common event columns
   distributionFromProjectId: Int  # set when the payment is a payout from another project
   beneficiary: String!
-  amount: BigInt!
+  amount: BigInt!                 # 0 when the payment was routed through the buyback pool (the trade is a swapEvent)
   amountUsd: BigInt!
   memo: String
   feeFromProject: Int             # set when the payment is a fee from this project ID
@@ -379,6 +403,7 @@ type cashOutTokensEvent {  # + common event columns
 
 type addToBalanceEvent {   # + common event columns
   amount: BigInt!
+  amountUsd: BigInt!              # live only
   memo: String
   metadata: String!
   returnedFees: BigInt!
@@ -490,6 +515,8 @@ type rulesetQueuedEvent {               # + common event columns
   metadata: BigInt!                     # packed ruleset metadata
   mustStartAtOrAfter: BigInt!
   cashOutTax: Int!
+  cycleNumber: Int!                     # what UIs print ("Ruleset #N")
+  basedOnId: Int!                       # 0 = genesis ruleset
 }
 type cashOutTaxSnapshot {               # PK: version+chainId+projectId+rulesetId
   chainId: Int!  projectId: Int!  suckerGroupId: String!  version: Int!
@@ -539,7 +566,7 @@ type liquidateLoanEvent {  # + common event columns
 type nft {                 # PK: chainId+hook+tokenId+version
   chainId: Int!  projectId: Int!  createdAt: Int!  version: Int!
   mintTx: String!
-  hook: String!
+  hook: nftHook             # RELATION (select `hook { address }`); filter with `where: { hook: "0x…" }`
   tokenId: BigInt!
   owner: String!
   category: Int!
@@ -548,12 +575,12 @@ type nft {                 # PK: chainId+hook+tokenId+version
   tierId: Int!
   customized: Boolean       # Banny decoration
   customizedAt: Int!
-  tier: nftTier  project: project  hook_rel: nftHook  participant: participant  wallet: wallet
+  tier: nftTier  project: project  participant: participant  wallet: wallet
 }
 
 type nftTier {             # PK: version+chainId+hook+tierId
   chainId: Int!  projectId: Int!  version: Int!
-  hook: String!
+  hook: nftHook             # RELATION; filter with `where: { hook: "0x…" }`
   tierId: Int!
   price: BigInt!
   allowOwnerMint: Boolean
@@ -570,7 +597,7 @@ type nftTier {             # PK: version+chainId+hook+tierId
   reserveFrequency: Int
   reserveBeneficiary: String
   svg: String               # Banny tiers only
-  nfts: nftPage  project: project  hook_rel: nftHook
+  nfts: nftPage  project: project
 }
 
 type nftHook {             # PK: chainId+address+version
@@ -605,19 +632,26 @@ type decorateBannyEvent {  # + common event columns MINUS projectId/suckerGroupI
 }
 ```
 
-### Buyback hook events
+### Buyback pools and swaps
 
 ```graphql
-type swapEvent {           # + common event columns — buyback hook AMM trades
-  direction: String!       # "buy" (swap), "sell" (cash-out swap), or "mint" (leftover minted instead)
+type swapEvent {           # + common event columns — one row per settled PoolManager Swap on a registered pool
+  direction: String!       # "buy" = trader received project tokens; "sell" = trader sent project tokens
+                           # into the pool (any V4 sell through the hook, NOT a cash-out — cash-outs are
+                           # cashOutTokensEvent); "mint" = buyback hook minted instead of swapping
   poolId: String
   terminalTokenAmount: BigInt!   # terminal-token side of the trade
   projectTokenAmount: BigInt!    # project-token side of the trade
   sqrtPriceX96: BigInt            # exact post-swap V4 spot; null for mint/legacy rows
   projectTokenIsCurrency0: Boolean # token ordering needed to orient sqrtPriceX96
+  accountingTokenUsdRate: BigInt  # USD per 1 whole accounting token AT THIS BLOCK, 18-dec; null when no feed
 }
+```
 
-type buybackPoolEvent {    # + common event columns — pool registrations
+`from` on a swap row is the tx submitter and `caller` is the router's `RouteSelected` caller; neither is a beneficiary. Swaps on pools never registered through `PoolAdded` are not indexed.
+
+```graphql
+type buybackPoolEvent {    # + common event columns — pool registration LOG (one row per PoolAdded)
   terminalToken: String!
   poolId: String!          # Uniswap V4 pool backing the project's buyback
   currency0: String
@@ -625,7 +659,38 @@ type buybackPoolEvent {    # + common event columns — pool registrations
   projectTokenIsCurrency0: Boolean
   initialSqrtPriceX96: BigInt      # Initialize/slot0 price at registration; nullable on legacy rows
 }
+
+type buybackPool {         # CURRENT registered pool state; PK: chainId+poolId (no suckerGroupId column)
+  chainId: Int!  projectId: Int!  version: Int!  createdAt: Int!
+  poolId: String!
+  terminalToken: String!
+  currency0: String!
+  currency1: String!
+  projectTokenIsCurrency0: Boolean!
+  initialSqrtPriceX96: BigInt
+  project: project
+}
+
+type buybackPoolPosition { # Uniswap V4 LP position in a registered buyback pool; PK: chainId+tokenId
+  chainId: Int!  projectId: Int!  version: Int!  createdAt: Int!
+  poolId: String!
+  tokenId: BigInt!         # PositionManager NFT id (also the position salt)
+  owner: String!
+  tickLower: Int!
+  tickUpper: Int!
+  liquidity: BigInt!       # live liquidity
+  feeGrowthInside0LastX128: BigInt!
+  feeGrowthInside1LastX128: BigInt!
+  feesClaimed0: BigInt!    # lifetime fees already collected (not recoverable from chain state)
+  feesClaimed1: BigInt!
+  updatedAt: Int!
+  burned: Boolean!         # burned rows are kept; filter `burned: false` for live positions
+  project: project
+  pool: buybackPool
+}
 ```
+
+Use `buybackPools(where: { chainId, projectId, version: 6 })` to resolve a project's current pool, and `buybackPoolPositions(where: { chainId, poolId, burned: false })` for its LP table or a wallet's positions (`where: { owner }`) — this is how the remove-liquidity flow avoids walking PoolManager logs.
 
 ### Cross-chain (suckers)
 
@@ -710,20 +775,18 @@ type storeAutoIssuanceAmountEvent { # same fields as autoIssueEvent
 
 ### Historical snapshots
 
-```graphql
-type projectMoment {       # per-project time series; PK: version+chainId+projectId+block
-  projectId: Int!  chainId: Int!  version: Int!
-  block: Int!  timestamp: Int!
-  volume: BigInt!  volumeUsd: BigInt!  balance: BigInt!  trendingScore: BigInt!
-}
+`projectMoment` exists in the schema but is never written (its insert is disabled in the indexer); `projectMoments` queries return empty pages. Chart from `suckerGroupMoments` — a single-chain project has its own single-member group, so this covers every project.
 
+```graphql
 type suckerGroupMoment {   # cross-chain time series; PK: suckerGroupId+version+timestamp (NO block field)
   suckerGroupId: String!  version: Int!  timestamp: Int!
   paymentsCount: Int!  redeemCount: Int!
   volume: BigInt!  volumeUsd: BigInt!  redeemVolume: BigInt!  redeemVolumeUsd: BigInt!
   nftsMintedCount: Int!  balance: BigInt!  tokenSupply: BigInt!  reservedTokenSupply: BigInt!
+  balanceUsd: BigInt!      # live only
   trendingScore: BigInt!  trendingVolume: BigInt!  trendingPaymentsCount: Int!
   contributorsCount: Int!
+  accountingTokenUsdRate: BigInt   # USD per 1 whole accounting token at this moment, 18-dec; null when no feed
 }
 
 type participantSnapshot { # per-holder time series; PK: version+chainId+projectId+address+block
@@ -776,7 +839,7 @@ query GetSuckerGroup($id: String!) {
     tokenSupply
     paymentsCount
     contributorsCount
-    projects {
+    projects(where: { version: 6 }, limit: 100) {
       items {
         projectId
         chainId
@@ -856,7 +919,7 @@ query TopHolders($projectId: Int!, $chainId: Int!, $limit: Int!) {
 }
 ```
 
-For omnichain holders, filter on `suckerGroupId` instead of `projectId + chainId` — but note the same wallet then appears once per chain; aggregate by `address` client-side or use the `/participants` REST endpoint.
+For omnichain holders, filter on `suckerGroupId` instead of `projectId + chainId` — the same wallet then appears once per chain; paginate the full set and sum `balance` by `address` client-side. Do not use the `/participants` REST endpoint for this (see below).
 
 ### Cash outs
 
@@ -918,11 +981,14 @@ query BuybackSwapHistory(
       timestamp chainId txHash direction poolId
       terminalTokenAmount projectTokenAmount
       sqrtPriceX96 projectTokenIsCurrency0
+      accountingTokenUsdRate
     }
     totalCount
   }
 }
 ```
+
+For a USD price axis multiply each point by its own `accountingTokenUsdRate` (null → no USD point), never by today's rate.
 
 `initialSqrtPriceX96` is the real V4 price at `PoolAdded`: the same-transaction `Initialize` price for a new pool, or pool-manager `slot0` at registration for an existing pool. Each swap row's `sqrtPriceX96` is the exact **post-trade** V4 spot. Both use Uniswap's raw encoding:
 
@@ -934,20 +1000,36 @@ terminalPerProject = rawTerminalPerProject * 10^(18 - terminalDecimals)
 
 V6 project tokens use 18 decimals; `terminalDecimals` comes from the project's accounting context (for example, 6 for USDC). Keep the raw GraphQL `BigInt` value exact and use a decimal/bignumber implementation when display precision matters.
 
-A sucker group can span chains and retain superseded pools. Resolve the current onchain pool, then accept only rows matching its exact `chainId` and `poolId`; use a matching pool registration as the first series point, followed by matching swaps in timestamp order. Ignore `direction: "mint"`, which does not touch V4. The new price/order fields are nullable on legacy rows: a swap's `terminalTokenAmount / projectTokenAmount` can be used as a **realized average-price** fallback, never labeled as an exact spot. During rollout, if the server rejects the new swap fields at GraphQL validation time, retry a legacy `swapEvents` selection without `sqrtPriceX96` and `projectTokenIsCurrency0`; do not let a failed pool-registration query erase usable swap history.
+A sucker group can span chains and retain superseded pools. Resolve the current pool with `buybackPools(where: { chainId, projectId, version: 6 })`, then accept only rows matching its exact `chainId` and `poolId`; use a matching pool registration as the first series point, followed by matching swaps in timestamp order. Ignore `direction: "mint"`, which does not touch V4. The new price/order fields are nullable on legacy rows: a swap's `terminalTokenAmount / projectTokenAmount` can be used as a **realized average-price** fallback, never labeled as an exact spot. During rollout, if the server rejects the new swap fields at GraphQL validation time, retry a legacy `swapEvents` selection without `sqrtPriceX96` and `projectTokenIsCurrency0`; do not let a failed pool-registration query erase usable swap history.
 
 ### Unified activity feed
 
+Restrict the feed to the event types the UI renders by filtering the embedded-event id columns with `OR: [{ xEvent_not: null }, …]` (this is what every production client does; `type_in: [...]` on the enum also works):
+
 ```graphql
-query ActivityFeed($projectId: Int!, $chainId: Int!, $limit: Int!) {
+query ActivityFeed($suckerGroupId: String!, $limit: Int!, $offset: Int!) {
   activityEvents(
-    where: { projectId: $projectId, chainId: $chainId, version: 6 }
+    where: {
+      suckerGroupId: $suckerGroupId
+      version: 6
+      OR: [
+        { payEvent_not: null }
+        { cashOutTokensEvent_not: null }
+        { mintNftEvent_not: null }
+        { sendPayoutsEvent_not: null }
+        { borrowLoanEvent_not: null }
+        { swapEvent_not: null }
+        { rulesetQueuedEvent_not: null }
+        { projectTransferEvent_not: null }
+      ]
+    }
     orderBy: "timestamp"
     orderDirection: "desc"
     limit: $limit
+    offset: $offset
   ) {
     items {
-      id timestamp txHash from type
+      id chainId timestamp txHash from type
       payEvent { amount amountUsd beneficiary memo }
       cashOutTokensEvent { cashOutCount reclaimAmount holder }
       mintNftEvent { tierId tokenId totalAmountPaid }
@@ -957,14 +1039,17 @@ query ActivityFeed($projectId: Int!, $chainId: Int!, $limit: Int!) {
         direction poolId terminalTokenAmount projectTokenAmount
         sqrtPriceX96 projectTokenIsCurrency0
       }
-      rulesetQueuedEvent { rulesetId duration weight cashOutTax }
+      rulesetQueuedEvent { rulesetId cycleNumber basedOnId duration weight cashOutTax }
       projectTransferEvent { previousOwner owner }
     }
+    totalCount
   }
 }
 ```
 
-For an omnichain feed, use `where: { suckerGroupId: $suckerGroupId, version: 6 }` and include `chainId` in items.
+`activityEvents` is re-pointed on sucker-group merges, so `suckerGroupId` gives the complete omnichain feed. For a single chain use `where: { projectId, chainId, version: 6, OR: [...] }`.
+
+`activityEvent` has no `beneficiary` column and `from` is the tx sender, so an account page must union two queries: `activityEvents(where: { from: $address, … })` plus the beneficiary-side typed tables (`payEvents(where: { beneficiary: $address })`, `cashOutTokensEvents(where: { beneficiary })`, `mintNftEvents(where: { beneficiary })`, …), then de-duplicate by `id`.
 
 ### Loans
 
@@ -1039,18 +1124,9 @@ query ListNftMints($projectId: Int!, $chainId: Int!, $limit: Int!) {
 
 ### Historical snapshots (charts)
 
-```graphql
-query ProjectHistory($projectId: Int!, $chainId: Int!, $limit: Int!) {
-  projectMoments(
-    where: { projectId: $projectId, chainId: $chainId, version: 6 }
-    orderBy: "timestamp"
-    orderDirection: "desc"
-    limit: $limit
-  ) {
-    items { block timestamp volume volumeUsd balance trendingScore }
-  }
-}
+Per-project moments are not populated; chart every project (single- or multi-chain) from its group's moments:
 
+```graphql
 query GroupHistory($suckerGroupId: String!, $limit: Int!) {
   suckerGroupMoments(
     where: { suckerGroupId: $suckerGroupId, version: 6 }
@@ -1058,7 +1134,29 @@ query GroupHistory($suckerGroupId: String!, $limit: Int!) {
     orderDirection: "desc"
     limit: $limit
   ) {
-    items { timestamp volume volumeUsd balance tokenSupply contributorsCount }
+    items {
+      timestamp volume volumeUsd balance tokenSupply contributorsCount
+      accountingTokenUsdRate
+    }
+  }
+}
+```
+
+### Buyback pool LP positions
+
+```graphql
+query LpPositions($chainId: Int!, $poolId: String!, $limit: Int!, $offset: Int!) {
+  buybackPoolPositions(
+    where: { chainId: $chainId, poolId: $poolId, burned: false }
+    orderBy: "tokenId"
+    orderDirection: "asc"
+    limit: $limit
+    offset: $offset
+  ) {
+    items {
+      chainId tokenId owner tickLower tickUpper liquidity feesClaimed0 feesClaimed1
+    }
+    totalCount
   }
 }
 ```
@@ -1111,12 +1209,12 @@ query CashOutTaxHistory($projectId: Int!, $chainId: Int!, $limit: Int!) {
 
 ---
 
-## Special Endpoint: `/participants` (holder snapshot at timestamp)
+## Special Endpoint: `/participants` (latest snapshot per address)
 
-Retrieves every `participantSnapshot` for a sucker group at a given unix timestamp, de-duped by wallet address. Use for governance snapshots and airdrops. (Block-height snapshots are not offered — block numbers are not comparable across chains.)
+What it does, exactly: collects the distinct `address` values of `participant` rows in the group with `createdAt <= timestamp`, then for each address returns the single most recent `participantSnapshot` with `timestamp <= timestamp` — with NO filter on `suckerGroupId`, `projectId` or `chainId`. It is one row per address, not a per-chain balance sum, and a wallet that also holds tokens in another project can come back with that other project's snapshot. Do not use it for omnichain holder de-duplication, airdrops or governance weights; paginate `participants(where: { suckerGroupId, version: 6 })` and sum by `address` client-side instead. (Block-height snapshots are not offered — block numbers are not comparable across chains.)
 
 ```
-POST https://bendystraw.xyz/{API_KEY}/participants
+POST https://bendystraw.up.railway.app/{API_KEY}/participants   (or keyless /participants from an allowlisted origin)
 Content-Type: application/json
 
 { "suckerGroupId": "…", "timestamp": 1704067200 }
@@ -1147,12 +1245,13 @@ Response: an array of snapshot objects:
 ## JavaScript Client
 
 ```javascript
-const HOST_MAINNET = 'https://bendystraw.xyz';
+const HOST_MAINNET = 'https://bendystraw.up.railway.app';
 const HOST_TESTNET = 'https://testnet.bendystraw.xyz';
-const API_KEY = process.env.BENDYSTRAW_API_KEY;
+const API_KEY = process.env.BENDYSTRAW_API_KEY; // optional server-side; required for browser calls from a foreign origin
 
 async function bendystrawQuery(query, variables = {}, host = HOST_MAINNET) {
-  const res = await fetch(`${host}/${API_KEY}/graphql`, {
+  const path = API_KEY ? `/${API_KEY}/graphql` : '/graphql';
+  const res = await fetch(`${host}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
@@ -1172,7 +1271,7 @@ async function getProjectWithGroup(projectId, chainId) {
         decimals currency suckerGroupId
         suckerGroup {
           volume volumeUsd balance tokenSupply contributorsCount
-          projects { items { chainId balance volume } }
+          projects(where: { version: 6 }, limit: 100) { items { chainId balance volume } }
         }
       }
     }
@@ -1184,10 +1283,10 @@ async function getProjectWithGroup(projectId, chainId) {
 ### Server-side proxy (Next.js)
 
 ```typescript
-// app/api/bendystraw/route.ts
+// app/api/bendystraw/route.ts — server-side, so the keyless route works (no CORS on server fetches)
 export async function POST(req: Request) {
   const res = await fetch(
-    `https://bendystraw.xyz/${process.env.BENDYSTRAW_API_KEY}/graphql`,
+    'https://bendystraw.up.railway.app/graphql',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1223,7 +1322,7 @@ Never assume 18 decimals — `formatEther` on a USDC project's balance is wrong 
 
 ### USD amounts (`volumeUsd`, `amountUsd`, `feeUsd`, …)
 
-Fixed-point with **18 decimals**, returned as strings. Use `BigInt` — `parseFloat` loses precision beyond ~15 digits:
+Fixed-point with **18 decimals**, returned as strings. Use `BigInt` — `parseFloat` loses precision beyond ~15 digits. For value-over-time use the stored USD columns (`volumeUsd`, `balanceUsd`, `accountingTokenUsdRate` on the row itself); do not multiply a raw accounting-token amount by today's rate — a project can switch accounting context mid-history, so the raw series mixes units. `*Usd` for ERC-20-accounted projects (USDC, …) depends on the indexer's external price feed and is `0` if it was not configured when that row was indexed.
 
 ```javascript
 function formatUsd(raw) {
@@ -1239,9 +1338,9 @@ function formatUsd(raw) {
 ## Best Practices
 
 1. **Filter `version: 6` on every query** — plural via `where`, singular via the PK arg.
-2. **Use the keyed route** — the keyless `/graphql` route is origin-locked (CORS).
+2. **Server-side or allowlisted-origin calls go keyless**; a browser on a foreign origin needs the keyed route.
 3. **Use `suckerGroup` for cross-chain totals** — pre-aggregated; avoids per-chain fan-out and race conditions.
-4. **Filter on `suckerGroupId`** for omnichain event/holder queries.
+4. **Filter on `suckerGroupId`** for `activityEvents` and current-state tables; for typed historical event tables also query each member `(chainId, projectId)` and merge, because their `suckerGroupId` is as-of-event.
 5. **Cache responses** — indexing lags the chain by a block or two.
 6. **Paginate** — `limit` + `offset`, or cursors (`after` + `pageInfo.endCursor`).
 7. **Store only deterministic IDs** — `project.id` and `suckerGroup.id`; event `id`s change on reindex.
@@ -1255,13 +1354,17 @@ function formatUsd(raw) {
 
 - **Omitting `version: 6`.** The database also contains rows with other `version` values. Every plural query needs `version: 6` in `where`; every singular query needs it as an argument.
 - **Wrong singular-arg types.** Singular queries type integer PK args as `Float!`, plural `where` filters use `Int`. Declaring `$projectId: Int!` for `project(...)` fails; declaring `Float!` for a `where` filter fails.
-- **`projects_rel` does not exist.** `suckerGroup.projects` is the relation and returns a page: `projects { items { … } }`.
+- **`projects_rel` / `hook_rel` do not exist.** A relation that shares a column's name replaces it: `suckerGroup.projects { items { … } }`, `nft.hook { address }`.
+- **Same `projectId` on another chain is a different project.** Cross-chain siblings have different ids; find them through `suckerGroup.projects`.
+- **`projectMoments` is always empty.** Chart from `suckerGroupMoments`.
+- **`volume` excludes `addToBalance`.** Total inflow = `volume` + Σ `addToBalanceEvents.amount`.
+- **Filtering a typed event table by `suckerGroupId` only** misses rows written before the group merged.
 - **`cashOutEvents` does not exist.** The entity is `cashOutTokensEvent` / query `cashOutTokensEvents`.
 - **`project.id` format is `"{version}-{projectId}-{chainId}"`** — version first, chain last.
 - **`tokenSymbol` is the accounting token** ("ETH", "USDC"), NOT the project's issued ERC-20 symbol. For the issued token, read `deployErc20Events` (fields `token`, `name`, `symbol`) or query `JBTokens.tokenOf(projectId)` on-chain (`0x1f80d8f057ee36b4c2656d107e4e4558b71ba7d9`, same address on every chain).
 - **`project.currency` is not a small enum.** It is `uint32(uint160(accountingToken))` — `61166` for the native token, `uint32(uint160(USDC_ADDRESS))` for USDC. Do not compare it against 1/2-style price-feed currency IDs.
 - **`participant` has no `redeemCount`, `firstPaidAt`, or `lastPaidAt`** — the timestamp field is `lastPaidTimestamp`.
-- **`payEvent` has no `rulesetId`, `blockNumber`, or `beneficiaryTokenCount`** — token issuance is `newlyIssuedTokenCount`; fee/payout provenance is `feeFromProject` / `distributionFromProjectId`.
+- **`payEvent` has no `rulesetId`, `blockNumber`, or `beneficiaryTokenCount`** — token issuance is `newlyIssuedTokenCount`; fee/payout provenance is `feeFromProject` / `distributionFromProjectId`. `amount` is `0` for buyback-routed payments, so never derive a USD rate from `amountUsd / amount`; read `accountingTokenUsdRate` from `swapEvent`/`suckerGroupMoment`.
 - **Treating swap amounts as the exact AMM spot.** `terminalTokenAmount / projectTokenAmount` is the realized average across the trade. Use `sqrtPriceX96` for the exact post-trade V4 spot when present.
 - **Ignoring `projectTokenIsCurrency0`.** Uniswap's sqrt price is always currency1/currency0. Invert it when the project token is currency1, then apply the project-token (18) and terminal-token decimal adjustment.
 - **`suckerTransaction.status` values are `pending | claimable | claimed`** — there is no `completed`/`failed`.

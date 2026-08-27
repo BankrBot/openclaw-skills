@@ -59,4 +59,4 @@ Correct: reservedPercent: 0
 
 - Asking "what percentage will you share?" and writing the answer into `reservedPercent`.
 - Implying the contract automatically sends X% of off-chain sales to supporters — it cannot see off-chain revenue.
-- Setting a non-zero `reservedPercent` without configuring reserved-token splits — undistributed reserved tokens accumulate to the project owner.
+- Setting a non-zero `reservedPercent` without configuring reserved-token splits — reserved tokens sit unminted in `JBController.pendingReservedTokenBalanceOf` until `sendReservedTokensToSplitsOf` is called, and any portion not covered by splits is then minted to whoever owns the project at that moment.

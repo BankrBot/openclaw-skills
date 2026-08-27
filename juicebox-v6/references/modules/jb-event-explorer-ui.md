@@ -184,7 +184,7 @@ event SendReservedTokensToSplits(uint256 indexed rulesetId, uint256 indexed rule
   </div>
 
   <script type="module">
-    import { createPublicClient, http, parseAbiItem, decodeEventLog } from 'https://esm.sh/viem';
+    import { createPublicClient, http, parseAbiItem, decodeEventLog } from 'viem';
     import {
       CHAIN_CONFIGS,
       CHAINS,
@@ -235,18 +235,22 @@ event SendReservedTokensToSplits(uint256 indexed rulesetId, uint256 indexed rule
           return;
         }
 
-        // Create viem client
+        // Create viem client (CHAIN_CONFIGS carries the CORS-open public RPC per chain)
         const client = createPublicClient({
           chain: CHAIN_CONFIGS[chainId],
-          transport: http(chainConfig.rpc)
+          transport: http()
         });
 
         const currentBlock = await client.getBlockNumber();
         const fromBlock = currentBlock - BigInt(blockRange);
 
-        // Get contract addresses (same on every chain)
+        // Get contract addresses (same on every chain). Router-forwarded pays land on JBMultiTerminal with
+        // payer = JBRouterTerminal / JBRouterTerminalRegistry (its _msgSender()); the user is only in
+        // `beneficiary` and in the router's own Pay event, so fetch the router logs too.
         const terminalAddress = chainConfig.contracts.JBMultiTerminal;
         const controllerAddress = chainConfig.contracts.JBController;
+        const routerAddresses = [chainConfig.contracts.JBRouterTerminal, chainConfig.contracts.JBRouterTerminalRegistry].filter(Boolean);
+        const isRouter = a => routerAddresses.some(r => r.toLowerCase() === a?.toLowerCase());
 
         if (!terminalAddress) {
           container.innerHTML = '<div class="empty">Contract addresses not configured for this chain</div>';
@@ -255,7 +259,7 @@ event SendReservedTokensToSplits(uint256 indexed rulesetId, uint256 indexed rule
 
         // Fetch logs from both contracts
         const logs = await client.getLogs({
-          address: [terminalAddress, controllerAddress].filter(Boolean),
+          address: [terminalAddress, controllerAddress, ...routerAddresses].filter(Boolean),
           fromBlock,
           toBlock: 'latest'
         });
@@ -315,7 +319,7 @@ event SendReservedTokensToSplits(uint256 indexed rulesetId, uint256 indexed rule
             if (eventName === 'Pay') {
               paymentCount++;
               totalVolume += parsed.args.amount || 0n;
-              uniqueAddresses.add(parsed.args.payer);
+              uniqueAddresses.add(isRouter(parsed.args.payer) ? parsed.args.beneficiary : parsed.args.payer);
             }
             if (parsed.args.beneficiary) {
               uniqueAddresses.add(parsed.args.beneficiary);
@@ -437,13 +441,14 @@ event SendReservedTokensToSplits(uint256 indexed rulesetId, uint256 indexed rule
         case 'Pay':
           return {
             title: `Project ${args.projectId}`,
-            description: `${truncateAddress(args.payer)} paid ${formatEth(args.amount)} → ${formatNumber(args.newlyIssuedTokenCount)} tokens${args.memo ? ` · "${args.memo}"` : ''}`
+            // Token counts are 18-decimal fixed point (JBTokens); `amount` is in the accounting context's decimals.
+            description: `${truncateAddress(args.payer)} paid ${formatEth(args.amount)} → ${formatEth(args.newlyIssuedTokenCount)} tokens${args.memo ? ` · "${args.memo}"` : ''}`
           };
 
         case 'CashOutTokens':
           return {
             title: `Project ${args.projectId}`,
-            description: `${truncateAddress(args.holder)} cashed out ${formatNumber(args.cashOutCount)} tokens for ${formatEth(args.reclaimAmount)}`
+            description: `${truncateAddress(args.holder)} cashed out ${formatEth(args.cashOutCount)} tokens for ${formatEth(args.reclaimAmount)}`
           };
 
         case 'SendPayouts':
@@ -455,7 +460,7 @@ event SendReservedTokensToSplits(uint256 indexed rulesetId, uint256 indexed rule
         case 'MintTokens':
           return {
             title: `Project ${args.projectId}`,
-            description: `Minted ${formatNumber(args.tokenCount)} tokens to ${truncateAddress(args.beneficiary)}`
+            description: `Minted ${formatEth(args.tokenCount)} tokens to ${truncateAddress(args.beneficiary)}`
           };
 
         case 'LaunchProject':
@@ -559,7 +564,8 @@ event SendReservedTokensToSplits(uint256 indexed rulesetId, uint256 indexed rule
 - **`SendPayouts` carries `projectOwner` and `netLeftoverPayoutAmount`**; there is no `beneficiary` field on the aggregate event. Per-recipient data is on `SendPayoutToSplit`.
 - **`LaunchProject` has 5 fields** (`rulesetId, projectId, projectUri, memo, caller`) — omitting `projectUri` breaks the topic0 hash and the event never matches.
 - **`amount` is not always 18-decimal ETH**: terminals also accept ERC-20s (e.g. 6-decimal USDC). Check the project's accounting context before formatting with `formatEth`.
-- **Public RPCs cap `eth_getLogs` ranges**: keep block ranges small or paginate requests.
+- **Public RPCs cap `eth_getLogs` ranges**: publicnode returns 403 for wide archive scans; keep windows to a few thousand blocks (the 50000-block preset needs an archive gateway such as `https://mainnet.gateway.tenderly.co`) and use Bendystraw `activityEvents` for history.
+- **`payer` on a router-forwarded `Pay` is the router**, not the user — `JBMultiTerminal` records `_msgSender()`; use `beneficiary` (or the `JBRouterTerminal` / `JBRouterTerminalRegistry` `Pay` event) for the originating wallet.
 
 ---
 

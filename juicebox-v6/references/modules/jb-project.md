@@ -536,10 +536,13 @@ Permission IDs relevant here (`JBPermissionIds`):
 | 8 | `DEPLOY_ERC20` | `JBController.deployERC20For` |
 | 9 | `SET_TOKEN` | `JBController.setTokenFor` |
 | 10 | `MINT_TOKENS` | `JBController.mintTokensOf` (ruleset must `allowOwnerMinting`) |
+| 12 | `CLAIM_TOKENS` | `JBController.claimTokensFor` |
 | 14 | `SET_CONTROLLER` | `JBDirectory.setControllerOf` |
 | 15 | `SET_TERMINALS` | `JBDirectory.setTerminalsOf` |
+| 16 | `ADD_TERMINALS` | `JBDirectory.setPrimaryTerminalOf` when the terminal is not yet in the project's terminal list (it gets added) |
 | 17 | `SET_PRIMARY_TERMINAL` | `JBDirectory.setPrimaryTerminalOf` |
 | 19 | `SET_SPLIT_GROUPS` | `JBController.setSplitGroupsOf` |
+| 20 | `ADD_PRICE_FEED` | `JBController.addPriceFeed` |
 | 22 | `SET_TOKEN_METADATA` | `JBController.setTokenMetadataOf` |
 
 ## Reading Project State
@@ -574,7 +577,7 @@ DIRECTORY.setTerminalsOf(projectId, terminals);             // SET_TERMINALS + r
 - "Create a project that mints 1000 tokens per ETH with 10% reserved" → `weight: 1000e18`, `reservedPercent: 1000`
 - "Set up a project with weekly payout cycles to 3 addresses" → `duration: 604800`, payout split group + fund access limits
 - "Deploy a project with a 3-day approval delay for ruleset changes" → `approvalHook: JBDeadline3Days`
-- "Create a project that accepts both ETH and USDC" → two `JBAccountingContext` entries (and a USD price feed if `baseCurrency` differs)
+- "Create a project that accepts both ETH and USDC" → two `JBAccountingContext` entries with `baseCurrency: 2` (USD); no default ETH<->USDC feed exists, so any other base currency makes one of the two payments revert `JBPrices_PriceFeedNotFound`
 
 ## Common mistakes
 

@@ -7,8 +7,9 @@
   "demo": null,
   "setup": [
     "Install: `install the juicebox-v6 skill from https://github.com/BankrBot/skills/tree/main/juicebox-v6`.",
-    "For onchain actions, work on a supported chain (Ethereum, Optimism, Base, Arbitrum, or their Sepolia testnets); inspect `references/shared/chain-config.json` before preparing a transaction.",
-    "Review the exact chain, contract, token, amount, recipient, calldata, and fee before asking for confirmation to sign or broadcast.",
+    "For onchain writes, use `references/shared/deployment-manifest.json`; `chain-config.json` is read-only discovery data and never authorizes a target.",
+    "Read `references/modules/jb-tx-safety.md`, verify live bytecode and project wiring, simulate the exact call, and review its decoded bytes before requesting confirmation.",
+    "For generated UIs, obtain approval before installing exact local dependencies, verify the pinned lockfile integrity, use local imports, and apply the restrictive CSP in `references/frontend-security.md`.",
     "Upstream source and attribution: https://github.com/mejango/juicebox-skills (MIT)."
   ],
   "install": {

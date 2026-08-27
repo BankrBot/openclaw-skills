@@ -22,7 +22,7 @@ Proven patterns for common use cases using native Juicebox mechanics. **Always p
 
 ## Shared facts used throughout
 
-- All contract addresses come from `references/shared/chain-config.json`. Core contracts (`JBController`, `JBMultiTerminal`, `JBTokens`, `JBProjects`, `JBPermissions`, `JBDirectory`, `JB721TiersHookProjectDeployer`, …) share one address across every supported chain — look each up once.
+- Read-only discovery addresses come from `references/shared/chain-config.json`; write authority comes only from the reviewed deployment manifest and live verification. Core contracts often share CREATE2 addresses, but verify the selected chain instead of assuming sameness.
 - `JBController.launchProjectFor(...)` is **payable**: `msg.value` must equal `JBProjects.creationFee()` exactly or it reverts with `JBController_InvalidCreationFee`. Every launch example below forwards the fee. `JB721TiersHookProjectDeployer.launchProjectFor(...)` is also payable and forwards `msg.value` to `JBProjects.createFor`.
 - Key constants (`nana-core-v6/src/libraries/JBConstants.sol`):
 
@@ -139,7 +139,7 @@ Payout distribution: `JBMultiTerminal.sendPayoutsOf(uint256 projectId, address t
 JBPayDataHookRulesetMetadata({
     reservedPercent: 0,
     cashOutTaxRate: 0,             // Full proportional redemption.
-    baseCurrency: uint32(uint160(JBConstants.NATIVE_TOKEN)),
+    baseCurrency: JBCurrencyIds.ETH,  // 61166 also works (short-circuits when it equals the pay currency); use one convention.
     // ... flags ...
     useDataHookForCashOut: true,   // 721 hook prices cash outs by NFT weight.
     metadata: 0
@@ -219,8 +219,8 @@ splits[1] = JBSplit({percent: 300_000_000, projectId: 0, beneficiary: payable(te
 splits[2] = JBSplit({percent: 200_000_000, projectId: 0, beneficiary: payable(treasury), preferAddToBalance: false, lockedUntil: 0, hook: IJBSplitHook(address(0))});
 ```
 
-- Split percents may total **less** than 100% (`JBSplits` reverts only if the total exceeds `SPLITS_TOTAL_PERCENT`). Leftover payout funds go to the project owner; leftover reserved tokens are minted to the project owner.
-- Only use split hooks (`IJBSplitHook.processSplitWith(JBSplitHookContext)`) when you need custom logic (swapping, LP deposits). Tokens are transferred to the hook optimistically before the call.
+- Split percents may total **less** than 100%. `JBSplits.setSplitGroupsOf` reverts if the total exceeds `SPLITS_TOTAL_PERCENT`, if any split has `percent == 0` (`JBSplits_ZeroSplitPercent`), or if a currently locked split (`block.timestamp < lockedUntil`) is not carried over unchanged (`JBSplits_PreviousLockedSplitsNotIncluded`). Leftover payout funds go to the project owner; leftover reserved tokens are minted to the project owner.
+- Only use split hooks (`IJBSplitHook.processSplitWith(JBSplitHookContext)`) when you need custom logic (swapping, LP deposits). Native token is pushed as `msg.value`; for ERC-20 payouts and reserved ERC-20 project tokens the caller grants the hook an allowance and revokes what is left afterward, so the hook must `transferFrom(msg.sender, ...)` inside `processSplitWith`. Reserved credits (no ERC-20) are transferred to the hook directly.
 
 ---
 
@@ -399,7 +399,7 @@ struct DefifaTierCashOutWeight {
 
 ### Check the default first
 
-`JBERC20` (the canonical implementation, deployed as a minimal clone via `JBController.deployERC20For(uint256 projectId, string name, string symbol, bytes32 salt)`) already includes:
+`JBERC20` (the canonical implementation, deployed as a minimal clone via `JBController.deployERC20For(uint256 projectId, string name, string symbol, bytes32 salt)` — requires `DEPLOY_ERC20` permission, ID 8) already includes:
 
 - **ERC20Votes** — `delegate()`, `getVotes()`, `getPastVotes()`: on-chain governance works out of the box. No custom token needed for voting.
 - **ERC20Permit** and ERC-1271 signature validation.
@@ -755,8 +755,8 @@ contract PayWithSplitsTerminal {
             projectId, token, amount, beneficiary, minReturnedTokens, memo, innerMetadata
         );
 
-        // Distribute reserved tokens to the just-configured splits.
-        CONTROLLER.sendReservedTokensToSplitsOf(projectId);
+        // Distribute reserved tokens to the just-configured splits. Reverts `JBController_NoReservedTokens` when nothing is pending.
+        if (CONTROLLER.pendingReservedTokenBalanceOf(projectId) != 0) CONTROLLER.sendReservedTokensToSplitsOf(projectId);
     }
 
     function _acceptFunds(address token, uint256 amount, address spender) internal returns (uint256 valueToSend) {
@@ -766,7 +766,8 @@ contract PayWithSplitsTerminal {
         return 0;
     }
 
-    /// @dev Requires SET_SPLIT_GROUPS permission (ID 19) on the project.
+    /// @dev Requires SET_SPLIT_GROUPS permission (ID 19) on the project. Any currently locked reserved split must be
+    /// included unchanged in `splits` or `setSplitGroupsOf` reverts `JBSplits_PreviousLockedSplitsNotIncluded`.
     function _validateAndSetSplits(uint256 projectId, JBSplit[] memory splits) internal {
         uint256 total;
         for (uint256 i; i < splits.length; i++) total += splits[i].percent;
@@ -800,7 +801,7 @@ PERMISSIONS.setPermissionsFor(
 );
 ```
 
-Warning: an operator with `SET_SPLIT_GROUPS` can redirect **all** unlocked reserved-token splits, not just for its own callers. Use `lockedUntil` on splits that must survive, or accept the trust assumption.
+Warning: an operator with `SET_SPLIT_GROUPS` can redirect **all** unlocked reserved-token splits, not just for its own callers. A locked split does more than survive: `setSplitGroupsOf` reverts unless it is carried over unchanged, so the wrapper must read `SPLITS.splitsOf(projectId, rulesetId, RESERVED_TOKENS)` and include every split with `lockedUntil > block.timestamp` in the new array.
 
 ### Beneficiary-to-self and cash-out wrappers
 
@@ -838,16 +839,18 @@ const metadata = encodeAbiParameters(
 
 ## Pattern 11: Yield-Generating Hook (Aave Integration)
 
-**Use case**: Deposit contributions into a yield protocol; route yield to the project balance while investors can always cash out principal.
+**Use case**: Deposit contributions into a yield protocol; route yield to the project balance while holders can always cash out principal.
 
 **Solution**: One contract implementing `IJBRulesetDataHook` + `IJBPayHook` + `IJBCashOutHook`.
 
 ```
 Payment flow:  pay → data hook forwards full amount to pay hook → hook supplies Aave → principal tracked
 Yield flow:    aToken balance grows → hook withdraws yield → addToBalanceOf() → team uses sendPayoutsOf()
-Cash-out flow: cashOutTokensOf → data hook routes pro-rata principal to the cash-out hook → hook withdraws
-               from Aave to the beneficiary
+Cash-out flow: cashOutTokensOf → data hook returns surplus 0 + a zero-amount spec carrying the holder's share
+               → terminal burns tokens, reclaims 0, calls the hook → hook withdraws the share from Aave to the beneficiary
 ```
+
+Why the cash-out flow looks like this: `JBTerminalStore.recordCashOutFor` debits `reclaimAmount + Σ hookSpecifications[i].amount` from the **terminal's** balance and reverts `JBTerminalStore_InadequateTerminalStoreBalance` if that exceeds the local surplus. A `JBCashOutHookSpecification.amount` is terminal-held money forwarded to the hook, not an instruction to release external funds. With principal in Aave the terminal holds ~0, so the data hook must return `effectiveSurplusValue = 0` and `amount: 0`; a zero-amount, non-`noop` spec still triggers `afterCashOutRecordedWith`, and the spec `metadata` carries the pre-burn share to the hook.
 
 ### Ruleset configuration
 
@@ -916,36 +919,38 @@ function beforeCashOutRecordedWith(JBBeforeCashOutRecordedContext calldata conte
     )
 {
     uint256 availablePrincipal = principalDeposited[context.projectId] - principalWithdrawn[context.projectId];
-    uint256 userShare = (availablePrincipal * context.cashOutCount) / context.totalSupply;
+    uint256 userShare = (availablePrincipal * context.cashOutCount) / context.totalSupply; // pre-burn supply
 
-    cashOutTaxRate = 0; // No tax on principal.
+    cashOutTaxRate = 0;
     effectiveCashOutCount = context.cashOutCount;
     effectiveTotalSupply = context.totalSupply;
-    effectiveSurplusValue = context.surplus.value;
+    effectiveSurplusValue = 0; // Principal is in Aave, not the terminal: reclaim nothing locally.
 
     hookSpecifications = new JBCashOutHookSpecification[](1);
     hookSpecifications[0] = JBCashOutHookSpecification({
         hook: IJBCashOutHook(address(this)),
-        noop: false,
-        amount: userShare,
-        metadata: ""
+        noop: false,               // Zero amount still triggers the callback; only noop skips it.
+        amount: 0,                 // Nothing is debited from the terminal balance.
+        metadata: abi.encode(userShare)
     });
 }
 ```
 
-Note: the terminal caps the reclaim at locally available funds, and it burns the caller-supplied token count regardless of `effectiveCashOutCount`.
+The terminal burns the caller-supplied `cashOutCount` regardless of `effectiveCashOutCount`, and takes no protocol fee on a 0 reclaim / 0 spec amount.
 
 ### Cash-out hook: withdraw principal from Aave
 
 ```solidity
 function afterCashOutRecordedWith(JBAfterCashOutRecordedContext calldata context) external payable override {
     if (msg.sender != address(TERMINAL)) revert Unauthorized();
-    uint256 amount = context.forwardedAmount.value;
+    uint256 userShare = abi.decode(context.hookMetadata, (uint256)); // Set by this contract's data hook.
 
-    AAVE_POOL.withdraw(config.principalToken, amount, context.beneficiary);
-    principalWithdrawn[context.projectId] += amount;
+    principalWithdrawn[context.projectId] += userShare;
+    AAVE_POOL.withdraw(config.principalToken, userShare, context.beneficiary);
 }
 ```
+
+Fees: funds withdrawn this way never pass through the terminal, so the 2.5% cash-out fee is not applied. Project-scoped data — `principalDeposited` keyed by `projectId` — keeps one hook usable by several projects.
 
 ### Yield management: route to project balance
 
@@ -971,11 +976,12 @@ function _availableYieldOf(uint256 projectId) internal view returns (uint256) {
 ### Key implementation notes
 
 1. `JBPayHookSpecification.amount` must be `context.amount.value` to forward funds — `0` forwards nothing.
-2. Both `after*RecordedWith` hooks MUST check `msg.sender` is the terminal — they are externally callable.
-3. Track principal deposits and withdrawals separately; the aToken balance above principal is yield.
-4. Route yield through `addToBalanceOf` so it shows up as regular project balance.
-5. Use a yield threshold to batch transfers (gas).
-6. Include an emergency direct-withdrawal path.
+2. `JBCashOutHookSpecification.amount` is debited from the terminal balance; keep it `0` when the money lives elsewhere, and pass the share through spec `metadata` (`context.hookMetadata`).
+3. Both `after*RecordedWith` hooks MUST check `msg.sender` is the terminal — they are externally callable.
+4. Track principal deposits and withdrawals separately; the aToken balance above principal is yield.
+5. Route yield through `addToBalanceOf` so it shows up as regular project balance. Once yield is in the terminal, holders can also cash out against it through the normal `reclaimAmount` path if `effectiveSurplusValue` is set to `context.surplus.value` instead of `0`.
+6. Use a yield threshold to batch transfers (gas).
+7. Include an emergency direct-withdrawal path.
 
 See the `jb-pay-hook` and `jb-cash-out-hook` skills for full hook-authoring detail.
 
@@ -1019,7 +1025,7 @@ Need prediction/game mechanics?
 └── Outcome-based payouts + voting + first-owner rewards? → Defifa (Pattern 7)
 
 Need custom token mechanics?
-├── Standard ERC-20? → deployERC20For() — JBERC20 clone
+├── Standard ERC-20? → deployERC20For() (permission ID 8) — JBERC20 clone
 ├── Governance voting? → JBERC20 already has ERC20Votes — no custom token needed
 ├── Editable name/symbol? → setTokenMetadataOf() — no custom token needed
 ├── Transfer taxes / holder caps / per-holder vesting? → Custom IJBToken (Pattern 8)
@@ -1072,7 +1078,7 @@ Need extended pay functionality on a locked project/revnet?
 10. **Custom cash out hooks for standard redemptions.** Proportional redemption is native: set `cashOutTaxRate: 0`. The 721 hook's burn-to-redeem is also native (Pattern 2).
 11. **Passing `cashOutCount > 0` when cashing out NFTs.** `JB721Hook.beforeCashOutRecordedWith` reverts if fungible project tokens accompany an NFT cash out — token IDs go in `JBMetadataResolver`-encoded metadata keyed by `hook.METADATA_ID_TARGET()` (the implementation address, since hooks are clones).
 12. **Trying to block payments with a terminal wrapper.** Anyone can always call `JBMultiTerminal` directly. Wrappers add features for opt-in clients; they cannot gate the project.
-13. **Assuming split percents must sum to 100%.** They may sum to less; leftovers go to the project owner (payout funds and reserved tokens alike). Only totals above `SPLITS_TOTAL_PERCENT` revert.
+13. **Assuming split percents must sum to 100%.** They may sum to less; leftovers go to the project owner (payout funds and reserved tokens alike). Reverts: total above `SPLITS_TOTAL_PERCENT`, any `percent == 0`, or a locked split omitted/changed.
 14. **Forwarding `amount: 0` in a `JBPayHookSpecification`.** The hook gets called but receives no funds — use `context.amount.value` to divert the full payment. Don't forget the `noop` field when constructing the struct (ABI order: `hook`, `noop`, `amount`, `metadata`).
 15. **Unprotected `after*RecordedWith` hooks.** Pay/cash-out hooks are externally callable — always require `msg.sender` is the terminal.
 16. **Pre-minted supply on attached tokens.** Supply minted outside the protocol counts in `totalSupplyOf` and dilutes every holder's cash-out value.

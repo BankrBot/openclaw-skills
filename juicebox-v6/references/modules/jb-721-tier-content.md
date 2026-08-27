@@ -53,7 +53,7 @@ For tier previews (unminted content), use the synthetic ID `tierId * 1_000_000_0
 | `reserveBeneficiary` | `address` | Receives reserve NFTs |
 | `encodedIpfsUri` | `bytes32` | IPFS CID digest (sha256, `0x1220` multihash prefix stripped) |
 | `category` | `uint24` | Grouping key; tiers must be added sorted by category ascending |
-| `discountPercent` | `uint8` | Discount applied to the tier |
+| `discountPercent` | `uint8` | Discount out of `JB721Constants.DISCOUNT_DENOMINATOR` = **200** (100 = 50% off, 200 = free); > 200 reverts `JB721TiersHookStore_DiscountPercentExceedsBounds` |
 | `flags` | `JB721TierConfigFlags` | 7 bools (below) |
 | `splitPercent` | `uint32` | Portion of the price routed to the tier's split group on mint, out of `JBConstants.SPLITS_TOTAL_PERCENT` |
 | `splits` | `JBSplit[]` | The tier's split group |
@@ -63,7 +63,7 @@ For tier previews (unminted content), use the synthetic ID `tierId * 1_000_000_0
 | Flag | Meaning |
 |------|---------|
 | `allowOwnerMint` | Owner can mint from this tier on demand |
-| `useReserveBeneficiaryAsDefault` | Store this tier's `reserveBeneficiary` as the hook-wide default. WARNING: overwrites the global default, affecting all tiers without a tier-specific beneficiary |
+| `useReserveBeneficiaryAsDefault` | Store this tier's `reserveBeneficiary` as the hook-wide default (only when `reserveBeneficiary != 0 && reserveFrequency != 0`); the tier itself gets no tier-specific beneficiary and follows the default. WARNING: overwrites the global default for all tiers without a tier-specific beneficiary. `MissingReserveBeneficiary` is checked in array order before the default is written, so a tier with `reserveFrequency > 0` and no beneficiary must come after the tier that sets the default |
 | `transfersPausable` | Transfers can be paused for this tier |
 | `useVotingUnits` | Use `votingUnits` for voting power (else price is used) |
 | `cantBeRemoved` | Tier cannot be removed once added |
@@ -95,7 +95,7 @@ Note the shape difference: config flags have 7 bools, returned tier flags have 5
 ## Pattern 1: Static IPFS content
 
 1. Tier is configured with `encodedIpfsUri`.
-2. `tokenURI(tokenId)` returns `baseUri` + base58-encoded CID (`JBIpfsDecoder` re-adds the `0x1220` sha256 multihash prefix). Set `baseUri = "ipfs://"` so the output is a standard `ipfs://Qm...` URI.
+2. `tokenURI(tokenId)` returns `baseUri` + base58-encoded CID (`JBIpfsDecoder` re-adds the `0x1220` sha256 multihash prefix). Set `baseUri = "ipfs://"` so the output is a standard `ipfs://Qm...` URI. A zero `encodedIpfsUri` is not special-cased: the output is `baseUri` + base58 of `0x1220` + 32 zero bytes, so frontends must test `encodedIpfsUri == 0x0` themselves.
 3. The CID should point to ERC-721 JSON metadata (`name`, `description`, `image`, `attributes`).
 
 ### Encoding / decoding (CIDv0 only)
@@ -119,7 +119,7 @@ function decodeEncodedIpfsUri(encoded: string): string | null {
 
 ## Pattern 2: On-chain resolver content
 
-1. Deploy a contract implementing `IJB721TokenUriResolver` and set it as `tokenUriResolver` in the `JBDeploy721TiersHookConfig` (or later via the hook's URI setter).
+1. Deploy a contract implementing `IJB721TokenUriResolver` and set it as `tokenUriResolver` in the `JBDeploy721TiersHookConfig`, or later via `hook.setMetadata(name, symbol, baseUri, contractUri, tokenUriResolver, encodedIpfsUriTierId, encodedIpfsUri)` (`SET_721_METADATA`). In `setMetadata`, empty strings and `encodedIpfsUriTierId == 0` mean "keep"; for `tokenUriResolver`, `address(hook)` means keep and `address(0)` CLEARS the resolver — passing `0x0` while only changing `baseUri` silently switches the collection to IPFS mode.
 2. Leave `encodedIpfsUri` as zero bytes in tier configs.
 3. The resolver receives every `tokenURI` call.
 
@@ -168,7 +168,7 @@ Resolver reads can be gas-heavy (on-chain SVG). Lazy-load per tier, cache result
 ## Categories
 
 - `category` is `uint24`. Tiers must be sorted by category ascending when initializing or calling `adjustTiers` — the store reverts with `JB721TiersHookStore_InvalidCategorySortOrder` otherwise.
-- `tiersOf` filters by category and returns tiers sorted by category:
+- `tiersOf` filters by category and returns tiers sorted by category. Within a category the order is linked-list insertion order, not ascending ID, and with `startingId != 0` plus a non-empty `categories` array each category restarts from `startingId`. Key results by `tier.id`, never by array index:
 
 ```typescript
 const merchTiers = await client.readContract({
@@ -180,6 +180,20 @@ const merchTiers = await client.readContract({
 
 - Default new tiers to category `0` unless the project sells distinct item types; keep human-readable category names in app-level project metadata.
 
+## Permissions
+
+Checked against the hook owner's account (`JBOwnable.owner()`, normally the project) via `JBPermissions`:
+
+| Function | Permission ID |
+|----------|---------------|
+| `adjustTiers(tiersToAdd, tierIdsToRemove)` | `ADJUST_721_TIERS` = 24 |
+| `setMetadata(...)` | `SET_721_METADATA` = 25 |
+| `mintFor(tierIds, beneficiary)` | `MINT_721` = 26 |
+| `setDiscountPercentOf` / `setDiscountPercentsOf` | `SET_721_DISCOUNT_PERCENT` = 27 |
+| `mintPendingReservesFor(...)`, `STORE.cleanTiers(hook)` | Permissionless |
+
+Ruleset `metadata.metadata` bit 0 pauses transfers (for tiers with `transfersPausable`), bit 1 pauses pending-reserve mints (`JB721TiersRulesetMetadataResolver`).
+
 ## Common mistakes
 
 - **Field name is `encodedIpfsUri`** (lowercase `pfs`), both in `JB721TierConfig` and `JB721Tier`. Wrong casing breaks ABI encoding by name.
@@ -190,3 +204,5 @@ const merchTiers = await client.readContract({
 - **`tiersOf` with `includeResolvedUri = true` reverting or timing out.** Large on-chain SVG resolvers exceed RPC gas caps — fetch with `false` and lazy-load resolver content per tier.
 - **Expecting `baseUri` to apply when a resolver is set.** The resolver takes precedence for every token.
 - **Encoding CIDv1 into `encodedIpfsUri`.** The bytes32 encoding assumes a CIDv0 sha256 multihash (`Qm...`).
+- **Treating `discountPercent` as percent of 100.** The denominator is 200; `50` is a 25% discount.
+- **Passing `address(0)` as `tokenUriResolver` to `setMetadata` to "leave it alone".** That clears the resolver; pass `address(hook)` to keep it.

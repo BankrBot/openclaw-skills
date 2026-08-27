@@ -39,6 +39,8 @@ struct JBCurrencyAmount { uint224 amount; uint32 currency; }
 
 An empty `fundAccessLimitGroups` array means ZERO payouts on that chain (everything is surplus), not unlimited.
 
+**Amount scaling.** `JBCurrencyAmount.amount` (payout limits and surplus allowances) is denominated in `currency` but fixed-point scaled to the **terminal token's accounting-context decimals**, not the currency's. `JBTerminalStore.recordPayoutFor` converts with `amount * 1e18 / pricePerUnitOf(..., 18)`, so the result keeps the input's scale and is compared against the limit at that same scale. Examples: 100 USD limit on an 18-decimal ETH context → `100e18`; 100 USD limit on a 6-decimal USDC context → `100e6`; 10 ETH limit on a USDC context → `10e6`.
+
 ## What V6's cross-chain accounting does — and does not — solve
 
 Suckers gossip per-chain accounting (total supply, surplus, balance) between peers, and `JBSuckerRegistry` aggregates it (`totalRemoteSurplusOf`, `totalRemoteBalanceOf`, `remoteTotalSupplyOf`). This feeds **cross-chain cash-out taxation** — a holder cashing out is priced against project-wide supply and surplus, not just the local chain's.
@@ -113,7 +115,7 @@ Tradeoffs: user friction, treasury fragmentation until bridged, unenforceable sw
 
 - **Assuming the limit is project-wide.** Multiply by chain count when reasoning about maximum extraction.
 - **Empty `fundAccessLimitGroups` = unlimited.** It's the opposite: zero payouts.
-- **Amount decimals.** `payoutLimits[].amount` is in the limit currency's decimals — a USD-denominated limit paid from a 6-decimal USDC terminal is specified with the currency's fixed-point convention, not always 18 decimals.
+- **Amount decimals.** `payoutLimits[].amount` uses the accounting context's decimals, never the currency's — a USD limit on a 6-decimal USDC context is a 6-decimal integer (`100e6`); writing `100e18` mis-scales it by 1e12.
 - **Pausing with the same projectId everywhere.** Each chain has its own projectId; see `jb-omnichain-per-chain-projectids`.
 - **Expecting sucker accounting to gate payouts.** Cross-chain gossip informs cash-out pricing only.
 

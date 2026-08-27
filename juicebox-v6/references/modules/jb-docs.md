@@ -1,174 +1,92 @@
 ---
 name: jb-docs
 description: |
-  Query Juicebox documentation and reference material. Use when: (1) looking up
-  interface definitions, struct schemas, or event signatures, (2) finding
-  implementation guides for hooks, terminals, or project configuration,
-  (3) searching docs for protocol concepts or patterns, (4) need deployed contract
-  addresses (prefer references/shared/chain-config.json for those).
+  Find Juicebox V6 reference material. Use when: (1) looking up interface
+  definitions, struct schemas, or event signatures, (2) finding implementation
+  guides for hooks, terminals, or project configuration, (3) searching for
+  protocol concepts or patterns, (4) need deployed contract addresses (prefer
+  references/shared/chain-config.json for those).
 version: 6.0.0
 ---
 
-# Juicebox V6 Documentation Lookup
+# Juicebox V6 Reference Lookup
 
-Query Juicebox documentation via the docs.juicebox.money MCP server or REST API. **Always request v6 docs** — the API serves version-tagged documents, and only `v6` content applies here. Never accept a result tagged with any other version.
+docs.juicebox.money publishes no V6 pages: `GET /api/mcp/structure` lists no `v6` version, `POST /api/mcp/search` with `"version": "v6"` returns `[]`, and every `/dev/v6/...` URL is 404. Do not fetch it for V6 facts. Ground truth is source.
 
 ## Sources of Truth, in Order
 
-1. **Contract addresses**: `references/shared/chain-config.json` (generated from deployment artifacts). Do not take addresses from web docs.
-2. **Interfaces / structs / events**: the source repos (below) and `references/shared/abis/*.json`.
-3. **Concept guides and tutorials**: docs.juicebox.money, filtered to v6.
+1. **Contract addresses**: chain config for read-only discovery; the reviewed deployment manifest plus live verification for writes. Do not take addresses from web pages.
+2. **Interfaces / structs / events / behavior**: the source repos (below) and `references/shared/abis/*.json`.
+3. **Concept guides**: the sibling skills in this plugin (`jb-patterns`, `jb-pay-hook`, `jb-cash-out-hook`, `jb-multi-currency`, `jb-query`, `jb-bendystraw`).
 
-If a v6 docs query returns no results, the page has not been published yet — fall back to the source repos instead of accepting docs tagged with another version.
-
-## MCP Server (Recommended)
-
-Add to your Claude Code or MCP client configuration:
-
-```json
-{
-  "mcpServers": {
-    "juice-docs": {
-      "type": "http",
-      "url": "https://docs.juicebox.money/api/mcp-sse"
-    }
-  }
-}
-```
-
-### MCP Tools Available
-
-| Tool | Purpose |
-|------|---------|
-| `search_docs` | Search documentation by keyword |
-| `get_doc` | Get full document content by path |
-| `list_docs_by_category` | List docs in a category |
-| `get_doc_structure` | Get documentation structure |
-
-Pass the v6 version tag with every call that supports one, and only request `dev/v6/...` paths.
-
-```bash
-curl -X POST https://docs.juicebox.money/api/mcp-sse \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search_docs","arguments":{"query":"pay hook","version":"v6"}}}'
-```
-
-## REST API Endpoints
-
-### Search documentation
-
-```bash
-POST https://docs.juicebox.money/api/mcp/search
-Content-Type: application/json
-
-{
-  "query": "pay hook",
-  "category": "all",    # all, developer, user, dao, ecosystem
-  "version": "v6",      # ALWAYS v6
-  "limit": 10
-}
-```
-
-### Get specific document
-
-```bash
-POST https://docs.juicebox.money/api/mcp/get-doc
-Content-Type: application/json
-
-{
-  "path": "dev/v6/learn/overview.md"
-}
-```
-
-### List documents by category
-
-```bash
-GET https://docs.juicebox.money/api/mcp/list-docs?category=developer&version=v6
-```
-
-### Get documentation structure
-
-```bash
-GET https://docs.juicebox.money/api/mcp/structure
-```
-
-Use the structure response to confirm v6 coverage before relying on search results.
-
-## Using WebFetch
-
-Fetch v6 documentation pages directly:
-
-```
-WebFetch https://docs.juicebox.money/dev/v6/build/pay-hook/
-"Extract how to implement a pay hook"
-```
-
-```
-WebFetch https://docs.juicebox.money/dev/v6/learn/overview/
-"Summarize the protocol overview"
-```
-
-Documentation path layout:
-
-```
-/dev/                    # Developer documentation root
-/dev/v6/learn/           # Conceptual documentation
-/dev/v6/build/           # Implementation guides
-/dev/v6/api/             # API reference
-/dev/v6/api/core/        # Core contract docs
-```
-
-## Source Repositories (ground truth for code)
+## Source Repositories
 
 | Repo | Contents |
 |------|----------|
-| [Bananapus/nana-core-v6](https://github.com/Bananapus/nana-core-v6) | Core protocol: controller, terminals, rulesets, tokens, splits |
+| [Bananapus/nana-core-v6](https://github.com/Bananapus/nana-core-v6) | Core protocol: controller, terminals, rulesets, tokens, splits, prices |
 | [Bananapus/nana-721-hook-v6](https://github.com/Bananapus/nana-721-hook-v6) | 721 tiers hook (NFT rewards) |
 | [Bananapus/nana-buyback-hook-v6](https://github.com/Bananapus/nana-buyback-hook-v6) | Buyback hook (AMM routing on pay) |
 | [Bananapus/nana-suckers-v6](https://github.com/Bananapus/nana-suckers-v6) | Cross-chain suckers |
+| [Bananapus/nana-router-terminal-v6](https://github.com/Bananapus/nana-router-terminal-v6) | Router terminal and registry |
+| [Bananapus/nana-univ4-lp-split-hook-v6](https://github.com/Bananapus/nana-univ4-lp-split-hook-v6) | Uniswap v4 LP split hook |
 | [rev-net/revnet-core-v6](https://github.com/rev-net/revnet-core-v6) | Revnets: REVDeployer, REVLoans |
 | [mejango/croptop-core-v6](https://github.com/mejango/croptop-core-v6) | Croptop publisher |
+| [BallKidz/defifa](https://github.com/BallKidz/defifa) | Defifa prediction games |
 | [peripheralist/bendystraw](https://github.com/peripheralist/bendystraw) | GraphQL indexer |
 
-## Common Documentation Queries
+## Concept → source path
+
+Paths are relative to each repo's `src/`. Read the interface first, then the implementation for revert conditions.
+
+| Need | File |
+|------|------|
+| Pay hook interface | `nana-core-v6` `interfaces/IJBPayHook.sol`, `structs/JBAfterPayRecordedContext.sol` |
+| Cash-out hook interface | `nana-core-v6` `interfaces/IJBCashOutHook.sol`, `structs/JBAfterCashOutRecordedContext.sol` |
+| Data hook (pay + cash-out pricing) | `nana-core-v6` `interfaces/IJBRulesetDataHook.sol`, `structs/JBBeforePayRecordedContext.sol`, `structs/JBBeforeCashOutRecordedContext.sol`, `structs/JBPayHookSpecification.sol`, `structs/JBCashOutHookSpecification.sol` |
+| Split hook interface | `nana-core-v6` `interfaces/IJBSplitHook.sol`, `structs/JBSplitHookContext.sol`, `libraries/JBPayoutSplitGroupLib.sol` |
+| Ruleset approval hook | `nana-core-v6` `interfaces/IJBRulesetApprovalHook.sol` |
+| Ruleset / metadata structs | `nana-core-v6` `structs/JBRuleset.sol`, `structs/JBRulesetMetadata.sol`, `structs/JBRulesetConfig.sol`, `libraries/JBRulesetMetadataResolver.sol` |
+| Splits, fund access limits, accounting contexts | `nana-core-v6` `structs/JBSplit.sol`, `structs/JBSplitGroup.sol`, `structs/JBFundAccessLimitGroup.sol`, `structs/JBCurrencyAmount.sol`, `structs/JBAccountingContext.sol`, `structs/JBTokenAmount.sol` |
+| Terminal entry points and events | `nana-core-v6` `interfaces/IJBTerminal.sol`, `interfaces/IJBMultiTerminal.sol`, `JBMultiTerminal.sol` |
+| Balance / surplus / preview math | `nana-core-v6` `JBTerminalStore.sol`, `libraries/JBCashOuts.sol`, `libraries/JBSurplus.sol`, `libraries/JBFees.sol` |
+| Controller (launch, queue, mint, reserved tokens) | `nana-core-v6` `interfaces/IJBController.sol`, `JBController.sol` |
+| Permissions | `nana-core-v6` `JBPermissions.sol`, `structs/JBPermissionsData.sol`; IDs in `@bananapus/permission-ids-v6` `src/JBPermissionIds.sol` |
+| Constants and currency IDs | `nana-core-v6` `libraries/JBConstants.sol`, `libraries/JBCurrencyIds.sol`, `libraries/JBSplitGroupIds.sol` |
+| Price feeds | `nana-core-v6` `JBPrices.sol`, `interfaces/IJBPriceFeed.sol`, `JBChainlinkV3PriceFeed.sol`, `JBChainlinkV3SequencerPriceFeed.sol`, `periphery/JBMatchingPriceFeed.sol`, `periphery/JBRatioPriceFeed.sol` |
+| Project tokens | `nana-core-v6` `interfaces/IJBToken.sol`, `JBERC20.sol`, `JBTokens.sol` |
+| Metadata encoding for hooks | `nana-core-v6` `libraries/JBMetadataResolver.sol` |
+| 721 tiers hook | `nana-721-hook-v6` `JB721TiersHook.sol`, `JB721TiersHookStore.sol`, `JB721TiersHookProjectDeployer.sol`, `structs/JB721TierConfig.sol`, `structs/JBDeploy721TiersHookConfig.sol`, `structs/JBLaunchProjectConfig.sol` |
+| Buyback hook | `nana-buyback-hook-v6` `JBBuybackHook.sol`, `JBBuybackHookRegistry.sol` |
+| Suckers | `nana-suckers-v6` `JBSucker.sol`, `JBSuckerRegistry.sol`, `deployers/` |
+| Revnets | `revnet-core-v6` `REVDeployer.sol`, `REVLoans.sol`, `structs/` |
+
+## Common Queries
 
 ### "What's the JBController address on mainnet?"
 
-Read `references/shared/chain-config.json`. Core contracts share one address across all chains — JBController is `0x3fcec3572e84b624477bcff4e2cf1f7deab648f1` everywhere.
+Read chain config for discovery. For a write, resolve JBController from the reviewed manifest and verify live code and selector on the connected chain; do not infer authority from a cross-chain address coincidence.
 
 ### "How do I implement a pay hook?"
 
-```
-WebFetch https://docs.juicebox.money/dev/v6/build/pay-hook/
-"Extract implementation steps for pay hooks"
-```
-
-If unpublished, read `IJBPayHook.sol` and `IJBRulesetDataHook.sol` in nana-core-v6's `src/interfaces/`.
+Read `IJBPayHook.sol` and `IJBRulesetDataHook.sol` in `nana-core-v6/src/interfaces/`, then the `jb-pay-hook` skill.
 
 ### "What events does JBMultiTerminal emit?"
 
-Prefer `references/shared/abis/JBMultiTerminal.json` (verified deployment ABI) or `nana-core-v6/src/JBMultiTerminal.sol`; docs alternative:
-
-```
-WebFetch https://docs.juicebox.money/dev/v6/api/core/jbmultiterminal/
-"List all events emitted by JBMultiTerminal"
-```
+`references/shared/abis/JBMultiTerminal.json` (verified deployment ABI) or `nana-core-v6/src/interfaces/IJBMultiTerminal.sol` plus the inherited terminal interfaces.
 
 ## Official Resources
 
-- **Docs**: https://docs.juicebox.money
 - **GitHub**: https://github.com/Bananapus
-- **Indexer**: https://bendystraw.xyz (see `/jb-bendystraw`)
+- **Indexer**: https://bendystraw.up.railway.app (see `/jb-bendystraw`)
 
 ## Generation Guidelines
 
-1. **Request v6 only** — pass `version: "v6"` and `dev/v6/...` paths on every call; discard results tagged with any other version.
-2. **Addresses from `references/shared/chain-config.json`**, never from fetched pages.
-3. **Interfaces/structs from source repos or `references/shared/abis/`** when docs are missing or ambiguous.
-4. **Provide direct links** to the v6 pages you used.
+1. **Addresses from `references/shared/chain-config.json`**, never from fetched pages.
+2. **Interfaces/structs from source repos or `references/shared/abis/`**.
+3. **Cite the source path** (repo + file) for every contract fact you state.
 
 ## Common mistakes
 
-- **Accepting docs from another version tag.** Search results can include pages for other protocol versions; check the `dev/v6/` path prefix on every result before using it.
-- **Copying addresses from docs pages.** Docs can lag deployments; `references/shared/chain-config.json` is generated from the deployment artifacts and is authoritative.
-- **Treating an empty v6 result as "feature doesn't exist."** It usually means the page is unpublished — verify against the source repos before concluding anything.
+- **Fetching docs.juicebox.money for V6 facts.** Its pages cover other protocol versions; signatures, permission IDs, and fees there do not match V6 source.
+- **Copying addresses from web pages.** `references/shared/chain-config.json` is generated from the deployment artifacts and is authoritative.
+- **Treating a missing doc page as "feature doesn't exist."** Check the source repo.

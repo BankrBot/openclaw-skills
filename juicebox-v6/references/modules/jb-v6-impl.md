@@ -254,8 +254,10 @@ pay()
           → tokenCount = mulDiv(amount.value, weight, weightRatio)
       → controller.mintTokensOf(..., useReservedPercent: true)   // if tokenCount != 0
       → emit Pay
-      → _fulfillPayHookSpecificationsFor()   // funds forwarded to each hook (allowance or msg.value), then
-                                             // hook.afterPayRecordedWith(context) — sequential, no try/catch
+      → _fulfillPayHookSpecificationsFor()   // funds forwarded to each hook (forceApprove or msg.value), then
+                                             // hook.afterPayRecordedWith(context) — sequential, no try/catch;
+                                             // ERC-20: hook must transferFrom the FULL forwarded amount or the
+                                             // pay reverts JBMultiTerminal_TemporaryAllowanceNotConsumed
   → beneficiaryTokenCount = balanceAfter − balanceBefore
   → revert JBMultiTerminal_UnderMin if < minReturnedTokens
 ```
@@ -264,6 +266,7 @@ Details that matter:
 
 - `beneficiaryTokenCount` is measured as a **balance delta** on `TOKENS.totalBalanceOf` — not the minted count returned by the controller.
 - **Data hook is trusted**: it can return any weight (overriding the ruleset) and route any portion of the payment to pay hooks. Pay/cash-out data-hook calls are NOT wrapped in try-catch; a reverting data hook or pay hook reverts the entire payment. (Split-hook calls, fee processing, and leftover-payout transfers ARE wrapped in try-catch.)
+- **ERC-20 hook forwarding is approve-then-verify**: `_beforeTransferTo` force-approves the hook for `forwardedAmount`, and `_afterTransferTo` reverts `JBMultiTerminal_TemporaryAllowanceNotConsumed` if any allowance remains after the callback. Pay hooks and cash-out hooks must pull exactly `forwardedAmount.value` via `transferFrom` inside `afterPayRecordedWith` / `afterCashOutRecordedWith`. Native forwards arrive as `msg.value`. Split hooks are the exception: called in try/catch, and unconsumed allowance is refunded to the project (payouts) or burned (reserved tokens).
 - Hook specifications with `noop: true` are informational only, must carry `amount == 0` (`JBTerminalStore_NoopHookSpecHasAmount`), and don't trigger the hook. The buyback hook uses noop specs as its public preview API — never strip them.
 - Zero weight → tokens aren't minted but the payment is still accepted and recorded.
 - ERC-20 acceptance measures a balance delta (`_acceptingToken` transient guard blocks reentrant transfers), so fee-on-transfer tokens credit only what actually arrived.
@@ -350,13 +353,15 @@ else → base × [(MAX − rate) + rate × cashOutCount / totalSupply] / MAX
 `JBDeadline(DURATION)` logic:
 
 ```
-ruleset.id > ruleset.start                 → Failed   (queued after start)
-ruleset.start − ruleset.id < DURATION      → Failed   (queued too late)
+ruleset.id > ruleset.start                 → Failed   (defensive; unreachable via queueFor)
+ruleset.start − ruleset.id < DURATION      → Failed   (defensive; unreachable via queueFor)
 block.timestamp + DURATION < ruleset.start → ApprovalExpected
 otherwise                                  → Approved
 ```
 
-Pre-deployed instances: 3 hours, 1 day, 3 days, 7 days. If `DURATION` exceeds the cycle duration, no queued ruleset can ever pass — the current configuration is locked in perpetuity.
+`JBRulesets._configureIntrinsicPropertiesFor` reads the base ruleset's `approvalHook.DURATION()` and forces `mustStartAtOrAfter = max(mustStartAtOrAfter, rulesetId + DURATION)` before deriving `start` (then cycle-aligns it). A queued ruleset therefore always satisfies `start − id ≥ DURATION`; the protocol delays the start instead of failing. Consequence: `start` can land a full cycle later than the `mustStartAtOrAfter` passed, and a `DURATION` longer than the cycle does not brick the project — the queued ruleset starts at the first cycle boundary ≥ `queueTimestamp + DURATION`.
+
+Pre-deployed instances: 3 hours, 1 day, 3 days, 7 days.
 
 ### Current-ruleset resolution (`JBRulesets.currentOf`)
 
@@ -381,7 +386,7 @@ weight(n cycles later) = baseWeight × ((1e9 − weightCutPercent) / 1e9)^n     
 ```
 
 - **`weight == 1` sentinel** in a queued config: inherit the previous ruleset's fully-cut weight (as of the new start) instead of setting a literal weight. `weight == 0` is a literal zero (no tokens minted).
-- Iteration limit: if the number of elapsed cycles (`weightCutMultiple`) exceeds `20_000` past the cache, `deriveWeightFrom` reverts with `JBRulesets_WeightCacheRequired`. Anyone can call `updateRulesetWeightCache(projectId, rulesetId)` (permissionless) to advance the cached `JBRulesetWeightCache {uint112 weight; uint168 weightCutMultiple}` in steps of ≤ 20,000 cycles. Pass the ruleset ID that `currentOf()` actually resolves to (the approved base, not a rejected latest).
+- Iteration limit: if the number of elapsed cycles (`weightCutMultiple`) exceeds `20_000` past the cache, `deriveWeightFrom` reverts with `JBRulesets_WeightCacheRequired`. Anyone can call `updateRulesetWeightCache(projectId, rulesetId)` (permissionless) to advance the cached `JBRulesetWeightCache {uint112 weight; uint168 weightCutMultiple}` in steps of ≤ 20,000 cycles. Pass the ruleset ID that `currentOf()` actually resolves to (the approved base, not a rejected latest). The call is a silent no-op when the target ruleset has `duration == 0` or `weightCutPercent == 0`.
 - Ruleset intrinsics are packed in one slot: weight bits 0–111, `basedOnId` 112–159, `start` 160–207, `cycleNumber` 208–255. User properties: approvalHook 0–159, duration 160–191, weightCutPercent 192–223.
 
 ## Reserved token distribution
@@ -419,7 +424,17 @@ sendReservedTokensToSplitsOf()
 
 ### `mintTokensOf` permissions
 
-`mintTokensOf(projectId, tokenCount, beneficiary, memo, useReservedPercent)` may be called by: the project owner / `MINT_TOKENS` operator (**only if** the current ruleset has `allowOwnerMinting`), any of the project's terminals, the ruleset's data hook, or an address the data hook approves via `hasMintPermissionFor(projectId, ruleset, addr)`. Terminals and the data hook bypass the `allowOwnerMinting` check.
+`mintTokensOf(projectId, tokenCount, beneficiary, memo, useReservedPercent)` may be called by: the project owner / `MINT_TOKENS` operator (**only if** the current ruleset has `allowOwnerMinting`), any of the project's terminals, the ruleset's data hook, or an address the data hook approves via `hasMintPermissionFor(projectId, ruleset, addr)`. Terminals and the data hook bypass the `allowOwnerMinting` check. The check is also skipped before the first ruleset (`ruleset.id == 0`): the owner can mint pre-launch.
+
+### Pre-launch owner actions (`currentRulesetOf` empty)
+
+| Action | Pre-launch |
+|---|---|
+| `mintTokensOf` (owner / `MINT_TOKENS`) | Allowed; `allowOwnerMinting` not checked |
+| `addPriceFeedFor` | Allowed; `allowAddPriceFeed` not checked |
+| `addAccountingContextsFor` | Allowed; `allowAddAccountingContext` not checked |
+| `setTokenFor` | Falls back to `upcomingRulesetOf`; reverts `JBController_RulesetSetTokenNotAllowed` unless a queued ruleset has `allowSetCustomToken` |
+| `deployERC20For`, `setUriOf`, `setSplitGroupsOf` | Allowed; no ruleset flag involved |
 
 ## Splits system
 
@@ -533,7 +548,7 @@ function addAccountingContextsFor(uint256 projectId, JBAccountingContext[] calld
 - `sendPayoutsOf` is permissionless unless the ruleset sets `ownerMustSendPayouts` (then `SEND_PAYOUTS` required). `currency` must match a configured payout-limit currency; `amount` is denominated in that currency and auto-capped at the remaining limit. Leftover after splits goes to the owner (fee applies; transfer failure returns funds to the balance and emits `PayoutTransferReverted`).
 - `useAllowanceOf` requires owner or `USE_ALLOWANCE`. Draws from local token surplus only; reverts if `usedAmount > surplus` or the allowance (keyed by ruleset ID) is exhausted/zero.
 - `migrateBalanceOf` requires `MIGRATE_TERMINAL` and `allowTerminalMigration` in the ruleset; destination must accept the token; migration to self reverts. A 2.5% fee applies unless the destination is feeless (this also settles the `feeFreeSurplusOf` liability, which is cleared).
-- `addAccountingContextsFor` requires owner / `ADD_ACCOUNTING_CONTEXTS` / the controller, and `allowAddAccountingContext` in the current ruleset (validated in the store).
+- `addAccountingContextsFor` requires owner / `ADD_ACCOUNTING_CONTEXTS` / the controller, and `allowAddAccountingContext` in the current ruleset (validated in the store; unconditional before the first ruleset). The store also rejects: a token already added (`JBTerminalStore_AccountingContextAlreadySet`), `decimals > 36`, `currency == 0` (`JBTerminalStore_ZeroAccountingContextCurrency`), and `decimals != IERC20Metadata(token).decimals()` (`JBTerminalStore_AccountingContextDecimalsMismatch`; native must be 18).
 
 ## Core infrastructure
 
@@ -553,7 +568,7 @@ mapping(address addr => bool) public isAllowedToSetFirstController;
 
 - `permissionsOf[operator][account][projectId]` is a 256-bit bitmap; bit N = permission ID N. Project ID 0 is the **wildcard** granting the permission across all of the account's projects.
 - `setPermissionsFor(account, JBPermissionsData{operator, projectId, permissionIds})` — `permissionIds` is `uint8[]`, so IDs are 0–255 by type; ID 0 is reserved and reverts. Setting replaces the whole bitmap for that (operator, account, projectId) — an empty array clears all permissions.
-- A non-account caller may set permissions only if it has ROOT for that specific project, and even then it cannot grant ROOT and cannot touch the wildcard project (prevents privilege escalation).
+- A non-account caller may set permissions only if it has ROOT for that project (project-scoped or wildcard ROOT; checked with `includeWildcardProjectId: true`), and even then it cannot grant ROOT and cannot write to the wildcard project (prevents privilege escalation).
 - `hasPermission(operator, account, projectId, permissionId, includeRoot, includeWildcardProjectId)`: ROOT short-circuits (project-scoped or wildcard) when `includeRoot`; otherwise checks the specific bit on the project and (optionally) the wildcard. `hasPermissions` requires ALL listed IDs; an empty array returns true (vacuous truth).
 
 ### JBTokens (credits + ERC-20 dual balance)
@@ -570,8 +585,8 @@ All mutating functions are controller-only (`onlyControllerOf`); integrators go 
 - `mintFor`: mints ERC-20 directly when a token exists, otherwise credits. Total supply (credits + ERC-20) is capped at `type(uint208).max`.
 - `burnFrom`: burns **credits first**, then ERC-20; reverts if `count > tokenBalance + creditBalance`.
 - `totalSupplyOf(projectId)` = credits + ERC-20 `totalSupply()` — the cash-out denominator. WARNING: an externally-minted custom token inflates this and dilutes cash-outs.
-- `deployERC20For(projectId, name, symbol, salt)`: EIP-1167 clone of the canonical `JBERC20`. Non-zero salt → `cloneDeterministic` with `keccak256(abi.encode(msg.sender, salt))` — deterministic (and hence same-address cross-chain when the caller and salt match). Controller-side permission: owner / `DEPLOY_ERC20`.
-- `setTokenFor(projectId, token)` requirements: token non-zero, project has no token, token not assigned to another project, `token.decimals() == 18`, `token.canBeAddedTo(projectId)` returns true. Controller-side: owner / `SET_TOKEN` plus ruleset `allowSetCustomToken` (checked when a ruleset exists).
+- `deployERC20For(projectId, name, symbol, salt)`: EIP-1167 clone of the canonical `JBERC20`. Non-zero salt → `cloneDeterministic` (CREATE2 from `JBTokens`, implementation `TOKEN`) with a two-level salt: the controller computes `saltHash = keccak256(abi.encodePacked(caller, salt))`, then `JBTokens` uses `keccak256(abi.encode(controller, saltHash))`. Predict with `Clones.predictDeterministicAddress(TOKEN, keccak256(abi.encode(JBController, keccak256(abi.encodePacked(caller, salt)))), JBTokens)` — same address on every chain when caller and salt match. Controller-side permission: owner / `DEPLOY_ERC20`.
+- `setTokenFor(projectId, token)` requirements: token non-zero, project has no token, token not assigned to another project, `token.decimals() == 18`, `token.canBeAddedTo(projectId)` returns true. Controller-side: owner / `SET_TOKEN` plus ruleset `allowSetCustomToken` — read from the current ruleset, falling back to the upcoming one; with neither, the flag reads `false` and the call reverts `JBController_RulesetSetTokenNotAllowed`. A pre-launch project cannot attach a custom token until a ruleset with the flag is queued.
 - Custom token requirements: 18 decimals; `mint(address,uint256)` and `burn(address,uint256)` callable by `JBTokens` without approval; transfer restrictions must exempt mint/burn; setting a token does not migrate credits — holders convert via `JBController.claimTokensFor(holder, projectId, tokenCount, beneficiary)` (caller must be the holder or a `CLAIM_TOKENS` operator of the holder).
 - `pauseCreditTransfers` in ruleset metadata blocks `transferCreditsFrom` (checked in the controller).
 
@@ -602,8 +617,8 @@ The `bytes metadata` argument of `pay`/`cashOutTokensOf` is a multiplexed contai
 ```
 
 - `getId(purpose, target) = bytes4(bytes20(target) ^ bytes20(keccak256(bytes(purpose))))`. Hooks key their entries by their own address (`getId("pay")` inside the hook = `getId("pay", hookAddress)`).
-- `getDataFor(id, metadata)` → `(bool found, bytes data)`; `addToMetadata` appends an entry. Minimum parseable length is 37 bytes; malformed tables revert.
-- **Permit2**: `JBMultiTerminal._acceptFundsFor` reads an entry keyed by `getId("permit2", terminalAddress)` decoding to `JBSingleAllowance {uint256 sigDeadline; uint160 amount; uint48 expiration; uint48 nonce; bytes signature}`; a failed `PERMIT2.permit` is caught (event `Permit2AllowanceFailed`). The subsequent pull prefers a sufficient direct ERC-20 allowance; otherwise it uses `PERMIT2.transferFrom` (amount must fit `uint160`).
+- `getDataFor(id, metadata)` → `(bool found, bytes data)`; `addToMetadata` appends an entry. Metadata of 37 bytes or fewer (`length <= 32 + 4 + 1`) returns `(false, "")`; malformed tables revert.
+- **Permit2**: `JBMultiTerminal._acceptFundsFor` reads an entry keyed by `getId("permit2", terminalAddress)` decoding to `JBSingleAllowance {uint256 sigDeadline; uint160 amount; uint48 expiration; uint48 nonce; bytes signature}`; `amount > allowance.amount` reverts `JBMultiTerminal_PermitAllowanceNotEnough` before the permit call; a failed `PERMIT2.permit` is caught (event `Permit2AllowanceFailed`). The subsequent pull prefers a sufficient direct ERC-20 allowance; otherwise it uses `PERMIT2.transferFrom` (amount must fit `uint160`).
 - Building metadata off-chain: reserve word 0, then table `[id1‖offset1, id2‖offset2, …]` zero-padded to a word, then each `abi.encode(...)` blob (already 32-byte aligned).
 
 ## Buyback hook (`JBBuybackHook`, Uniswap V4)
@@ -621,10 +636,13 @@ One canonical hook serves all projects. It is the project's ruleset `dataHook` w
 Payer metadata entry, keyed by `getId("pay", buybackHookAddress)`:
 
 ```solidity
-abi.encode(uint256 amountToSwapWith, uint256 minimumSwapAmountOut)
+abi.encode(uint256 amountToSwapWith, uint256 minimumSwapAmountOut, bool skipSplits)
 ```
 
+Three words (96 bytes); `abi.decode` reverts on a 64-byte blob.
+
 - `amountToSwapWith == 0` → use the full payment. `amountToSwapWith > totalPaid` reverts.
+- `skipSplits = true` → swapped tokens are transferred to the beneficiary as-is (no burn-and-remint through the reserved split). The mint-vs-swap comparison and `minimumSwapAmountOut` are then measured against the beneficiary's share of a direct mint, not the full issuance.
 - `minimumSwapAmountOut != 0` → treated as an explicit user quote (hard settlement floor). `0` → the hook derives a minimum from the pool TWAP (sigmoid slippage tolerance: `minSlippage = max(poolFee + 1%, 2%)`, saturating toward `8_800/10_000` = 88% max as estimated price impact grows; cold-start spot fallback uses a 3% tolerance with bounded impact).
 - Route decision: `tokenCountWithoutHook = mulDiv(amountToSwapWith, weight, weightRatio)` (identical math to the terminal). If the pool has no live liquidity or minting meets/exceeds the minimum → **noop spec** (mint path; spec still returned with diagnostic metadata: twapTick, liquidity, poolId, raw quote — this is the public preview API). Otherwise returns `weight = 0` and a hook spec forwarding `amountToSwapWith` to itself.
 - With no configured pool or no liquidity, an explicit minimum that direct minting can't satisfy reverts `JBBuybackHook_SpecifiedSlippageExceeded` rather than silently under-delivering.
@@ -632,7 +650,7 @@ abi.encode(uint256 amountToSwapWith, uint256 minimumSwapAmountOut)
 ### Pay-side execution (`afterPayRecordedWith`)
 
 - Swap runs via `poolManager.unlock` with a price limit derived from the issuance rate — the pool fills only while it beats minting; unconsumed input stays for minting. The whole swap is in try/catch: **swap failure falls back to minting** and never reverts the payment (unless an explicit user minimum then can't be met).
-- Project tokens received from the swap are **burned and re-minted through the controller** so the reserved percent applies to swapped tokens too.
+- Project tokens received from the swap are **burned and re-minted through the controller** so the reserved percent applies to swapped tokens too, unless the payer set `skipSplits`.
 - Leftover terminal tokens (partial fill) are returned to the project via `addToBalanceOf` and minted at the issuance rate; fee-on-transfer deltas are measured on both hops.
 - Same-terminal split pays that forward a net-of-fee amount scale the TWAP-derived floors proportionally; explicit user minima never scale.
 
@@ -737,9 +755,9 @@ Flow (`_processPayment` → `_mintAndUpdateCredits`):
 6. **Calling `JBSplits.setSplitGroupsOf` or expecting a URI setter on `JBProjects`** — both go through the project's controller (`JBController.setSplitGroupsOf`, `JBController.setUriOf`); fetch `controllerOf` from `JBDirectory`, don't hardcode.
 7. **`sendPayoutsOf` amount is denominated in the payout-limit `currency`, not in raw token units** — it's a fixed-point number using the token accounting context's decimals but expressed in `currency`. For a USD limit on 6-decimal USDC, "$100" is `100e6` of USD, converted to USDC at record time via `JBPrices`.
 8. **Confusing base-currency IDs with accounting-context currencies** — `baseCurrency` uses `JBCurrencyIds` (`ETH=1`, `USD=2`) or `uint32(uint160(token))`; accounting contexts always use `uint32(uint160(token))`. If they differ, a price feed must exist or every pay/payout reverts `JBPrices_PriceFeedNotFound`.
-9. **Forgetting the `weight == 1` sentinel** — queuing a ruleset with weight 1 inherits the previous ruleset's cut weight; a literal "1 wei" weight is not expressible.
+9. **Forgetting the `weight == 1` sentinel** — queuing a ruleset with weight 1 inherits the previous ruleset's cut weight; a literal "1 wei" weight is expressible only on a project's first ruleset (no base to inherit from).
 10. **Not populating the weight cache for long-idle cycling projects** — past 20,000 elapsed cycles, weight derivation reverts `JBRulesets_WeightCacheRequired` until someone calls `updateRulesetWeightCache` (permissionless, possibly multiple times).
-11. **Queuing a ruleset too close to its start with a `JBDeadline` approval hook** — `start − queuedTimestamp < DURATION` → `Failed`, and the protocol silently falls back to cycling the last approved ruleset.
+11. **Expecting a queued ruleset to start at `mustStartAtOrAfter` when the base has a `JBDeadline` hook** — `JBRulesets` pushes the start to `queueTimestamp + DURATION`, cycle-aligned, so it can land a full cycle later than requested. Read `latestQueuedRulesetOf` for the actual `start`.
 12. **Omitting locked splits (or shrinking their locks) when updating split groups** — reverts `JBSplits_PreviousLockedSplitsNotIncluded`; every locked split must reappear with identical fields and `lockedUntil` ≥ old, with the same multiplicity.
 13. **Pointing a payout split at the paying project itself** — reverts (`JBMultiTerminal_MintNotAllowed`); same for reserved-token splits (`JBController_ReservedTokenSplitProjectSameAsOwner`).
 14. **Assuming reserved tokens mint on every payment** — they accrue in `pendingReservedTokenBalanceOf` until anyone calls `sendReservedTokensToSplitsOf`; the pending amount also counts in the cash-out `totalSupply` denominator, and controller migration is blocked while it's non-zero.
