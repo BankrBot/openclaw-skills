@@ -110,6 +110,24 @@ planning. They emit unsigned transaction objects for Bankr to execute.
     recovery, roster-curation, route-configuration, pause, governance, role,
     multisig, timelock, or upgrade operation.
 
+## Crew tiers
+
+When presenting or asking for a Crew tier, always show the tier name and its
+full required BAES cost, not only the numeric tier ID:
+
+| Tier | Name | Required BAES |
+|---:|---|---:|
+| 0 | Signal | 600,000 BAES |
+| 1 | Surge | 1,500,000 BAES |
+| 2 | Riot | 3,300,000 BAES |
+| 3 | Overdrive | 6,000,000 BAES |
+| 4 | Maximum | 15,000,000 BAES |
+
+The tier cost is non-refundable and separate from the 6,600,000 BAES Bario
+Punk purchase price. An upgrade requires only the difference between the old
+and new tier costs; use the planner's fresh amount rather than calculating it
+from chat context.
+
 ## Command router
 
 Run commands from the installed skill directory with Node.js 18 or newer.
