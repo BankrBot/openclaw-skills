@@ -8,6 +8,8 @@
 //   entry.mjs plan   --market AAPL --usd 50 --wallet 0x… --quote 311.20 --quote-age-s 90 [--iv 0.28 | --w 0.04] [--width standard]
 //   entry.mjs size   --market AAPL --usd 50 --wallet 0x… --tick-lower -11710 --tick-upper -10910   (ticks from plan output)
 //   entry.mjs settle --market AAPL --wallet 0x… --mint-tx 0x… [--entry-usd 50] [--state-path p]
+//                    [--recenter-of <oldTokenId> --direction up|down]  <- REQUIRED on a recenter:
+//                    carries the trend-brake history forward from the closed position
 //
 // Output: ONE JSON object on stdout: {ok, phase, gates?, band?, txs?, report, next?}
 // Gates fail closed: any failed gate -> exit code 1 and {ok:false, gate:"…"}.
@@ -19,6 +21,7 @@ import {
   MAX_UINT256,
   ERC721_TRANSFER_TOPIC,
   CL_GAUGE_FACTORY,
+  GAS_MIN_ETH,
 } from "./lib/markets.mjs";
 import {
   addrWord,
@@ -33,6 +36,7 @@ import {
   geckoPool,
   aeroSpot,
   aeroHourlyCandles,
+  ethBalance,
   tx,
 } from "./lib/chain.mjs";
 import {
@@ -97,11 +101,15 @@ async function plan() {
     fail("nav", "equity entry requires --quote and --quote-age-s (fresh real-world quote)");
   }
 
-  const gecko = await geckoPool(M.pool);
-  const [slot0Res, usdcBalRes, usdcAllowRes] = await multicall([
+  const [gecko, walletEth] = await Promise.all([
+    geckoPool(M.pool),
+    ethBalance(wallet).catch(() => null), // null = unknown; agent checks gas another way
+  ]);
+  const [slot0Res, usdcBalRes, usdcAllowRes, stockBalRes] = await multicall([
     { to: M.pool, data: SEL.slot0 },
     { to: USDC, data: SEL.balanceOf + addrWord(wallet) },
     { to: USDC, data: SEL.allowance + addrWord(wallet) + addrWord(M.router) },
+    { to: M.token, data: SEL.balanceOf + addrWord(wallet) },
   ]);
   if (!slot0Res.ok) fail("rpc", "slot0 read failed");
   const poolPrice = priceFromSqrtX96(toBigInt(wordAt(slot0Res.data, 0)), M.decimals);
@@ -126,6 +134,10 @@ async function plan() {
   // ---------- gates (§5) — ALL must pass; fail closed ----------
   const volBrake = M.kind === "equity" ? 7 : 15;
   const usdcBal = usdcBalRes.ok ? Number(toBigInt(wordAt(usdcBalRes.data, 0))) / 1e6 : 0;
+  const looseStock = stockBalRes.ok
+    ? Number(toBigInt(wordAt(stockBalRes.data, 0))) / 10 ** M.decimals
+    : 0;
+  const looseStockUsd = looseStock * poolPrice;
   const ageHours = gecko.createdAt
     ? (Date.now() - Date.parse(gecko.createdAt)) / 3.6e6
     : Infinity;
@@ -153,6 +165,14 @@ async function plan() {
       limit: "<=25% of pool TVL",
     },
     {
+      // fail closed BEFORE any tx: an entry the wallet can't fund would
+      // otherwise revert mid-sequence at the swap or mint
+      name: "balance",
+      pass: usdcBal + looseStockUsd >= usd - 0.01,
+      value: +(usdcBal + looseStockUsd).toFixed(2),
+      limit: `wallet USDC + loose ${market} must cover $${usd}`,
+    },
+    {
       name: "vol-brake",
       pass: Math.abs(gecko.change24hPct) < volBrake,
       value: gecko.change24hPct,
@@ -167,14 +187,7 @@ async function plan() {
   const band = buildBand(poolPrice, quote, w, width, M.decimals, M.tickSpacing);
   const share = stockShare((poolPrice + quote) / 2, band.bandLow, band.bandHigh);
 
-  // absorb loose stock already in the wallet
-  const [stockBalRes] = await multicall([
-    { to: M.token, data: SEL.balanceOf + addrWord(wallet) },
-  ]);
-  const looseStock = stockBalRes.ok
-    ? Number(toBigInt(wordAt(stockBalRes.data, 0))) / 10 ** M.decimals
-    : 0;
-  const looseStockUsd = looseStock * poolPrice;
+  // absorb loose stock already in the wallet (read with the gate batch above)
   const swapUsd = Math.max(0, usd * share - looseStockUsd);
 
   const txs = [];
@@ -228,6 +241,10 @@ async function plan() {
     looseStockAbsorbedUsd: +looseStockUsd.toFixed(2),
     needsConcentrationConfirm: usd > 0.5 * usdcBal,
     walletUsdc: +usdcBal.toFixed(2),
+    // gas preflight (§0.5): when gasLowNeedsTopUp, fold ~$5 USDC -> ETH into
+    // the sequence's first step and mention it in the single confirmation line
+    walletEth: walletEth !== null ? +walletEth.toFixed(6) : null,
+    gasLowNeedsTopUp: walletEth !== null ? walletEth < GAS_MIN_ETH : null,
     txs,
     report: `Deposit $${usd} into the ${market} pool at $${band.bandLow.toFixed(2)} – $${band.bandHigh.toFixed(2)}?`,
     next:
@@ -389,6 +406,28 @@ async function settle() {
   const state = loadState(statePathArg);
   const entryUsd = args["entry-usd"] !== undefined ? Number(args["entry-usd"]) : null;
   const now = new Date().toISOString();
+
+  // Trend-brake history (§3): a recenter must carry the closed position's
+  // recenter log forward, or the brake can never see 2+ same-direction moves
+  // across the exit/re-enter cycle. exit.mjs finish parks closed records in
+  // state.recentExits for exactly this hand-off.
+  const recenterOf =
+    args["recenter-of"] !== undefined && args["recenter-of"] !== true
+      ? String(args["recenter-of"])
+      : null;
+  const direction =
+    args.direction === "up" || args.direction === "down" ? args.direction : null;
+  let recenters = [];
+  if (recenterOf) {
+    const prev =
+      (state.recentExits || []).find((p) => p.tokenId === recenterOf) ||
+      (state.positions || []).find((p) => p.tokenId === recenterOf);
+    recenters = [
+      ...(prev?.recenters || []),
+      { at: now, direction: direction || "unknown", from: recenterOf },
+    ].slice(-10);
+  }
+
   state.positions = (state.positions || []).filter((p) => p.tokenId !== String(tokenId));
   state.positions.push({
     market,
@@ -396,7 +435,7 @@ async function settle() {
     entryUsd,
     enteredAt: now,
     lastMintAt: now,
-    recenters: [],
+    recenters,
   });
   saveState(state, statePathArg);
 
@@ -415,7 +454,11 @@ async function settle() {
       minStakeTimeS: minStakeS,
     },
     txs,
-    stateRecorded: { entryUsd, enteredAt: now },
+    stateRecorded: { entryUsd, enteredAt: now, recentersCarried: recenters.length },
+    recenterWarning:
+      recenterOf && !direction
+        ? "recenter recorded WITHOUT --direction — the trend brake cannot match it; pass --direction up|down next time"
+        : null,
     memoryLine: `aero-stock-lp: active Aerodrome LP positions on Base — see ~/.aero-stock-lp/state.json. Manage with the aero-stock-lp skill.`,
     report:
       route === "staked"

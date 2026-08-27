@@ -8,10 +8,12 @@
 //   exit.mjs finish --market AAPL --token-id 123 --wallet 0x… [--state-path p]
 //     -> sell stock residual -> USDC, sell claimed AERO (> 0.1) -> USDC, burn
 //        (burn failure is NON-FATAL — funds are already out), remove from state
+//        (closed record parked in state.recentExits so a recenter's
+//        entry.mjs settle --recenter-of can carry the trend-brake history)
 //   exit.mjs sell-aero --wallet 0x…
 //     -> standalone AERO -> USDC sell of the wallet's AERO balance (compounding)
 
-import { getMarket, MARKETS, USDC, AERO, ROUTER_MAIN, SEL, MAX_UINT128 } from "./lib/markets.mjs";
+import { getMarket, MARKETS, USDC, AERO, ROUTER_MAIN, SEL, MAX_UINT128, GAS_MIN_ETH } from "./lib/markets.mjs";
 import {
   addrWord,
   uintWord,
@@ -21,6 +23,7 @@ import {
   toBigInt,
   toInt,
   toAddr,
+  ethBalance,
   tx,
 } from "./lib/chain.mjs";
 import { priceFromSqrtX96 } from "./lib/math.mjs";
@@ -74,9 +77,12 @@ async function begin() {
   const wallet = need("wallet");
   const idW = uintWord(tokenId);
 
-  const [ownerRes, posRes] = await multicall([
-    { to: M.npm, data: SEL.ownerOf + idW },
-    { to: M.npm, data: SEL.positions + idW },
+  const [[ownerRes, posRes], walletEth] = await Promise.all([
+    multicall([
+      { to: M.npm, data: SEL.ownerOf + idW },
+      { to: M.npm, data: SEL.positions + idW },
+    ]),
+    ethBalance(wallet).catch(() => null),
   ]);
   if (!ownerRes.ok || !posRes.ok) out({ ok: false, gate: "rpc", detail: "position reads failed" }, 1);
   const holder = toAddr(wordAt(ownerRes.data, 0));
@@ -107,6 +113,10 @@ async function begin() {
     market,
     tokenId: String(tokenId),
     wasStaked: staked,
+    // gas preflight (§0.5): when gasLowNeedsTopUp, fold ~$5 USDC -> ETH into
+    // the sequence's first step and mention it in the single confirmation line
+    walletEth: walletEth !== null ? +walletEth.toFixed(6) : null,
+    gasLowNeedsTopUp: walletEth !== null ? walletEth < GAS_MIN_ETH : null,
     txs,
     report: `Exit ${market} #${tokenId}: ${txs.length} txs (funds land in the wallet after collect).`,
     next: "submit txs in order via Bankr, then run: exit.mjs finish",
@@ -130,6 +140,11 @@ async function finish() {
       { to: M.pool, data: SEL.slot0 },
       { to: aeroPool.pool, data: SEL.slot0 },
     ]);
+  // Fail closed: a failed balance/price read here would silently skip a
+  // residual sell while the report claims the user lands in USDC.
+  if (!stockBalRes.ok || !aeroBalRes.ok || !slot0Res.ok || !aeroSlot0Res.ok) {
+    out({ ok: false, gate: "rpc", detail: "balance/price reads failed — cannot size residual sells; re-run finish" }, 1);
+  }
 
   const txs = [];
   const price = slot0Res.ok ? priceFromSqrtX96(toBigInt(wordAt(slot0Res.data, 0)), M.decimals) : 0;
@@ -160,11 +175,19 @@ async function finish() {
   // burn is cosmetic; a burn failure after collect must NOT fail the exit
   txs.push(tx(M.npm, SEL.burn + idW, `burn #${tokenId} (NON-FATAL if it reverts — funds are already out)`));
 
-  // remove from state; report basis for the final P&L decomposition
+  // Remove from state, but PARK the record in recentExits: a follow-up
+  // entry.mjs settle --recenter-of <tokenId> pulls the trend-brake history
+  // from there. Without this hand-off the brake resets on every recenter.
   const statePathArg = args["state-path"];
   const state = loadState(statePathArg);
   const rec = (state.positions || []).find((p) => p.tokenId === String(tokenId));
   state.positions = (state.positions || []).filter((p) => p.tokenId !== String(tokenId));
+  if (rec) {
+    state.recentExits = [
+      ...(state.recentExits || []),
+      { ...rec, closedAt: new Date().toISOString() },
+    ].slice(-10);
+  }
   saveState(state, statePathArg);
 
   out({
@@ -187,8 +210,10 @@ async function sellAero() {
     { to: AERO, data: SEL.allowance + addrWord(wallet) + addrWord(ROUTER_MAIN) },
     { to: aeroPool.pool, data: SEL.slot0 },
   ]);
-  const aeroRaw = aeroBalRes.ok ? toBigInt(wordAt(aeroBalRes.data, 0)) : 0n;
+  if (!aeroBalRes.ok) out({ ok: false, gate: "rpc", detail: "AERO balance read failed — re-run" }, 1);
+  const aeroRaw = toBigInt(wordAt(aeroBalRes.data, 0));
   if (aeroRaw <= 10n ** 17n) out({ ok: true, phase: "sell-aero", txs: [], report: "AERO balance below 0.1 — nothing to sell." });
+  if (!aeroSlot0Res.ok) out({ ok: false, gate: "rpc", detail: "AERO pool price read failed — cannot set minOut; re-run" }, 1);
   const aeroPrice = priceFromSqrtX96(toBigInt(wordAt(aeroSlot0Res.data, 0)), 18);
   const txs = [];
   const allow = aeroAllowRes.ok ? toBigInt(wordAt(aeroAllowRes.data, 0)) : 0n;
