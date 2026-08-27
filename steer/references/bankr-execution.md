@@ -12,7 +12,7 @@ The Bankr Wallet request must preserve the Steer transaction exactly:
 {
   "transaction": {
     "to": "<prepared request.transaction.to>",
-    "chainId": 8453,
+    "chainId": <prepared request.transaction.chainId>,
     "value": "<prepared request.transaction.value>",
     "data": "<prepared request.transaction.data>"
   },
