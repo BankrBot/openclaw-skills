@@ -15,6 +15,7 @@ import {
   SEL,
   CL_GAUGE_FACTORY,
   MAX_UINT128,
+  GAS_MIN_ETH,
 } from "./lib/markets.mjs";
 import {
   addrWord,
@@ -24,8 +25,10 @@ import {
   toBigInt,
   geckoPool,
   aeroSpot,
+  ethBalance,
   tx,
 } from "./lib/chain.mjs";
+import { priceFromSqrtX96 } from "./lib/math.mjs";
 import {
   discoverPositions,
   readPosition,
@@ -61,10 +64,11 @@ async function main() {
   const knownIds = Object.fromEntries(
     (state.positions || []).map((p) => [p.tokenId, p.market])
   );
-  const [found, loose, spot] = await Promise.all([
+  const [found, loose, spot, walletEth] = await Promise.all([
     discoverPositions(wallet, knownIds),
     looseBalances(wallet),
     aeroSpot().catch(() => null),
+    ethBalance(wallet).catch(() => null),
   ]);
 
   // gecko + minStakeTimes once per market that has a position
@@ -174,7 +178,9 @@ async function main() {
           emisDen > 0n ? (p.rewardRatePerSec * 31536000 * spot) / Number(emisDen) : 0;
         const current = p.staked ? emisPerL : feePerL;
         const other = p.staked ? feePerL : emisPerL;
-        if (current > 0 && other >= HYSTERESIS * current) {
+        // other > 0 alone covers the dead-route case (current = 0, e.g. a
+        // killed gauge): any paying alternative beats a route paying nothing
+        if (other > 0 && other >= HYSTERESIS * current) {
           entry.routeSwitchProposed = p.staked ? "unstake -> collect fees" : "stake -> earn AERO";
           if (p.staked) {
             txs.push(
@@ -225,6 +231,7 @@ async function main() {
         reentryCostEstUsd: +reentryCost.toFixed(2),
         costHurdleMet: hurdleMet,
         trendBrake,
+        priceDirection: direction,
         quoteProvided: quote !== null || f.market === "AERO",
         action: !hurdleMet
           ? "hold — waiting out the cost hurdle"
@@ -232,7 +239,7 @@ async function main() {
             ? "stand aside in cash — trend brake (2+ same-direction recenters)"
             : quote === null && f.market !== "AERO"
               ? "exit-ready, but re-entry BLOCKED: no fresh quote passed (--quote-" + f.market + ")"
-              : "exit and re-enter: run exit.mjs begin, then entry.mjs plan",
+              : `exit and re-enter: exit.mjs begin/finish, entry.mjs plan/size, then settle --recenter-of ${f.tokenId} --direction ${direction} (records the trend-brake history)`,
       };
       report.push(
         `${f.market}: $${value.toFixed(2)}, OUT of range ($${bandLow.toFixed(2)} – $${bandHigh.toFixed(2)}, now $${p.poolPrice.toFixed(2)}), earning nothing — ${entry.outOfRange.action}.`
@@ -241,16 +248,26 @@ async function main() {
     positions.push(entry);
   }
 
-  // loose balances are real book money
+  // loose balances are real book money — including stock in markets with no
+  // open position (mid-recenter, after a partial exit): price those off slot0
+  // rather than silently valuing them at $0
+  const looseStockMarkets = Object.keys(MARKETS).filter((m) => m !== "AERO" && loose[m] > 0);
+  const loosePrices = {};
+  const unpriced = looseStockMarkets.filter((m) => !positions.some((p) => p.market === m));
+  if (unpriced.length) {
+    const res = await multicall(unpriced.map((m) => ({ to: MARKETS[m].pool, data: SEL.slot0 })));
+    unpriced.forEach((m, i) => {
+      if (res[i].ok)
+        loosePrices[m] = priceFromSqrtX96(toBigInt(wordAt(res[i].data, 0)), MARKETS[m].decimals);
+    });
+  }
   const looseUsd =
     loose.USDC +
     (spot ? loose.AERO * spot : 0) +
-    Object.keys(MARKETS)
-      .filter((m) => m !== "AERO" && loose[m] > 0)
-      .reduce((s, m) => {
-        const pos = positions.find((p) => p.market === m);
-        return s + loose[m] * (pos ? pos.poolPrice : 0);
-      }, 0);
+    looseStockMarkets.reduce((s, m) => {
+      const pos = positions.find((p) => p.market === m);
+      return s + loose[m] * (pos ? pos.poolPrice : loosePrices[m] || 0);
+    }, 0);
 
   report.push(
     `Total: $${(totalUsd).toFixed(2)} in positions${pnlKnown && positions.length ? `, ${totalPnl >= 0 ? "+" : ""}$${totalPnl.toFixed(2)} net` : ""}; loose wallet balances ~$${looseUsd.toFixed(2)}. Emissions reset Thursday.`
@@ -262,10 +279,15 @@ async function main() {
     positions,
     loose,
     aeroSpot: spot,
+    walletEth: walletEth !== null ? +walletEth.toFixed(6) : null,
+    gasLowNeedsTopUp: walletEth !== null ? walletEth < GAS_MIN_ETH : null,
     txs,
     report,
     notes: [
       positions.length === 0 ? "No LP positions found on-chain for this wallet." : null,
+      walletEth !== null && walletEth < GAS_MIN_ETH
+        ? "Base ETH is low — fold a ~$5 USDC -> ETH top-up into the next tx sequence's first step (§0.5)"
+        : null,
       found.truncated
         ? "wallet holds many position NFTs — enumeration capped at the most recent 400; state-file positions were checked directly regardless"
         : null,

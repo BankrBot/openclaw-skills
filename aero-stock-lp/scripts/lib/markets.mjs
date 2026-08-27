@@ -129,6 +129,10 @@ export const ERC721_TRANSFER_TOPIC =
 export const MAX_UINT256 = (1n << 256n) - 1n;
 export const MAX_UINT128 = (1n << 128n) - 1n;
 
+// Gas preflight (SKILL.md §0.5): below this native ETH balance, the agent
+// folds a small USDC -> ETH top-up into the sequence's first step.
+export const GAS_MIN_ETH = 0.0015;
+
 export function getMarket(name) {
   const m = MARKETS[String(name || "").toUpperCase()];
   if (!m) {

@@ -203,6 +203,23 @@ export async function aeroHourlyCandles() {
 
 // ---------- unsigned tx helper ----------
 
-export function tx(to, dataNo0x, label) {
-  return { label, to, data: "0x" + dataNo0x, value: "0", chainId: 8453 };
+// Emits validated, ready-to-submit calldata. Accepts data with or without a
+// 0x prefix (selectors in markets.mjs carry one) and normalizes to exactly
+// one — blindly prepending here once produced 0x0x calldata that reverted
+// on submission. Fails closed on anything that isn't clean hex.
+export function tx(to, data, label) {
+  const d = "0x" + strip0x(String(data)).toLowerCase();
+  if (d.length < 10 || !/^0x(?:[0-9a-f]{2})+$/.test(d)) {
+    throw new Error(`malformed calldata for "${label}" — refusing to emit tx`);
+  }
+  if (!/^0x[0-9a-fA-F]{40}$/.test(to)) {
+    throw new Error(`malformed to-address for "${label}" — refusing to emit tx`);
+  }
+  return { label, to, data: d, value: "0", chainId: 8453 };
+}
+
+// native Base ETH balance (for the gas preflight)
+export async function ethBalance(addr) {
+  const out = await rpc("eth_getBalance", [addr, "latest"]);
+  return Number(BigInt(out)) / 1e18;
 }
