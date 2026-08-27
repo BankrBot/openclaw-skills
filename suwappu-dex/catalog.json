@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "suwappu-dex",
+  "provider": "Suwappu",
+  "providerUrl": "https://suwappu.bot",
+  "logo": null,
+  "demo": {
+    "title": "suwappu-quote.sh",
+    "language": "bash",
+    "code": "# Get a free agent key\ncurl -X POST https://api.suwappu.bot/v1/agent/register \\\n  -H 'Content-Type: application/json' -d '{\"name\":\"my-agent\"}'\nexport SUWAPPU_API_KEY=suwappu_sk_...\n\n# Add Suwappu to your agent (read-only by default — execute_swap excluded)\nopenclaw mcp add suwappu --url https://api.suwappu.bot/mcp \\\n  --transport streamable-http \\\n  --header \"Authorization=Bearer $SUWAPPU_API_KEY\" --exclude execute_swap\n\n# Now: \"quote 0.1 ETH to USDC on Base\" -> ~172 USDC via OKX (price impact 0.96%)\n# 14 chains, 10+ providers, best-route automatically."
+  },
+  "setup": [
+    "Get a free API key: `curl -X POST https://api.suwappu.bot/v1/agent/register -d '{\"name\":\"my-agent\"}'`",
+    "Set `SUWAPPU_API_KEY` (suwappu_sk_...) in your environment",
+    "Add the MCP server: `openclaw mcp add suwappu --url https://api.suwappu.bot/mcp --transport streamable-http --header \"Authorization=Bearer $SUWAPPU_API_KEY\" --exclude execute_swap`",
+    "Read-only by default; enable `execute_swap` only on an isolated trading agent. x402 pay-per-call supported.",
+    "Source: https://github.com/BankrBot/skills/tree/main/suwappu-dex"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "suwappu-dex",
+    "command": "install the suwappu-dex skill from https://github.com/BankrBot/skills/tree/main/suwappu-dex"
+  }
+}
