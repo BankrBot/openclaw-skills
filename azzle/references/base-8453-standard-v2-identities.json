@@ -1,0 +1,110 @@
+{
+  "market": "standard",
+  "version": "2.0.0",
+  "chainId": "8453",
+  "deploymentBlock": 49762587,
+  "deployer": "0x56C1A78c58404B6C7356D4Aad3967859d8bc85E1",
+  "factory": "0x386A99c2e6073a129482a2C92c92d196e123D843",
+  "governance": "0xB459145b74Ca4B198f73C0d573a161e85CA76D27",
+  "bundleHash": "0x4cdf297b3aee0f26d91edea41dc99f993f6729d6d8aae7cce1254a51d4ad6f61",
+  "finalizedTx": "0xb19a2384139127ca4e9b30c30a365fa7a366f8f10d0effe0147365dc0265f146",
+  "suiteDeployedTopic": "0xa2baaa630937144a1597d90cce156f73a99fc63b70c9d4b6ab9803f1fe44eccc",
+  "suiteDeployedHash": "0x1d0014488380501192214cc0defeb004b0493b6c604a7a574bbc7a131e6f5e5c",
+  "identities": {
+    "factory": {
+      "address": "0x386a99c2e6073a129482a2c92c92d196e123d843",
+      "runtimeCodeHash": "0x37a022f9bacfd52aa8219e6c41be0dab2010c32174d42cbc32e19224fd7f3ddd",
+      "implementationCodeHash": null
+    },
+    "observationOracle": {
+      "address": "0xa6ebecbe792c00d0b42a16b790ab9fe356654c0a",
+      "runtimeCodeHash": "0xae79f3f1de7482a7f341c498f93ba23f5148917a57d1010f2bce14880b9683f1",
+      "implementationCodeHash": null
+    },
+    "twapAdapter": {
+      "address": "0xdbf2f47386abb343b5c7c1613effec4f8ae341b8",
+      "runtimeCodeHash": "0x844772d3d8f305a4cfefe0cdc6c66556fff4f7dce0768869a9f3ee88ec9d1d64",
+      "implementationCodeHash": null
+    },
+    "usdOracle": {
+      "address": "0xadf46968cdfaab7298e470e475df0dd88da02e7a",
+      "runtimeCodeHash": "0x0d673f0a4a4bde025539592508d753c80ec2b589366568275693b307904745f4",
+      "implementationCodeHash": null
+    },
+    "pricingPolicy": {
+      "address": "0xb386a02d6403a088723e502dc2bb78a6b699317a",
+      "runtimeCodeHash": "0x3d8c47a4d3297b68b5e09ccb715cbb08133ccaed6ef6030776615a29dbb99d95",
+      "implementationCodeHash": null
+    },
+    "depositVault": {
+      "address": "0x50fe780072d62e6bc07de096b6e58a141f385d2f",
+      "runtimeCodeHash": "0x300df2a98837db1ed9e0f41593de0dc9717541a7ff82f060d66cc2df49b02505",
+      "implementationCodeHash": null
+    },
+    "escrowVault": {
+      "address": "0xa10e05505a334963c44cd63cecd204840d5122d1",
+      "runtimeCodeHash": "0x6e88d02d093a12f8c0b57a410114896886777122e0bf2d90c9b8b22f503360ce",
+      "implementationCodeHash": null
+    },
+    "reputationRegistry": {
+      "address": "0xb5827bb3bb9760ed72ea1416818188a8e71851b6",
+      "runtimeCodeHash": "0x7f7bc0837edccfc793a06de7a5b2f5ed2406c876fe5df1e3b577af1a429c1dba",
+      "implementationCodeHash": null
+    },
+    "verifierBondVault": {
+      "address": "0xfef0722d2f3ba0feb59b3fd5dcaaf49e69bd5387",
+      "runtimeCodeHash": "0xe99dd07c66ef2f60ffc489190a204ddb8a85a7f894a4fb3a2ad32b8313fd7f0b",
+      "implementationCodeHash": null
+    },
+    "stakingVault": {
+      "address": "0xc39ca289303eab7687b9d6a17b18538b75e7246b",
+      "runtimeCodeHash": "0xa3c753c9ee8fe0ed418e6bee84edf6bc42da4a6c137d73ee4184a727d6f420a8",
+      "implementationCodeHash": null
+    },
+    "treasuryRouter": {
+      "address": "0x0c89ed8e1f416e038c81f6ba3335e302281bbad3",
+      "runtimeCodeHash": "0x564ead7cf75b8e8cb2b527d206dc7d4f8c52495151abec8f36d646981a38dcd4",
+      "implementationCodeHash": null
+    },
+    "taskRegistry": {
+      "address": "0xc59266071794210e68be4c0cdb6d5f4cf652c300",
+      "runtimeCodeHash": "0xd36a6c9f5d1ec16c605a88c9c81da5a90778d33494eaa5d8b227c0a0975cedfc",
+      "implementationCodeHash": null
+    },
+    "arbitrationModule": {
+      "address": "0x1003592a2eef71b15a21457910007b38b0e2027a",
+      "runtimeCodeHash": "0x76bed43f43b17e14ff9b69d4eb996ba0df833eac16f1e80f823bf523487c38e0",
+      "implementationCodeHash": null
+    },
+    "usdcWethLeg": {
+      "address": "0x186ee76400e08373ea3f6184a11d8512bb8da168",
+      "runtimeCodeHash": "0xf14bb2db40e5174f1cd532802ab5e1d160c17c52986ca383204a0477292e4210",
+      "implementationCodeHash": null
+    },
+    "exactInputExecutor": {
+      "address": "0x1e343e3fdcc8f046e5c713dabf9226e281bd41a8",
+      "runtimeCodeHash": "0xc0d316a4993dfd990fc459787057aa65f5263992d9f4273190d50fb4030b05ea",
+      "implementationCodeHash": null
+    },
+    "paymentGateway": {
+      "address": "0x16da063f3d99edb9920adeb9aae55cfa32434e1c",
+      "runtimeCodeHash": "0xb6df6a44e00bbce2f3dc447292bf178aeace6431c947341ee1659df57ea97bfd",
+      "implementationCodeHash": null
+    },
+    "taskScopeRegistry": {
+      "address": "0x2ab611c0fd3c8cc91d1252ba99a37fe7b977d964",
+      "runtimeCodeHash": "0xb035727a20c25114182cc7be07967c57f877399c1b1ccf15a029c4b428b0e6c3",
+      "implementationCodeHash": null
+    },
+    "azl": {
+      "address": "0x931517e9502f9d52cdf6f5ac7fca7925e2a1bba3",
+      "runtimeCodeHash": "0x1e178a8dde9b688e83492d70f59881c9a43f42464b6a8c4b6f3ae1a96212a19b",
+      "implementationCodeHash": null
+    },
+    "usdc": {
+      "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      "runtimeCodeHash": "0xa6705a10bb756b5dea144591118be77d7af0c3eee3bf2dfe2583dcb0364fefab",
+      "implementationCodeHash": "0x11b75a237997ab8328f65b2d5a55c10f0346d0a175741ed42ddf4f2c66b9e873"
+    }
+  }
+}

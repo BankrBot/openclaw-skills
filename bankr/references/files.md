@@ -17,11 +17,15 @@ Quotas are checked at the moment of write and resolved from your current Club st
 ## Layout
 
 ```
-/                    ← your root
+/                    ← your root (permanent, wallet-scoped)
 ├─ .memory/          ← auto-managed agent memory
 ├─ cli/              ← installed CLI skills and manifests
 └─ (your folders)
+
+/runs/               ← run outputs (conversation-scoped, expiring) — see below
 ```
+
+`/runs` is a reserved namespace: you can't create a folder of your own by that name.
 
 ## Using Files From Chat
 
@@ -36,6 +40,25 @@ delete the draft from yesterday
 ```
 
 A **path** (`/research/notes.md`) works anywhere a file ID does, on every file tool. When the agent generates a document you get a clickable link in the chat that opens the built-in preview/editor.
+
+## Run Outputs (`/runs`)
+
+Your permanent files are one half of what the agent can see. The other is `/runs` — a scratch namespace holding what a run produced: deliverables a sandboxed skill wrote, and tool results too large to sit in the conversation.
+
+- **Anything a sandboxed run writes to `./output/` is persisted automatically** to a `/runs/…` path when the call ends, and the run's summary lists those paths. You can ask the agent to read them back by path in a later turn, without re-running anything.
+- **Oversized tool results are stored rather than pasted.** A large result is written to `/runs` with a short preview kept inline, so a big fetch doesn't crowd out the rest of the conversation — the agent re-reads the full file by path when it needs it.
+- Ask for `/runs` listings the same way you ask for any other folder: *"list my run files"*, *"read /runs/… back to me"*.
+
+| | Limit |
+|---|---|
+| Scope | Your wallet **and** the conversation — run files aren't visible from another thread |
+| Retention | ~14 days, refreshed on each read or write, so an active conversation's files don't lapse |
+| Per file | 10 MB |
+| Per conversation | 100 MB across all run files |
+| Per sandbox call | 25 files / 10 MB synced out of `./output/` |
+| Content | **Text only.** Binary output (images, archives, PDFs) is refused — a run publishes those as artifacts instead |
+
+Run outputs are deliberately not durable storage. When something matters beyond the conversation, have the agent save it into your own filesystem (`/reports/…`), which is permanent and wallet-wide.
 
 ## Asking Questions About a File
 
