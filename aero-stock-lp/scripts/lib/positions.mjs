@@ -96,24 +96,25 @@ export async function discoverPositions(wallet, knownIds = {}) {
       });
     }
   });
+  const posCalls = [];
   if (enumCalls.length) {
     const ids = await multicall(enumCalls.map((e) => e.call));
-    const posCalls = ids
-      .map((r, i) => ({
-        npm: enumCalls[i].npm,
-        tokenId: r.ok ? toBigInt(wordAt(r.data, 0)) : null,
-      }))
-      .filter((x) => x.tokenId !== null);
-    // state-file positions are always checked, even past the cap
-    // (skip ones already found staked — the gauge holds those NFTs)
-    for (const [id, market] of Object.entries(knownIds)) {
-      if (
-        !posCalls.some((p) => String(p.tokenId) === String(id)) &&
-        !found.some((f) => String(f.tokenId) === String(id))
-      ) {
-        posCalls.push({ npm: MARKETS[market]?.npm || NPM_EQUITY, tokenId: BigInt(id) });
-      }
+    for (let i = 0; i < ids.length; i++) {
+      if (ids[i].ok) posCalls.push({ npm: enumCalls[i].npm, tokenId: toBigInt(wordAt(ids[i].data, 0)) });
     }
+  }
+  // state-file positions are ALWAYS checked directly — even past the cap,
+  // even when enumeration is empty or a balance read failed (skip ones
+  // already found staked — the gauge holds those NFTs)
+  for (const [id, market] of Object.entries(knownIds)) {
+    if (
+      !posCalls.some((p) => String(p.tokenId) === String(id)) &&
+      !found.some((f) => String(f.tokenId) === String(id))
+    ) {
+      posCalls.push({ npm: MARKETS[market]?.npm || NPM_EQUITY, tokenId: BigInt(id) });
+    }
+  }
+  if (posCalls.length) {
     const details = await multicall(
       posCalls.map((p) => ({ to: p.npm, data: SEL.positions + uintWord(p.tokenId) }))
     );

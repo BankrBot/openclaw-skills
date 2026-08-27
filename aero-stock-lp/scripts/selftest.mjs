@@ -4,7 +4,7 @@
 // Exit 0 = all pass; any failure exits 1 with the failing check named.
 
 import { MARKETS, SEL } from "./lib/markets.mjs";
-import { intWord, uintWord, addrWord, toInt, multicall, wordAt, toBigInt } from "./lib/chain.mjs";
+import { intWord, uintWord, addrWord, toInt, multicall, wordAt, toBigInt, strip0x, tx } from "./lib/chain.mjs";
 import {
   priceFromSqrtX96,
   tickFromPrice,
@@ -104,6 +104,26 @@ const swapData =
   uintWord(3400000n) +
   uintWord(0);
 check("exactInputSingle calldata = 4 + 8*32 bytes", swapData.length === 2 + (4 + 8 * 32) * 2);
+
+// --- unsigned tx hygiene (REGRESSION: SEL selectors carry 0x; a blind
+// "0x" + data in tx() once emitted 0x0x… calldata that failed on submission) ---
+const t1 = tx(MARKETS.AAPL.gauge, SEL.getReward + uintWord(123n), "claim vector");
+check("tx() exactly one 0x prefix", t1.data.startsWith("0x") && !t1.data.startsWith("0x0x"));
+check("tx() clean hex payload", /^0x(?:[0-9a-f]{2})+$/.test(t1.data));
+check("tx() selector at head", t1.data.slice(0, 10) === SEL.getReward);
+check("tx() word-aligned length", (t1.data.length - 10) % 64 === 0);
+check("tx() to is 42 chars", t1.to.length === 42);
+check("tx() value/chainId shape", t1.value === "0" && t1.chainId === 8453);
+const t2 = tx(MARKETS.AAPL.gauge, strip0x(SEL.gaugeDeposit) + uintWord(1n), "unprefixed vector");
+check("tx() normalizes unprefixed data too", t2.data.slice(0, 10) === SEL.gaugeDeposit);
+const mintTx = tx(MARKETS.AAPL.npm, mintData, "mint vector");
+check("tx() mint calldata single-prefixed", !mintTx.data.startsWith("0x0x") && mintTx.data.length === mintData.length);
+let badDataThrew = false;
+try { tx(MARKETS.AAPL.gauge, "0xZZ123", "bad calldata"); } catch { badDataThrew = true; }
+check("tx() malformed calldata throws (fail closed)", badDataThrew);
+let badToThrew = false;
+try { tx("0x1234", SEL.getReward + uintWord(1n), "bad to"); } catch { badToThrew = true; }
+check("tx() malformed to-address throws (fail closed)", badToThrew);
 
 // --- live (read-only) ---
 if (process.argv.includes("--live")) {
