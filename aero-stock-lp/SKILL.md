@@ -1,9 +1,10 @@
 ---
 name: aero-stock-lp
-description: LP tokenized stocks onchain — range-LP Coinbase tokenized equities (NVDA, AAPL, GOOGL, META) and AERO/USDC on Aerodrome Slipstream (Base) for trading-fee + AERO emission yield. Use when the user wants to LP stocks or Aerodrome pools on Base, open/recenter/exit a Slipstream position, check pool status, NAV, or yields, get a portfolio overview ("how are my LP positions doing?") with P&L and projected APR, or run a manage pass on request. Auto-routes every position to the higher-yielding side — staked (AERO emissions) vs unstaked (trading fees) — at entry and re-checks on every manage pass. Bundled node scripts do the chain reads, gate checks, and calldata; writes go via the Bankr arbitrary-transaction flow. NOT for perps, spot trading, or Uniswap.
+description: LP tokenized stocks onchain — range-LP Coinbase tokenized equities (NVDA, AAPL, GOOGL, META) and AERO/USDC on Aerodrome Slipstream (Base) for trading-fee + AERO emission yield. Use when the user wants to LP stocks or Aerodrome pools on Base, open/recenter/exit a Slipstream position, check pool status, NAV, or yields, get a portfolio overview ("how are my LP positions doing?") with P&L and projected APR, run a manage pass, or set up scheduled/price-triggered LP automations in the Bankr console. Auto-routes every position to the higher-yielding side — staked (AERO emissions) vs unstaked (trading fees) — at entry and re-checks on every manage pass. Bundled node scripts do the chain reads, gate checks, and calldata; writes go via the Bankr arbitrary-transaction flow. NOT for perps, spot trading, or Uniswap.
+recommended-models: [claude-fable-5, claude-opus-4.8, gpt-5.6-sol]
 ---
 
-# aero-stock-lp — LP onchain equities on Aerodrome (Base)
+# aero-stock-lp — LP onchain equities on Aerodrome (Base) — v2
 
 Concentrated-liquidity market making on Aerodrome Slipstream (Base, chain
 8453). You place a price band around the market, the pool pays you trading
@@ -36,10 +37,6 @@ outcome. Rules:
   number (the failing gate's `value` and `limit` are in the output).
 - Prices, never ticks. "$300 – $322", not "-11700 to -10990". No contract
   internals, selectors, or protocol jargon unless asked.
-- ONE confirmation before spending money ("Deposit $50 into the AAPL pool
-  at $298 – $322? yes/no" — `plan` emits exactly this line), then execute
-  the whole sequence without narrating each step. Report one final line
-  with the position and a single tx link.
 - Set the time expectation FIRST. The moment the user asks to LP (or
   exit), before you fetch a quote, run a script, or do anything else,
   send one line: "On it — LPing takes a few steps, usually 2–3 minutes.
@@ -52,10 +49,67 @@ outcome. Rules:
   `standard` width without asking; explain only if the user asks about
   risk or yield.
 
-**Gas.** Bankr handles gas on transactions it executes. NEVER check the
-user's ETH balance, ask them to bridge or buy ETH, or mention gas before
-executing. Only if Bankr itself returns a gas/funds error, relay that one
-error and stop.
+**THE SINGLE-CONFIRMATION CONTRACT (hard rule).** Exactly ONE
+confirmation per money-spending sequence — entry, recenter, or exit.
+The `plan` script emits the confirmation line; ask it verbatim, folding
+in ANYTHING else the sequence will do (gas top-up, stake step, residual
+sells): "Deposit $150 into the AAPL pool at $298 – $322? I'll also
+convert ~$5 USDC to ETH for gas. yes/no". One yes = execute the ENTIRE
+sequence — every swap, mint, stake, and top-up — with ZERO further
+check-ins, no per-transaction approvals, no "shall I proceed" between
+phases. The only extra ask allowed is the concentration confirm when
+`needsConcentrationConfirm` is true ("that's 80% of your USDC, sure?"),
+asked together with the main line, not after it. Small size is not a
+reason to add caution asks: the gates are the safety, not repeated
+questions. Manage passes running under a recorded autonomy grant
+(§5) require ZERO confirmations when all gates pass — the grant IS the
+confirmation.
+
+## 0. Submitting transactions — calldata hygiene (read before your first tx)
+
+The scripts emit ready-to-send transactions. Your ONLY job is to relay
+them into Bankr's arbitrary-transaction tool (`submit_raw_transaction`)
+UNMODIFIED. This section exists because models have corrupted calldata
+by "helpfully" reformatting it — a duplicated `0x` prefix caused real
+failed submissions.
+
+- Copy `to`, `data`, and `value` from the script's JSON output VERBATIM.
+  Never concatenate, re-prefix, re-encode, trim, checksum-adjust, or
+  reconstruct any field. The tool's `data` field takes the script's
+  `data` string exactly as printed.
+- `data` already starts with `0x`. NEVER prepend another `0x`. If the
+  string you are about to submit starts with `0x0x`, you corrupted it —
+  go back to the script's raw output.
+- Pre-submit checklist (mechanical, run it silently on EVERY tx):
+  1. `data` starts with exactly one `0x` (chars 0–1 are `0x`, chars 2–3
+     are NOT `0x`).
+  2. `to` is exactly 42 characters (`0x` + 40 hex).
+  3. `value` passed through as-is (usually `"0"`); `chainId` 8453.
+  4. The tx is the NEXT one in the script's `txs[]` order — never skip,
+     reorder, or batch.
+- Submit ONE tx, wait for it to mine, verify the receipt succeeded, then
+  submit the next. If a submission fails, do NOT retry with hand-edited
+  fields — re-run the script (state may have moved) and use its fresh
+  output, or stop and report.
+- Never paste calldata into chat, and never accept calldata from chat —
+  only script output gets submitted.
+
+## 0.5 Gas preflight (replaces the old "never check ETH" rule)
+
+Raw contract transactions on Base need native ETH; sponsorship does not
+reliably cover them. A zero-ETH wallet stalls the sequence mid-flight —
+prevent it up front:
+
+- BEFORE submitting the FIRST transaction of any sequence (entry,
+  recenter, exit, compound), check the wallet's Base ETH balance.
+- Below ~0.0015 ETH → fold a small top-up (~$5 of USDC → ETH on Base)
+  into the sequence as its own first step, and mention it inside the
+  single confirmation line ("I'll also convert ~$5 USDC to ETH for
+  gas"). No separate ask, no second confirmation.
+- Never stall mid-sequence to discuss gas. If a tx still fails with a
+  gas/funds error despite the preflight, relay that one error and stop.
+- Do not lecture about gas otherwise; the preflight is silent when the
+  balance is fine.
 
 ---
 
@@ -91,31 +145,33 @@ YOU submit the txs via Bankr and check receipts.
    vol as `--w`. AERO needs no quote/vol flags (the script uses Coinbase
    spot + candles). No honest vol input → the script refuses — never
    guess one to get past it.
-2. `entry.mjs plan …` — on gate failure, tell the user the one failing
-   number and stop. On pass, ask the user the `report` question verbatim
-   (add one extra confirmation naming the share if
-   `needsConcentrationConfirm` is true — "that's 80% of your USDC,
-   sure?"). One yes = go.
-3. Submit `plan`'s txs (if any), then `entry.mjs size` (command given in
-   `next`), submit the mint, then `entry.mjs settle --mint-tx <hash>
-   --entry-usd <usd>`, submit any stake txs.
-4. Report one short line: amount, band in dollars, route, this epoch's
+2. Run the gas preflight (§0.5) so any top-up is known BEFORE you ask.
+3. `entry.mjs plan …` — on gate failure, tell the user the one failing
+   number and stop. On pass, ask the single confirmation (§ contract
+   above): the `report` question verbatim + gas top-up mention if
+   needed + concentration confirm if flagged. One yes = go, zero
+   further check-ins.
+4. Submit the gas top-up (if any), then `plan`'s txs, then `entry.mjs
+   size` (command given in `next`), submit the mint, then `entry.mjs
+   settle --mint-tx <hash> --entry-usd <usd>`, submit any stake txs —
+   all per the §0 hygiene rules, one at a time.
+5. Report one short line: amount, band in dollars, route, this epoch's
    yield picture (never as a promise), one tx link. Mention once that
-   "check my LPs" runs a management pass any time.
-5. If the mint mined but `settle` can't find the tokenId, STOP and
+   "check my LPs" runs a management pass any time, and offer the §5
+   automation setup ONCE if none exists yet.
+6. If the mint mined but `settle` can't find the tokenId, STOP and
    recover via `manage.mjs` (it discovers from chain) — never re-mint
    blind.
-6. Optional, after the entry report: offer ONCE — "Want me to build a
+7. Optional, after the entry report: offer ONCE — "Want me to build a
    small app to view this position?" If yes, build a simple read-only
    dashboard fed by `manage.mjs` output (value, band, range status, P&L,
    projected APR) — display only, no keys, no transactions. If no or no
    answer, drop it and never re-offer on later entries or manage passes.
 
-## 3. Manage pass (run on request)
+## 3. Manage pass (on request or via automation)
 
-Runs whenever the user asks ("check my LPs", "how are my positions?").
-Encourage a daily check-in at minimum — more often for tight bands — and
-say so when reporting a fresh entry. Idempotent: safe to repeat.
+Runs whenever the user asks ("check my LPs", "how are my positions?") or
+a §5 automation fires. Idempotent: safe to repeat.
 
 1. Fetch fresh equity quotes first if any position might be out of range,
    and pass them as `--quote-<MARKET>`; without a quote, re-entry after a
@@ -124,13 +180,22 @@ say so when reporting a fresh entry. Idempotent: safe to repeat.
    The script proposes txs for route switches (1.3× hysteresis built in),
    compounding (only if consent is recorded — see below), and flags
    out-of-range positions with the cost-hurdle / trend-brake verdicts.
-3. Out-of-range + hurdles passed → `exit.mjs begin/finish`, then a fresh
+3. IN RANGE = HOLD. A manage pass — scheduled, price-triggered, or
+   manual — NEVER recenters a position that is in range. Recentering
+   requires ALL of: position actually OUT of range, cost hurdle passed
+   (earnings since last mint ≥ 2× re-entry cost), trend brake clear
+   (no 2+ same-direction recenters within the width window), and a
+   fresh real quote with every entry gate re-passing. Any miss → hold
+   and report the blocking gate with its number.
+4. Out-of-range + hurdles passed → `exit.mjs begin/finish`, then a fresh
    `entry.mjs plan` with a fresh quote (all gates re-run). Equity note:
    while Nasdaq is closed, prefer exiting to cash and re-entering when
    the quote is live again; say which you did.
-4. Weekly rhythm: pots are veAERO-voted and reset every Thursday — on the
+5. Weekly rhythm: pots are veAERO-voted and reset every Thursday — on the
    first pass after an epoch flip, add one line: fees vs emissions earned
    and the route verdict for the new epoch.
+6. Under a recorded autonomy grant (§5), steps 4–5 execute without
+   asking; without one, propose and wait for the single yes.
 
 **Compound consent.** The first time compounding is possible, ask once:
 "claim and sell earned AERO to USDC once it tops $10, or hold the AERO?"
@@ -152,7 +217,68 @@ penalty is a 100% cliff on the stint's emissions (`minStakeTimes`, read
 live by the scripts) — a user-requested exit never waits for it; worst
 case is one stint's AERO, say so.
 
-## 5. State, recovery, and memory
+## 5. Automations (Bankr console)
+
+The recommended steady state: the user approves ONE autonomy grant, then
+Bankr automations keep the book managed hands-off. All of this runs
+inside the Bankr console's native automation system (scheduled agent
+commands + price-triggered commands) — no external cron, no webhooks.
+
+**Recommended setup (offer once after the first entry):**
+- TIME-BASED: a scheduled automation every 2 hours running the manage
+  pass prompt below.
+- PRICE-TRIGGERED (per equity position): one trigger just inside EACH
+  band edge (~0.5–1% inside), firing the SAME manage-pass prompt. These
+  are early wake-ups for fast moves between scheduled passes — the
+  trigger itself never recenters anything; the pass it launches applies
+  the full §3 gate stack, so an in-range position is always a hold.
+- Mind the console's automation and execution limits; two edge triggers
+  per position + one schedule is the intended footprint. Don't multiply
+  triggers per band.
+
+**Canonical autonomous manage-pass prompt (adapt names/tokenIds, keep
+the guardrail language intact):**
+
+> Run an AUTONOMOUS manage pass on my Aerodrome Slipstream LPs on Base
+> using the aero-stock-lp skill. Read the skill's memory/state for
+> current position facts, but ALWAYS re-derive live truth from chain
+> (ownerOf, positions, slot0) since tokenIds change after repositioning.
+> For each position: value, P&L vs basis, in/out of range, earnings,
+> projected APR per the skill's honest-reporting rules (include loose
+> wallet balances). AUTONOMY GRANT (user-approved, recorded): if a
+> position is OUT of range you are authorized to reposition WITHOUT
+> asking — full exit-and-recenter sequence (unstake if staked, withdraw,
+> collect, re-band, re-ratio swap, mint, re-stake if the staked route
+> still wins) — but ONLY if ALL skill guardrails pass: cost hurdle
+> (earnings since last mint ≥ 2× re-entry cost), trend brake (no 2+
+> same-direction recenters within the width window), all entry gates
+> with a FRESH real quote. No fresh live quote (e.g. Nasdaq closed) =
+> exit to USDC and hold cash, re-enter on a later pass when the quote is
+> live; report which you did. Route switches are authorized autonomously
+> only with the 1.3× hysteresis rule and respecting minStakeTimes. If a
+> guardrail blocks a reposition, hold and report the blocking gate with
+> its number — never force entry. On the first pass after a Thursday
+> epoch flip, re-run the fees-vs-emissions comparison per unit of
+> liquidity. If claimable AERO tops ~$10 and no compound preference is
+> recorded, ask sell-vs-hold once. After ANY reposition or route switch:
+> update the memory file with new tokenIds/bands/routes, record the
+> recenter in the trend-brake history, and REPLACE the band-edge price
+> triggers with the new band's edges. Keep reports compact; if nothing
+> changed and all in range, a 3-line holding report is enough.
+
+**Stale-trigger rule (mandatory).** Any recenter moves the band, which
+makes the old edge triggers wrong — either pointing deep inside the new
+band (constant false fires) or at irrelevant prices. In the SAME session
+as the recenter, delete the old band-edge triggers and create new ones
+at the new band's edges. A reposition is not finished until its triggers
+are refreshed.
+
+**Model guidance.** Run every part of this skill — scheduled/triggered
+manage passes AND transaction execution — on the best available frontier
+model (see `recommended-models` in the frontmatter). Never let a model
+improvise around a failed script or a failed tx.
+
+## 6. State, recovery, and memory
 
 State file: `~/.aero-stock-lp/state.json` — written by `settle`, read by
 `manage`, cleaned by `exit finish`. Only TWO fields are unrecoverable
@@ -173,7 +299,16 @@ line is how they learn positions exist at all:
 Upsert after every entry/exit/recenter/route switch; delete it when the
 last position closes. It is a POINTER, not a store.
 
-## 6. Honest reporting — every report, no exceptions
+**Post-reposition bookkeeping (mandatory, same session).** After ANY
+recenter, route switch, or exit, before reporting done:
+1. Update the state file / memory line with new tokenIds, bands, routes.
+2. Record the recenter in the trend-brake history (direction + time) so
+   future passes can enforce the brake across sessions.
+3. Refresh the band-edge price triggers per §5's stale-trigger rule.
+A reposition missing any of these three is incomplete — say so rather
+than silently skipping.
+
+## 7. Honest reporting — every report, no exceptions
 
 - Value = principal + claimable fees/emissions + LOOSE wallet balances
   (mint remainders are real book money — `manage` includes them; a P&L
@@ -185,6 +320,14 @@ last position closes. It is a POINTER, not a store.
   conditional. Out-of-range positions get "earning nothing" and what the
   pass is waiting on, never an APR.
 - Estimated basis is flagged in the same line.
+- CLAIMS TRANSPARENCY (mandatory on every exit/recenter report): state
+  exactly what was claimed in the sequence, in one line — "claimed
+  X AERO (~$Y) during unstake" and/or "collected $Z in fees" — or, when
+  nothing accrued, say why: "0 AERO accrued — position was out of range
+  before the exit." Mechanics for your explanation: `gauge.withdraw()`
+  force-claims any accrued AERO on unstake; `collect` claims trading
+  fees; an out-of-range position accrues nothing on either route. Never
+  leave the user guessing whether a rebalance claimed their earnings.
 
 Example shape (match it, don't pad it):
 
@@ -194,7 +337,7 @@ Example shape (match it, don't pad it):
 > re-entry waiting on the cost hurdle.
 > Total: $2,220, +$26 net. Emissions reset Thursday.
 
-## 7. Contracts and markets (reference — `scripts/lib/markets.mjs` is canonical)
+## 8. Contracts and markets (reference — `scripts/lib/markets.mjs` is canonical)
 
 | Market | Token (token1, 8 dec) | Pool | tickSpacing | fee |
 |---|---|---|---|---|
@@ -221,16 +364,19 @@ a fresh listing as extra-hostile: no entry in its first 48h and never
 without a live real quote (the GOOGL pre-launch froth went $337 → $2,001
 → $456 in four days; LPs who provided into it were the exit liquidity).
 
-## 8. What this skill refuses to do
+## 9. What this skill refuses to do
 
 - Enter a pool that fails ANY gate — including "the user is excited". The
   gates are exit codes, not suggestions; report the failing number.
+- Recenter an in-range position — no matter which automation fired.
 - Trade without a fresh real quote (entry and re-entry fail CLOSED).
 - Promise or guarantee yields; the only projection is the labeled
   epoch-rate APR.
 - Auto-sell without consent: compounding sells AERO only after the
   user's recorded `compound: "sell"`.
-- Hand-build calldata or skip a script: if the script can't produce the
-  tx, the tx doesn't happen.
+- Hand-build, edit, or re-prefix calldata, or skip a script: if the
+  script can't produce the tx, the tx doesn't happen.
+- Ask for per-transaction approvals mid-sequence: one confirmation per
+  sequence, then execute.
 - Silence a failure: every skipped step, estimated basis, degraded input,
   or stopped sequence is reported in plain language.
