@@ -19,7 +19,7 @@ Create, curate, deposit into, and manage LP vaults with the Steer CLI. Establish
 
 ## Before use
 
-1. Install or upgrade to the npm `latest` release with `npm install -g '@steerprotocol/cli@latest'`, then run `steer --version`. At publication, `latest` is `4.5.0`. Use the installed latest release, never a pinned or minimum-version range. Stop if installation or version verification fails.
+1. At the start of each live workflow, run `node scripts/ensure-steer-cli.mjs`. It resolves npm latest, installs that exact version only when needed, and verifies the `steer` binary on PATH matches. Proceed only when its JSON result has `ok: true`. Do not re-run it between quote and preparation; if it updated the CLI, inspect the relevant command help and schema before collecting live data.
 2. Configure `STEER_RPC_URL` and `STEER_SUBGRAPH_STUDIO_KEY` securely. Do not print either value or a credentialed RPC URL. The rebalance-context helper requires the subgraph key; tend quote and preparation require `eth_getProof` support from the RPC.
 3. Resolve the Bankr EVM wallet and requested chain. Use that wallet as `--account` for account-aware quote and preparation commands.
 4. Read [references/command-discovery.md](references/command-discovery.md), then inspect the exact installed command with `--help` and `--schema`. Use native structured Steer tools only when their schema matches the installed CLI.

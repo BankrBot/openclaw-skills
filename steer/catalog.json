@@ -11,7 +11,7 @@
   },
   "setup": [
     "Set `STEER_RPC_URL` and `STEER_SUBGRAPH_STUDIO_KEY` as secure environment secrets. The rebalance-context helper requires the subgraph key; tend `quote` and `prepare` require `eth_getProof` support from the RPC.",
-    "In Bankr `execute_cli`, install or upgrade with `npm install -g '@steerprotocol/cli@latest'`, then run `steer --version`. Use the installed npm latest release, currently 4.5.0. Do not use a pinned or minimum-version range; stop if installation or version verification fails.",
+    "At the start of each live workflow, run `node scripts/ensure-steer-cli.mjs` in Bankr `execute_cli`. It resolves npm latest, installs that exact version only when needed, and verifies the `steer` binary. Proceed only when its JSON result has `ok: true`; after an update, inspect the relevant command help and schema before collecting live data.",
     "Resolve the Bankr EVM wallet address. Pass it as `--account` to account-aware quote and prepare commands so simulation can check the expected signer.",
     "Review CLI stages as JSON: `steer <command> --format json --full-output`. Do not broadcast with the CLI; submit only the unchanged prepared request through `submit_raw_transaction` after specific approval or a valid bounded automation policy."
   ],

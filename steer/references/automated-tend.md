@@ -8,7 +8,7 @@ Before any preparation, the request must identify the curated vault and chain, s
 
 If a required policy value, tool, source, or durable state check is absent, stop with `AUTOMATION_POLICY_INCOMPLETE`. Do not fill gaps with a heuristic.
 
-Install or upgrade to `@steerprotocol/cli@latest` before the run and record the reported `steer --version`; at publication, npm latest is `4.5.0`. Never honor a pinned or minimum-version selector in an automation request. Stop with `VERSION_POLICY_CONFLICT` when the request requires a different version, or `VERSION_UNAVAILABLE` when npm latest cannot be installed and verified.
+At the start of every scheduled run, call `node scripts/ensure-steer-cli.mjs` and persist its complete JSON result. It resolves npm latest twice, installs the initially resolved exact version only when needed, and fails if npm latest changes during the preflight or the binary does not match. Do not re-run it between quote and preparation. Stop with `VERSION_POLICY_CONFLICT` when a request requires a different version, or the script's returned version error when it cannot verify the current npm latest.
 
 ## Run sequence
 
@@ -24,6 +24,6 @@ Install or upgrade to `@steerprotocol/cli@latest` before the run and record the 
 
 ## Minimum skip reasons
 
-Report the first applicable specific reason and submit no transaction: `VERSION_POLICY_CONFLICT`, `VERSION_UNAVAILABLE`, `VAULT_CHAIN_MISMATCH`, `CAPABILITY_UNSUPPORTED`, `WALLET_UNAVAILABLE`, `AUTOMATION_POLICY_INCOMPLETE`, `RANGE_POLICY_UNSPECIFIED`, `DATA_UNAVAILABLE`, `DATA_STALE`, `PRICE_DISAGREEMENT`, `DUPLICATE_RUN`, `UNECONOMIC_TEND`, `QUOTE_UNACCEPTABLE`, `PREPARATION_INVALID`, `SIGNER_MISMATCH`, or `SIMULATION_FAILED`.
+Report the first applicable specific reason and submit no transaction: `VERSION_POLICY_CONFLICT`, `NPM_LATEST_UNAVAILABLE`, `NPM_LATEST_INVALID`, `CLI_VERSION_UNAVAILABLE`, `CLI_VERSION_INVALID`, `CLI_INSTALL_FAILED`, `CLI_VERSION_MISMATCH`, `VERSION_CHANGED_DURING_RUN`, `VAULT_CHAIN_MISMATCH`, `CAPABILITY_UNSUPPORTED`, `WALLET_UNAVAILABLE`, `AUTOMATION_POLICY_INCOMPLETE`, `RANGE_POLICY_UNSPECIFIED`, `DATA_UNAVAILABLE`, `DATA_STALE`, `PRICE_DISAGREEMENT`, `DUPLICATE_RUN`, `UNECONOMIC_TEND`, `QUOTE_UNACCEPTABLE`, `PREPARATION_INVALID`, `SIGNER_MISMATCH`, or `SIMULATION_FAILED`.
 
 Never automatically retry a submission-side failure. Preserve the prepared artifact, Bankr response, and any hash before following the recovery procedure in [bankr-execution.md](bankr-execution.md).

@@ -11,7 +11,7 @@ node scripts/rebalance-context.mjs \
   --vault <VAULT> --chain <CHAIN> --protocol <MARKET_PROTOCOL>
 ```
 
-The resource records the installed `steer --version`, which the calling workflow must have just installed or upgraded from npm `latest`. It then runs `vaults inspect` and `markets history --window 26h --interval hour --limit 27` inside that one sandboxed call. The 26-hour request provides an exact close 24 hours before the latest hourly close when the source has contiguous hourly buckets. No raw CLI result is returned to the agent.
+The calling workflow must first complete `node scripts/ensure-steer-cli.mjs` successfully and retain its JSON result. The resource separately records the installed `steer --version`, then runs `vaults inspect` and `markets history --window 26h --interval hour --limit 27` inside that one sandboxed call. The 26-hour request provides an exact close 24 hours before the latest hourly close when the source has contiguous hourly buckets. No raw CLI result is returned to the agent.
 
 Some installed CLI releases request incompatible `volumeUSD` and `volumeUsd` fields together from a protocol subgraph. If, and only if, `markets history` returns the known `PoolHourData`/`volumeUsd` schema error, the helper calls `steer subgraphs` to discover the installed CLI's protocol endpoint, then retries the same read-only hourly GraphQL query with the Base-compatible `volumeUSD` field alone. The endpoint and key are never printed. The returned `sources.execution.commands` records that compatibility fallback. Any other CLI error still stops the helper.
 

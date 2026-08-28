@@ -2,7 +2,7 @@
 
 This is a route map, not a frozen command specification. The installed Steer CLI is the authority for command names, aliases, flags, required arguments, and output fields.
 
-Before a workflow, run `steer --version`, then inspect the relevant family with `steer <family> --help`. Before a state-changing preparation, inspect its JSON Schema with `steer <family> <subcommand> --schema`. Use `--llms-full` only when the task needs the broader machine-readable command manifest. Request `--format json --full-output` for structured operational results.
+At the start of a live workflow, run `node scripts/ensure-steer-cli.mjs` and retain its successful JSON result. Then inspect the relevant family with `steer <family> --help`. Before a state-changing preparation, inspect its JSON Schema with `steer <family> <subcommand> --schema`. Use `--llms-full` only when the task needs the broader machine-readable command manifest. Request `--format json --full-output` for structured operational results.
 
 If Bankr exposes native structured Steer tools, use them only after confirming that their schema and installed CLI version express the same operation. Otherwise use `execute_cli`. Never substitute `--web` for the Bankr transaction path.
 
