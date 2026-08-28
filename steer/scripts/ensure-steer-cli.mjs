@@ -3,12 +3,13 @@
 import { execFile } from "node:child_process";
 
 const PACKAGE_NAME = "@steerprotocol/cli";
+const PACKAGE_REGISTRY_URL = "https://registry.npmjs.org/%40steerprotocol%2Fcli";
 const TIMEOUT_MS = 120_000;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
 const USAGE = `Usage: node scripts/ensure-steer-cli.mjs
 
-Resolve npm's current ${PACKAGE_NAME} latest dist-tag, install that exact
+Resolve the npm registry's current ${PACKAGE_NAME} latest dist-tag, install that exact
 version when needed, and verify that the steer binary on PATH matches it.
 The script prints one JSON result and never prints npm or CLI command output.`;
 
@@ -32,29 +33,34 @@ function run(command, args) {
 }
 
 async function latestVersion() {
-  let stdout;
+  let response;
   try {
-    stdout = await run("npm", ["view", PACKAGE_NAME, "dist-tags.latest", "--json"]);
+    response = await fetch(PACKAGE_REGISTRY_URL, {
+      headers: { accept: "application/vnd.npm.install-v1+json" },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
   } catch {
     throw new PreflightError(
       "NPM_LATEST_UNAVAILABLE",
       `Unable to resolve npm latest for ${PACKAGE_NAME}.`,
     );
   }
-
-  let version;
   try {
-    version = JSON.parse(stdout);
+    if (!response.ok) {
+      throw new Error(`Registry returned HTTP ${response.status}.`);
+    }
+    const metadata = await response.json();
+    const version = metadata?.["dist-tags"]?.latest;
+    if (typeof version !== "string" || !VERSION_PATTERN.test(version)) {
+      throw new Error("Registry latest dist-tag was not a valid version.");
+    }
+    return version;
   } catch {
-    version = stdout.trim();
-  }
-  if (typeof version !== "string" || !VERSION_PATTERN.test(version)) {
     throw new PreflightError(
       "NPM_LATEST_INVALID",
-      `npm latest for ${PACKAGE_NAME} was not a valid version.`,
+      `The npm registry latest dist-tag for ${PACKAGE_NAME} was not a valid version.`,
     );
   }
-  return version;
 }
 
 async function installedVersion() {
