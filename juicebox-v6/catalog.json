@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "slug": "juicebox-v6",
+  "provider": "Juicebox",
+  "providerUrl": "https://juicebox.money",
+  "logo": null,
+  "demo": null,
+  "setup": [
+    "Install: `install the juicebox-v6 skill from https://github.com/BankrBot/skills/tree/main/juicebox-v6`.",
+    "For onchain writes, use `references/shared/deployment-manifest.json`; `chain-config.json` is read-only discovery data and never authorizes a target.",
+    "Read `references/modules/jb-tx-safety.md`, verify live bytecode and project wiring, simulate the exact call, and review its decoded bytes before requesting confirmation.",
+    "For generated UIs, obtain approval before installing exact local dependencies, verify the pinned lockfile integrity, use local imports, and apply the restrictive CSP in `references/frontend-security.md`.",
+    "Upstream source and attribution: https://github.com/mejango/juicebox-skills (MIT)."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "juicebox-v6",
+    "command": "install the juicebox-v6 skill from https://github.com/BankrBot/skills/tree/main/juicebox-v6"
+  }
+}

@@ -1,0 +1,1517 @@
+[
+ {
+  "type": "constructor",
+  "inputs": [
+   {
+    "name": "directory",
+    "type": "address",
+    "internalType": "contract IJBDirectory"
+   },
+   {
+    "name": "permissions",
+    "type": "address",
+    "internalType": "contract IJBPermissions"
+   },
+   {
+    "name": "prices",
+    "type": "address",
+    "internalType": "contract IJBPrices"
+   },
+   {
+    "name": "projects",
+    "type": "address",
+    "internalType": "contract IJBProjects"
+   },
+   {
+    "name": "tokens",
+    "type": "address",
+    "internalType": "contract IJBTokens"
+   },
+   {
+    "name": "deployer",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "trustedForwarder",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "receive",
+  "stateMutability": "payable"
+ },
+ {
+  "type": "function",
+  "name": "DIRECTORY",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBDirectory"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "MAX_TWAP_WINDOW",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "MIN_TWAP_WINDOW",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "PERMISSIONS",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBPermissions"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "PRICES",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBPrices"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "PROJECTS",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBProjects"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "TOKENS",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBTokens"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "TWAP_SLIPPAGE_DENOMINATOR",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "afterCashOutRecordedWith",
+  "inputs": [
+   {
+    "name": "context",
+    "type": "tuple",
+    "internalType": "struct JBAfterCashOutRecordedContext",
+    "components": [
+     {
+      "name": "holder",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "projectId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "rulesetId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "cashOutCount",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "reclaimedAmount",
+      "type": "tuple",
+      "internalType": "struct JBTokenAmount",
+      "components": [
+       {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+       },
+       {
+        "name": "currency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ]
+     },
+     {
+      "name": "forwardedAmount",
+      "type": "tuple",
+      "internalType": "struct JBTokenAmount",
+      "components": [
+       {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+       },
+       {
+        "name": "currency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ]
+     },
+     {
+      "name": "cashOutTaxRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "beneficiary",
+      "type": "address",
+      "internalType": "address payable"
+     },
+     {
+      "name": "hookMetadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "cashOutMetadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ]
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "payable"
+ },
+ {
+  "type": "function",
+  "name": "afterPayRecordedWith",
+  "inputs": [
+   {
+    "name": "context",
+    "type": "tuple",
+    "internalType": "struct JBAfterPayRecordedContext",
+    "components": [
+     {
+      "name": "payer",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "projectId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "rulesetId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "amount",
+      "type": "tuple",
+      "internalType": "struct JBTokenAmount",
+      "components": [
+       {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+       },
+       {
+        "name": "currency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ]
+     },
+     {
+      "name": "forwardedAmount",
+      "type": "tuple",
+      "internalType": "struct JBTokenAmount",
+      "components": [
+       {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+       },
+       {
+        "name": "currency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ]
+     },
+     {
+      "name": "weight",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "newlyIssuedTokenCount",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "beneficiary",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "hookMetadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "payerMetadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ]
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "payable"
+ },
+ {
+  "type": "function",
+  "name": "beforeCashOutRecordedWith",
+  "inputs": [
+   {
+    "name": "context",
+    "type": "tuple",
+    "internalType": "struct JBBeforeCashOutRecordedContext",
+    "components": [
+     {
+      "name": "terminal",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "holder",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "projectId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "rulesetId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "cashOutCount",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "totalSupply",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "surplus",
+      "type": "tuple",
+      "internalType": "struct JBTokenAmount",
+      "components": [
+       {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+       },
+       {
+        "name": "currency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ]
+     },
+     {
+      "name": "scopeCashOutsToLocalBalances",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "cashOutTaxRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "beneficiaryIsFeeless",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "metadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ]
+   }
+  ],
+  "outputs": [
+   {
+    "name": "cashOutTaxRate",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "cashOutCount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "totalSupply",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "effectiveSurplusValue",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "hookSpecifications",
+    "type": "tuple[]",
+    "internalType": "struct JBCashOutHookSpecification[]",
+    "components": [
+     {
+      "name": "hook",
+      "type": "address",
+      "internalType": "contract IJBCashOutHook"
+     },
+     {
+      "name": "noop",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "amount",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "metadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "beforePayRecordedWith",
+  "inputs": [
+   {
+    "name": "context",
+    "type": "tuple",
+    "internalType": "struct JBBeforePayRecordedContext",
+    "components": [
+     {
+      "name": "terminal",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "payer",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "amount",
+      "type": "tuple",
+      "internalType": "struct JBTokenAmount",
+      "components": [
+       {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+       },
+       {
+        "name": "currency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ]
+     },
+     {
+      "name": "projectId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "rulesetId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "beneficiary",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "weight",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "reservedPercent",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "metadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ]
+   }
+  ],
+  "outputs": [
+   {
+    "name": "weight",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "hookSpecifications",
+    "type": "tuple[]",
+    "internalType": "struct JBPayHookSpecification[]",
+    "components": [
+     {
+      "name": "hook",
+      "type": "address",
+      "internalType": "contract IJBPayHook"
+     },
+     {
+      "name": "noop",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "amount",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "metadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "hasMintPermissionFor",
+  "inputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "",
+    "type": "tuple",
+    "internalType": "struct JBRuleset",
+    "components": [
+     {
+      "name": "cycleNumber",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "id",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "basedOnId",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "start",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "duration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "weight",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "weightCutPercent",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "approvalHook",
+      "type": "address",
+      "internalType": "contract IJBRulesetApprovalHook"
+     },
+     {
+      "name": "metadata",
+      "type": "uint256",
+      "internalType": "uint256"
+     }
+    ]
+   },
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "pure"
+ },
+ {
+  "type": "function",
+  "name": "initializePoolFor",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "fee",
+    "type": "uint24",
+    "internalType": "uint24"
+   },
+   {
+    "name": "tickSpacing",
+    "type": "int24",
+    "internalType": "int24"
+   },
+   {
+    "name": "twapWindow",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "sqrtPriceX96",
+    "type": "uint160",
+    "internalType": "uint160"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "isTrustedForwarder",
+  "inputs": [
+   {
+    "name": "forwarder",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "oracleHook",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IHooks"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "poolKeyOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "key",
+    "type": "tuple",
+    "internalType": "struct PoolKey",
+    "components": [
+     {
+      "name": "currency0",
+      "type": "address",
+      "internalType": "Currency"
+     },
+     {
+      "name": "currency1",
+      "type": "address",
+      "internalType": "Currency"
+     },
+     {
+      "name": "fee",
+      "type": "uint24",
+      "internalType": "uint24"
+     },
+     {
+      "name": "tickSpacing",
+      "type": "int24",
+      "internalType": "int24"
+     },
+     {
+      "name": "hooks",
+      "type": "address",
+      "internalType": "contract IHooks"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "poolManager",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IPoolManager"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "projectTokenOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "setChainSpecificConstants",
+  "inputs": [
+   {
+    "name": "newPoolManager",
+    "type": "address",
+    "internalType": "contract IPoolManager"
+   },
+   {
+    "name": "newOracleHook",
+    "type": "address",
+    "internalType": "contract IHooks"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "setPoolFor",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "fee",
+    "type": "uint24",
+    "internalType": "uint24"
+   },
+   {
+    "name": "tickSpacing",
+    "type": "int24",
+    "internalType": "int24"
+   },
+   {
+    "name": "twapWindow",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "setPoolFor",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "poolKey",
+    "type": "tuple",
+    "internalType": "struct PoolKey",
+    "components": [
+     {
+      "name": "currency0",
+      "type": "address",
+      "internalType": "Currency"
+     },
+     {
+      "name": "currency1",
+      "type": "address",
+      "internalType": "Currency"
+     },
+     {
+      "name": "fee",
+      "type": "uint24",
+      "internalType": "uint24"
+     },
+     {
+      "name": "tickSpacing",
+      "type": "int24",
+      "internalType": "int24"
+     },
+     {
+      "name": "hooks",
+      "type": "address",
+      "internalType": "contract IHooks"
+     }
+    ]
+   },
+   {
+    "name": "twapWindow",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "setTwapWindowOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "newWindow",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "supportsInterface",
+  "inputs": [
+   {
+    "name": "interfaceId",
+    "type": "bytes4",
+    "internalType": "bytes4"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "pure"
+ },
+ {
+  "type": "function",
+  "name": "trustedForwarder",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "twapWindowOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "unlockCallback",
+  "inputs": [
+   {
+    "name": "data",
+    "type": "bytes",
+    "internalType": "bytes"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bytes",
+    "internalType": "bytes"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "event",
+  "name": "CashOutSwap",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "cashOutCount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "poolId",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "PoolId"
+   },
+   {
+    "name": "amountReceived",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "Mint",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "leftoverAmount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "tokenCount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "PoolAdded",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "poolId",
+    "type": "bytes32",
+    "indexed": false,
+    "internalType": "PoolId"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "SellSwapReverted",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "holder",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "amount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "Swap",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "amountToSwapWith",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "poolId",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "PoolId"
+   },
+   {
+    "name": "amountReceived",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "TwapWindowChanged",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "oldWindow",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "newWindow",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "error",
+  "name": "FailedCall",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "InsufficientBalance",
+  "inputs": [
+   {
+    "name": "balance",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "needed",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_AlreadyConfigured",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_CallerNotPoolManager",
+  "inputs": [
+   {
+    "name": "caller",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_CallerNotTerminal",
+  "inputs": [
+   {
+    "name": "caller",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_InsufficientPayAmount",
+  "inputs": [
+   {
+    "name": "swapAmount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "totalPaid",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_InvalidTwapWindow",
+  "inputs": [
+   {
+    "name": "value",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "min",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "max",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_PoolAlreadySet",
+  "inputs": [
+   {
+    "name": "poolId",
+    "type": "bytes32",
+    "internalType": "PoolId"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_PoolInitializedAtWrongPrice",
+  "inputs": [
+   {
+    "name": "actualSqrtPriceX96",
+    "type": "uint160",
+    "internalType": "uint160"
+   },
+   {
+    "name": "expectedSqrtPriceX96",
+    "type": "uint160",
+    "internalType": "uint160"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_PoolKeyCurrenciesMismatch",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_PoolNotInitialized",
+  "inputs": [
+   {
+    "name": "poolId",
+    "type": "bytes32",
+    "internalType": "PoolId"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_PoolNotSet",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_SpecifiedSlippageExceeded",
+  "inputs": [
+   {
+    "name": "amount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "minimum",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_TerminalTokenIsProjectToken",
+  "inputs": [
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "projectToken",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_Unauthorized",
+  "inputs": [
+   {
+    "name": "caller",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHook_ZeroProjectToken",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBPermissioned_Unauthorized",
+  "inputs": [
+   {
+    "name": "account",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "sender",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "permissionId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "PRBMath_MulDiv_Overflow",
+  "inputs": [
+   {
+    "name": "x",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "y",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "denominator",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "SafeERC20FailedOperation",
+  "inputs": [
+   {
+    "name": "token",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ }
+]

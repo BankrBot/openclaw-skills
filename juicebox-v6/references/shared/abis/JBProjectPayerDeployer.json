@@ -1,0 +1,165 @@
+[
+ {
+  "type": "constructor",
+  "inputs": [
+   {
+    "name": "directory",
+    "type": "address",
+    "internalType": "contract IJBDirectory"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "DIRECTORY",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBDirectory"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "IMPLEMENTATION",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "deployProjectPayer",
+  "inputs": [
+   {
+    "name": "defaultProjectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "defaultBeneficiary",
+    "type": "address",
+    "internalType": "address payable"
+   },
+   {
+    "name": "defaultMemo",
+    "type": "string",
+    "internalType": "string"
+   },
+   {
+    "name": "defaultMetadata",
+    "type": "bytes",
+    "internalType": "bytes"
+   },
+   {
+    "name": "defaultAddToBalance",
+    "type": "bool",
+    "internalType": "bool"
+   },
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "projectPayer",
+    "type": "address",
+    "internalType": "contract IJBProjectPayer"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "event",
+  "name": "DeployProjectPayer",
+  "inputs": [
+   {
+    "name": "projectPayer",
+    "type": "address",
+    "indexed": true,
+    "internalType": "contract IJBProjectPayer"
+   },
+   {
+    "name": "defaultProjectId",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "defaultBeneficiary",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   },
+   {
+    "name": "defaultMemo",
+    "type": "string",
+    "indexed": false,
+    "internalType": "string"
+   },
+   {
+    "name": "defaultMetadata",
+    "type": "bytes",
+    "indexed": false,
+    "internalType": "bytes"
+   },
+   {
+    "name": "defaultAddToBalance",
+    "type": "bool",
+    "indexed": false,
+    "internalType": "bool"
+   },
+   {
+    "name": "directory",
+    "type": "address",
+    "indexed": false,
+    "internalType": "contract IJBDirectory"
+   },
+   {
+    "name": "owner",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "error",
+  "name": "FailedDeployment",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "InsufficientBalance",
+  "inputs": [
+   {
+    "name": "balance",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "needed",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ }
+]
