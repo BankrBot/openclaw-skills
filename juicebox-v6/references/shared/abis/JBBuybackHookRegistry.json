@@ -1,0 +1,1029 @@
+[
+ {
+  "type": "constructor",
+  "inputs": [
+   {
+    "name": "permissions",
+    "type": "address",
+    "internalType": "contract IJBPermissions"
+   },
+   {
+    "name": "projects",
+    "type": "address",
+    "internalType": "contract IJBProjects"
+   },
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "trustedForwarder",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "PERMISSIONS",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBPermissions"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "PROJECTS",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBProjects"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "allowHook",
+  "inputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "beforeCashOutRecordedWith",
+  "inputs": [
+   {
+    "name": "context",
+    "type": "tuple",
+    "internalType": "struct JBBeforeCashOutRecordedContext",
+    "components": [
+     {
+      "name": "terminal",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "holder",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "projectId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "rulesetId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "cashOutCount",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "totalSupply",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "surplus",
+      "type": "tuple",
+      "internalType": "struct JBTokenAmount",
+      "components": [
+       {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+       },
+       {
+        "name": "currency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ]
+     },
+     {
+      "name": "scopeCashOutsToLocalBalances",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "cashOutTaxRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "beneficiaryIsFeeless",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "metadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ]
+   }
+  ],
+  "outputs": [
+   {
+    "name": "cashOutTaxRate",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "cashOutCount",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "totalSupply",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "effectiveSurplusValue",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "hookSpecifications",
+    "type": "tuple[]",
+    "internalType": "struct JBCashOutHookSpecification[]",
+    "components": [
+     {
+      "name": "hook",
+      "type": "address",
+      "internalType": "contract IJBCashOutHook"
+     },
+     {
+      "name": "noop",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "amount",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "metadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "beforePayRecordedWith",
+  "inputs": [
+   {
+    "name": "context",
+    "type": "tuple",
+    "internalType": "struct JBBeforePayRecordedContext",
+    "components": [
+     {
+      "name": "terminal",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "payer",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "amount",
+      "type": "tuple",
+      "internalType": "struct JBTokenAmount",
+      "components": [
+       {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+       },
+       {
+        "name": "currency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ]
+     },
+     {
+      "name": "projectId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "rulesetId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "beneficiary",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "weight",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "reservedPercent",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "metadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ]
+   }
+  ],
+  "outputs": [
+   {
+    "name": "weight",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "hookSpecifications",
+    "type": "tuple[]",
+    "internalType": "struct JBPayHookSpecification[]",
+    "components": [
+     {
+      "name": "hook",
+      "type": "address",
+      "internalType": "contract IJBPayHook"
+     },
+     {
+      "name": "noop",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "amount",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "metadata",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "defaultHook",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "defaultHookHistoryAt",
+  "inputs": [
+   {
+    "name": "index",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "segment",
+    "type": "tuple",
+    "internalType": "struct DefaultHookSegment",
+    "components": [
+     {
+      "name": "minProjectIdExclusive",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "maxProjectId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "hook",
+      "type": "address",
+      "internalType": "contract IJBRulesetDataHook"
+     }
+    ]
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "defaultHookHistoryLength",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "length",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "defaultHookProjectIdThreshold",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "disallowHook",
+  "inputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "hasLockedHook",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "hasMintPermissionFor",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "",
+    "type": "tuple",
+    "internalType": "struct JBRuleset",
+    "components": [
+     {
+      "name": "cycleNumber",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "id",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "basedOnId",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "start",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "duration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "weight",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "weightCutPercent",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "approvalHook",
+      "type": "address",
+      "internalType": "contract IJBRulesetApprovalHook"
+     },
+     {
+      "name": "metadata",
+      "type": "uint256",
+      "internalType": "uint256"
+     }
+    ]
+   },
+   {
+    "name": "addr",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "hookOf",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "initializePoolFor",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "fee",
+    "type": "uint24",
+    "internalType": "uint24"
+   },
+   {
+    "name": "tickSpacing",
+    "type": "int24",
+    "internalType": "int24"
+   },
+   {
+    "name": "twapWindow",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "sqrtPriceX96",
+    "type": "uint160",
+    "internalType": "uint160"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "isHookAllowed",
+  "inputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "isTrustedForwarder",
+  "inputs": [
+   {
+    "name": "forwarder",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "lockHookFor",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "expectedHook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "owner",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "renounceOwnership",
+  "inputs": [],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "setDefaultHook",
+  "inputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "setHookFor",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "setPoolFor",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "fee",
+    "type": "uint24",
+    "internalType": "uint24"
+   },
+   {
+    "name": "tickSpacing",
+    "type": "int24",
+    "internalType": "int24"
+   },
+   {
+    "name": "twapWindow",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "terminalToken",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "supportsInterface",
+  "inputs": [
+   {
+    "name": "interfaceId",
+    "type": "bytes4",
+    "internalType": "bytes4"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "pure"
+ },
+ {
+  "type": "function",
+  "name": "transferOwnership",
+  "inputs": [
+   {
+    "name": "newOwner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "trustedForwarder",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "event",
+  "name": "JBBuybackHookRegistry_AllowHook",
+  "inputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "indexed": false,
+    "internalType": "contract IJBRulesetDataHook"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "JBBuybackHookRegistry_DisallowHook",
+  "inputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "indexed": false,
+    "internalType": "contract IJBRulesetDataHook"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "JBBuybackHookRegistry_LockHook",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "JBBuybackHookRegistry_SetDefaultHook",
+  "inputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "indexed": false,
+    "internalType": "contract IJBRulesetDataHook"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "JBBuybackHookRegistry_SetHook",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "hook",
+    "type": "address",
+    "indexed": false,
+    "internalType": "contract IJBRulesetDataHook"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "OwnershipTransferred",
+  "inputs": [
+   {
+    "name": "previousOwner",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "newOwner",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHookRegistry_CannotDisallowDefaultHook",
+  "inputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHookRegistry_HookLocked",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHookRegistry_HookMismatch",
+  "inputs": [
+   {
+    "name": "currentHook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   },
+   {
+    "name": "expectedHook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHookRegistry_HookNotAllowed",
+  "inputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHookRegistry_HookNotSet",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBBuybackHookRegistry_ZeroHook",
+  "inputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJBRulesetDataHook"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBMetadataResolver_DataNotPadded",
+  "inputs": [
+   {
+    "name": "dataLength",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBMetadataResolver_MetadataTooLong",
+  "inputs": [
+   {
+    "name": "offset",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "maxOffset",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBMetadataResolver_MetadataTooShort",
+  "inputs": [
+   {
+    "name": "metadataLength",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "minMetadataLength",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "JBPermissioned_Unauthorized",
+  "inputs": [
+   {
+    "name": "account",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "sender",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "permissionId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "OwnableInvalidOwner",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "OwnableUnauthorizedAccount",
+  "inputs": [
+   {
+    "name": "account",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ }
+]
