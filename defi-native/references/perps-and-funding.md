@@ -1,0 +1,27 @@
+# Perps and funding
+
+For questions about perpetual futures, funding rates, basis strategies, or venues. Perps are the dominant crypto trading instrument and the funding rate is the closest thing DeFi has to an overnight rate: understanding it unlocks synthetic dollars, basis vaults, and half of onchain yield.
+
+## Mechanics in six sentences
+
+A perpetual future is a futures contract with no expiry: no rolls, one contract per market, always on. It tracks spot through the funding rate: a periodic payment between longs and shorts, positive when the perp trades above spot (longs pay shorts) and negative when below. Funding is therefore a market-set interest rate on leveraged direction: when the market is levered long, being short gets PAID, which is the entire engine of delta-neutral basis strategies (hold spot, short the perp, collect funding plus any staking yield on the spot leg). Margin can be cash (stablecoins) or, increasingly, yield-bearing collateral (tokenized funds, tokenized stocks), which lets a hedge double as margin and materially reduces market maker capital needs. Liquidation runs on the venue's mark price and margin tiers; when liquidation cannot complete, venues use ADL (auto-deleveraging): closing profitable opposite positions at venue-set prices: the mechanism that turns crashes into counterparty events. Open interest, funding, and the depth of the liquidation backstop (insurance fund or liquidity pool) are the three health metrics to pull for any venue.
+
+## The funding regime as a signal
+
+Persistent positive funding = levered bullish crowding (basis strategies earn; a long squeeze builds). Deeply negative funding = panic or structural short demand (basis books bleed and shrink: synthetic dollar supply contracts exactly then). Funding spikes around events are the tail: any strategy that pays floating funding can see its cost triple in hours. Fixed-for-floating funding swaps (where available) let basis books hedge this: the existence and pricing of that market is itself a signal of institutionalization.
+
+## Venue due diligence (perp-specific additions to the opportunities playbook)
+
+Beyond the twelve steps: who runs the ordering (sequencer/operator concentration and its censorship or MEV surface); oracle construction for the mark price (index composition, manipulation cost, what happened in past outages); the liquidation waterfall in order (margin, insurance fund size in dollars, then ADL: and the venue's ADL fairness rules, since opaque ADL at off-market prices is the historical retail-wrecker); listing standards for long-tail markets (who bears bad-debt risk on a thin underlying); collateral policy (what assets, what haircuts, whether yield-bearing margin is rehypothecated); and jurisdiction (offshore venues barring US persons, the VPN-enforcement question, and any onshore licensing path: the regulatory trajectory determines which venues institutions can ever touch).
+
+## RWA perps
+
+Perps on stocks, commodities, and FX give leveraged synthetic exposure without holding the asset: distribution-first products (no custody, no transfer restrictions) whose honest costs are weekend gap risk (the underlying market closes, the perp does not: someone prices being unhedged for the closure (roughly 65 hours for US cash equities Friday close to Monday open, less for futures; venue conventions vary), so expect structurally wider weekend spreads and funding), reference-price construction while the primary market is dark, and the securities-law boundary for equity underlyings (contested jurisdiction: track it in market-pulse structural signals). The capital-efficiency frontier is tokenized spot as margin: when the hedge and the margin become the same asset, quoting cost drops structurally: watch which venues enable it, because their books deepen first.
+
+## House vaults and perp LP books (a product class, not a vault flavor)
+
+HLP-style pools, JLP, and GLP descendants are the venue's pooled counterparty and first-loss book, not lending vaults that happen to sit on an exchange. Their "APY" is trader losses plus fees minus trader wins, marked on inventory that includes the venue's worst moments: analyze inventory composition, ADL (auto-deleveraging) behavior, the pool's share of open interest, and drawdown history, never the headline APY alone. A perp LP book with no visible losing week is unseasoned, not safe.
+
+## Funding as a term structure (live)
+
+Fixed-for-floating funding swaps are no longer hypothetical: Pendle Boros trades fixed vs floating funding with cross-venue pricing (Hyperliquid vs CEX perps and beyond), which gives funding a real term structure and basis books a real hedge. For any funding-dependent product, check whether its funding exposure is hedged, at what fixed rate, and on which venue's print; the fixed-floating funding spread is a fourth curve instrument (concepts section 10) and a crowding signal in its own right.

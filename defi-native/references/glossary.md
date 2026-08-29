@@ -1,0 +1,86 @@
+# Glossary
+
+One-line definitions for fast lookup. Acronyms expanded here once for the whole skill. TradFi terms a newcomer brings are here too; the full bridge is references/analogs.md.
+- AP (authorized participant): the whitelisted actor allowed to create/redeem fund shares at NAV; their arbitrage pins price to value. No AP you can become = closed-end discount risk.
+- Beneficial ownership: the real economic owner behind a custodial or omnibus holding; the address on chain is often not the human.
+- Breaking the buck: a money market fund's NAV printing under $1; the TradFi depeg.
+- CCP (central counterparty / clearinghouse): steps between every trade, collects variation margin, absorbs defaults via a mutualized waterfall so winners never pay for losers. Onchain has insurance funds and ADL instead.
+- Capital market: term instruments with duration whose price moves with rates (bonds, equity, PTs). Contrast money market.
+- Closed-end discount: a fund trading below NAV because nobody accessible can redeem at NAV.
+- Create/redeem: primary-market mint and burn of fund shares at NAV; the mechanism that anchors price.
+- Discount window: the central bank's standing loan facility for banks; one reason deposits hold par. Does not exist onchain.
+- Duration: price sensitivity to yield; price change is roughly minus duration times yield change. A PT is a zero-coupon bond with duration.
+- DVP (delivery versus payment): asset and cash legs settle together or not at all.
+- LOLR (lender of last resort): the central bank backstopping the money hierarchy. Absent onchain; exit design replaces it.
+- Money market: short, refinanced, par-promised instruments (T-bills, repo, floating lending pools). Contrast capital market.
+- Omnibus / street name: many customers' assets pooled under one custodial name; concentrates exit decisions.
+- Real vs nominal: nominal is the quoted rate; real subtracts inflation in the holder's unit of account.
+- Rehypothecation: reusing posted collateral for further borrowing; looping is the self-service version.
+- Settlement cycle: when asset and cash actually move (equities T+1); queued redemptions exist because underlying assets settle on calendars.
+- Variation margin: the daily true-up on a levered position; a health factor drifting toward 1.0 is the onchain version.
+
+
+- APY (annual percentage yield): compounded annual rate; always ask what window and what source.
+- APR (annual percentage rate): simple annual rate, no compounding.
+- AMM (automated market maker): a pool that quotes prices from a formula instead of an order book.
+- Attachment point: the pool loss level at which a tranche starts taking losses.
+- Basis trade: long an asset, short its derivative, earn the gap (funding or futures premium).
+- Bad debt: borrower debt exceeding seized collateral value; someone must eat it.
+- Bridge: moves assets or messages between chains; adds a custodian or validator set to the claim stack, and its health gates cross-chain exits.
+- Canonical vs bridged: the natively issued version of a token vs a bridge-wrapped one; same ticker, different issuer of record, independent depeg risk.
+- CDP (collateralized debt position): a stablecoin loan minted against locked collateral.
+- CLOB (central limit order book): price-time matched orders; how exchanges trade.
+- Collateral: what a borrower forfeits on default.
+- Curator: the manager choosing a vault's markets or parameters; an asset manager in code clothing.
+- Depeg: a par-claim trading away from its intended value.
+- Discount curve oracle: marks a principal token by pull-to-par math instead of live tape.
+- E-mode / category: venue setting granting higher LTV within a correlated asset set.
+- Endogenous yield: yield paid from inside the system (its own token, recursion); evaporates in stress.
+- ERC-4626: the standard vault interface: deposit assets, receive shares that accrue value.
+- Exogenous yield: yield paid by outside cash flows (coupons, borrowers, traders).
+- FDV (fully diluted valuation): price times total eventual supply; compare with float before believing it.
+- First loss: the capital that absorbs damage before you; if unknown, it is probably you.
+- Fixed rate: a rate agreed for a term; onchain via discounts, offer books, or swaps.
+- Float: circulating, tradable supply; the denominator that makes early prices meaningful or not.
+- Funding rate: periodic payment keeping a perp pinned to spot; positive means longs pay shorts.
+- Gate: an issuer's right to pause or queue redemptions.
+- Haircut: the discount applied to collateral value when lending against it.
+- Health factor: distance to liquidation; 1.0 is the cliff edge.
+- HLP-style vault: a venue's pooled house liquidity that takes the other side and eats first loss.
+- Impermanent loss (IL): an LP's shortfall vs simply holding the assets, caused by pool rebalancing as prices diverge; LP APYs are quoted before it.
+- Incentives: emissions or subsidies added to organic yield; they end.
+- JIT (just-in-time) liquidity: concentrated liquidity added in the same block as a large swap and removed after, capturing the fee; dilutes passive LPs and inflates headline pool APRs.
+- Instant redemption sleeve: the cash buffer that honors immediate exits, capacity-limited.
+- IRM (interest rate model): the formula turning utilization into rates.
+- Isolated market: one collateral, one loan asset, one oracle; damage contained IF the graph is too.
+- Liquidation: forced closure of an undercollateralized position, executed for a bounty.
+- LLTV (liquidation loan-to-value): the debt/collateral ratio where liquidation triggers.
+- Looping: recursively borrowing against deposits to amplify exposure; rehypothecation self-serve.
+- LST/LRT (liquid staking/restaking token): a receipt for staked assets; slashing is its first loss.
+- LTV (loan-to-value): debt as a share of collateral value.
+- LVR (loss-versus-rebalancing): the passive LP's structural loss to arbitrageurs repricing the pool after market moves; charged before the fee APR you see.
+- Mark: the price a contract believes; may differ from the tape humans see.
+- MEV (maximal extractable value): profit from ordering transactions; someone pays it: swappers via sandwiches, LPs via LVR.
+- MMF (money market fund): a regulated cash-equivalent fund; the tokenized version is onchain cash-plus.
+- NAV (net asset value): assets minus liabilities per share; for RWAs, reported, not traded.
+- Prop AMM: a pool run by a single proprietary market maker as its own venue; quotes are one firm's book, not pooled passive liquidity.
+- RFQ (request-for-quote): execution where market makers return a firm quote per trade; no pool, no impermanent loss, inventory risk instead.
+- RFS (request-for-stream): the continuous version of RFQ; makers stream live quotes (FX-style) rather than answering one-shot requests.
+- Oracle: the feed that tells contracts what things are worth; its CLASS determines who dies in stress.
+- Organic yield: what the strategy earns without subsidies.
+- Par: the promise that one unit equals one dollar; an equilibrium, not a law.
+- Perp (perpetual future): a futures contract with no expiry, pinned to spot by funding.
+- PT (principal token): the zero-coupon half of split yield; its discount is the fixed rate.
+- Rehypothecation: reusing posted collateral; multiplies both efficiency and contagion.
+- RWA (real world asset): an offchain claim wrapped into a token; count the layers.
+- Slashing: protocol-imposed loss on staked collateral for misbehavior or fault.
+- Spread: yield above risk-free; must be decomposed into named risks or it is marketing.
+- Synthetic dollar: a hedged trading book (long spot, short perps) wearing a stablecoin costume.
+- Term premium: extra yield for lending longer.
+- Tranche: a slice of a structure with defined seniority.
+- TVL (total value locked): deposits plus locked issuance plus recursive loops, mixed; state what it counts before citing it.
+- TWAP (time-weighted average price): an averaged market price; honest but shovable when pools are thin.
+- Utilization: borrowed over supplied; drives floating rates and exit availability.
+- Vault: a pooled, share-issuing strategy contract; functionally a fund.
+- Whitelist/gate (compliance): transfer restrictions enforced at the token or market level.
+- YT (yield token): the floating-yield half of split yield; levered, and an oracle weapon in thin pools.

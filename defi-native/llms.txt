@@ -1,0 +1,29 @@
+# defi-native
+
+A skill that makes any LLM agent crypto-native for onchain capital markets. Evergreen mental models plus live-data discipline. MIT licensed.
+
+## Core
+- [SKILL.md](SKILL.md): prime directives, working loop, orientation, competence test
+- [README.md](README.md): what this is and how it is organized
+- [manifest.json](manifest.json): 95 protocol/docs sources with machine-readable endpoints
+
+## References (load per task)
+- [references/analogs.md](references/analogs.md): the TradFi Rosetta stone and baseline capital-markets chapters
+- [references/concepts.md](references/concepts.md): 17 evergreen sections incl. yield decomposition, oracle taxonomy, claim-stack look-through
+- [references/defi-opportunities-playbook.md](references/defi-opportunities-playbook.md): 12-step assessment, opportunity lens, recommendation protocol
+- [references/checklist.md](references/checklist.md): run against any product; unanswered items are findings
+- [references/data-sources.md](references/data-sources.md): live data recipes, API tiers, keys, MCP
+- [references/market-pulse.md](references/market-pulse.md): monitoring cadence, leading indicators, structural signals
+- [references/task-playbooks.md](references/task-playbooks.md): learning and content playbooks
+- [references/tokens-and-value-accrual.md](references/tokens-and-value-accrual.md): token rights, accrual, launch mechanics
+- [references/perps-and-funding.md](references/perps-and-funding.md): perp mechanics, funding, venue DD, RWA perps
+- [references/credit-cycles-and-history.md](references/credit-cycles-and-history.md): Minsky sort, cycle template, historical rhymes
+- [references/glossary.md](references/glossary.md): fast term lookups
+
+## Examples and maintenance
+- [examples/assessment-example.md](examples/assessment-example.md): full worked assessment (constructed numbers)
+- [examples/failure-autopsy-pt-reusd.md](examples/failure-autopsy-pt-reusd.md): real verified incident analysis
+- [evals/evals.json](evals/evals.json): test prompts and assertions
+- [MAINTENANCE.md](MAINTENANCE.md): the self-updating protocol and its safety gradient
+- [scripts/pulse.py](scripts/pulse.py): keyless live data pulls
+- [scripts/verify_manifest.py](scripts/verify_manifest.py): deterministic manifest health checks
