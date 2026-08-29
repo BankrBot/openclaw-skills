@@ -16,6 +16,10 @@ Two leverage platforms are available:
 **Chain**: Base
 **Protocol**: [Avantis](https://docs.avantisfi.com/)
 
+Avantis prices come from **Avantis' own price feed**, keyed by the pair — one bounded fetch, with no third-party price oracle and no on-chain read in the price path, so a slow Base RPC can't stall a quote.
+
+**Closing a position never depends on the price feed.** A close is encoded as a market close and doesn't read a price to execute — the quote is only used to render the PnL card. If pricing is unavailable, the close still goes through and the card is simply less detailed. An open position is never stranded by a pricing outage.
+
 ### Leverage Limits
 
 | Asset Class | Max Leverage |

@@ -62,6 +62,8 @@ Base hosts the **B20 tokenized equities** — Coinbase-issued equity tokens trad
 "sell half my META on base"
 ```
 
+**Two spellings resolve to the same token.** A B20's own on-chain `symbol()` is **c-suffixed** — `AAPLc`, `NVDAc`, `GOOGLc`, `METAc` and so on across all thirteen — which is the spelling you'll copy off a block explorer or a DEX front-end. The bare equity ticker (`AAPL`) names the underlying security and is also the canonical symbol of the separate **Robinhood Chain** listing. Both spellings resolve: the c-suffixed form identifies the Base B20 token specifically, while a bare ticker leaves the venue choice to Bankr's resolution. Prefer the c-suffixed symbol when you have it and mean the Base token — it's unambiguous, and it keeps the query out of pool-indexed search, where a memecoin on a near-identical ticker can outrank the genuine equity pool.
+
 B20 is an ERC-20 extension: transfers and approvals behave normally, but the redemption ratio to the underlying share is an **on-chain multiplier** that moves on corporate actions (splits, dividends), and issuer policy can block transfers. Token price = the underlying equity's price × that multiplier, so Bankr prices these off the equity rather than off pool liquidity — a B20 is quotable before any Base liquidity exists. They are 8-decimal tokens (Robinhood stocks are 18-decimal), which matters if you're reading raw amounts from the API rather than the formatted figures.
 
 **Base B20 trades are behind the same location verification as Robinhood stocks** — same site-visit verdict, same blocked-country list, same 30-day expiry, and the same fail-closed behaviour. Everything else on Base is ungated.
