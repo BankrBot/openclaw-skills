@@ -538,7 +538,7 @@ env | grep NEXT_PUBLIC_
 ### Community Resources
 - OnchainKit Discord: [Coinbase Developer Platform](https://discord.gg/invite/cdp)
 - GitHub Issues: [OnchainKit Repository](https://github.com/coinbase/onchainkit/issues)
-- Documentation: [onchainkit.xyz](https://onchainkit.xyz)
+- Source and documentation: [OnchainKit Repository](https://github.com/coinbase/onchainkit)
 - Twitter: [@OnchainKit](https://x.com/OnchainKit)
 
 ### When to Contact Support

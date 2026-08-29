@@ -438,7 +438,7 @@ Next steps:
 
 3. Customize the components as needed for your use case.
 
-Need help? Check the OnchainKit docs at https://onchainkit.xyz
+Need help? Check the OnchainKit repository at https://github.com/coinbase/onchainkit
 """)
 
 if __name__ == "__main__":

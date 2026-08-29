@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "x-twitter-scraper",
+  "provider": "Xquik",
+  "providerUrl": "https://github.com/Xquik-dev/x-twitter-scraper",
+  "logo": null,
+  "demo": {
+    "title": "xquik-mcp.sh",
+    "language": "bash",
+    "code": "# Configure XQUIK_API_KEY first\n# Then ask your agent to use the x-twitter-scraper skill for X/Twitter research and workflow tasks."
+  },
+  "setup": [
+    "Create an Xquik API key",
+    "Set `XQUIK_API_KEY` in your local environment",
+    "Install the skill from this repository",
+    "Use MCP or REST requests for X/Twitter research, monitoring, and workflow tasks"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "x-twitter-scraper",
+    "command": "install the x-twitter-scraper skill from https://github.com/BankrBot/skills/tree/main/x-twitter-scraper"
+  }
+}

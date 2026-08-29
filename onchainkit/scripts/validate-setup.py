@@ -220,7 +220,7 @@ Start building with OnchainKit:
     • CDP API: https://portal.cdp.coinbase.com/
     • WalletConnect: https://cloud.walletconnect.com/
 
-Need help? Check the OnchainKit docs at https://onchainkit.xyz
+Need help? Check the OnchainKit repository at https://github.com/coinbase/onchainkit
 """)
 
 def main():
