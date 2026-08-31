@@ -131,6 +131,7 @@ If you don't have USDC on Polygon:
 | Market closed | Can't bet on closed/resolved markets |
 | Low liquidity | May get worse prices on small markets |
 | Slippage | Large bets may move price against you |
+| "not supported when trusted-recipient restrictions are configured" | The API key carries a recipient allowlist. Polymarket trades pay an exchange contract that can't be validated against it, so buys and sells are refused outright — see [safety.md](safety.md). Use a key without an allowlist for this workflow |
 
 ## Tips for Success
 

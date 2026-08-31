@@ -17,9 +17,29 @@ User-controlled wallet safety features configured at [bankr.bot](https://bankr.b
 | Per-transaction limit | $500 | Rejects any single tx priced above the limit |
 | Price impact limit | On (15%) | Rejects a swap whose estimated price impact exceeds the limit |
 | Permitted recipients | Off | Restricts transfers/swaps to an allowlist; new entries enter a configurable cooldown |
-| Disable arbitrary contract calls | Off | Blocks `write_contract`, raw `/wallet/submit`, and arbitrary transaction tools (named operations like swaps still work) |
+| Arbitrary contract calls | Off (blocked) | While off, blocks `write_contract`, raw `/wallet/submit`, and arbitrary transaction tools (named operations like swaps still work). Enabling is a timed opt-in |
+| Response channels | All on | Per-channel control over where the agent may reply — X, Farcaster, Telegram. A disabled channel is skipped silently |
 
 USD limits accept `1` to `1,000,000`. Setting `0` is rejected — disable the limit instead. Cooldown accepts `0` to `168` hours (default 24h).
+
+### Defaults Are Enforced, Everywhere
+
+A wallet that has never opened the Security page still has a **$500 daily and $500 per-transaction limit**, and those defaults are enforced on every signing path — including the ones that don't run the agent's preflight: **x402 paid calls**, **raw `/wallet/submit`**, and direct signer callers. Don't design an integration around the idea that an unconfigured wallet is uncapped; if it needs to sign above $500, raise the limit deliberately.
+
+(System-owned vesting wallets are the one exception — they have no Security screen and no user to configure them, and are governed by their signing policy's authorized-caller gate instead.)
+
+### Timed Windows (auto-restoring)
+
+Most controls can be turned off for a bounded window instead of indefinitely, after which they restore themselves. Supported on the **daily limit**, **per-transaction limit**, **price impact limit**, **arbitrary contract calls**, and each **response channel**. Durations are a fixed vocabulary: **10, 30, 60, or 1440 minutes**.
+
+| Property | Behaviour |
+|----------|-----------|
+| Direction | A deadline only ever resolves toward the **safer** state. On a protection the timer runs while it is *off* and restores it at the deadline; on arbitrary contract calls the framing inverts — the timer runs while calls are *enabled* and revokes them. Neither can turn an enabled protection off, or hold one off past its deadline. |
+| Resolution | Read-time, not swept. An expired window is already in effect at the next transaction evaluation — there is no window to race. |
+| Replacement | Every explicit write replaces the timer. Toggling a control or editing its amount clears any running window, so a stale off-window can't outlive an edit you thought was unrelated. |
+| Authority | The deadline is computed server-side from the duration you choose. A client-supplied timestamp is rejected, and a duration is only accepted on the write direction that starts a timer. |
+
+`/user` and `/user/security` expose the resolved state, so an API key can *read* whether a protection is currently off and when it returns — but not change it. Long-running integrations should re-read rather than cache what they saw at startup: "the limit is off" is a fact with an expiry attached.
 
 ### Price Impact Limit
 
@@ -49,6 +69,18 @@ The wallet-level permitted-recipients list is independent from the API-key `allo
 
 - **API-key allowlist** = where this key is allowed to send
 - **Wallet allowlist** = where this wallet is allowed to send, regardless of key
+
+### Allowlists Disable Uncontrolled-Counterparty Operations
+
+Some operations pay an address that can't be meaningfully checked against an allowlist — a marketplace escrow, a mint contract, a prediction-market exchange. Rather than let those slip past a restriction the operator deliberately configured, Bankr **refuses them outright** whenever the key carries a non-empty `allowedRecipients` list (EVM or Solana):
+
+- **Polymarket** — buying and selling shares
+- **NFTs** — purchases, Seadrop and Manifold mints, listing for sale, accepting offers, creating collection offers
+- **Airdrops** — both the general airdrop tool and the top-members variant
+
+The error names the action and points at the key administrator; it is not a transient failure and retrying won't help. Swaps and transfers are unaffected — their recipient *is* checkable, and the allowlist gates them normally.
+
+If an agent needs these operations, give it a key **without** a recipient allowlist and constrain it with spend limits, read-only scoping, or IP whitelisting instead. Trying to have both is the case this rule exists to refuse.
 
 ### Incident Response
 
