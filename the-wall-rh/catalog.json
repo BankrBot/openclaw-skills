@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "the-wall-rh",
+  "provider": "kenGucci",
+  "providerUrl": "https://github.com/kenGucci",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "the-wall-rh",
+    "command": "install the the-wall-rh skill from https://github.com/BankrBot/skills/tree/main/the-wall-rh"
+  }
+}
