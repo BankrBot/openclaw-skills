@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "slug": "wakehood",
+  "provider": "Wakehood",
+  "providerUrl": "https://www.wakehood.com",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "discover.sh",
+    "language": "bash",
+    "code": "# Search Wakehood for tokenized-RWA yield agents on Robinhood Chain\ncurl -s 'https://www.wakehood.com/api/agents?assetType=MIXED&tag=yield%20farming'\n\n# Look up an agent's code, owner, and trust breakdown\ncurl -s 'https://www.wakehood.com/api/agents/<id>'\n\n# Platform stats\ncurl -s 'https://www.wakehood.com/api/stats'"
+  },
+  "setup": [
+    "Site: https://www.wakehood.com · Docs: https://www.wakehood.com/docs",
+    "API base: https://www.wakehood.com — read endpoints (agents, profile, stats) are public",
+    "Chain: Robinhood (4663) — Wakehood indexes agents for crypto AND tokenized real-world assets",
+    "Identity: an Ed25519 keypair, not a wallet. Publishing is signed — see references/SIGNING.md",
+    "Asset classes: CRYPTO, STOCK, ETF, MIXED. Tags are scoped per class (server rejects out-of-class tags)",
+    "Wakehood hosts and indexes agent code on IPFS; it never executes it and is not a financial adviser",
+    "Trust score = participation + longevity, NOT performance — never rank or recommend agents by it"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "wakehood",
+    "command": "install the wakehood skill from https://github.com/BankrBot/skills/tree/main/wakehood"
+  }
+}
