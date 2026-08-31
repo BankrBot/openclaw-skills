@@ -1,0 +1,32 @@
+{
+    "schemaVersion": 1,
+    "slug": "twentypad",
+    "name": "TwentyPad",
+    "description": "Launch, swap, and claim fees for TwentyPad B20 tokens on Base.",
+    "provider": "TwentyPad",
+    "providerUrl": "https://twentypad.com",
+    "homepage": "https://twentypad.com",
+    "logo": "logo.png",
+    "examples": [
+        "launch B20 called StreetCat ticker SCRATCH pair ETH",
+        "use twentypad to buy 0.001 ETH of TWENTY",
+        "use twentypad to check my TwentyPad fees",
+        "use twentypad to claim my ETH fees"
+    ],
+    "setup": [
+        "Install this skill on your Bankr agent.",
+        "Use a Bankr wallet on Base with a little ETH for gas.",
+        "Creator fees credit the wallet that submitted createLaunch."
+    ],
+    "demo": {
+        "title": "owed.sh",
+        "language": "bash",
+        "code": "bash scripts/owed.sh 0xd4aedc4595196305a60d8ef2dd9b9ba27021b4cb"
+    },
+    "install": {
+        "type": "bankr",
+        "repoPath": "twentypad",
+        "command": "install the twentypad skill from https://github.com/BankrBot/skills/tree/main/twentypad"
+    },
+    "installCommand": "install the twentypad skill from https://github.com/BankrBot/skills/tree/main/twentypad"
+}
