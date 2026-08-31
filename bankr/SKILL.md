@@ -623,7 +623,16 @@ bankr agent prompt "How many LLM credits do I have left?"
 
 The agent can also report your current LLM credit balance in conversation — including any expiring grants and when they lapse — without needing the `bankr llm credits` command.
 
-**Sending credits to another Bankr user.** Purchased credit is transferable peer-to-peer — ask the agent ("send $20 of LLM credits to @alice") or `POST /llm/credits/transfer`. The recipient must already be a Bankr user (X username or `0x` address; no ENS on this path), only purchased credit moves (grants are not transferable), the minimum is $1, and a wallet may send at most **$500 per trailing 24 hours**. Read-only API keys are refused; pass your own `transferId` so a retry can't double-send.
+**Sending credits to another Bankr user.** Credit is transferable peer-to-peer — ask the agent ("send $20 of LLM credits to @alice") or `POST /llm/credits/transfer`. The recipient must already be a Bankr user (X username or `0x` address; no ENS on this path), the minimum is $1, and a wallet may send at most **$500 per trailing 24 hours**. Read-only API keys are refused; pass your own `transferId` so a retry can't double-send.
+
+**Granted credit can be sent too, behind an opt-in.** By default only *purchased* credit moves. Set `useGrantedCredits` (the `transfer_llm_credits` tool flag, or the "use granted credits" toggle in the web Send Credits panel) to let a transfer also spend granted credit — operator grants and bonuses, including ones carrying an expiry:
+
+- **Purchased credit still spends first, and free.** Only the overflow into the granted slice carries a **10% burn fee**, charged *on top* of the amount.
+- **The recipient always receives exactly the amount you entered.** You are debited amount + fee, and the fee is burned — it isn't credited to anyone.
+- Each granted dollar is fee'd once. Concurrent sends can't double-claim the same slice, and a replayed `transferId` reports the original fee rather than charging again.
+- Leaving the flag off keeps the old behaviour byte-for-byte, so existing integrations need no change.
+
+**Two different ceilings, and the smaller one binds.** Your balance has a transferable slice (the pool net of reserve, debt and live grants), and your daily budget clamps what can move *today*. Both are exposed on `/llm/usage` — `balanceTransferableUsd` for the balance-side figure, alongside `grantedTransferableUsd` and `transferFeeBps` — so a wallet holding $265 that's temporarily gated to $10 by a rolling window can be shown as exactly that, rather than as if the money were missing. The agent quotes both figures and names which one is binding when you ask about your balance.
 
 **Daily spend budget.** You can cap what the gateway spends on your behalf, independently of your balance. The window is a **trailing 24 hours**, not a calendar day — nothing resets at midnight, capacity returns as charges age out. Over budget, spending requests return `402` with `type: daily_budget_exceeded` (distinct from `insufficient_credits`), while read-only `GET` endpoints keep working so you can poll for when you're unblocked. The same budget also ends Max Mode agent runs early.
 
@@ -736,8 +745,9 @@ Spot stocks work with swaps, transfers, limit orders, and DCA. Only issuer-token
 
 ### Token Deployment
 
-- **EVM (Base or Robinhood Chain)**: Launch ERC20 tokens via Doppler on a Uniswap V4 pool with customizable metadata and social links. Fixed **100 billion** supply. Every trade pays a **0.7% swap fee on the pool and 95% of it goes to you** (0.665% of volume, claimable anytime); the hook adds the Bankr protocol fee + BNKR buyback and LP fee on top, for **1.75% all-in**. The **0.285% LP fee is creator-side too** — it compounds as locked liquidity in your own pool, strengthening your token's liquidity on every swap, so the creator side totals **0.95% of volume**. **The default chain depends on the surface**: the CLI (`bankr launch`) and the web launch form preselect **Base**, while the AI agent and the deploy API fall back to **Robinhood Chain** when no chain is named. Name the chain explicitly (`bankr launch --chain robinhood`, `"chain": "base"`, or "launch it on Base") whenever it matters. Legacy Clanker tokens remain claimable (claims auto-detect Doppler vs Clanker).
+- **EVM (Base or Robinhood Chain)**: Launch ERC20 tokens via Doppler on a Uniswap V4 pool with customizable metadata and social links. Supply is fixed and non-mintable once deployed; standard launches use **100 billion** (the web launch flow can set a custom figure — the deploy API and CLI always use the standard supply). Ticker symbols are **1–20 characters**. Every trade pays a **0.7% swap fee on the pool and 95% of it goes to you** (0.665% of volume, claimable anytime); the hook adds the Bankr protocol fee + BNKR buyback and LP fee on top, for **1.75% all-in**. The **0.285% LP fee is creator-side too** — it compounds as locked liquidity in your own pool, strengthening your token's liquidity on every swap, so the creator side totals **0.95% of volume**. **The default chain depends on the surface**: the CLI (`bankr launch`) and the web launch form preselect **Base**, while the AI agent and the deploy API fall back to **Robinhood Chain** when no chain is named. Name the chain explicitly (`bankr launch --chain robinhood`, `"chain": "base"`, or "launch it on Base") whenever it matters. Legacy Clanker tokens remain claimable (claims auto-detect Doppler vs Clanker).
 - **Stock-paired launches** (EVM, optional): pair the new token's pool with a registry tokenized stock instead of WETH, so the token trades against equity exposure. Available on Base (B20 equities) and Robinhood Chain — pass `pairedStockAddress` to the deploy API, or ask the agent to pair the launch with a ticker. Only stocks Bankr can price are offered, since launch-curve math needs a USD price.
+- **Base quote-token launches** (optional): on Base, quote the pool in **BNKR** or **ba3Pump** (Bankr-bridged PUMP from Solana) instead of WETH — pass `chain: "base"` with the matching fixed `pairedTokenAddress`. User-key launches only; it can't be combined with `pairedStockAddress`, and omitting both gives you WETH. Volume in these pools stays eligible for the weekly developer rebate on the same terms as WETH-quoted launches.
 - **Quote-only fees** (EVM, optional): opt in at launch to collect all creator fees in the quote token (e.g. WETH) instead of a mix of the launched token and quote token — your total take is identical either way. Ask for "quote-only fees", pass `quoteOnlyFees: true` to the deploy API, or use `bankr launch --quote-only-fees`. Fixed at launch, like the fee schedule itself.
 - **Degen mode** (EVM, optional): start the token at a **$2,500 market cap** instead of the standard starting cap, for maximum early volatility. Explicit opt-in only — ask for "degen mode" by name, or pass `degenMode: true` to the deploy API. The figure is fixed; there is no custom starting market cap, a token *named* DEGEN does not opt you in, and the mode is unavailable on partner deploys.
 - **Solana**: Launch SPL tokens via Raydium LaunchLab with bonding curve and auto-migration to CPMM
@@ -805,6 +815,18 @@ Every Bankr wallet has a persistent filesystem, shared across the CLI, web termi
 
 The agent can answer questions about Bankr itself — how features work, official domains and links, the official Telegram bot, and support channels — grounded in Bankr's own documentation. When it doesn't have a confident answer it abstains rather than guessing, so you won't get fabricated links or facts. Useful for onboarding questions and for verifying that a link or channel is genuinely official.
 
+### Extending the Agent with Skills
+
+Skills work in **two directions**, and they're easy to confuse. This document is the first direction: the Bankr skill installed into *your* agent, so it can trade. The second is the reverse — installing skills **into** your Bankr agent to teach it new behaviours.
+
+- **Install by pasting a link.** A public GitHub folder URL (`tree/<branch>/<path>` containing a `SKILL.md`), a `blob/…/SKILL.md` URL, a bare repo when the skill sits at the root, or a direct `.md` file URL. Links from the [bankr.bot](https://bankr.bot) Discover and partner pages work too — both the canonical share URL and the in-app routes the UI hands out resolve to the catalogue entry.
+- **Reinstalling replaces.** A skill installed under a name that already exists overwrites it — that's the update path.
+- **Size limits**: `SKILL.md` is capped at **1 MB**, and each individual file under `references/` at **100 KB**. The agent loads a reference file's text inline on demand (up to 200 KB); binary files (images, PDFs) arrive as metadata plus a path it can hand to CLI tools.
+- **Frontmatter is optional.** A skill published in the frontmatter-less convention still installs — Bankr synthesizes the `name` from the first heading and the `description` from the opening prose, and keeps the full document as the body without truncating it.
+- **Curated skills are suggested, not silently used.** When a request has no native route but a curated skill covers it, the agent can name that skill even if you haven't installed it — so a capability gap reads as "install this" rather than a flat failure. Nothing is installed on your behalf.
+
+`bankr agent skills` lists what the agent currently has.
+
 ### Arbitrary Transactions
 
 - Submit raw EVM transactions with explicit calldata
@@ -848,13 +870,27 @@ User-controlled settings that apply to every surface — chat, agent, API, CLI. 
 | Per-transaction limit | $500 | Rejects any single tx priced above the limit |
 | Price impact limit | On (15%) | Rejects a swap whose estimated price impact exceeds the limit — guards against catastrophic fills in thin/low-liquidity pools. Adjustable 1–100% or turned off |
 | Permitted recipients | Off | Restricts transfers/swaps to an allowlist; new entries enter a configurable cooldown (default 24h) |
-| Disable arbitrary contract calls | Off | Blocks `write_contract`, raw `/wallet/submit`, and arbitrary transaction tools (named operations like swaps still work) |
+| Arbitrary contract calls | Off (blocked) | While off, blocks `write_contract`, raw `/wallet/submit`, and arbitrary transaction tools (named operations like swaps still work). Enabling is a timed opt-in — see below |
+| Response channels | All on | Per-channel control over where the agent is allowed to reply (X, Farcaster, Telegram). A disabled channel is silently skipped; account management on Telegram (`/start`, wallet linking) stays live |
 
 If USD pricing is unavailable and a limit is enabled, the transaction is **rejected** (fail-closed) rather than waved through. Your own wallet addresses are always implicitly allowed as recipients.
 
 Spend limits apply to **every** swap path, including cross-chain and Solana legs — the sell side is priced and checked before execution, and a successful swap counts toward your rolling 24h total.
 
+**The $500 defaults are real limits, not placeholders.** A wallet that has never touched its daily/per-transaction settings is enforced at $500 on *every* path — including the ones that skip the agent preflight: x402 calls, raw `/wallet/submit`, and direct signer callers. If your integration signs large transactions, raise the limit explicitly rather than assuming an unconfigured wallet is uncapped.
+
 One side effect worth knowing: the price-impact limit also fails closed on venues that can't report an impact figure. The clearest case is a brand-new Solana token still on its LaunchLab bonding curve — with the limit enabled, that fallback is refused rather than filled unguarded. Turn the limit off if you specifically need those fills.
+
+#### Timed Windows (auto-restoring)
+
+Rather than turning a protection off indefinitely, you can turn it off for a fixed window and let it restore itself. Available on the **daily limit**, **per-transaction limit**, **price impact limit**, **arbitrary contract calls**, and each **response channel**; the duration vocabulary is fixed at **10, 30, 60, or 1440 minutes**.
+
+- **A deadline only ever resolves toward the safer state.** On a protection, the timer runs while it is *off* and restores it when the window lapses. On arbitrary contract calls the framing inverts — the timer runs while calls are *enabled* and revokes them at expiry — so in both cases a lapsed deadline locks down rather than opens up.
+- **Resolution happens at read time**, not on a sweeper, so an expired window is already in effect the moment the next transaction is evaluated. There is no gap to race.
+- **Every explicit write replaces the timer.** Toggling a setting or editing its amount clears any running window, so a stale off-window can't survive a change you thought was unrelated.
+- **The window is server-computed** from the duration you pick; you can't hand the API a deadline of your own.
+
+These are web-authenticated settings like the rest of the Security screen — an API key can read the resolved state (`/user`, `/user/security`) but cannot change it. Treat "the limit is off" as a fact with an expiry attached: a long-running integration should re-read the resolved settings rather than caching what it saw at startup.
 
 ### Protected-Token Swap Guard
 
@@ -881,6 +917,8 @@ Per-key settings configured at [bankr.bot/api-keys](https://bankr.bot/api-keys):
 **IP Whitelisting**: Set `allowedIps` on your API key to restrict usage to specific IPs or CIDR ranges (e.g., `10.0.0.0/24`). Requests from non-whitelisted IPs are rejected with 403 at the auth layer.
 
 **Recipient Allowlist**: Restrict which addresses the key can send funds to. Independent from the wallet-level permitted recipients — when both are configured, both must pass.
+
+> **A recipient allowlist also disables uncontrolled-counterparty operations.** Some actions pay an address the allowlist can't be checked against — a marketplace escrow, a mint contract, a prediction-market exchange. Rather than let those slip past the restriction, Bankr refuses them outright whenever a key carries a non-empty allowlist (EVM or Solana): **Polymarket buys and sells**, **NFT purchases, mints, listings and offer acceptance**, and **airdrop tools**. The error names the action and tells you to contact the key administrator. Swaps and transfers are unaffected — their recipient *is* checkable. If your agent needs these operations, use a key without an allowlist and constrain it with spend limits instead.
 
 ### Incident Response
 
@@ -1231,6 +1269,7 @@ Venue selection is automatic and the Wallet API now covers the same edge cases t
 - **Polygon `pUSD` → `USDC.e`** uses the 1:1 on-chain Offramp unwrap rather than a DEX quote: no fee, no slippage, no price impact. Asking the agent to convert pUSD to plain "USDC" on Polygon resolves to `USDC.e` and takes this path — the request is read as the one routable thing it can mean, so the quote, the signing card, and the confirmation all name `USDC.e` rather than the pair failing to route. The reverse direction (`USDC.e` → `pUSD`) is quoted like any ordinary pair, and **buying** pUSD is untouched — the Offramp can only unwrap. The unwrap settles to your own wallet, so a **swap-and-send** naming a different recipient routes through the normal venues instead — it never silently settles to you
 - **Robinhood Chain tokenized stocks** are quoted and filled through the aggregator's RFQ makers, settling against USDG, while ordinary Robinhood Chain pairs keep their thin-pool protection
 - **Wallet-mode swaps** — where you sign from an external/connected wallet rather than a Bankr-custodied one — now walk the same venue order as every other swap, so a thin-liquidity pair reaches its direct-pool venue instead of being diverted to the bridge aggregator. Practical effects: a route that used to need an approval plus a router call can now come back as a single transaction to sign, and a leg whose build fails is reported as **failed** rather than handed to you as something to sign under a success message
+- **`/wallet/swap-quote` falls back the same way execution does.** When the primary aggregator reports no route on an EVM pair, the quote retries the bridge/swap aggregator rather than returning "No quote available". This matters most for pairs whose only pool is an exotic one — a launch pool quoted in a tokenized stock, say, which the primary aggregator will fill single-hop but won't compose *through* as an intermediate. Quote and execution now agree on what's routable, so a quote you can get is a quote you can fill
 
 ```bash
 # CLI — quote only (no execution)

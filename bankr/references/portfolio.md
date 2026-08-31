@@ -70,6 +70,7 @@ All chains: Base, Polygon, Ethereum, Unichain, Solana, World Chain, Arbitrum, BN
 - **Comprehensive View**: Shows all tokens with meaningful balances
 - **Wrap/Unwrap Aware**: Wrapping and unwrapping the native token (ETH ↔ WETH and equivalents) updates both balances, so a portfolio read straight after an unwrap reflects it
 - **Exact Balances**: token `balance` is the exact decimal amount in plain notation, carried as a string — never rounded, and never in scientific notation for very small or very large holdings. If you do arithmetic on it, parse it with a decimal-safe library rather than relying on a float
+- **Partial-Failure Resilient**: the native balance and the token-list lookup are fetched independently per chain, so an indexer failure on the token side no longer takes the chain's native row down with it. A degraded chain returns the native balance it did retrieve rather than reporting the wallet as empty of it
 
 ## Common Tokens Tracked
 
