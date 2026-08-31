@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="WaybackClaw">
+  <rect width="128" height="128" rx="20" fill="#2B2B2B"/>
+  <!-- Wayback Machine temple — exact geometry from the site header, centered -->
+  <g transform="translate(24, 32)" fill="none" stroke="#FFFFFF">
+    <polygon points="40,2 6,22 74,22" stroke-width="2"/>
+    <rect x="6" y="22" width="68" height="4" stroke-width="1.5"/>
+    <rect x="12" y="26" width="4" height="28" stroke-width="1.5"/>
+    <rect x="24" y="26" width="4" height="28" stroke-width="1.5"/>
+    <rect x="36" y="26" width="4" height="28" stroke-width="1.5"/>
+    <rect x="48" y="26" width="4" height="28" stroke-width="1.5"/>
+    <rect x="60" y="26" width="4" height="28" stroke-width="1.5"/>
+    <rect x="4" y="54" width="72" height="3" stroke-width="1.5"/>
+    <rect x="2" y="57" width="76" height="3" stroke-width="1.5"/>
+    <rect x="0" y="60" width="80" height="3" stroke-width="1.5"/>
+  </g>
+</svg>
