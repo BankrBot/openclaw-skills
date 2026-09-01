@@ -3,7 +3,7 @@
 // validates the message, assembles the header, and sends the request - the
 // personal_sign itself stays in your wallet. Bearer-credential hygiene is
 // enforced by construction: the signature enters via stdin only (never argv,
-// env, or files), is sent only to https://tenjin.blog, and is never printed
+// env, or files), is sent only to https://tenjin.sh, and is never printed
 // or persisted; the pending-context file stores public fields only.
 //
 // Usage:
@@ -11,7 +11,7 @@
 //     re-reads): fetch the 402, validate its sign-in-with-x info against the
 //     pins, write the exact message to a file, print the sign command
 //   siwx.mjs message <url> --address <0x> --mint client-minted flow (publish
-//     and account routes per https://tenjin.blog/skills.md: fresh nonce,
+//     and account routes per https://tenjin.sh/skills.md: fresh nonce,
 //     24h expiry)
 //   siwx.mjs send <url> [-X <method>] [-d <json>] < signature-on-stdin
 //     assemble the header from the saved context and call the url
@@ -35,7 +35,7 @@ try {
   process.exit(2);
 }
 
-const ORIGIN = 'https://tenjin.blog';
+const ORIGIN = 'https://tenjin.sh';
 const CHAIN = 'eip155:8453';
 const STATE_DIR = process.env.TENJIN_SIWX_DIR || join(homedir(), '.config', 'tenjin', 'siwx');
 
@@ -76,7 +76,7 @@ if (cmd === 'message') {
     // Client-minted flow (skills.md recipe): the values are ours, nothing
     // remote to distrust.
     info = {
-      domain: 'tenjin.blog',
+      domain: 'tenjin.sh',
       uri: ORIGIN,
       version: '1',
       chainId: CHAIN,
@@ -103,7 +103,7 @@ if (cmd === 'message') {
     // accept (validated below) before building the message.
     info = { ...ext.info, chainId: CHAIN, type: 'eip191' };
     const bad = [];
-    if (info.domain !== 'tenjin.blog') bad.push(`domain ${info.domain} != tenjin.blog`);
+    if (info.domain !== 'tenjin.sh') bad.push(`domain ${info.domain} != tenjin.sh`);
     if (info.uri !== url) bad.push(`uri ${info.uri} != the url you requested`);
     if (!(ext.supportedChains || []).some((c) => c.chainId === CHAIN && c.type === 'eip191')) bad.push(`no ${CHAIN}/eip191 in supportedChains`);
     if (!/^[0-9a-zA-Z]{8,}$/.test(String(info.nonce))) bad.push(`nonce missing or malformed`);

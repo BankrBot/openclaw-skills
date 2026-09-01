@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "slug": "tenjin",
   "provider": "Tenjin",
-  "providerUrl": "https://tenjin.blog",
+  "providerUrl": "https://tenjin.sh",
   "logo": "logo.svg",
   "demo": {
     "title": "tenjin-search-and-buy.sh",
@@ -14,7 +14,7 @@
     "Before every payment, scripts/verify-402.mjs enforces x402-registry.json signingPolicy deterministically: pinned origin/chain/asset/cap, plus the payee - the pinned treasury (answers) or the creator's on-chain 0xSplits split verified by exact bytecode (reads)",
     "Bundled scripts never touch keys, sign, or pay - signing stays in the wallet, after a payment preview and user confirmation",
     "Reads are gasless for the payer (EIP-3009) - the wallet needs USDC on Base, no ETH",
-    "Publishing is free and needs only an EIP-191 wallet signature (SIWX) - see https://tenjin.blog/skills.md"
+    "Publishing is free and needs only an EIP-191 wallet signature (SIWX) - see https://tenjin.sh/skills.md"
   ],
   "install": {
     "type": "bankr",

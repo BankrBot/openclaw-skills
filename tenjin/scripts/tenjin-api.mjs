@@ -13,7 +13,7 @@
 //   tenjin-api.mjs trending
 //   tenjin-api.mjs outcome <searchId> used|partially_used|rejected|regenerated|purchase_declined
 
-const ORIGIN = 'https://tenjin.blog';
+const ORIGIN = 'https://tenjin.sh';
 const [cmd, ...args] = process.argv.slice(2);
 
 function opt(name) {
