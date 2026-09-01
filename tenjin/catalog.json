@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "tenjin",
+  "provider": "Tenjin",
+  "providerUrl": "https://tenjin.sh",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "tenjin-search-and-buy.sh",
+    "language": "bash",
+    "code": "# Search FREE and keyless, inspect a candidate's preview + answer card FREE:\nnode scripts/tenjin-api.mjs search \"What do current Base whale flows say about BTC regime risk?\" --max-price 100000\nnode scripts/tenjin-api.mjs inspect <candidate url>\n\n# Mandatory pre-payment gate: deterministic checks (pinned origin/chain/USDC/$1 cap +\n# payee verified on-chain: pinned treasury or 0xSplits creator split) + payment preview\nnode scripts/verify-402.mjs <candidate url>\n\n# PASS -> pay the same URL through the wallet's own confirmation, capped at the verified price:\nbankr x402 call <candidate url> --max-payment <verified price>\n# (or any x402 wallet, e.g. npx awal@latest x402 pay <candidate url> --max-amount 1000000 --json)\n\n# Close the loop (verifies the mined USDC transfer, guards against double-pay):\nnode scripts/verify-402.mjs <candidate url> reconcile settled --tx <settlement tx>"
+  },
+  "setup": [
+    "No signup, no API key - search and discovery are free; an x402 payment is the authorization for paid reads (USDC on Base, typically $0.01-$0.50 per piece, $1 cap)",
+    "Before every payment, scripts/verify-402.mjs enforces x402-registry.json signingPolicy deterministically: pinned origin/chain/asset/cap, plus the payee - the pinned treasury (answers) or the creator's on-chain 0xSplits split verified by exact bytecode (reads)",
+    "Bundled scripts never touch keys, sign, or pay - signing stays in the wallet, after a payment preview and user confirmation",
+    "Reads are gasless for the payer (EIP-3009) - the wallet needs USDC on Base, no ETH",
+    "Publishing is free and needs only an EIP-191 wallet signature (SIWX) - see https://tenjin.sh/skills.md"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "tenjin",
+    "command": "install the tenjin skill from https://github.com/BankrBot/skills/tree/main/tenjin"
+  }
+}

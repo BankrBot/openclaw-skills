@@ -1,0 +1,75 @@
+{
+  "$comment": "x402 service listing for Tenjin paid reads and answers. Prices vary per piece. payTo has exactly two validated classes: the pinned treasury (answers) and per-piece 0xSplits creator split contracts (reads) - see signingPolicy.payeePolicy.",
+  "name": "tenjin-knowledge-marketplace",
+  "title": "Tenjin - buy verified research answers",
+  "description": "Search free, then buy dated, provenance-backed research pieces and cited answers. Settles in USDC on Base.",
+  "version": "tenjin-api-v1",
+  "provider": {
+    "name": "Tenjin",
+    "url": "https://tenjin.sh",
+    "contact": "https://tenjin.sh"
+  },
+  "endpoint": {
+    "method": "GET",
+    "url": "https://tenjin.sh/api/read/{handle}/{slug}",
+    "search": "https://tenjin.sh/api/agent/search",
+    "answer": "https://tenjin.sh/api/answer",
+    "articles": "https://tenjin.sh/api/articles",
+    "trending": "https://tenjin.sh/api/trending",
+    "discovery": "https://tenjin.sh/.well-known/x402",
+    "openapi": "https://tenjin.sh/openapi.json"
+  },
+  "payment": {
+    "scheme": "exact",
+    "network": "eip155:8453",
+    "asset": "USDC",
+    "assetAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "payTo": null,
+    "payToNote": "Two validated classes, enforced by signingPolicy.payeePolicy: /api/answer always pays the pinned Tenjin treasury; /api/read/... pays the piece creator's 0xSplits split contract (which itself routes 10% to that same treasury). Never sign for a payee outside these classes.",
+    "minAmountUsd": 0.01,
+    "maxAmountUsd": 1,
+    "extra": { "name": "USD Coin", "version": "2" }
+  },
+  "allowedOrigins": ["https://tenjin.sh"],
+  "signingPolicy": {
+    "$comment": "Pin-check EVERY x402 challenge against these values BEFORE signing - scripts/verify-402.mjs enforces this policy deterministically and prints the payment preview. On any mismatch, missing field, or failed payee check, ABORT - do not sign. The signed EIP-3009 authorization is the only funds-moving object in the flow (no client-side facilitator): whoever settles it can only move `value` to `to`, so validating payTo + amount bounds the blast radius even if the origin is compromised.",
+    "requireScheme": "exact",
+    "requireAuthorization": "eip3009-transferWithAuthorization",
+    "pinned": {
+      "network": "eip155:8453",
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "resourceOrigin": "https://tenjin.sh",
+      "assetName": "USD Coin",
+      "assetVersion": "2",
+      "treasury": "0x578c640E2D53023066026381B8CC362539741063"
+    },
+    "payeePolicy": {
+      "answer": {
+        "endpoint": "https://tenjin.sh/api/answer",
+        "rule": "payTo MUST equal pinned.treasury exactly - abort otherwise."
+      },
+      "read": {
+        "endpoint": "https://tenjin.sh/api/read/...",
+        "class": "0xsplits-v2-pushsplit",
+        "factory": "0x8E8eB0cC6AE34A38B67D5Cf91ACa38f60bc3Ecf4",
+        "required": "eth_getCode(payTo) on Base MUST equal runtimeBytecode below - the 0xSplits v2 PushSplit proxy every Tenjin split shares (Tenjin deploys each split before quoting it to buyers). Rejects EOAs, undeployed addresses, and unknown code.",
+        "runtimeBytecode": "0x36602c57343d527f9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff593da1005b3d3d3d3d363d3d37363d731e2086a7e84a32482ac03000d56925f607ccb7085af43d3d93803e605757fd5bf3",
+        "maximum": "Verify the split's recipients are exactly the piece creator's wallet plus pinned.treasury at the 10% platform fee (inspect https://app.splits.org/accounts/<payTo>/?chainId=8453 or verify the on-chain splitHash), proving every read routes through Tenjin's fee split."
+      }
+    },
+    "limits": { "maxAmountAtomic": "1000000", "maxValiditySeconds": 300 },
+    "preSignChecks": [
+      "accepts has exactly ONE entry - Tenjin never serves alternatives; extra entries could steer a multi-scheme wallet into an unvetted flow - else abort.",
+      "accepts[0].extra contains ONLY {name, version} (the USDC EIP-712 domain) - a permit2 spender, facilitator address, or any other extra field signals a spender-mediated flow this policy does not cover - else abort.",
+      "accepts[0].scheme === 'exact' - else abort.",
+      "accepts[0].network === 'eip155:8453' (Base mainnet) - else abort.",
+      "accepts[0].asset === 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 (Base USDC) - else abort; never sign for any other token.",
+      "The 402 challenge came from an https://tenjin.sh/... URL this agent requested - else abort; never pay a challenge relayed from anywhere else.",
+      "accepts[0].payTo passes payeePolicy for the endpoint class (pinned treasury for /api/answer; validated 0xSplits contract for reads) - else abort.",
+      "accepts[0].amount <= 1000000 (or the user's stricter cap) and equals the piece's listed price - else abort.",
+      "The EIP-3009 authorization's to/value match the validated payTo/amount, validity window <= 300s, nonce fresh and never reused - else abort.",
+      "The user saw a payment preview (endpoint, chain, asset, amount, payee class, expiry, spend remaining) and confirmed, or a local autopay policy covers the call - else ask first.",
+      "A local attempt record (url, amount, payTo, nonce, state) exists before sending; after a timeout, 5xx, 409, or ambiguous response, reconcile against it - never sign a second authorization for the same purchase."
+    ]
+  }
+}
