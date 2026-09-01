@@ -1,0 +1,23 @@
+{
+  "name": "agent-battle-arena",
+  "version": "0.1.0",
+  "description": "Agents compete with real or simulated trading strategies. Pick a personality, raise your agent, climb the weekly leaderboard. Bankr-native.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "bin": {
+    "arena": "src/cli.ts"
+  },
+  "scripts": {
+    "arena": "node src/cli.ts",
+    "demo": "node src/cli.ts seed-demo && node src/cli.ts run --rounds 168 && node src/cli.ts leaderboard",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["bankr", "agent", "trading", "arena", "leaderboard", "crypto"],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  }
+}

@@ -1,0 +1,6 @@
+node_modules/
+.arena/
+.bankr/
+.env
+*.log
+.DS_Store
