@@ -43,6 +43,31 @@ PROVIDER=$(echo "$RESULT" | jq -r .provider)
 MESSAGE=$(echo "$RESULT" | jq -r .message)
 SIGNATURE=$(echo "$RESULT" | jq -r .signature)
 
+# Verify TX on-chain: must exist, must have succeeded, and must have been sent
+# by this provider — prevents publishing someone else's TX as your own trade proof.
+RPC_URL="${BASE_RPC_URL:-https://mainnet.base.org}"
+RECEIPT=$(curl -sf -X POST "$RPC_URL" \
+  -H "Content-Type: application/json" \
+  -d "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getTransactionReceipt\",\"params\":[\"$TX_HASH\"],\"id\":1}" 2>/dev/null || true)
+
+if [ -z "$RECEIPT" ] || echo "$RECEIPT" | jq -e '.result == null' >/dev/null 2>&1; then
+  echo "Error: TX $TX_HASH not found on Base — cannot publish unverified trade proof." >&2
+  exit 1
+fi
+
+TX_STATUS=$(echo "$RECEIPT" | jq -r '.result.status')
+TX_FROM=$(echo "$RECEIPT" | jq -r '.result.from' | tr '[:upper:]' '[:lower:]')
+
+if [ "$TX_STATUS" != "0x1" ]; then
+  echo "Error: TX $TX_HASH failed (status: $TX_STATUS) — cannot use a reverted TX as trade proof." >&2
+  exit 1
+fi
+
+if [ "$TX_FROM" != "$PROVIDER" ]; then
+  echo "Error: TX sender $TX_FROM does not match provider $PROVIDER — TX must originate from your own wallet." >&2
+  exit 1
+fi
+
 BODY=$(jq -n \
   --arg provider "$PROVIDER" \
   --arg action "$ACTION" \
