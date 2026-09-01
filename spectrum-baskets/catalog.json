@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "slug": "spectrum-baskets",
+  "provider": "Spectrum",
+  "providerUrl": "https://spectrumindexes.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "basket-agent.sh",
+    "language": "bash",
+    "code": "# Read a basket: NAV, holdings, weights, with provenance\n\"What's in the AIBASKET basket on Base?\"\n# ✓ AI Tokens Basket ($AIBASKET) · AUM $... · NAV $... (onchain)\n# ✓ legs: VVV 40% · A0T 35% · BNKR 25%\n\n# Build a new basket from a thesis\n\"Create a 60/40 basket of AAVE and UNI called MyThesis on Base\"\n# ✓ legs resolved + routed · CREATE2 address mined\n# → deploy calls returned for your wallet to sign\n\n# Buy: the floor comes from a LIVE simulation, never guessed\n\"Buy $250 of AIBASKET\"\n# ✓ simulated fill - slippage = the signed floor\n# → { approval, swap } for your wallet · signing stays in your wallet\n\n# Get out: the unconditional exit that always works\n\"Redeem my AIBASKET in kind\"\n# → redeemInKind calldata · touches no pool, needs no floor"
+  },
+  "setup": [
+    "Clone the open-source kit: `git clone https://github.com/Irora-dev/Spectrum`",
+    "Build the server: `cd Spectrum/app && npm install && npm run mcp:build`",
+    "Verify the install: `bash Spectrum/mcp/run.sh --check` (node version, build, live handshake + health, PASS/FAIL lines)",
+    "Register the MCP server: point your agent at `Spectrum/mcp/run.sh`",
+    "For live buy/sell quotes, set a provider RPC (e.g. VITE_ALCHEMY_API_KEY); the trade simulation needs eth_simulateV1 or eth_call state overrides. Reads, create, and the exit work on any RPC",
+    "Compose-only by default: the skill returns transactions for YOUR wallet to sign; it never holds keys or sends unless you set MCP_OPERATOR_KEY",
+    "Security disclosures go through the public repo's issue tracker: https://github.com/Irora-dev/Spectrum/issues"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Spectrum",
+    "command": "git clone https://github.com/Irora-dev/Spectrum && cd Spectrum/app && npm install && npm run mcp:build",
+    "reference": "https://github.com/Irora-dev/Spectrum/tree/main/mcp"
+  }
+}
