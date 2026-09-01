@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="edge" x1="32" y1="3" x2="32" y2="61" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#48D8FF"/>
+      <stop offset="1" stop-color="#3B82F6"/>
+    </linearGradient>
+    <radialGradient id="core" cx="32" cy="28" r="22" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#11203A"/>
+      <stop offset="1" stop-color="#0E0E14"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Shield body (guardian) -->
+  <path d="M32 3 L55 11 V29 C55 44 45.5 54 32 60 C18.5 54 9 44 9 29 V11 Z"
+        fill="url(#core)" stroke="url(#edge)" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- Inner shield contour -->
+  <path d="M32 9 L50 15 V29 C50 40.5 42.5 48.5 32 53.5 C21.5 48.5 14 40.5 14 29 V15 Z"
+        fill="none" stroke="#1C2A40" stroke-width="1"/>
+
+  <!-- Horizontal scan sweep -->
+  <line x1="14" y1="30" x2="50" y2="30" stroke="#48D8FF" stroke-width="1" stroke-dasharray="2 3" opacity="0.45"/>
+
+  <!-- Scan aperture / audit eye -->
+  <circle cx="32" cy="30" r="9.5" fill="none" stroke="#3B82F6" stroke-width="2"/>
+  <circle cx="32" cy="30" r="5.5" fill="none" stroke="#48D8FF" stroke-width="1.4"/>
+  <circle cx="32" cy="30" r="2" fill="#48D8FF"/>
+
+  <!-- Reticle ticks -->
+  <line x1="32" y1="17" x2="32" y2="22.5" stroke="#48D8FF" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="32" y1="37.5" x2="32" y2="43" stroke="#48D8FF" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="19" y1="30" x2="24.5" y2="30" stroke="#48D8FF" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="39.5" y1="30" x2="45" y2="30" stroke="#48D8FF" stroke-width="1.6" stroke-linecap="round"/>
+
+  <!-- Verdict check (lower shield) -->
+  <path d="M27 47.5 L30.5 51 L38 43.5" fill="none" stroke="#48D8FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

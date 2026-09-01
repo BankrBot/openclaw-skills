@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "slug": "phylax-skill-audit",
+  "provider": "Phylax",
+  "providerUrl": "https://usephylax.com",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "phylax-audit.sh",
+    "language": "bash",
+    "code": "# Audit a skill before install (CLI — exit 0=ALLOW, 1=WARN, 2=DENY)\nnpx phylax@0.2.3 --skill ./SKILL.md\n\n# Hosted API (same engine, SSRF-hardened)\ncurl -sS -X POST https://usephylax.com/api/audit \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"skill_source\":\"github.com/owner/repo/SKILL.md\",\"mode\":\"fast\"}' | jq .\n\n# Embeddable verdict badge\n# https://usephylax.com/api/badge?skill=owner/repo"
+  },
+  "setup": [
+    "Install: `install the phylax-skill-audit skill from https://github.com/BankrBot/skills/tree/main/phylax-skill-audit`",
+    "Run audits locally: `npx phylax@0.2.3 --skill ./path/to/SKILL.md` (Node 18+)",
+    "Free fast API: `POST https://usephylax.com/api/audit` with `\"mode\":\"fast\"`",
+    "Paid deep audit: deploy `bankr x402 deploy` → audit-deep @ $0.05 USDC (see repo x402/README.md)",
+    "x402 terminal: https://bankr.bot/terminal/x402 — security layer for skills & x402 APIs on Bankr",
+    "Also available as a native Aeon skill: `./add-skill aaronjmars/aeon phylax-audit`",
+    "Source: https://github.com/usephylax/phylax-skill-audit"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "phylax-skill-audit",
+    "command": "install the phylax-skill-audit skill from https://github.com/BankrBot/skills/tree/main/phylax-skill-audit"
+  }
+}
