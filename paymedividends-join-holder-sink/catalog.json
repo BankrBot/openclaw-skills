@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "paymedividends-join-holder-sink",
+  "provider": "Pay Me Dividends",
+  "providerUrl": "https://app.paymedividends.xyz",
+  "logo": null,
+  "demo": {
+    "title": "join-sink.sh",
+    "language": "bash",
+    "code": "# List Robinhood tokens where this wallet is fee beneficiary\ncurl \"https://api.bankr.bot/public/doppler/beneficiary-fees/0xYourWallet\"\n\n# Pay Me Dividends filtered proxy\ncurl \"https://paymedividends-production.up.railway.app/v1/bankr/beneficiary-fees/0xYourWallet\"\n\n# Deep link to site wizard (existing token)\nopen \"https://app.paymedividends.xyz/#test-lab?token=0x80db362eab104ec378e19d0a3dcd5e84bafd4ba3\""
+  },
+  "setup": [
+    "User must be the current Bankr fee beneficiary on a Robinhood Chain stock-paired token (≥95% share).",
+    "Connect wallet on Robinhood Chain (4663) or use Bankr wallet with Robinhood support.",
+    "For new tokens, use app.paymedividends.xyz instead — this skill is for existing tokens only."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "paymedividends-join-holder-sink",
+    "command": "install the paymedividends-join-holder-sink skill from https://github.com/BankrBot/skills/tree/main/paymedividends-join-holder-sink"
+  }
+}
