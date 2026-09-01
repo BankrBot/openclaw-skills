@@ -1,0 +1,90 @@
+{
+  "version": "1.0",
+  "operator": "Achilles",
+  "did": "did:key:z6MksD98V31uLxhL65NZ6zChk8rnUiXRSAgtgSA7yJWQz762",
+  "settlement": {
+    "chain": "base-mainnet",
+    "chain_id": 8453,
+    "token": "USDC",
+    "token_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "wallet": "0x069c6012E053DFBf50390B19FaE275aD96D22ed7",
+    "facilitator_wallet": "0x8AEE621035D93Deb3C0C1177fac252dC2dd501a0"
+  },
+  "services": [
+    {
+      "name": "flowcore",
+      "url": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/flowcore",
+      "method": "POST",
+      "price": {"amount": "0.02", "currency": "USDC"},
+      "description": "Full pre-execution safety pipeline — NoLeak + RiskOracle + SecureExec + MemGuard in one call. Returns decision + risk_score + per-check proofs.",
+      "input_schema": {
+        "type": "object",
+        "required": ["action"],
+        "properties": {
+          "action": {
+            "type": "object",
+            "description": "The proposed action to verify. Arbitrary shape — include type, parameters, and any context the risk models should consider.",
+            "properties": {
+              "type":   {"type": "string", "description": "e.g. transfer, swap, deploy, tool_call"},
+              "token":  {"type": "string"},
+              "amount": {"type": "string"},
+              "to":     {"type": "string"},
+              "chain":  {"type": "string", "default": "base-mainnet"}
+            }
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "service":  {"type": "string", "const": "flowcore"},
+          "result": {
+            "type": "object",
+            "properties": {
+              "decision":   {"type": "string", "enum": ["allow", "deny", "abstain"]},
+              "risk_score": {"type": "number", "minimum": 0, "maximum": 1},
+              "checks":     {"type": "object"}
+            }
+          },
+          "proof":   {"type": "object"},
+          "payment": {"type": "object"}
+        }
+      }
+    },
+    {
+      "name": "noleak",
+      "url": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/noleak",
+      "method": "POST",
+      "price": {"amount": "0.01", "currency": "USDC"},
+      "description": "Execution integrity / leak detection — scans payload for tampering, prompt injection, unauthorised data flow. Returns proof_hash on pass."
+    },
+    {
+      "name": "memguard",
+      "url": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/memguard",
+      "method": "POST",
+      "price": {"amount": "0.01", "currency": "USDC"},
+      "description": "Memory state verification — detects drift, corruption, unauthorised modification vs. reference."
+    },
+    {
+      "name": "riskoracle",
+      "url": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/riskoracle",
+      "method": "POST",
+      "price": {"amount": "0.01", "currency": "USDC"},
+      "description": "Pre-action multi-factor risk scoring — market, counterparty, operational risk before any trade, transfer, or deploy."
+    },
+    {
+      "name": "secureexec",
+      "url": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/secureexec",
+      "method": "POST",
+      "price": {"amount": "0.01", "currency": "USDC"},
+      "description": "Sandboxed tool-call validation — confirms tool call is safe to run in an isolated environment."
+    },
+    {
+      "name": "validate",
+      "url": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/validate",
+      "method": "POST",
+      "price": {"amount": "0.01", "currency": "USDC"},
+      "description": "Full EP policy validation — identity + integrity + risk + compliance flags + proof_hash."
+    }
+  ]
+}

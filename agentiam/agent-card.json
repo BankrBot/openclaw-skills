@@ -1,0 +1,80 @@
+{
+  "did": "did:key:z6MksD98V31uLxhL65NZ6zChk8rnUiXRSAgtgSA7yJWQz762",
+  "name": "AgentIAM by Achilles",
+  "description": "Pre-execution safety layer for autonomous agent actions on Base. Six x402 services, USDC-settled, signed verification proofs. No account, no API key, no private-key handling.",
+  "operator": "Achilles",
+  "human_oversight": "Zeus",
+  "repository": "https://github.com/achilliesbot/agentiam",
+  "bankr_skill": "https://github.com/BankrBot/skills/tree/main/agentiam",
+  "discovery": "https://402index.io",
+  "settlement": {
+    "chain": "base-mainnet",
+    "chain_id": 8453,
+    "asset": "USDC",
+    "asset_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "signer_wallet": "0x069c6012E053DFBf50390B19FaE275aD96D22ed7",
+    "provider_wallet": "0x24908846a4397d3549d07661e0fc02220ab14dad",
+    "facilitator": {
+      "operator": "BANKR x402 Cloud",
+      "wallet": "0x8AEE621035D93Deb3C0C1177fac252dC2dd501a0",
+      "note": "Appears as payTo in 402 quotes. Escrows + sweeps to provider_wallet. Expected routing."
+    },
+    "decommissioned_wallet": "0x16708f79D6366eE32774048ECC7878617236Ca5C"
+  },
+  "services": [
+    {
+      "name": "flowcore",
+      "path": "/flowcore",
+      "price_usdc": "0.02",
+      "recommended": true,
+      "summary": "Full pipeline — NoLeak + RiskOracle + SecureExec + MemGuard in one call. Returns decision + risk_score + per-check proofs.",
+      "endpoint": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/flowcore"
+    },
+    {
+      "name": "noleak",
+      "path": "/noleak",
+      "price_usdc": "0.01",
+      "summary": "Execution integrity / leak detection — scans payload for tampering, prompt injection, unauthorised data flow.",
+      "endpoint": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/noleak"
+    },
+    {
+      "name": "memguard",
+      "path": "/memguard",
+      "price_usdc": "0.01",
+      "summary": "Memory state verification — detects drift, corruption, unauthorised modification vs. reference.",
+      "endpoint": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/memguard"
+    },
+    {
+      "name": "riskoracle",
+      "path": "/riskoracle",
+      "price_usdc": "0.01",
+      "summary": "Pre-action multi-factor risk scoring — market, counterparty, operational.",
+      "endpoint": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/riskoracle"
+    },
+    {
+      "name": "secureexec",
+      "path": "/secureexec",
+      "price_usdc": "0.01",
+      "summary": "Sandboxed tool-call validation — confirms tool call is safe to run in an isolated environment.",
+      "endpoint": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/secureexec"
+    },
+    {
+      "name": "validate",
+      "path": "/validate",
+      "price_usdc": "0.01",
+      "summary": "Full EP policy validation — identity + integrity + risk + compliance flags + proof_hash.",
+      "endpoint": "https://x402.bankr.bot/0x24908846a4397d3549d07661e0fc02220ab14dad/validate"
+    }
+  ],
+  "safety": {
+    "no_install_script": true,
+    "no_private_key_handled": true,
+    "no_env_var_secrets": true,
+    "no_mcp_server_v1": true,
+    "no_remote_code_execution": true,
+    "tls_only": true,
+    "signed_responses": true,
+    "wallet_disclosure": "references/wallet-disclosure.md",
+    "full_review": "SAFETY.md"
+  }
+}
