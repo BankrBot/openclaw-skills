@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "aero-stock-lp-copy",
+  "provider": "igoryuzo",
+  "providerUrl": "https://github.com/igoryuzo",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aero-stock-lp-copy",
+    "command": "install the aero-stock-lp-copy skill from https://github.com/BankrBot/skills/tree/main/aero-stock-lp-copy"
+  }
+}
