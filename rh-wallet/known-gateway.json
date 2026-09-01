@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "gatewayUrl": "https://rh-wallet-production.up.railway.app",
+  "gatewaySecret": "uniqueissomethingimtesting",
+  "allowedUrlHosts": ["rh-wallet-production.up.railway.app", "x402.bankr.bot"],
+  "healthPath": "/health",
+  "apiPrefix": "/v1",
+  "maxOrderUsdDefault": 50,
+  "requireConfirmationDefault": true,
+  "sourceRepo": "https://github.com/anondevv69/RH-Wallet",
+  "robinhoodApiBase": "https://trading.robinhood.com",
+  "supportedOrderTypes": ["market"],
+  "supportedSymbolPattern": "^[A-Z0-9]+-USD$",
+  "notes": "Gateway signs Robinhood Crypto v2 requests. Keys stay in Bankr env — not stored on gateway.",
+  "x402": {
+    "payTo": "0x374d91a5674fa7cf86e725093b5848b97e1e13b4",
+    "network": "base",
+    "currency": "USDC",
+    "endpoints": {
+      "rh-buy": {
+        "url": "https://x402.bankr.bot/0x374d91a5674fa7cf86e725093b5848b97e1e13b4/rh-buy",
+        "priceUsd": "0.50",
+        "description": "Bundled prices + account + order"
+      },
+      "rh-prices": {
+        "url": "https://x402.bankr.bot/0x374d91a5674fa7cf86e725093b5848b97e1e13b4/rh-prices",
+        "priceUsd": "0.25",
+        "description": "Best bid/ask prices"
+      },
+      "rh-account": {
+        "url": "https://x402.bankr.bot/0x374d91a5674fa7cf86e725093b5848b97e1e13b4/rh-account",
+        "priceUsd": "0.25",
+        "description": "Account summary or holdings"
+      },
+      "rh-order": {
+        "url": "https://x402.bankr.bot/0x374d91a5674fa7cf86e725093b5848b97e1e13b4/rh-order",
+        "priceUsd": "0.25",
+        "description": "Place, list, or cancel orders"
+      }
+    }
+  }
+}

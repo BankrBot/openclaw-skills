@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="RH Wallet">
+  <rect width="128" height="128" rx="24" fill="#00c805"/>
+  <path d="M64 28 L88 44 L88 76 C88 92 76 102 64 108 C52 102 40 92 40 76 L40 44 Z" fill="#ffffff" opacity="0.95"/>
+  <text x="64" y="72" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="#00c805">RH</text>
+</svg>

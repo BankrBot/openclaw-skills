@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "slug": "rh-wallet",
+  "provider": "RH Wallet",
+  "providerUrl": "https://github.com/anondevv69/RH-Wallet",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "x402-prices.sh",
+    "language": "bash",
+    "code": "bankr x402 call \"https://x402.bankr.bot/0x374d91a5674fa7cf86e725093b5848b97e1e13b4/rh-prices\" \\\n  -X POST \\\n  -d '{\"rh_api_key\":\"'\"$RH_API_KEY\"'\",\"rh_private_key_b64\":\"'\"$RH_PRIVATE_KEY_BASE64\"'\",\"symbol\":\"BTC-USD\"}' \\\n  --yes"
+  },
+  "setup": [
+    "US Robinhood customers — Crypto API + optional Agentic MCP",
+    "CRYPTO: RH_API_KEY + RH_PRIVATE_KEY_BASE64 in Bankr Agent tool environment (never in chat)",
+    "CRYPTO: free gateway or x402 USDC on Base — references/x402.md",
+    "STOCKS/OPTIONS: connect MCP https://agent.robinhood.com/mcp/trading (OAuth, desktop) — references/AGENTIC-TRADING.md",
+    "STOCKS/OPTIONS: no API keys in env — OAuth only; open Robinhood Agentic account",
+    "Never post account numbers on X — references/RESPONSE-SAFETY.md",
+    "Crypto pairs BTC-USD only on rh-wallet — NOT 0x contract addresses (see WALLET-ROUTING.md)",
+    "Keygen: https://github.com/anondevv69/RH-Wallet/blob/main/scripts/generate_rh_keypair.py"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "rh-wallet",
+    "command": "install the rh-wallet skill from https://github.com/BankrBot/skills/tree/main/rh-wallet"
+  }
+}
