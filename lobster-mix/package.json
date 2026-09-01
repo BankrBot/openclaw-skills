@@ -1,0 +1,8 @@
+{
+    "name": "lobster-mix",
+    "version": "1.0.0",
+    "description": "Private USDC mixing for agents. Privacy by default.",
+    "main": "SKILL.md",
+    "author": "Lobster Protocol",
+    "license": "MIT"
+}
