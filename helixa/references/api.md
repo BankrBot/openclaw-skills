@@ -2,7 +2,7 @@
 
 Base URL: `https://api.helixa.xyz`
 
-All responses are JSON. No API key required for public endpoints. Authenticated endpoints use SIWA (see `siwa.md`). Paid endpoints use x402 micropayments ($1 USDC).
+All responses are JSON. No API key required for public endpoints. Authenticated endpoints use SIWA (see `siwa.md`). Paid endpoints use x402 micropayments. Prices vary by endpoint: API mint is $1 USDC, full Cred Report is $1 USDC, and Deep CRED generation is $0.15 USDC.
 
 ---
 
@@ -33,7 +33,7 @@ List agents in the directory.
 |-------|------|---------|-------------|
 | `limit` | int | 20 | Max results (1-1000) |
 | `offset` | int | 0 | Pagination offset |
-| `search` | string | — | Search by name, address, or framework |
+| `search` | string | - | Search by name, address, or framework |
 
 **Response:**
 ```json
@@ -63,7 +63,7 @@ List agents in the directory.
 
 Get a single agent's full profile.
 
-**Path Parameters:** `id` — token ID (integer)
+**Path Parameters:** `id` - token ID (integer)
 
 **Response:**
 ```json
@@ -132,9 +132,49 @@ Check name availability for minting.
 
 **Paid: $1 USDC via x402**
 
-Full Cred Report with 9-factor scoring breakdown, recommendations, ranking, and signed receipt.
+Full Cred Report with current scoring breakdown, recommendations, ranking, and signed receipt.
 
 ---
+
+### GET /api/terminal/agent/:id/deep-cred-report
+
+Read a cached Deep CRED report for an agent when one exists. No auth or payment is required for cached reads.
+
+**Response:**
+```json
+{
+  "report": {
+    "subject_key": "8453:0x...",
+    "model": "bankr-router:claude-haiku-4.5",
+    "summary": { "confidence": "MEDIUM" }
+  }
+}
+```
+
+### POST /api/terminal/agent/:id/deep-cred-report
+
+Generate a fresh Deep CRED report. Paid x402: $0.15 USDC on Base. Operators may use an internal key for no-charge smoke tests; normal agents should use x402.
+
+---
+
+## Multipass Public Agent Profile Endpoints
+
+Base URL: `https://helixa.xyz`
+
+| Endpoint | Description |
+|---|---|
+| `GET /.well-known/multipass.json` | Canonical agent-readable discovery document |
+| `GET /api/openapi.json` | OpenAPI 3.1 document |
+| `GET /api/resolve?agent={input}` | Resolve token ID, ERC-8004-style ID, name, slug, or Multipass ID |
+| `GET /api/multipass/{id}` | Public profile JSON |
+| `GET /api/multipass/{id}/agent-card` | Compact machine-readable public agent card |
+| `GET /api/multipass/{id}/card` | Compatibility alias for agent-card |
+| `GET /api/multipass/{id}/tools` | Public tool/service cards only |
+| `GET /api/multipass/{id}/x402` | Public x402 manifest |
+| `GET /api/multipass/{id}/receipts` | Public receipt fragments |
+| `GET /api/multipass/{id}/changes` | Public change history |
+
+Multipass surfaces are public profile/discovery metadata only. They do not execute tools, transfer custody, expose private credentials, or grant approvals.
 
 ## Authenticated Endpoints (SIWA Required)
 
@@ -168,14 +208,14 @@ Mint a new Helixa identity NFT. Requires SIWA auth + x402 payment ($1 USDC).
 { "success": true, "tokenId": 901, "txHash": "0x...", "mintOrigin": "AGENT_SIWA" }
 ```
 
-**Error — x402 Payment Required (402):**
+**Error - x402 Payment Required (402):**
 Returns x402 payment instructions. Use the x402 SDK for automatic handling.
 
 ---
 
 ### POST /api/v2/agent/:id/update
 
-Update agent traits, personality, narrative, or social links. Requires SIWA auth + x402 ($1 USDC).
+Update agent traits, personality, narrative, or social links. Requires SIWA auth. Updates are currently free.
 
 **Headers:** `Authorization: Bearer {siwa}`, `Content-Type: application/json`
 
@@ -189,7 +229,7 @@ Update agent traits, personality, narrative, or social links. Requires SIWA auth
 }
 ```
 
-All fields optional — only provided fields are updated.
+All fields optional - only provided fields are updated.
 
 **Response (200):**
 ```json

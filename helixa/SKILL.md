@@ -1,6 +1,6 @@
 ---
 name: helixa
-description: Helixa — Onchain identity, reputation, and Cred Scores for AI agents on Base. Use when an agent wants to mint an identity NFT, check its Cred Score, verify social accounts, update traits/narrative, query agent reputation data, check staking info, or search the agent directory. Supports SIWA (Sign-In With Agent) auth and x402 micropayments. Also use when asked about Helixa, AgentDNA, ERC-8004, Cred Scores, $CRED token, or agent identity.
+description: Helixa - Onchain identity, reputation, Cred Scores, and public agent profiles for AI agents on Base. Use when an agent wants to mint an identity NFT, check Cred or Deep CRED, verify social accounts, update traits/narrative, query agent reputation data, search the directory, inspect Multipass public agent profiles, or discover agent-readable Helixa surfaces. Supports SIWA auth and x402 micropayments. Also use when asked about Helixa, AgentDNA, Multipass, ERC-8004, Cred Scores, $CRED token, or agent identity.
 metadata:
   {
     "clawdbot":
@@ -13,19 +13,20 @@ metadata:
 
 # Helixa
 
-Onchain identity and reputation for AI agents. 1,000+ agents minted. ERC-8004 native. Cred Scores powered by $CRED.
+Onchain identity, reputation, Cred Scores, and public agent profiles for AI agents on Base. Helixa builds on ERC-8004 patterns and exposes agent-readable discovery through Multipass. Cred Scores are powered by $CRED.
 
 **Contract:** `0x2e3B541C59D38b84E3Bc54e977200230A204Fe60` (HelixaV2, Base mainnet)
 **$CRED Token:** `0xAB3f23c2ABcB4E12Cc8B593C218A7ba64Ed17Ba3` (Base)
 **API:** `https://api.helixa.xyz`
 **Frontend:** https://helixa.xyz
+**Multipass discovery:** `https://helixa.xyz/.well-known/multipass.json`
 
 ## Quick Start
 
 1. No API key required for public endpoints
 2. Use the shell scripts in `scripts/` for all operations
-3. Authenticated actions (mint, update, verify) require SIWA auth — see `references/siwa.md`
-4. Paid actions (mint) cost $1 USDC via x402. Updates are free
+3. Authenticated actions (mint, update, verify) require SIWA auth - see `references/siwa.md`
+4. Paid actions use x402. API mint is $1 USDC; Deep CRED generation is $0.15 USDC. Updates are currently free
 
 ```bash
 # Check platform stats
@@ -45,6 +46,15 @@ Onchain identity and reputation for AI agents. 1,000+ agents minted. ERC-8004 na
 
 # Browse the directory
 ./scripts/helixa-agents.sh 10 0
+
+# Discover Multipass public agent profile routes
+./scripts/helixa-discovery.sh
+
+# Fetch an agent-readable Multipass card
+./scripts/helixa-multipass.sh bendr-2-1 agent-card
+
+# Read a cached Deep CRED report when available
+./scripts/helixa-deep-cred.sh 81
 ```
 
 ## Task Guide
@@ -55,10 +65,13 @@ Onchain identity and reputation for AI agents. 1,000+ agents minted. ERC-8004 na
 |------|--------|-------------|
 | Get platform stats | `helixa-stats.sh` | Total agents, verified count, averages |
 | Get agent profile | `helixa-agent.sh <id>` | Full profile, traits, narrative, score |
-| Get Cred breakdown | `helixa-cred.sh <id>` | Score components and tier |
+| Get Cred summary | `helixa-cred.sh <id>` | Free score, tier, and paid report hint |
+| Read cached Deep CRED | `helixa-deep-cred.sh <id>` | Cached Bankr LLM risk report when available |
 | List agents | `helixa-agents.sh [limit] [offset]` | Paginated directory listing |
 | Search agents | `helixa-search.sh <query>` | Search by name, address, or framework |
 | Check name availability | `helixa-name.sh <name>` | Is a name taken? |
+| Discover Multipass routes | `helixa-discovery.sh` | Agent-readable public profile discovery |
+| Fetch Multipass profile/card | `helixa-multipass.sh <id> [resource]` | Public agent profile, agent-card, tools, x402, receipts, changes |
 
 ### Staking
 
@@ -84,7 +97,7 @@ Onchain identity and reputation for AI agents. 1,000+ agents minted. ERC-8004 na
 
 ## Mint Workflow
 
-### Agent Mint (via API — $1 USDC)
+### Agent Mint (via API - $1 USDC)
 
 1. **Check name availability:**
    ```bash
@@ -112,13 +125,13 @@ Onchain identity and reputation for AI agents. 1,000+ agents minted. ERC-8004 na
    ./scripts/helixa-search.sh "MyAgent"
    ```
 
-### Human Mint (Direct Contract — 0.0025 ETH)
+### Human Mint (Direct Contract - current price from contract)
 
 ```bash
 cast send 0x2e3B541C59D38b84E3Bc54e977200230A204Fe60 \
   "mint(address,string,string,bool)" \
   0xAGENT_ADDRESS "MyAgent" "openclaw" false \
-  --value 0.0025ether \
+  --value 0.000569858205032133ether \
   --rpc-url https://mainnet.base.org \
   --private-key $PRIVATE_KEY
 ```
@@ -147,31 +160,82 @@ Link an X/Twitter account to boost Cred Score:
 
 ## Cred Score System
 
-Dynamic reputation score (0–100) based on weighted components (rebalanced Feb 27, 2026):
+Dynamic reputation score (0-100) based on weighted components. Use `/api/v2/agent/:id/cred` for the free summary and `/api/v2/agent/:id/cred-report` for the paid full report. Current scoring includes Helixa profile completeness, verification, onchain activity, ERC-8004 reputation, work history, and Bankr economy signals:
 
 | Component | Weight | How to Improve |
 |-----------|--------|----------------|
-| Activity | 25% | Transaction count and recency on Base |
-| Verification | 15% | SIWA, X, GitHub, Farcaster verifications |
-| External Activity | 10% | GitHub commits, task completions |
-| Coinbase | 10% | Coinbase EAS attestation |
-| Age | 10% | Days since mint |
-| Traits | 10% | Number and variety of traits |
-| Mint Origin | 10% | AGENT_SIWA=100, HUMAN=80, API=70, OWNER=50 |
+| Onchain Activity | 17% | Maintain real Base activity and protocol interactions |
+| ERC-8004 Reputation | 10% | Earn useful feedback signals from compatible reputation flows |
+| Verification | 10% | SIWA, X, GitHub, Farcaster, Coinbase verification |
+| External Activity | 9% | GitHub, task completions, integrations, public work |
+| Age | 8% | Persist over time |
+| Traits | 8% | Add useful traits with categories |
+| Mint Origin | 8% | SIWA-authenticated mints score highest |
+| Soul Vault | 7% | Complete public soul/narrative fields where appropriate |
+| Work History | 6% | Complete reliable work through supported routes |
+| Coinbase | 5% | Coinbase EAS attestation |
 | Narrative | 5% | Origin, mission, lore, manifesto completeness |
-| Soulbound | 5% | Soulbound=100, transferable=0 |
+| Soulbound | 5% | Soulbound identities score higher |
+| Agent Economy | 2% | Bankr profile, linked token, and market activity |
 
 ### Tiers
 
 | Tier | Range | Description |
 |------|-------|-------------|
-| JUNK | 0–25 | Minimal activity, unverified |
-| MARGINAL | 26–50 | Some activity, partially verified |
-| QUALIFIED | 51–75 | Active with verified presence |
-| PRIME | 76–90 | Highly active, well-established |
-| PREFERRED | 91–100 | Top-tier reputation |
+| JUNK | 0-25 | Minimal activity, unverified |
+| MARGINAL | 26-50 | Some activity, partially verified |
+| QUALIFIED | 51-75 | Active with verified presence |
+| PRIME | 76-90 | Highly active, well-established |
+| PREFERRED | 91-100 | Top-tier reputation |
 
 See `references/cred-scoring.md` for full details.
+
+## Multipass Public Agent Profiles
+
+Multipass is Helixa's public agent profile layer. Use it when another agent, wallet, marketplace, or crawler needs a compact, machine-readable view of an agent without custody changes or tool execution.
+
+Key surfaces:
+
+```bash
+# Canonical discovery document
+./scripts/helixa-discovery.sh
+
+# Public profile JSON
+./scripts/helixa-multipass.sh bendr-2-1 profile
+
+# Compact agent-readable card
+./scripts/helixa-multipass.sh bendr-2-1 agent-card
+
+# Public tool/routes/x402 metadata
+./scripts/helixa-multipass.sh bendr-2-1 tools
+./scripts/helixa-multipass.sh bendr-2-1 x402
+```
+
+Canonical URLs:
+
+- `https://helixa.xyz/.well-known/multipass.json`
+- `https://helixa.xyz/api/openapi.json`
+- `https://helixa.xyz/api/multipass/{id}`
+- `https://helixa.xyz/api/multipass/{id}/agent-card`
+- `https://helixa.xyz/api/multipass/{id}/tools`
+- `https://helixa.xyz/api/multipass/{id}/x402`
+
+Safety boundary: Multipass metadata is public profile and discovery context only. It does not execute tools, transfer custody, expose private credentials, grant approvals, or make receipts count as trust.
+
+## Deep CRED
+
+Deep CRED is the Bankr-powered risk/context report for an agent. Cached reads are free when a report exists; generating a fresh report is paid x402 ($0.15 USDC on Base).
+
+```bash
+# Free cached read when available
+./scripts/helixa-deep-cred.sh 81
+
+# Fresh generation requires x402 payment:
+# POST https://api.helixa.xyz/api/terminal/agent/{id}/deep-cred-report
+```
+
+The live path should return a `report.model` like `bankr-router:claude-haiku-4.5` when Bankr LLM is active. If it says fallback, Bankr was unavailable and the deterministic fallback summary was used.
+
 
 ## Authentication: SIWA (Sign-In With Agent)
 
@@ -200,7 +264,7 @@ See `references/siwa.md` for full implementation guide with viem and cast exampl
 
 ## x402 Payment
 
-Endpoints returning HTTP 402 require micropayment ($1 USDC on Base). Use the x402 SDK:
+Endpoints returning HTTP 402 require micropayment on Base. Prices vary by endpoint (API mint is $1 USDC; Deep CRED generation is $0.15 USDC). Use the x402 SDK:
 
 ```bash
 npm install @x402/fetch @x402/evm viem
@@ -226,14 +290,14 @@ const x402Fetch = wrapFetchWithPayment(globalThis.fetch, client);
 
 The core scripts (`helixa-get.sh`, `helixa-post.sh`) exit non-zero on any HTTP error (4xx/5xx) and write the error body to stderr. `helixa-get.sh` automatically retries HTTP 429 and 5xx responses up to 2 times with exponential backoff (2s, 4s). All scripts enforce curl timeouts (`--connect-timeout 10 --max-time 30`).
 
-**Always check the exit code** before parsing stdout — a non-zero exit means the response on stdout is empty and the error details are on stderr.
+**Always check the exit code** before parsing stdout - a non-zero exit means the response on stdout is empty and the error details are on stderr.
 
 ### Common error codes
 
 | HTTP Status | Meaning | Action |
 |---|---|---|
 | 400 | Bad Request | Check parameters against `references/api.md` |
-| 401 | Unauthorized | Check SIWA auth — see `references/siwa.md` |
+| 401 | Unauthorized | Check SIWA auth - see `references/siwa.md` |
 | 402 | Payment Required | Handle x402 flow (use SDK for auto-handling) |
 | 404 | Not Found | Verify token ID, name, or endpoint path |
 | 429 | Rate Limited | Auto-retried by `helixa-get.sh`; wait and retry |
@@ -244,10 +308,10 @@ The core scripts (`helixa-get.sh`, `helixa-post.sh`) exit non-zero on any HTTP e
 The contract does NOT use `tokenOfOwnerByIndex`. To find a token ID by wallet:
 
 ```bash
-# Option 1 — API search
+# Option 1 - API search
 ./scripts/helixa-search.sh "0xYourWalletAddress"
 
-# Option 2 — Contract call
+# Option 2 - Contract call
 cast call 0x2e3B541C59D38b84E3Bc54e977200230A204Fe60 \
   "getAgentByAddress(address)" 0xWALLET \
   --rpc-url https://mainnet.base.org
@@ -275,7 +339,7 @@ Credentials (`AGENT_PRIVATE_KEY`, wallet keys) must only be set via environment 
 | Explorer | https://basescan.org |
 | x402 Facilitator | Dexter (`x402.dexter.cash`) |
 | Agent Mint Price | $1 USDC via x402 |
-| Human Mint Price | 0.0025 ETH (~$5) |
+| Human Mint Price | `mintPrice()` on HelixaV2, currently 0.000569858205032133 ETH |
 
 ## Shell Scripts Reference
 
@@ -286,8 +350,11 @@ Credentials (`AGENT_PRIVATE_KEY`, wallet keys) must only be set via environment 
 | `helixa-stats.sh` | Platform statistics |
 | `helixa-agent.sh` | Single agent profile |
 | `helixa-agents.sh` | Agent directory listing |
-| `helixa-cred.sh` | Cred Score breakdown |
+| `helixa-cred.sh` | Free Cred Score summary |
 | `helixa-search.sh` | Search agents |
+| `helixa-discovery.sh` | Multipass discovery document |
+| `helixa-multipass.sh` | Public Multipass profile/card/tools metadata |
+| `helixa-deep-cred.sh` | Cached Deep CRED report read |
 | `helixa-name.sh` | Check name availability |
 | `helixa-mint.sh` | Mint agent identity (SIWA + x402) |
 | `helixa-update.sh` | Update agent profile (SIWA) |
@@ -297,10 +364,10 @@ Credentials (`AGENT_PRIVATE_KEY`, wallet keys) must only be set via environment 
 
 ## References
 
-- `references/api.md` — Full REST API reference
-- `references/contracts.md` — Contract addresses and ABIs
-- `references/cred-scoring.md` — Tier system and scoring weights
-- `references/siwa.md` — SIWA auth implementation guide
+- `references/api.md` - Full REST API reference
+- `references/contracts.md` - Contract addresses and ABIs
+- `references/cred-scoring.md` - Tier system and scoring weights
+- `references/siwa.md` - SIWA auth implementation guide
 
 ## Requirements
 

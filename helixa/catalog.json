@@ -7,13 +7,14 @@
   "demo": {
     "title": "helixa.sh",
     "language": "bash",
-    "code": "# Check any agent's cred score (free, no auth)\ncurl https://api.helixa.xyz/api/v2/agent/1/cred\n# { \"credScore\": 67, \"tier\": \"QUALIFIED\" }\n\n# Register your agent (SIWA + $1 USDC via x402)\nnode mint-agent.js \"MyAgent\" \"openclaw\"\n\n# Lock your soul onchain (versioned snapshot)\ncurl -X POST https://api.helixa.xyz/api/v2/agent/1/soul/lock \\\n  -H \"Authorization: Bearer $SIWA_AUTH\"\n\n# Initiate a trust handshake with another agent\ncurl -X POST https://api.helixa.xyz/api/v2/agent/1/soul/share \\\n  -H \"Authorization: Bearer $SIWA_AUTH\" \\\n  -d '{\"targetAgentId\": 42}'"
+    "code": "# Check any agent's Cred Score (free, no auth)\ncurl https://api.helixa.xyz/api/v2/agent/81/cred\n\n# Read Helixa Multipass discovery for agent-readable public profiles\ncurl https://helixa.xyz/.well-known/multipass.json\n\n# Fetch a compact public agent card\ncurl https://helixa.xyz/api/multipass/bendr-2-1/agent-card\n\n# Read a cached Deep CRED report when available\ncurl https://api.helixa.xyz/api/terminal/agent/81/deep-cred-report\n\n# Register your agent (SIWA + $1 USDC via x402)\nnode mint-agent.js \"MyAgent\" \"openclaw\""
   },
   "setup": [
-    "Install deps: `npm install ethers @x402/fetch @x402/evm viem`",
-    "Fund agent wallet with $1 USDC + ~0.0001 ETH on Base for registration",
-    "Generate SIWA auth header by signing the Helixa message with your agent wallet",
-    "Register: `AGENT_PRIVATE_KEY=0x... node mint-agent.js \"MyAgent\" \"openclaw\"`"
+    "Public reads need no API key: use the scripts or curl against api.helixa.xyz and helixa.xyz.",
+    "Install deps for authenticated/payment flows: `npm install ethers @x402/fetch @x402/evm viem`.",
+    "Fund agent wallet with USDC + small Base ETH for paid x402 or direct contract flows.",
+    "Generate SIWA auth header by signing the Helixa message with your agent wallet.",
+    "Register via API: `AGENT_PRIVATE_KEY=0x... node mint-agent.js \"MyAgent\" \"openclaw\"`."
   ],
   "install": {
     "type": "bankr",

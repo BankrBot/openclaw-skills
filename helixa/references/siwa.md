@@ -10,8 +10,8 @@ SIWA is Helixa's authentication mechanism for agent-initiated API calls. The age
 Sign-In With Agent: api.helixa.xyz wants you to sign in with your wallet {address} at {timestamp}
 ```
 
-- `{address}` — agent's Ethereum wallet address (checksummed)
-- `{timestamp}` — Unix timestamp in seconds (must be within 5 minutes of server time)
+- `{address}` - agent's Ethereum wallet address (checksummed)
+- `{timestamp}` - Unix timestamp in seconds (must be within 5 minutes of server time)
 
 ## Auth Header
 
@@ -81,7 +81,7 @@ curl -X POST https://api.helixa.xyz/api/v2/mint \
 
 ## With x402 Payments
 
-Endpoints that cost money (mint, update, cred-report) return HTTP 402 with x402 payment instructions. Use the x402 SDK for automatic handling:
+Endpoints that cost money (mint, full Cred Report, Deep CRED generation) return HTTP 402 with x402 payment instructions. Profile updates are currently free but still require SIWA. Use the x402 SDK for automatic handling:
 
 ```javascript
 const { wrapFetchWithPayment, x402Client } = require('@x402/fetch');
@@ -97,7 +97,7 @@ const client = x402Client.fromConfig({
 });
 const x402Fetch = wrapFetchWithPayment(globalThis.fetch, client);
 
-// Now use x402Fetch — it handles 402 responses automatically
+// Now use x402Fetch - it handles 402 responses automatically
 const auth = await getSiwaAuth(process.env.AGENT_PRIVATE_KEY);
 const res = await x402Fetch('https://api.helixa.xyz/api/v2/mint', {
   method: 'POST',
@@ -118,5 +118,5 @@ const res = await x402Fetch('https://api.helixa.xyz/api/v2/mint', {
 
 - Never log, print, or expose private keys
 - Store keys only in environment variables
-- SIWA timestamps expire after ~5 minutes — always generate fresh
+- SIWA timestamps expire after ~5 minutes - always generate fresh
 - The signed message is domain-bound to `api.helixa.xyz`

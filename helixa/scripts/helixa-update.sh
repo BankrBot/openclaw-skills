@@ -5,7 +5,7 @@ if [ "$#" -lt 3 ]; then
   echo "Usage: helixa-update.sh <id> <json_body> <siwa_auth>" >&2
   echo "Example: helixa-update.sh 1 '{\"traits\":[...]}' 'Bearer addr:ts:sig'" >&2
   echo "" >&2
-  echo "Requires SIWA auth + x402 payment (\$1 USDC)." >&2
+  echo "Requires SIWA auth. Updates are currently free." >&2
   exit 1
 fi
 

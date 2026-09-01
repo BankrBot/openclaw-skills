@@ -7,4 +7,4 @@ if [ "$#" -ne 1 ]; then
   exit 1
 fi
 
-"$(dirname "$0")/helixa-get.sh" "/api/v2/agent/$1/cred-breakdown"
+"$(dirname "$0")/helixa-get.sh" "/api/v2/agent/$1/cred"

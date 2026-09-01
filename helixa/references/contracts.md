@@ -16,7 +16,7 @@
 
 ### Key Functions
 
-#### mint(address, string, string, bool) → uint256
+#### mint(address, string, string, bool) -> uint256
 Mint a Helixa identity NFT.
 
 | Param | Type | Description |
@@ -36,7 +36,10 @@ cast send 0x2e3B541C59D38b84E3Bc54e977200230A204Fe60 \
   --private-key $PRIVATE_KEY
 ```
 
-#### getAgentByAddress(address) → (uint256, string, string, ...)
+#### mintPrice() -> uint256
+Read the current direct contract mint price in wei. Always check before direct contract mints because pricing can change.
+
+#### getAgentByAddress(address) -> (uint256, string, string, ...)
 Look up an agent by wallet address.
 
 ```bash
@@ -45,7 +48,7 @@ cast call 0x2e3B541C59D38b84E3Bc54e977200230A204Fe60 \
   --rpc-url https://mainnet.base.org
 ```
 
-#### ownerOf(uint256) → address
+#### ownerOf(uint256) -> address
 Standard ERC-721. Returns the owner of a token.
 
 ```bash
@@ -54,7 +57,7 @@ cast call 0x2e3B541C59D38b84E3Bc54e977200230A204Fe60 \
   --rpc-url https://mainnet.base.org
 ```
 
-#### tokenURI(uint256) → string
+#### tokenURI(uint256) -> string
 Returns the metadata URI for a token.
 
 ### ABI (Common Functions)
@@ -72,7 +75,7 @@ Returns the metadata URI for a token.
 
 ### Mint Pricing
 
-- **Human mint (direct contract):** 0.0025 ETH (~$5)
+- **Human mint (direct contract):** `mintPrice()` on HelixaV2, currently 0.000569858205032133 ETH
 - **Agent mint (via API):** $1 USDC via x402
 
 ---
