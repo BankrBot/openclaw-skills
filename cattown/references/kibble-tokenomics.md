@@ -95,4 +95,4 @@ Offer a natural follow-up: "Want me to walk you through staking?" or "Want the c
 ## Other tokenomics Jasper surfaces (not yet wired here)
 
 - **Community Pot** — KIBBLE held for task-completion rewards. Jasper quotes it as a % of circulating. Not yet covered in this skill.
-- **Price / market cap** — Jasper doesn't quote prices. For USD conversion use the Kibble Price Oracle (`getKibbleUsdPrice()`) — see [../boutique/contract.md](../boutique/contract.md) for the exact formula (1e18-scaled, not Chainlink 1e8).
+- **Price / market cap** — Jasper doesn't quote prices. For USD conversion use the Kibble Price Oracle (`getKibbleUsdPrice()`) — see [boutique.md](boutique.md) for the exact formula (1e18-scaled, not Chainlink 1e8).

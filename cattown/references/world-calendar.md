@@ -56,7 +56,7 @@ Paulie's Fish Raffle runs weekly.
 - **5 winners per draw**, chosen via Chainlink VRF. Prize pool is split **equally** among the 5 — ranks are ordering only, not prize weighting.
 - Prize pool is a tier-based fraction of the `FreeToPlayPool` balance. 8 tiers keyed to `totalTickets` sold that round, paying 30 bps (0.3%) at 0 tickets up to 100 bps (1.0%) once sales cross 5,500. More tickets sold → bigger cut of the pool paid out.
 
-Full contract + API reference, free-ticket claim flow, tier table, and chance-to-win math: [../fish-raffle/contract.md](../fish-raffle/contract.md), [../fish-raffle/api.md](../fish-raffle/api.md).
+Full contract + API reference, free-ticket claim flow, tier table, and chance-to-win math: [fish-raffle.md](fish-raffle.md), [fish-raffle-api.md](fish-raffle-api.md).
 
 ## Weekly fishing competition (Sat–Sun) — Isabella
 
@@ -80,7 +80,7 @@ Isabella hosts the weekend fishing competition. Only catches made during her win
 
 - The leaderboard is only meaningful Saturday–Monday; outside that window it reflects the prior week's results.
 
-Full contract + API reference, prize-pool math (10% top-10 / 80% treasures / 10% stakers), and active/inactive response patterns: [../fishing/competition.md](../fishing/competition.md).
+Full contract + API reference, prize-pool math (10% top-10 / 80% treasures / 10% stakers), and active/inactive response patterns: [fishing-competition.md](fishing-competition.md).
 
 ---
 

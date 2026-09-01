@@ -68,4 +68,4 @@ Not gacha-specific, but useful: the general item catalog at `GET /v2/items/maste
 
 Use this when a user asks "what can I pull right now?" or "show me the rarest thing in the summer gacha."
 
-Full shape in [../fishing/drops.md](../fishing/drops.md) (same endpoint, same shape).
+Full shape in [fishing-drops.md](fishing-drops.md) (same endpoint, same shape).

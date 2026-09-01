@@ -105,7 +105,7 @@ prize_pool_wei  = poolBalance * current_tier.bps / 10000
 per_winner_wei  = prize_pool_wei / winnersPerDraw                     // equal split — NOT ranked
 ```
 
-Divide by `10^18` for KIBBLE; multiply by `getKibbleUsdPrice() / 10^18` for USD (see [../boutique/contract.md](../boutique/contract.md) for the oracle formula).
+Divide by `10^18` for KIBBLE; multiply by `getKibbleUsdPrice() / 10^18` for USD (see [boutique.md](boutique.md) for the oracle formula).
 
 ### Live worked example (at time of writing)
 
@@ -138,7 +138,7 @@ For small `tickets / totalTickets` the approximation is accurate to within ~1–
 | rank 2 (`bitcoinbov`)       | 364     | **~63.7%**                              |
 | single-free-ticket claimant | 1       | 5 × 1 / 2855 = **~0.175%**              |
 
-If a user asks "what's my chance?", call the `/v1/tickets/leaderboard` endpoint (see [./api.md](./api.md)), find their address, read `totalCount`, and compute against `totalTickets`.
+If a user asks "what's my chance?", call the `/v1/tickets/leaderboard` endpoint (see [fish-raffle-api.md](fish-raffle-api.md)), find their address, read `totalCount`, and compute against `totalTickets`.
 
 ## Claiming winnings — `claimPrize()`
 

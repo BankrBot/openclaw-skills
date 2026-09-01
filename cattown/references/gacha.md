@@ -125,7 +125,7 @@ Public, no auth. Returns the user's capsule NFTs (not a global feed). Used as th
 
 Response shape (array of items): `[{ id, name, rarity, imageUrl, traitNames, traitValues, ... }, ... ]`. The `id` is the key field for the ordering trick. A 500 response can mean the address has never pulled; treat it as an empty array.
 
-Full API shape notes: [./api.md](./api.md).
+Full API shape notes: [gacha-api.md](gacha-api.md).
 
 ## Reads cheat-sheet
 

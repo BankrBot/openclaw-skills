@@ -70,14 +70,14 @@ Future revisions will add the boutique purchase flow, the paid-ticket (fish-burn
 - `isUnlocking(user)` + `unlockEndTime(user)` — exit status + ETA
 - `getTotalStaked()` / `getTotalActiveStaked()` — pool sizes
 
-Full reference: [references/staking/contract.md](references/staking/contract.md).
+Full reference: [references/staking.md](references/staking.md).
 
 ### Offchain API (public, unauthenticated)
 
 - `GET https://api.cat.town/v2/revenue/staking/leaderboard` — top stakers with rank + pool-share %.
 - `GET https://api.cat.town/v2/revenue/deposits/{address}` — one user's historical fishing/gacha deposits with per-tx share.
 
-Response shapes + field meanings: [references/staking/api.md](references/staking/api.md).
+Response shapes + field meanings: [references/staking-api.md](references/staking-api.md).
 
 ---
 
@@ -91,9 +91,9 @@ Response shapes + field meanings: [references/staking/api.md](references/staking
 
 Enums: Season `0..3` (Spring/Summer/Autumn/Winter); TimeOfDay string (`"Morning"`, `"Daytime"`, `"Evening"`, `"Nighttime"`); Weather `0..6` (None/Sun/Rain/Wind/Storm/Snow/Heatwave).
 
-World state drives fishing and gacha drop tables (different fish appear in different weather/seasons). Fishing drop tables are documented in [references/fishing/drops.md](references/fishing/drops.md); gacha pools are covered in the gacha section below.
+World state drives fishing and gacha drop tables (different fish appear in different weather/seasons). Fishing drop tables are documented in [references/fishing-drops.md](references/fishing-drops.md); gacha pools are covered in the gacha section below.
 
-Full function table, selectors, live sample: [references/world/contract.md](references/world/contract.md).
+Full function table, selectors, live sample: [references/world.md](references/world.md).
 
 ---
 
@@ -110,7 +110,7 @@ Each item carries optional `dropConditions` keyed by `events`, `seasons`, `times
 
 Weather changes most frequently (minutes-to-hours), so weather-exclusive drops are the most rotational — highest-value thing to surface.
 
-Full recipe + live weather→drops table: [references/fishing/drops.md](references/fishing/drops.md).
+Full recipe + live weather→drops table: [references/fishing-drops.md](references/fishing-drops.md).
 
 ---
 
@@ -128,7 +128,7 @@ Seasonal doc pages (public): [shops/boutique](https://docs.cat.town/shops/boutiq
 
 **USD conversion:** `getKibbleUsdPrice()` returns USD-per-KIBBLE scaled by **`10^18`** (note: `getEthUsdPrice()` on the same contract uses `10^8`). Formula: `usd = (price_wei * rawKibbleUsdPrice) / 10^36`. Live at time of writing: ~$0.0009487 per KIBBLE.
 
-Full reference: [references/boutique/contract.md](references/boutique/contract.md).
+Full reference: [references/boutique.md](references/boutique.md).
 
 ---
 
@@ -152,7 +152,7 @@ stakersRevenue   = prizePool * 0.10   // flows to KIBBLE stakers via RevenueShar
 
 When active: lead with running time / weather / participants / prize pool / top 10. When inactive: compute next Saturday 00:00 UTC, offer a reminder, and offer to narrate the last completed competition (the API returns it when `isActive=false`).
 
-Full reference: [references/fishing/competition.md](references/fishing/competition.md).
+Full reference: [references/fishing-competition.md](references/fishing-competition.md).
 
 ---
 
@@ -176,7 +176,7 @@ Prize pool is `poolBalance * tier.bps / 10000` where the tier is picked by the r
 
 Chance-to-win approximation: `min(1, 5 * userTickets / totalTickets)`. Live at time of writing: round 31, 2,855 tickets sold, 80-bps tier, ~47,742 KIBBLE pool → ~9,548 KIBBLE per winner.
 
-Full reference: [references/fish-raffle/contract.md](references/fish-raffle/contract.md), [references/fish-raffle/api.md](references/fish-raffle/api.md).
+Full reference: [references/fish-raffle.md](references/fish-raffle.md), [references/fish-raffle-api.md](references/fish-raffle-api.md).
 
 ---
 
@@ -193,7 +193,7 @@ Full reference: [references/fish-raffle/contract.md](references/fish-raffle/cont
 
 The pay tx submits a VRF randomness request; the NFT mints in a separate tx seconds later. Agents must either poll the capsule API for new items (if Bankr supports async polling) or return "ask me again in ~30 s" and re-check later. For multi-pulls, wait until `count(newItems) >= N` before reporting.
 
-Every pull is uniformly weighted against the current season's pool — no pity, no streaks. Full pattern + oracle math + 500-on-cold-wallet quirk: [references/gacha/contract.md](references/gacha/contract.md), [references/gacha/api.md](references/gacha/api.md).
+Every pull is uniformly weighted against the current season's pool — no pity, no streaks. Full pattern + oracle math + 500-on-cold-wallet quirk: [references/gacha.md](references/gacha.md), [references/gacha-api.md](references/gacha-api.md).
 
 ---
 
@@ -212,7 +212,7 @@ Sellable types: Treasure + Collectible only (Cosmetics/Fish/Equipment aren't sel
 
 Write call (single, batched): `sellMultipleNFTsToContract(address[] nftContracts, uint256[] tokenIds, uint256[] amounts)`. Requires `setApprovalForAll(sellContract, true)` on the V2 minter, once per wallet.
 
-Full reference: [references/sell-items/contract.md](references/sell-items/contract.md).
+Full reference: [references/sell-items.md](references/sell-items.md).
 
 ---
 
@@ -227,7 +227,7 @@ Full reference: [references/sell-items/contract.md](references/sell-items/contra
 
 Mirrors Jasper's NPC answers in the Wealth & Whiskers Bank. The % burned uses total supply as the denominator; % staked uses circulating (total − burned). APY is dynamic and uncapped until 1000% APY / 50% monthly rate sanity limits.
 
-Full reference: [references/kibble/tokenomics.md](references/kibble/tokenomics.md).
+Full reference: [references/kibble-tokenomics.md](references/kibble-tokenomics.md).
 
 ---
 
@@ -244,7 +244,7 @@ Cat Town runs on a fixed weekly UTC cycle. Only the **bold** rows directly affec
 | Friday    | **Fish raffle draw**              | 20:00                      | Paulie            |
 | Sat–Sun   | **Weekly fishing competition**    | Sat morning → Sun night    | Isabella          |
 
-Full calendar with revenue-split details and NPC cheat-sheet: [references/world/calendar.md](references/world/calendar.md).
+Full calendar with revenue-split details and NPC cheat-sheet: [references/world-calendar.md](references/world-calendar.md).
 
 ---
 

@@ -76,7 +76,7 @@ If an agent is answering "what's special about Storm weather?" — use this filt
 
 ## Recipe: "what can I catch in this weather?"
 
-1. Read world state from GameData (see [../world/contract.md](../world/contract.md)):
+1. Read world state from GameData (see [world.md](world.md)):
    ```
    GameData.getGameState() → (season, timeOfDay, isWeekend, worldEvent, weather)
    ```

@@ -2,7 +2,7 @@
 
 Two public JSON endpoints served from `https://api.cat.town`. **No authentication** — plain GET, no headers required.
 
-Use these when you need leaderboard or historical-deposit data without paying RPC costs. For live position reads (current stake, pending rewards, unlock state), go onchain — see [contract.md](contract.md).
+Use these when you need leaderboard or historical-deposit data without paying RPC costs. For live position reads (current stake, pending rewards, unlock state), go onchain — see [staking.md](staking.md).
 
 ---
 
