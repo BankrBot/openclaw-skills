@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "lex-token-lexicon",
+  "provider": "Lexispawn",
+  "providerUrl": "https://lexispawn.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "bankr \"load lex-token-lexicon and build a lexicon for $MYTOKEN: 400 holders, launched last week, running joke about the deployer's cat\""
+  },
+  "setup": [
+    "Install the skill into your Bankr agent",
+    "Best run in the same session as a token launch, before the first post",
+    "Save the finished lexicon as a resource file so scheduled automations post in-language"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "lex-token-lexicon",
+    "command": "install the lex-token-lexicon skill from https://github.com/BankrBot/skills/tree/main/lex-token-lexicon"
+  }
+}

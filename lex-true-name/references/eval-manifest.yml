@@ -1,0 +1,8 @@
+# Starter manifest, aeon-skill-evals dialect. Derived from the output contract.
+lex-true-name:
+  min_words: 200
+  required_patterns: ["nine", "sweep", "shortlist"]
+  required_sections: ["kills", "final three"]
+  forbidden_patterns: ["I cannot", "any name works", "skipped the sweep"]
+  min_distinct_items: 9
+  must_show_sweep_evidence: true

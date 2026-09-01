@@ -1,0 +1,9 @@
+# Starter manifest, aeon-skill-evals dialect. Derived from the output contract.
+lex-undertow:
+  min_words: 150
+  required_sections: ["voice", "drop-line"]
+  required_patterns: ["felt thing", "banned"]
+  forbidden_patterns: ["excited to announce", "stay tuned", "gm fam", "I cannot", "as an AI"]
+  max_variants: 3
+  seeding_must_save_voice_file: true
+  weekly_must_quote_evidence: true

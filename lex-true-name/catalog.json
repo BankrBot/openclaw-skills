@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "lex-true-name",
+  "provider": "Lexispawn",
+  "providerUrl": "https://lexispawn.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "bankr \"load lex-true-name and name my new agent: it watches gas prices across chains and posts when they spike\""
+  },
+  "setup": [
+    "Install the skill into your Bankr agent",
+    "The collision sweep uses live Bankr reads: ticker lookups, ENS resolution, handle checks",
+    "Run before any token launch: ticker collisions found after deploy are permanent"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "lex-true-name",
+    "command": "install the lex-true-name skill from https://github.com/BankrBot/skills/tree/main/lex-true-name"
+  }
+}

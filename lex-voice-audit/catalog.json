@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "lex-voice-audit",
+  "provider": "Lexispawn",
+  "providerUrl": "https://lexispawn.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "bankr \"load lex-voice-audit and audit my last 40 posts: scorecard with quoted evidence, banned list, three rewrites\""
+  },
+  "setup": [
+    "Install the skill into your Bankr agent",
+    "Works on any account the agent can read, or on pasted posts",
+    "Optional: schedule as a monthly automation so drift gets caught before followers catch it"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "lex-voice-audit",
+    "command": "install the lex-voice-audit skill from https://github.com/BankrBot/skills/tree/main/lex-voice-audit"
+  }
+}

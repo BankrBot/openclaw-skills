@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "lex-fee-loop",
+  "provider": "Lexispawn",
+  "providerUrl": "https://lexispawn.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "bankr \"load lex-fee-loop and run the weekly review on $MYTOKEN before I claim fees\""
+  },
+  "setup": [
+    "Install the skill into your Bankr agent",
+    "Works with any launched token whose fees the agent can read",
+    "Recommended: schedule as a Monday automation so the review arrives before the claim"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "lex-fee-loop",
+    "command": "install the lex-fee-loop skill from https://github.com/BankrBot/skills/tree/main/lex-fee-loop"
+  }
+}

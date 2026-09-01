@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "lex-spawn",
+  "provider": "Lexispawn",
+  "providerUrl": "https://lexispawn.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "bankr \"load lex-spawn and turn the morning report workflow we just ran into a skill I can install\""
+  },
+  "setup": [
+    "Install the skill into your Bankr agent",
+    "No API keys and no dependencies: the forge is pure method plus gates",
+    "Spawned skills ship with a starter eval manifest, ready for aeon-skill-evals on day one"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "lex-spawn",
+    "command": "install the lex-spawn skill from https://github.com/BankrBot/skills/tree/main/lex-spawn"
+  }
+}

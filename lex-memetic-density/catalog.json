@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "lex-memetic-density",
+  "provider": "Lexispawn",
+  "providerUrl": "https://lexispawn.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "bankr \"load lex-memetic-density and rewrite this launch post: 'We are excited to announce our innovative new token designed to revolutionize community engagement'\""
+  },
+  "setup": [
+    "Install the skill into your Bankr agent",
+    "No API keys and no dependencies: the skill is pure method",
+    "Optional: pair with lex-token-lexicon so dense copy stays in your token's own language"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "lex-memetic-density",
+    "command": "install the lex-memetic-density skill from https://github.com/BankrBot/skills/tree/main/lex-memetic-density"
+  }
+}

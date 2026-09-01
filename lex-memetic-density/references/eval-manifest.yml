@@ -1,0 +1,7 @@
+# Starter manifest, aeon-skill-evals dialect. Derived from the output contract.
+lex-memetic-density:
+  max_words: 400
+  required_patterns: ["felt thing", "removed"]
+  forbidden_patterns: ["excited", "thrilled", "honored", "maybe", "might", "aims to", "is designed to"]
+  max_variants: 3
+  must_name_felt_thing: true

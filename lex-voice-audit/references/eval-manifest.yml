@@ -1,0 +1,8 @@
+# Starter manifest, aeon-skill-evals dialect. Derived from the output contract.
+lex-voice-audit:
+  min_words: 300
+  required_sections: ["Scorecard", "Verdict", "Banned list", "rewrites"]
+  required_patterns: ["\"", "0 to 5"]
+  forbidden_patterns: ["probably fine", "looks good overall", "I cannot"]
+  min_distinct_items: 7
+  must_quote_evidence: true

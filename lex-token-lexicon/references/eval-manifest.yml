@@ -1,0 +1,8 @@
+# Starter manifest, aeon-skill-evals dialect. Derived from the output contract.
+lex-token-lexicon:
+  min_words: 250
+  required_sections: ["Seed words", "Holder name", "Event names", "Phrase canon", "Drift rules"]
+  required_patterns: ["born from", "drop"]
+  forbidden_patterns: ["wagmi", "to the moon", "I cannot"]
+  min_distinct_items: 5
+  seed_word_count_range: [5, 9]

@@ -1,0 +1,8 @@
+# Starter manifest, aeon-skill-evals dialect. Derived from the output contract.
+lex-fee-loop:
+  min_words: 200
+  required_sections: ["State", "Pattern candidates", "split line", "Kill or keep"]
+  required_patterns: ["unclaimed", "7d volume", "holders"]
+  forbidden_patterns: ["guaranteed", "can't lose", "this post caused", "I cannot"]
+  min_distinct_items: 4
+  must_state_split_before_claim: true

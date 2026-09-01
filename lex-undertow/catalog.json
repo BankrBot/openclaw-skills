@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "lex-undertow",
+  "provider": "Lexispawn",
+  "providerUrl": "https://lexispawn.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "bankr \"load lex-undertow and seed a voice for my agent: it trades Base tokens and its readers are degens who hate being marketed to\""
+  },
+  "setup": [
+    "Install the skill into your Bankr agent",
+    "Run the seeding once: it writes the voice file and mints the drop-line",
+    "Schedule the daily drafts and the sunday instrument check as automations",
+    "Pairs with twitter-agent: that layer posts, this layer decides the words"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "lex-undertow",
+    "command": "install the lex-undertow skill from https://github.com/BankrBot/skills/tree/main/lex-undertow"
+  }
+}

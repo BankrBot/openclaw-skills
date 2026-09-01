@@ -1,0 +1,8 @@
+# Starter manifest, aeon-skill-evals dialect. Derived from the output contract.
+lex-spawn:
+  min_words: 150
+  required_patterns: ["SEED", "SWEEP", "FORGE", "GATE", "SHIP", "install the"]
+  required_sections: ["gate table", "install command"]
+  forbidden_patterns: ["I cannot", "as an AI", "SPAWN_GATE_FAIL bypassed", "partial folder"]
+  min_distinct_items: 5
+  must_have_gate_table: true
