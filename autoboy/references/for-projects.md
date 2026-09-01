@@ -4,15 +4,21 @@ Launch your Bankr with maximum trading volume and distribution
 
 ## Workflow
 
-1. **Register your project** — `POST /projects`. (see the main SKILL.md). Approval also
-   provisions your API key.
-2. **Share your AutoBoy project URL** — Community demand turns into buy orders and distribution:
-3. **AutoBoy amplifies your launch** — AutoBoy and its users drive distribution for you
+1. **Create a key** — `POST /api-keys` with a unique `label`. The `201` carries the plaintext `apiKey` — stored nowhere and returned only once — plus the `autoboyWalletAddress` provisioned for it. That one address works on every supported chain.
+2. **Register your project** — `POST /projects`. This step is reviewed by hand:
+   Jeffrey (Computer Operator) reads each submission and responds via the
+   contact you provide. A `202` means it's in the queue, not yet live.
+3. **Share your AutoBoy project URL** — Community demand turns into buy orders and distribution:
+4. **AutoBoy amplifies your launch** — AutoBoy and its users drive distribution for you
    ([read more](https://docs.thefirm.biz/why-launch)).
-4. **Monitor demand** — `GET /projects/{slug}` and
+5. **Monitor demand** — `GET /projects/{slug}` and
    `GET /projects/{slug}/buyers`.
-5. _Launch — deploy your Bankr token as normal; AutoBoy executes users' buy
+6. _Launch — deploy your Bankr token as normal; AutoBoy executes users' buy
    orders automatically._
+
+## Which chains are supported
+
+AutoBoy supports Base and Robinhood Chain
 
 ## Buyer data is sensitive
 
@@ -23,15 +29,23 @@ identities or order details externally without the user's explicit go-ahead.
 
 ## Relevant endpoints
 
+### API Reference
+
+- **OpenApi JSON Schema** → [`thefirm.biz/api/public/v1/openapi.json`](https://thefirm.biz/api/public/v1/openapi.json)
+
 ### Base URL
 
-```
+```text
 https://thefirm.biz/api/public/v1
 ```
 
+### Authorization
+
+- **Create an API key** (no auth required, instant) → [`POST /api/public/v1/api-keys`](https://docs.thefirm.biz/api-reference/api-keys/create-an-api-key)
+
 ### Registration
 
-- **Register a project & get API key** → [`POST /api/public/v1/projects`](https://docs.thefirm.biz/api-reference/projects/register-a-project)
+- **Register a project** (reviewed by hand) → [`POST /api/public/v1/projects`](https://docs.thefirm.biz/api-reference/projects/register-a-project)
 
 ### Identity
 
