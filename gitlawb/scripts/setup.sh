@@ -9,7 +9,7 @@ echo "=== gitlawb setup ==="
 # Install gl CLI if not present
 if ! command -v gl &>/dev/null; then
   echo "Installing gl CLI..."
-  curl -sSf https://gitlawb.com/install.sh | sh
+  npm install -g @gitlawb/gl
 else
   echo "gl CLI already installed: $(which gl)"
 fi
