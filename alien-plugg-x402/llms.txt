@@ -1,0 +1,71 @@
+# Alien Plugg — x402 API Endpoints for AI Agents
+
+> What I have is outta this world 👽🌌
+
+Alien Plugg operates 27 paid x402 API endpoints on the Bankr marketplace, plus an MCP server with 10 curated tools. All payments are automatic via the x402 protocol (USDC on Base).
+
+## MCP Server
+
+Connect your AI agent (Claude, Cursor, etc.) to:
+
+```
+https://x402.bankr.bot/0xabf922abb2a9e782f0b187d5d1ab24deb4870c3d/mcp-server
+```
+
+Implements MCP protocol 2024-11-05: initialize, tools/list, tools/call, resources/list, resources/read.
+
+## Quick Reference
+
+### Crypto & Trading
+- zora-scanner ($0.01) — Trending coins + BUY/SELL/STRONG_BUY signals
+- zora-rug-check ($0.02) — Rug risk score 0-100 with verdict
+- zora-portfolio ($0.005) — Wallet holdings, PnL, allocation
+- zora-sentiment ($0.05) — Social sentiment scoring
+- honeypot-check ($0.04) — Honeypot detector
+- holder-analysis ($0.03) — Holder concentration + Gini
+- token-price ($0.015) — CoinGecko price lookup
+- token-compare ($0.005) — Side-by-side comparison
+- chart-roast ($0.008) — Brutal chart analysis
+- alien-plugg-alpha ($0.05) — Daily curated alpha report
+
+### On-Chain
+- whale-tracker ($0.08) — Whale transfer detection
+- wallet-profile ($0.003) — Wallet behavioral profiler
+- smart-money ($0.08) — Smart money tracking
+- dex-flow ($0.12) — DEX liquidity analysis
+- new-launches ($0.01) — Fresh token launches
+- creator-lookup ($0.01) — Creator profile + coins
+- gas-tracker ($0.002) — Gas prices
+- tx-status ($0.002) — Transaction status
+
+### Utilities
+- translate ($0.005) — 100+ languages
+- ip-info ($0.0015) — IP geolocation + VPN detection
+- expand-url ($0.015) — URL redirect tracer
+- tech-stack-detect ($0.008) — Website tech fingerprinting
+- webpage-diff ($0.03) — Webpage change monitor
+- price-alerts ($0.008) — Price alert management
+- builder-score ($0.008) — Builder reputation score
+
+## Base URL
+
+All endpoints:
+```
+https://x402.bankr.bot/0xabf922abb2a9e782f0b187d5d1ab24deb4870c3d/<name>
+```
+
+## Discovery
+
+- x402 manifest: `.well-known/x402.json`
+- MCP server: POST to the MCP URL with JSON-RPC 2.0
+- Full catalog: https://base44.app/api/apps/6a5fdd57651262e86b24133e/files/mp/public/6a5fdd57651262e86b24133e/1a205d56c_landing-page.html
+
+## Tokens
+
+- PLUGG on Base: 0xDe76415CeBe959CF0738e8A636d9153fF295bba3
+- PLUGG on Robinhood: 0x09d56eaCb69E85Dca856B6dc15fA6aE9eeaBFBa3
+
+## Links
+
+- Chat: https://app.base44.com/superagent/6a5fdd57651262e86b24133e
+- Zora: https://zora.co/@alienplugg
