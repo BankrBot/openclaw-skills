@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "hoodrunner-stash",
+  "provider": "HoodRunner",
+  "providerUrl": "https://hoodrunner.net",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "stash.mjs — derive account + encode unwrap",
+    "language": "bash",
+    "code": "# Derive a Stash's token-bound account address (Robinhood Chain)\nACCOUNT_IMPL=0xf7D4E66eA5b88B62a4aEb1E531e483B947B6151D \\\n  node hoodrunner-stash/scripts/stash.mjs account \\\n  0xA5718a030bd9dC18EB0b23B5409D86AA66A11944 1\n\n# Encode an unwrap: holder sweeps a token out of the Stash's account\nnode hoodrunner-stash/scripts/stash.mjs unwrap <account> <token> <amount>\n\n# Hand the encoded calldata to the Bankr Wallet API to sign + submit"
+  },
+  "setup": [
+    "Get a Bankr API key (bk_...) with walletApiEnabled — see the base `bankr` skill. Read-only keys can call `nav`.",
+    "Target Robinhood Chain (chain id 4663) — Bankr supports RHC natively.",
+    "Contracts are live on RHC mainnet (addresses in references/stash-contracts.md); `npm i viem` to run scripts/stash.mjs."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "hoodrunner-stash",
+    "command": "install the hoodrunner-stash skill from https://github.com/BankrBot/skills/tree/main/hoodrunner-stash"
+  }
+}
