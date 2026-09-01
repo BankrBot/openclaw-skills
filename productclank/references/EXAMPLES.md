@@ -6,74 +6,25 @@ Practical code examples for common use cases when creating Communiply campaigns 
 
 ## Table of Contents
 
-1. [Basic Campaign Creation (x402)](#basic-campaign-creation-x402)
-2. [Campaign with Direct USDC Transfer](#campaign-with-direct-usdc-transfer)
+1. [Basic Campaign Creation](#basic-campaign-creation)
+2. [Full 2-Step Flow (Create + Generate Posts)](#full-2-step-flow)
 3. [Advanced Campaign with Custom Guidelines](#advanced-campaign-with-custom-guidelines)
 4. [Competitor Intercept Campaign](#competitor-intercept-campaign)
 5. [Product Launch Campaign](#product-launch-campaign)
-6. [Error Handling & Retry Logic](#error-handling--retry-logic)
-7. [Testing with Test Package](#testing-with-test-package)
-8. [TypeScript Types](#typescript-types)
-9. [Tier 2: Research-Enhanced Campaign (Coming Soon)](#tier-2-research-enhanced-campaign-coming-soon)
-10. [Tier 3: Iterate & Optimize (Coming Soon)](#tier-3-iterate--optimize-coming-soon)
+6. [Adding Delegators](#adding-delegators)
+7. [Trusted Agent with caller_user_id](#trusted-agent-with-caller_user_id)
+8. [Error Handling & Retry Logic](#error-handling--retry-logic)
+9. [TypeScript Types](#typescript-types)
 
 ---
 
-## Basic Campaign Creation (Credit-Based)
+## Basic Campaign Creation
 
-The simplest way to create a campaign using the credit-based system.
+The simplest way to create a campaign.
 
 ```typescript
-import { wrapFetchWithPayment } from "@x402/fetch";
-import { createWalletClient, http } from "viem";
-import { base } from "viem/chains";
-import { privateKeyToAccount } from "viem/accounts";
-
 async function createBasicCampaign() {
-  // Setup wallet for x402 payment (if needed for top-up)
-  const account = privateKeyToAccount(process.env.AGENT_PRIVATE_KEY);
-  const walletClient = createWalletClient({
-    account,
-    chain: base,
-    transport: http(),
-  });
-
-  const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
-
   try {
-    // Step 1: Check credit balance
-    const balanceResponse = await fetch(
-      "https://api.productclank.com/api/v1/credits/balance",
-      {
-        headers: {
-          "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-        },
-      }
-    );
-    const { credits } = await balanceResponse.json();
-    console.log(`💳 Current balance: ${credits} credits`);
-
-    // Step 2: Top up if needed (estimated 50 posts × 12 credits = 600 credits)
-    if (credits < 600) {
-      console.log(`⚠️  Insufficient credits. Topping up with 'small' bundle...`);
-      const topupResponse = await x402Fetch(
-        "https://api.productclank.com/api/v1/credits/topup",
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            bundle: "small", // $25 for 550 credits
-          }),
-        }
-      );
-      const topupResult = await topupResponse.json();
-      console.log(`✅ Topped up: +${topupResult.credits_added} credits`);
-    }
-
-    // Step 3: Create campaign (no credits deducted yet)
     const response = await fetch(
       "https://api.productclank.com/api/v1/agents/campaigns",
       {
@@ -87,189 +38,102 @@ async function createBasicCampaign() {
           title: "Launch Week Campaign",
           keywords: ["productivity tools", "task management", "team collaboration"],
           search_context: "People discussing productivity tools and team collaboration challenges",
-          estimated_posts: 50, // Optional: for cost estimation
         }),
       }
     );
 
     const result = await response.json();
 
-    if (!result.success) {
-      console.error(`❌ Error: ${result.error} - ${result.message}`);
-      throw new Error(result.message);
-    }
-
-    console.log(`✅ Campaign created: ${result.campaign.campaign_number}`);
-    console.log(`📊 Dashboard: https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
-
-    // Step 4: Generate posts (credits deducted here)
-    const generateResponse = await fetch(
-      `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-        },
-      }
-    );
-
-    const generateResult = await generateResponse.json();
-
-    if (generateResult.success) {
-      console.log(`✅ Posts generated: ${generateResult.postsGenerated}`);
-      console.log(`💳 Credits used: ${generateResult.credits.creditsUsed}`);
-      console.log(`💰 Credits remaining: ${generateResult.credits.creditsRemaining}`);
+    if (result.success) {
+      console.log(`✅ Campaign created: ${result.campaign.campaign_number}`);
+      console.log(`📊 Dashboard: ${result.campaign.url}`);
+      console.log(`💰 Credits used: ${result.credits.credits_used}, remaining: ${result.credits.credits_remaining}`);
+      console.log(`🔗 Next step: ${result.next_step.endpoint}`);
       return result.campaign;
     } else {
-      console.error(`❌ Generate posts error: ${generateResult.error} - ${generateResult.message}`);
-      throw new Error(generateResult.message);
+      console.error(`❌ Error: ${result.error} - ${result.message}`);
+      throw new Error(result.message);
     }
   } catch (error) {
     console.error("Failed to create campaign:", error);
     throw error;
   }
 }
-
-// Usage
-createBasicCampaign()
-  .then(campaign => console.log("Campaign:", campaign))
-  .catch(err => console.error("Error:", err));
-```
-
-**Dependencies:**
-```bash
-npm install @x402/fetch viem
 ```
 
 **Environment Variables:**
 ```bash
-AGENT_PRIVATE_KEY=0x...
 PRODUCTCLANK_API_KEY=pck_live_...
 ```
 
 ---
 
-## Credit Top-Up with Direct USDC Transfer
+## Full 2-Step Flow
 
-For wallets without private key access (smart contracts, MPC wallets, Bankr, etc.).
+Create a campaign and then generate posts (the complete flow).
 
 ```typescript
-import { ethers } from "ethers";
+async function createCampaignAndGeneratePosts() {
+  const API_KEY = process.env.PRODUCTCLANK_API_KEY;
+  const headers = {
+    "Authorization": `Bearer ${API_KEY}`,
+    "Content-Type": "application/json",
+  };
 
-const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-const PAYMENT_ADDRESS = "0x876Be690234aaD9C7ae8bb02c6900f5844aCaF68";
-const USDC_ABI = [
-  "function transfer(address to, uint256 amount) returns (bool)"
-];
-
-async function topUpCreditsWithDirectTransfer() {
-  // Step 1: Check current balance
-  const balanceResponse = await fetch(
-    "https://api.productclank.com/api/v1/credits/balance",
-    {
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      },
-    }
-  );
-  const { credits } = await balanceResponse.json();
-  console.log(`💳 Current balance: ${credits} credits`);
-
-  // Step 2: Send USDC transfer for credit bundle
-  const provider = new ethers.providers.JsonRpcProvider(
-    "https://base.llamarpc.com" // Base RPC
-  );
-  const wallet = new ethers.Wallet(process.env.WALLET_PRIVATE_KEY, provider);
-  const usdc = new ethers.Contract(USDC_ADDRESS, USDC_ABI, wallet);
-
-  const bundlePrice = 25; // Small bundle: $25 = 550 credits
-  const amount = ethers.utils.parseUnits(bundlePrice.toString(), 6); // USDC has 6 decimals
-
-  console.log(`💸 Sending ${bundlePrice} USDC to payment address for credit top-up...`);
-  const tx = await usdc.transfer(PAYMENT_ADDRESS, amount);
-  console.log(`⏳ Waiting for confirmation... Tx: ${tx.hash}`);
-
-  await tx.wait();
-  console.log(`✅ Transfer confirmed: ${tx.hash}`);
-
-  // Step 3: Top up credits with tx hash
-  const topupResponse = await fetch(
-    "https://api.productclank.com/api/v1/credits/topup",
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        bundle: "small", // $25 for 550 credits
-        payment_tx_hash: tx.hash,
-      }),
-    }
-  );
-
-  const topupResult = await topupResponse.json();
-
-  if (topupResult.success) {
-    console.log(`✅ Credits topped up!`);
-    console.log(`   Added: ${topupResult.credits_added} credits`);
-    console.log(`   New balance: ${topupResult.new_balance} credits`);
-    return topupResult;
-  } else {
-    console.error(`❌ Error: ${topupResult.error}`);
-    throw new Error(topupResult.message);
-  }
-
-  // Step 4: Now create campaign (no credits deducted yet)
+  // Step 1: Create campaign (10 credits)
+  console.log("📋 Step 1: Creating campaign...");
   const campaignResponse = await fetch(
     "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({
         product_id: "your-product-uuid",
-        title: "DeFi App Launch",
-        keywords: ["DeFi", "yield farming", "crypto staking"],
-        search_context: "People discussing DeFi platforms and yield opportunities",
-        estimated_posts: 40,
+        title: "AI Tools Campaign",
+        keywords: ["AI tools", "automation", "workflow"],
+        search_context: "People discussing AI tools and workflow automation",
+        mention_accounts: ["@yourproduct"],
+        reply_style_tags: ["friendly", "helpful"],
+        reply_length: "short",
+        min_follower_count: 500,
+        max_post_age_days: 7,
       }),
     }
   );
 
-  const result = await campaignResponse.json();
+  const campaignResult = await campaignResponse.json();
 
-  if (!result.success) {
-    console.error(`❌ Error: ${result.error}`);
-    throw new Error(result.message);
+  if (!campaignResult.success) {
+    console.error(`❌ Campaign creation failed: ${campaignResult.message}`);
+    return;
   }
 
-  console.log(`✅ Campaign created: ${result.campaign.campaign_number}`);
-  console.log(`🔗 View: https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
+  console.log(`✅ Campaign created: ${campaignResult.campaign.campaign_number}`);
+  console.log(`📊 URL: ${campaignResult.campaign.url}`);
+  console.log(`💰 Credits: ${campaignResult.credits.credits_used} used, ${campaignResult.credits.credits_remaining} remaining`);
 
-  // Step 5: Generate posts (credits deducted here)
-  const generateResponse = await fetch(
-    `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
+  // Step 2: Generate posts (12 credits/post)
+  console.log("\n📝 Step 2: Generating posts...");
+  const postsResponse = await fetch(
+    `https://api.productclank.com/api/v1/agents/campaigns/${campaignResult.campaign.id}/generate-posts`,
     {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      },
+      headers,
+      body: JSON.stringify({}),
     }
   );
 
-  const generateResult = await generateResponse.json();
+  const postsResult = await postsResponse.json();
 
-  if (generateResult.success) {
-    console.log(`✅ Posts generated: ${generateResult.postsGenerated}`);
-    console.log(`💳 Credits used: ${generateResult.credits.creditsUsed}`);
-    return result.campaign;
+  if (postsResult.success) {
+    console.log(`✅ Generated ${postsResult.posts_created} posts`);
+    console.log(`💰 Credits used for posts: ${postsResult.credits_used}`);
+    console.log(`💰 Credits remaining: ${postsResult.credits_remaining}`);
   } else {
-    console.error(`❌ Generate posts error: ${generateResult.error}`);
-    throw new Error(generateResult.message);
+    console.error(`❌ Post generation failed: ${postsResult.message}`);
   }
+
+  return { campaign: campaignResult, posts: postsResult };
 }
 ```
 
@@ -281,9 +145,7 @@ Highly customized campaign with specific filters and reply instructions.
 
 ```typescript
 async function createAdvancedCampaign() {
-  const x402Fetch = setupX402Fetch(); // See basic example
-
-  const response = await x402Fetch(
+  const response = await fetch(
     "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
@@ -308,7 +170,7 @@ async function createAdvancedCampaign() {
         // Reply customization
         mention_accounts: ["@yourproduct", "@cto_handle"],
         reply_style_tags: ["professional", "technical", "authoritative"],
-        reply_style_account: "@briankrebs", // Security expert style
+        reply_style_account: "@briankrebs",
         reply_length: "medium",
 
         // Custom AI instructions
@@ -334,50 +196,24 @@ Tone: Professional, helpful, technically accurate. Never salesy.
         `.trim(),
 
         // Quality filters
-        min_follower_count: 2000, // Target established accounts
-        min_engagement_count: 10, // High-engagement posts only
-        max_post_age_days: 3, // Recent conversations
-        require_verified: false, // Most security pros aren't verified
-
-        // Cost estimation
-        estimated_posts: 80, // ~960 credits needed
+        min_follower_count: 2000,
+        min_engagement_count: 10,
+        max_post_age_days: 3,
+        require_verified: false,
       }),
     }
   );
 
   const result = await response.json();
 
-  if (!result.success) {
-    throw new Error(result.message);
-  }
-
-  console.log(`✅ Campaign created: ${result.campaign.campaign_number}`);
-  console.log(`🔗 Review: https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
-
-  // Generate posts (credits deducted here)
-  const generateResponse = await fetch(
-    `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  const generateResult = await generateResponse.json();
-
-  if (generateResult.success) {
+  if (result.success) {
     console.log(`
-✅ Advanced Campaign Live
+✅ Advanced Campaign Created
 
 📋 Details:
    - Title: ${result.campaign.title}
    - Campaign #: ${result.campaign.campaign_number}
-   - Posts generated: ${generateResult.postsGenerated}
-   - Credits used: ${generateResult.credits.creditsUsed}
-   - Credits remaining: ${generateResult.credits.creditsRemaining}
+   - Credits used: ${result.credits.credits_used}
 
 🎯 Targeting:
    - 5 keywords (enterprise security space)
@@ -386,12 +222,14 @@ Tone: Professional, helpful, technically accurate. Never salesy.
    - Last 3 days only
 
 📊 View Dashboard:
-   https://app.productclank.com/communiply/campaigns/${result.campaign.id}
+   ${result.campaign.url}
+
+🔗 Next: Generate posts via ${result.next_step.endpoint}
     `);
 
     return result.campaign;
   } else {
-    throw new Error(generateResult.message);
+    throw new Error(result.message);
   }
 }
 ```
@@ -404,9 +242,7 @@ Target conversations mentioning competitors.
 
 ```typescript
 async function createCompetitorInterceptCampaign() {
-  const x402Fetch = setupX402Fetch();
-
-  const response = await x402Fetch(
+  const response = await fetch(
     "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
@@ -452,36 +288,12 @@ Keep it conversational, not salesy.
         `.trim(),
 
         min_follower_count: 500,
-        max_post_age_days: 2, // Strike while the iron is hot
-        estimated_posts: 60, // ~720 credits
+        max_post_age_days: 2,
       }),
     }
   );
 
-  const result = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.message);
-  }
-
-  console.log(`✅ Campaign created: ${result.campaign.campaign_number}`);
-  console.log(`🔗 View: https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
-
-  // Generate posts (credits deducted here)
-  const generateResponse = await fetch(
-    `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      },
-    }
-  );
-
-  const generateResult = await generateResponse.json();
-  console.log(`✅ Posts generated: ${generateResult.postsGenerated}, credits used: ${generateResult.credits?.creditsUsed}`);
-
-  return result;
+  return response.json();
 }
 ```
 
@@ -493,9 +305,8 @@ Coordinated campaign for product launch week.
 
 ```typescript
 async function createLaunchWeekCampaign() {
-  const x402Fetch = setupX402Fetch();
-
-  const response = await x402Fetch(
+  // Step 1: Create campaign
+  const response = await fetch(
     "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
@@ -541,44 +352,34 @@ You're an early beta user who's been using the product for 3 months.
 Be genuinely enthusiastic but not pushy. Share real value.
         `.trim(),
 
-        min_follower_count: 200, // Cast wider net for launch
-        max_post_age_days: 1, // Today's conversations only
-        estimated_posts: 200, // ~2400 credits - large campaign
+        min_follower_count: 200,
+        max_post_age_days: 1,
       }),
     }
   );
 
   const result = await response.json();
 
-  if (!result.success) {
-    throw new Error(result.message);
-  }
+  if (result.success) {
+    // Step 2: Generate posts
+    const postsResult = await fetch(
+      `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      }
+    ).then(r => r.json());
 
-  console.log(`✅ Campaign created: ${result.campaign.campaign_number}`);
-  console.log(`🔗 Review: https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
-
-  // Generate posts (credits deducted here)
-  const generateResponse = await fetch(
-    `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      },
-    }
-  );
-
-  const generateResult = await generateResponse.json();
-
-  if (generateResult.success) {
     console.log(`
 🚀 LAUNCH WEEK CAMPAIGN LIVE!
 
 Campaign: ${result.campaign.campaign_number}
-Posts generated: ${generateResult.postsGenerated}
-Credits used: ${generateResult.credits.creditsUsed}
-Credits remaining: ${generateResult.credits.creditsRemaining}
-Dashboard: https://app.productclank.com/communiply/campaigns/${result.campaign.id}
+Credits used: ${result.credits.credits_used} (creation) + ${postsResult.credits_used || 0} (posts)
+Dashboard: ${result.campaign.url}
 
 🎯 Targeting fresh conversations about:
    - New AI tools
@@ -586,13 +387,118 @@ Dashboard: https://app.productclank.com/communiply/campaigns/${result.campaign.i
    - Show HN / Product Hunt
    - Startup tools
 
+📝 Posts generated: ${postsResult.posts_created || 0}
+
 ✅ Community is now discovering and amplifying your launch!
     `);
 
     return result.campaign;
   } else {
-    throw new Error(generateResult.message);
+    throw new Error(result.message);
   }
+}
+```
+
+---
+
+## Adding Delegators
+
+Add a user as a delegator so they can manage the campaign in the webapp.
+
+```typescript
+async function addDelegator(campaignId: string, userId: string) {
+  const response = await fetch(
+    `https://api.productclank.com/api/v1/agents/campaigns/${campaignId}/delegates`,
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        user_id: userId,
+      }),
+    }
+  );
+
+  const result = await response.json();
+
+  if (result.success) {
+    if (result.already_delegator) {
+      console.log(`ℹ️ User ${userId} is already a delegator for this campaign`);
+    } else {
+      console.log(`✅ User ${userId} added as delegator for campaign ${campaignId}`);
+    }
+  } else {
+    console.error(`❌ Failed to add delegator: ${result.message}`);
+  }
+
+  return result;
+}
+
+// Usage: After creating a campaign, add the user who requested it
+const campaign = await createBasicCampaign();
+await addDelegator(campaign.id, "user-uuid-of-requester");
+```
+
+---
+
+## Trusted Agent with caller_user_id
+
+Trusted agents can bill a human user's credits and auto-add them as a delegator.
+
+```typescript
+async function createCampaignForUser(userId: string) {
+  // Step 1: Create campaign, billing the user's credits
+  const response = await fetch(
+    "https://api.productclank.com/api/v1/agents/campaigns",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        product_id: "product-uuid",
+        title: "Campaign for User",
+        keywords: ["AI tools", "productivity"],
+        search_context: "People discussing AI productivity tools",
+        // This bills the user's credits AND auto-adds them as a delegator
+        caller_user_id: userId,
+      }),
+    }
+  );
+
+  const result = await response.json();
+
+  if (!result.success) {
+    if (result.error === "forbidden") {
+      console.error("❌ Your agent is not trusted. Contact ProductClank for trusted status.");
+    } else if (result.error === "insufficient_credits") {
+      console.error(`❌ User doesn't have enough credits. Need ${result.credits_required}, have ${result.credits_available}.`);
+    }
+    return null;
+  }
+
+  console.log(`✅ Campaign created for user ${userId}`);
+  console.log(`💰 Credits deducted from user: ${result.credits.credits_used}`);
+
+  // Step 2: Generate posts, also billing the user
+  const postsResult = await fetch(
+    `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        caller_user_id: userId, // Also bill the user for post generation
+      }),
+    }
+  ).then(r => r.json());
+
+  return { campaign: result, posts: postsResult };
 }
 ```
 
@@ -607,13 +513,11 @@ async function createCampaignWithRetry(
   campaignData: CampaignRequest,
   maxRetries = 3
 ) {
-  const x402Fetch = setupX402Fetch();
-
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`Attempt ${attempt}/${maxRetries}...`);
 
-      const response = await x402Fetch(
+      const response = await fetch(
         "https://api.productclank.com/api/v1/agents/campaigns",
         {
           method: "POST",
@@ -633,32 +537,34 @@ async function createCampaignWithRetry(
         return result.campaign;
       }
 
-      // Handle specific errors
+      // Handle specific errors (don't retry these)
       switch (result.error) {
         case "rate_limit_exceeded":
           console.error("❌ Rate limit exceeded. Try again tomorrow.");
-          throw new Error("RATE_LIMIT"); // Don't retry
+          throw new Error("RATE_LIMIT");
 
         case "insufficient_credits":
-          console.error("❌ Insufficient credits. Top up required.");
-          console.error(`   Required: ${result.required_credits} credits`);
-          console.error(`   Available: ${result.available_credits} credits`);
-          throw new Error("INSUFFICIENT_CREDITS"); // Don't retry
+          console.error(`❌ Insufficient credits. Need ${result.credits_required}, have ${result.credits_available}.`);
+          throw new Error("INSUFFICIENT_CREDITS");
 
         case "unauthorized":
           console.error("❌ Invalid API key");
-          throw new Error("UNAUTHORIZED"); // Don't retry
+          throw new Error("UNAUTHORIZED");
+
+        case "forbidden":
+          console.error("❌ Forbidden: " + result.message);
+          throw new Error("FORBIDDEN");
 
         case "not_found":
           console.error("❌ Product not found");
-          throw new Error("NOT_FOUND"); // Don't retry
+          throw new Error("NOT_FOUND");
 
         case "validation_error":
           console.error(`❌ Validation error: ${result.message}`);
-          throw new Error("VALIDATION_ERROR"); // Don't retry
+          throw new Error("VALIDATION_ERROR");
 
         default:
-          // Retry on network errors, 500s, etc.
+          // Retry on server errors
           console.warn(`⚠️  Attempt ${attempt} failed: ${result.error}`);
           if (attempt === maxRetries) {
             throw new Error(result.message);
@@ -669,136 +575,22 @@ async function createCampaignWithRetry(
           console.log(`⏳ Waiting ${delay}ms before retry...`);
           await new Promise(resolve => setTimeout(resolve, delay));
       }
-    } catch (error) {
-      if (attempt === maxRetries) {
+    } catch (error: any) {
+      // Don't retry on known errors
+      const noRetryErrors = [
+        "RATE_LIMIT", "INSUFFICIENT_CREDITS", "UNAUTHORIZED",
+        "FORBIDDEN", "NOT_FOUND", "VALIDATION_ERROR"
+      ];
+      if (noRetryErrors.includes(error.message)) {
         throw error;
       }
 
-      // Don't retry on known errors
-      if (
-        error.message === "RATE_LIMIT" ||
-        error.message === "INSUFFICIENT_CREDITS" ||
-        error.message === "UNAUTHORIZED" ||
-        error.message === "NOT_FOUND" ||
-        error.message === "VALIDATION_ERROR"
-      ) {
-        throw error;
-      }
+      if (attempt === maxRetries) throw error;
 
       console.warn(`⚠️  Network error, retrying...`);
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
-}
-
-// Usage
-try {
-  const campaign = await createCampaignWithRetry({
-    product_id: "...",
-    title: "...",
-    keywords: ["..."],
-    search_context: "...",
-    estimated_posts: 50,
-  });
-  console.log("Campaign created:", campaign);
-} catch (error) {
-  console.error("Failed after retries:", error);
-}
-```
-
----
-
-## Testing with Nano Bundle
-
-Use the nano bundle ($2/40 credits) for development and testing.
-
-```typescript
-async function createTestCampaign() {
-  // Step 1: Top up with nano bundle if needed
-  const balanceResponse = await fetch(
-    "https://api.productclank.com/api/v1/credits/balance",
-    {
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      },
-    }
-  );
-  const { credits } = await balanceResponse.json();
-
-  if (credits < 40) {
-    const x402Fetch = setupX402Fetch();
-    await x402Fetch(
-      "https://api.productclank.com/api/v1/credits/topup",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          bundle: "nano", // $2 for 40 credits
-        }),
-      }
-    );
-    console.log("✅ Topped up with nano bundle (40 credits)");
-  }
-
-  // Step 2: Create small test campaign (no credits deducted yet)
-  const response = await fetch(
-    "https://api.productclank.com/api/v1/agents/campaigns",
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        product_id: "your-product-uuid",
-        title: "[TEST] Development Campaign",
-        keywords: ["test keyword"],
-        search_context: "Test search context for development",
-        estimated_posts: 4, // 4 posts × 12 credits = 48 credits
-
-        // Minimal settings for testing
-        reply_length: "short",
-        min_follower_count: 100,
-      }),
-    }
-  );
-
-  const result = await response.json();
-  console.log("Test campaign created:", result.campaign);
-  console.log(`🔗 Review: https://app.productclank.com/communiply/campaigns/${result.campaign.id}`);
-
-  // Step 3: Generate posts (credits deducted here — ~48 for 4 posts)
-  const generateResponse = await fetch(
-    `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      },
-    }
-  );
-
-  const generateResult = await generateResponse.json();
-  console.log("Posts generated:", generateResult.postsGenerated);
-  console.log(`Credits used: ${generateResult.credits?.creditsUsed} (${generateResult.postsGenerated} posts × 12)`);
-  return result;
-}
-
-// Check credit usage
-async function checkCreditHistory() {
-  const response = await fetch(
-    "https://api.productclank.com/api/v1/credits/history?limit=10",
-    {
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      },
-    }
-  );
-  const history = await response.json();
-  console.log("Recent credit transactions:", history.transactions);
 }
 ```
 
@@ -809,13 +601,12 @@ async function checkCreditHistory() {
 Type definitions for type-safe development.
 
 ```typescript
-// Campaign Request Types
+// Campaign Request
 interface CampaignRequest {
-  product_id: string; // UUID
+  product_id: string;
   title: string;
-  keywords: string[]; // Non-empty
+  keywords: string[];
   search_context: string;
-  estimated_posts?: number; // Optional: for cost estimation
   mention_accounts?: string[];
   reply_style_tags?: string[];
   reply_style_account?: string;
@@ -825,133 +616,90 @@ interface CampaignRequest {
   min_engagement_count?: number;
   max_post_age_days?: number;
   require_verified?: boolean;
-  payment_tx_hash?: string; // For direct transfer (credit top-up)
+  caller_user_id?: string; // Trusted agents only
 }
 
-// Credit Bundle Types
-type CreditBundle = "nano" | "micro" | "small" | "medium" | "large" | "enterprise";
-
-interface CreditTopupRequest {
-  bundle: CreditBundle;
-  payment_tx_hash?: string; // Optional for x402
+// Generate Posts Request
+interface GeneratePostsRequest {
+  caller_user_id?: string; // Trusted agents only
 }
 
-interface CreditBalance {
-  success: true;
-  credits: number;
-  last_topup: string; // ISO timestamp
-  total_spent: number;
+// Add Delegate Request
+interface AddDelegateRequest {
+  user_id: string;
 }
 
-interface CreditTopupResponse {
-  success: true;
-  credits_added: number;
-  new_balance: number;
-  bundle: CreditBundle;
-  amount_usdc: number;
-  tx_hash?: string;
-}
-
-// Success Response
+// Campaign Creation Success Response
 interface CampaignSuccessResponse {
   success: true;
   campaign: {
     id: string;
-    campaign_number: string; // e.g. "CP-042"
+    campaign_number: string;
     title: string;
     status: "active";
     created_via: "api";
     creator_agent_id: string;
     is_funded: boolean;
+    url: string;
   };
-  payment: {
-    method: "x402" | "direct_transfer" | "trusted";
-    amount_usdc: number;
-    network: "base";
-    payer: string | null;
-    tx_hash?: string; // Only for direct_transfer
+  credits: {
+    credits_used: number;
+    credits_remaining: number;
+    billing_user_id: string;
   };
   next_step: {
     action: "generate_posts";
-    endpoint: string; // e.g. "POST /api/v1/agents/campaigns/{id}/generate-posts"
+    endpoint: string;
     description: string;
   };
 }
 
-// Generate Posts Response
+// Generate Posts Success Response
 interface GeneratePostsSuccessResponse {
   success: true;
+  posts_created: number;
+  credits_used: number;
+  credits_remaining: number;
+  campaign_id: string;
+}
+
+// Add Delegate Success Response
+interface AddDelegateSuccessResponse {
+  success: true;
   message: string;
-  postsGenerated: number;
-  repliesGenerated: number;
-  errors: string[];
-  batchNumber: number;
-  credits: {
-    creditsUsed: number;
-    creditsRemaining: number;
+  delegator?: {
+    user_id: string;
+    campaign_id: string;
   };
+  already_delegator?: boolean;
 }
-
-interface GeneratePostsErrorResponse {
-  success: false;
-  error: "insufficient_credits" | "forbidden" | "not_found" | "internal_error";
-  message: string;
-}
-
-type GeneratePostsResponse = GeneratePostsSuccessResponse | GeneratePostsErrorResponse;
 
 // Error Response
-interface CampaignErrorResponse {
+interface ErrorResponse {
   success: false;
   error:
     | "insufficient_credits"
     | "validation_error"
     | "unauthorized"
+    | "forbidden"
     | "not_found"
     | "rate_limit_exceeded"
-    | "payment_invalid"
     | "creation_failed"
     | "internal_error";
   message: string;
-  required_credits?: number;
-  available_credits?: number;
-  estimated_cost_breakdown?: {
-    post_discovery_and_reply: {
-      credits_per_post: number;
-      estimated_posts: number;
-      total_credits: number;
-    };
-  };
-  topup_options?: Array<{
-    bundle: CreditBundle;
-    credits: number;
-    price_usdc: number;
-    recommended?: boolean;
-  }>;
-  payment_methods?: {
-    x402: {
-      description: string;
-      config: X402Config;
-    };
-    direct_transfer: {
-      description: string;
-      pay_to: string;
-      amount_usdc: number;
-      network: string;
-      asset: string;
-    };
-  };
+  credits_required?: number;
+  credits_available?: number;
+  shortfall?: number;
+  topup_endpoint?: string;
 }
 
-type CampaignResponse = CampaignSuccessResponse | CampaignErrorResponse;
+type CampaignResponse = CampaignSuccessResponse | ErrorResponse;
 
 // Helper function with types
 async function createCampaign(
   data: CampaignRequest
 ): Promise<CampaignSuccessResponse["campaign"]> {
-  const x402Fetch = setupX402Fetch();
-
-  const response = await x402Fetch(
+  const response = await fetch(
     "https://api.productclank.com/api/v1/agents/campaigns",
     {
       method: "POST",
@@ -970,29 +718,6 @@ async function createCampaign(
   }
 
   return result.campaign;
-}
-
-// Helper function to generate posts after campaign creation
-async function generatePosts(
-  campaignId: string
-): Promise<GeneratePostsSuccessResponse> {
-  const response = await fetch(
-    `https://api.productclank.com/api/v1/agents/campaigns/${campaignId}/generate-posts`,
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      },
-    }
-  );
-
-  const result: GeneratePostsResponse = await response.json();
-
-  if (!result.success) {
-    throw new Error(`Generate posts failed: ${result.message}`);
-  }
-
-  return result;
 }
 ```
 
@@ -1026,47 +751,9 @@ function validateCampaignData(data: Partial<CampaignRequest>): string[] {
   return errors;
 }
 
-// Usage
-const errors = validateCampaignData(campaignData);
-if (errors.length > 0) {
-  console.error("Validation errors:", errors);
-  throw new Error(errors.join(", "));
-}
-
-// Calculate bundle details
-function getBundleDetails(bundle: CreditBundle): { credits: number; price: number } {
-  const bundles = {
-    nano: { credits: 40, price: 2 },
-    micro: { credits: 200, price: 10 },
-    small: { credits: 550, price: 25 },
-    medium: { credits: 1200, price: 50 },
-    large: { credits: 2600, price: 100 },
-    enterprise: { credits: 14000, price: 500 },
-  };
-  return bundles[bundle];
-}
-
-// Estimate campaign cost
-function estimateCampaignCost(estimatedPosts: number): number {
-  const CREDITS_PER_POST = 12; // Discovery + Reply
-  return estimatedPosts * CREDITS_PER_POST;
-}
-
-// Recommend bundle based on estimated posts
-function recommendBundle(estimatedPosts: number): CreditBundle {
-  const creditsNeeded = estimateCampaignCost(estimatedPosts);
-
-  if (creditsNeeded <= 40) return "nano";
-  if (creditsNeeded <= 200) return "micro";
-  if (creditsNeeded <= 550) return "small";
-  if (creditsNeeded <= 1200) return "medium";
-  if (creditsNeeded <= 2600) return "large";
-  return "enterprise";
-}
-
 // Format campaign URL
 function getCampaignDashboardUrl(campaignId: string): string {
-  return `https://app.productclank.com/communiply/campaigns/${campaignId}`;
+  return `https://app.productclank.com/communiply/${campaignId}`;
 }
 ```
 
@@ -1074,25 +761,16 @@ function getCampaignDashboardUrl(campaignId: string): string {
 
 ## Complete End-to-End Example
 
-Full workflow from user input to campaign creation.
+Full workflow from user input to campaign creation with post generation.
 
 ```typescript
-import { wrapFetchWithPayment } from "@x402/fetch";
-import { createWalletClient, http } from "viem";
-import { base } from "viem/chains";
-import { privateKeyToAccount } from "viem/accounts";
-
 async function main() {
-  // 1. Setup x402 payment
-  const account = privateKeyToAccount(process.env.AGENT_PRIVATE_KEY!);
-  const walletClient = createWalletClient({
-    account,
-    chain: base,
-    transport: http(),
-  });
-  const x402Fetch = wrapFetchWithPayment(fetch, walletClient);
+  const headers = {
+    "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+    "Content-Type": "application/json",
+  };
 
-  // 2. Gather campaign requirements (from user input, LLM, etc.)
+  // 1. Gather campaign requirements (from user input, LLM, etc.)
   const campaignData: CampaignRequest = {
     product_id: "abc-123-def-456",
     title: "AI Agents Launch Week",
@@ -1103,7 +781,6 @@ async function main() {
       "AI automation"
     ],
     search_context: "Developers and founders discussing AI agents, autonomous systems, and agent frameworks",
-    estimated_posts: 80, // Estimate for cost calculation
     mention_accounts: ["@myaiagent", "@founder"],
     reply_style_tags: ["technical", "enthusiastic", "helpful"],
     reply_length: "short",
@@ -1111,120 +788,58 @@ async function main() {
     max_post_age_days: 3,
   };
 
-  // 3. Validate
+  // 2. Validate
   const errors = validateCampaignData(campaignData);
   if (errors.length > 0) {
     throw new Error(`Validation failed: ${errors.join(", ")}`);
   }
 
-  // 4. Check credit balance and top up if needed
-  console.log("Checking credit balance...");
-  const balanceResponse = await fetch(
-    "https://api.productclank.com/api/v1/credits/balance",
-    {
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      },
-    }
-  );
-  const { credits } = await balanceResponse.json();
-  const estimatedCost = estimateCampaignCost(campaignData.estimated_posts || 50);
-
-  console.log(`Current balance: ${credits} credits`);
-  console.log(`Estimated cost: ${estimatedCost} credits`);
-
-  if (credits < estimatedCost) {
-    const recommendedBundle = recommendBundle(campaignData.estimated_posts || 50);
-    const bundleDetails = getBundleDetails(recommendedBundle);
-    console.log(`Topping up with ${recommendedBundle} bundle (+${bundleDetails.credits} credits)...`);
-
-    await x402Fetch(
-      "https://api.productclank.com/api/v1/credits/topup",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          bundle: recommendedBundle,
-        }),
-      }
-    );
-    console.log("✅ Credits topped up successfully");
-  }
-
-  // 5. Create campaign (no credits deducted yet)
+  // 3. Create campaign (10 credits)
   console.log("Creating campaign...");
-  const response = await fetch(
+  const campaignResult = await fetch(
     "https://api.productclank.com/api/v1/agents/campaigns",
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(campaignData),
-    }
-  );
+    { method: "POST", headers, body: JSON.stringify(campaignData) }
+  ).then(r => r.json());
 
-  const result: CampaignResponse = await response.json();
-
-  if (!result.success) {
-    throw new Error(`Failed: ${result.message}`);
+  if (!campaignResult.success) {
+    throw new Error(`Failed: ${campaignResult.message}`);
   }
 
-  const campaignUrl = getCampaignDashboardUrl(result.campaign.id);
-  console.log(`✅ Campaign created: ${result.campaign.campaign_number}`);
-  console.log(`🔗 Review at: ${campaignUrl}`);
-
-  // 6. (Optional) Share URL with user for review before generating posts
-
-  // 7. Generate posts (credits deducted here)
+  // 4. Generate posts (12 credits/post)
   console.log("Generating posts...");
-  const generateResponse = await fetch(
-    `https://api.productclank.com/api/v1/agents/campaigns/${result.campaign.id}/generate-posts`,
-    {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-      },
-    }
-  );
+  const postsResult = await fetch(
+    `https://api.productclank.com/api/v1/agents/campaigns/${campaignResult.campaign.id}/generate-posts`,
+    { method: "POST", headers, body: JSON.stringify({}) }
+  ).then(r => r.json());
 
-  const generateResult: GeneratePostsResponse = await generateResponse.json();
-
-  if (!generateResult.success) {
-    throw new Error(`Generate posts failed: ${generateResult.message}`);
-  }
-
-  // 8. Return results to user
+  // 5. Return results to user
   console.log(`
 ✅ Campaign Created Successfully!
 
 📋 Campaign Details:
-   - ID: ${result.campaign.campaign_number}
-   - Title: ${result.campaign.title}
-   - Status: ${result.campaign.status}
+   - ID: ${campaignResult.campaign.campaign_number}
+   - Title: ${campaignResult.campaign.title}
+   - Status: ${campaignResult.campaign.status}
 
-📝 Posts Generated:
-   - Posts discovered: ${generateResult.postsGenerated}
-   - Replies generated: ${generateResult.repliesGenerated}
+💰 Credits:
+   - Campaign creation: ${campaignResult.credits.credits_used}
+   - Post generation: ${postsResult.credits_used || 0}
+   - Remaining: ${postsResult.credits_remaining || campaignResult.credits.credits_remaining}
 
-💳 Credit Usage:
-   - Credits used: ${generateResult.credits.creditsUsed}
-   - Credits remaining: ${generateResult.credits.creditsRemaining}
+📝 Posts Generated: ${postsResult.posts_created || 0}
 
 🔗 View Campaign:
-   ${campaignUrl}
+   ${getCampaignDashboardUrl(campaignResult.campaign.id)}
 
 🎯 What Happens Next:
    1. Community members browse and claim reply opportunities
    2. They post replies from their personal accounts
    3. You track engagement and ROI in real-time
+
+Your campaign is now live and actively working!
   `);
 
-  return result.campaign;
+  return campaignResult.campaign;
 }
 
 main()
@@ -1237,190 +852,338 @@ main()
 
 ---
 
+---
+
+## Growth Campaign with Rewards
+
+Run a paid growth campaign where community members earn rewards for amplifying your launch.
+
+```typescript
+async function createGrowthRewardsCampaign() {
+  const headers = {
+    "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+
+  // Step 1: Create a growth campaign targeting launch conversations
+  const campaignResult = await fetch(
+    "https://api.productclank.com/api/v1/agents/campaigns",
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        product_id: "your-product-uuid",
+        title: "Launch Week Growth — Earn Rewards for Amplifying",
+        keywords: [
+          "new productivity tools 2026",
+          "best project management app",
+          "team collaboration tools",
+          "workflow automation startup"
+        ],
+        search_context: "Founders, PMs, and developers actively looking for new productivity and project management solutions",
+        mention_accounts: ["@yourproduct"],
+        reply_style_tags: ["enthusiastic", "helpful", "genuine"],
+        reply_length: "short",
+        reply_guidelines: `
+You're a user who's been using the product for a few weeks during beta.
+
+Share what you love:
+- How it saved you time on X
+- A specific feature that surprised you
+- Why you'd recommend it
+
+Keep it natural — you're helping someone, not selling.
+Include @yourproduct when relevant.
+        `.trim(),
+        min_follower_count: 300,
+        max_post_age_days: 5,
+      }),
+    }
+  ).then(r => r.json());
+
+  if (!campaignResult.success) {
+    throw new Error(campaignResult.message);
+  }
+
+  // Step 2: Generate posts — community members will claim these
+  // and earn crypto rewards for posting verified replies
+  const postsResult = await fetch(
+    `https://api.productclank.com/api/v1/agents/campaigns/${campaignResult.campaign.id}/generate-posts`,
+    { method: "POST", headers, body: JSON.stringify({}) }
+  ).then(r => r.json());
+
+  console.log(`
+🚀 Growth Rewards Campaign Live!
+
+Campaign: ${campaignResult.campaign.campaign_number}
+Dashboard: ${campaignResult.campaign.url}
+Posts generated: ${postsResult.posts_created || 0}
+
+💰 How it works for community:
+   1. Members browse ${postsResult.posts_created || 0} reply opportunities
+   2. They claim a reply, customize it, post from their account
+   3. Submit proof (tweet URL)
+   4. Earn crypto rewards after verification
+
+📊 Your cost: ${campaignResult.credits.credits_used + (postsResult.credits_used || 0)} credits
+   (~60-80% cheaper than running Twitter ads for the same reach)
+  `);
+
+  return campaignResult.campaign;
+}
+```
+
+---
+
+## Autonomous Growth Agent (Cron-Based)
+
+Build an agent that runs weekly campaigns automatically — detecting trends and creating fresh campaigns.
+
+```typescript
+// This runs on a cron schedule (e.g., every Monday at 9am)
+async function weeklyGrowthCampaign() {
+  const headers = {
+    "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+
+  // 1. Check credit balance before proceeding
+  const balanceRes = await fetch(
+    "https://api.productclank.com/api/v1/agents/credits/balance",
+    { headers }
+  ).then(r => r.json());
+
+  if (balanceRes.balance < 300) {
+    console.log(`⚠️ Low credits (${balanceRes.balance}). Skipping this week.`);
+    // Optionally: notify team, auto-topup, etc.
+    return;
+  }
+
+  // 2. Dynamic keywords based on current week's trends
+  // (You'd replace this with your own trend detection logic)
+  const weekNumber = Math.ceil(
+    (Date.now() - new Date("2026-01-01").getTime()) / (7 * 24 * 60 * 60 * 1000)
+  );
+
+  const campaignResult = await fetch(
+    "https://api.productclank.com/api/v1/agents/campaigns",
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        product_id: "your-product-uuid",
+        title: `Weekly Growth Push — Week ${weekNumber}`,
+        keywords: [
+          "need a better tool for",
+          "any recommendations for",
+          "what do you use for",
+          "looking for a solution to"
+        ],
+        search_context: "People actively seeking tool recommendations in our category",
+        reply_style_tags: ["helpful", "concise"],
+        reply_length: "short",
+        min_follower_count: 200,
+        max_post_age_days: 3,
+      }),
+    }
+  ).then(r => r.json());
+
+  if (!campaignResult.success) return;
+
+  // 3. Generate posts
+  await fetch(
+    `https://api.productclank.com/api/v1/agents/campaigns/${campaignResult.campaign.id}/generate-posts`,
+    { method: "POST", headers, body: JSON.stringify({}) }
+  );
+
+  console.log(`✅ Week ${weekNumber} campaign created: ${campaignResult.campaign.url}`);
+}
+```
+
+---
+
+## Tweet Boost — Rally Community Around Your Post
+
+Get your community to engage with your tweet — replies showing support, asking questions, congratulating, plus likes and reposts.
+
+```typescript
+async function boostTweet(
+  tweetUrl: string,
+  actionType: "replies" | "likes" | "repost",
+  options?: { tweetText?: string; tweetAuthor?: string; guidelines?: string; productId?: string }
+) {
+  const creditCost = actionType === "replies" ? 200 : 300;
+
+  const result = await fetch(
+    "https://api.productclank.com/api/v1/agents/campaigns/boost",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        post_url: tweetUrl,
+        action_type: actionType,
+        // product_id is OPTIONAL — omit for tweet-first boosts.
+        // When provided, AI replies reference the product name and brand-mention enforcement is on.
+        ...(options?.productId && { product_id: options.productId }),
+        // For reply boosts — tell the community how to engage
+        ...(actionType === "replies" && {
+          reply_guidelines: options?.guidelines ||
+            "Show genuine excitement. Ask thoughtful questions about the features or congratulate the team. Keep it authentic.",
+        }),
+        // Optional: pass tweet text to skip server-side fetch (useful when Twitter API is down)
+        ...(options?.tweetText && { post_text: options.tweetText }),
+        ...(options?.tweetAuthor && { post_author: options.tweetAuthor }),
+      }),
+    }
+  ).then(r => r.json());
+
+  if (result.success) {
+    const actions = actionType === "replies" ? "10 community replies" : actionType === "likes" ? "30 likes" : "10 reposts";
+    console.log(`
+Boost created!
+
+Tweet: ${tweetUrl}
+Action: ${actions} from real community members
+Cost: ${creditCost} credits
+Dashboard: ${result.campaign.url}
+    `);
+  }
+
+  return result;
+}
+
+// Community replies with support and questions
+await boostTweet(
+  "https://x.com/myproduct/status/123456789",
+  "replies",
+  {
+    tweetText: "We just shipped v2.0! New API with 10x faster response times.",
+    tweetAuthor: "myproduct",
+    guidelines: "Congratulate the team, ask about the new API features, show excitement",
+  }
+);
+
+// Community likes
+await boostTweet("https://x.com/myproduct/status/123456789", "likes");
+
+// Community reposts
+await boostTweet("https://x.com/myproduct/status/123456789", "repost");
+```
+
+**Also available via CLI:**
+```bash
+# Install: npm install -g @productclank/communiply-cli
+
+# Community replies with guidelines
+communiply boost https://x.com/myproduct/status/123 --action replies \
+  --guidelines "Congratulate the team, ask about new features" \
+  --tweet-text "We just shipped v2.0!"
+
+# Likes
+communiply boost https://x.com/myproduct/status/123 --action likes
+
+# Reposts
+communiply boost https://x.com/myproduct/status/123 --action reposts
+```
+
+---
+
+## Multi-Product Growth Agency
+
+Manage campaigns for multiple clients from a single agent.
+
+```typescript
+interface ClientProduct {
+  productId: string;
+  name: string;
+  keywords: string[];
+  searchContext: string;
+  teamUserId?: string; // Add as delegator
+}
+
+async function createCampaignsForPortfolio(clients: ClientProduct[]) {
+  const headers = {
+    "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+
+  const results = [];
+
+  for (const client of clients) {
+    // Create campaign for each client product
+    const campaignResult = await fetch(
+      "https://api.productclank.com/api/v1/agents/campaigns",
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          product_id: client.productId,
+          title: `${client.name} — Weekly Outreach`,
+          keywords: client.keywords,
+          search_context: client.searchContext,
+          reply_style_tags: ["professional", "helpful"],
+          reply_length: "short",
+          min_follower_count: 500,
+          max_post_age_days: 7,
+        }),
+      }
+    ).then(r => r.json());
+
+    if (!campaignResult.success) {
+      console.error(`❌ ${client.name}: ${campaignResult.message}`);
+      continue;
+    }
+
+    // Generate posts
+    await fetch(
+      `https://api.productclank.com/api/v1/agents/campaigns/${campaignResult.campaign.id}/generate-posts`,
+      { method: "POST", headers, body: JSON.stringify({}) }
+    );
+
+    // Add client's team as delegator so they can manage it
+    if (client.teamUserId) {
+      await fetch(
+        `https://api.productclank.com/api/v1/agents/campaigns/${campaignResult.campaign.id}/delegates`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ user_id: client.teamUserId }),
+        }
+      );
+    }
+
+    console.log(`✅ ${client.name}: ${campaignResult.campaign.url}`);
+    results.push({ client: client.name, campaign: campaignResult.campaign });
+  }
+
+  return results;
+}
+
+// Usage
+await createCampaignsForPortfolio([
+  {
+    productId: "uuid-1",
+    name: "DeFi Protocol",
+    keywords: ["DeFi yield", "staking rewards", "liquidity pools"],
+    searchContext: "Crypto users looking for DeFi yield opportunities",
+    teamUserId: "user-uuid-1",
+  },
+  {
+    productId: "uuid-2",
+    name: "Dev Tools Startup",
+    keywords: ["developer tools", "API management", "backend framework"],
+    searchContext: "Developers discussing backend frameworks and API tooling",
+    teamUserId: "user-uuid-2",
+  },
+]);
+```
+
+---
+
 For more examples and use cases, see:
 - [SKILL.md](../SKILL.md) - Main skill documentation
 - [API_REFERENCE.md](./API_REFERENCE.md) - Complete API reference
 - [scripts/create-campaign.mjs](../scripts/create-campaign.mjs) - Ready-to-use script
-
----
-
-## Tier 2: Research-Enhanced Campaign (Coming Soon)
-
-Example code for the research-enhanced workflow. These endpoints are not yet available.
-
-```typescript
-async function createResearchEnhancedCampaign() {
-  const API = "https://api.productclank.com/api/v1";
-  const headers = {
-    "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-    "Content-Type": "application/json",
-  };
-
-  // Step 1: Generate keywords from natural language (2 credits)
-  console.log("🔍 Generating keywords...");
-  const keywordsRes = await fetch(`${API}/agents/generate-keywords`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      search_goals: "Content marketers looking for AI writing assistants",
-      product_name: "WriteAI",
-      product_tagline: "AI writing assistant for marketers",
-    }),
-  });
-  const { keywords } = await keywordsRes.json();
-  console.log(`✅ Generated ${keywords.length} keywords:`, keywords);
-
-  // Step 2: Create campaign with AI-generated keywords (10 credits)
-  console.log("🚀 Creating campaign...");
-  const campaignRes = await fetch(`${API}/agents/campaigns`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      product_id: "YOUR_PRODUCT_UUID",
-      title: "AI Writing Tools Campaign",
-      keywords,
-      search_context: "Marketers and content creators discussing AI writing tools",
-      reply_style_tags: ["helpful", "authentic"],
-      reply_length: "short",
-    }),
-  });
-  const { campaign } = await campaignRes.json();
-  console.log(`✅ Campaign created: ${campaign.campaign_number}`);
-
-  // Step 3: Run research analysis (free)
-  console.log("🔬 Running research analysis...");
-  const researchRes = await fetch(
-    `${API}/agents/campaigns/${campaign.id}/research`,
-    { method: "POST", headers }
-  );
-  const { analysis } = await researchRes.json();
-  console.log(`📊 Research complete:`);
-  console.log(`   - ${analysis.expandedKeywords.length} expanded keywords`);
-  console.log(`   - ${analysis.highIntentPhrases.length} high-intent phrases`);
-  console.log(`   - ${analysis.twitterLists.length} Twitter lists found`);
-  console.log(`   - ${analysis.competitors.length} competitors discovered`);
-
-  // Step 4: Select discovery sources based on research (free)
-  console.log("⚙️ Configuring discovery sources...");
-  await fetch(`${API}/agents/campaigns/${campaign.id}/verticals`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      enabledVerticals: ["keywords", "phrases", "lists"],
-      selectedTwitterListIds: analysis.twitterLists.slice(0, 5).map(l => l.id),
-    }),
-  });
-
-  // Step 5: Generate posts with enhanced targeting (12 credits/post)
-  console.log("⚡ Generating posts...");
-  const generateRes = await fetch(
-    `${API}/agents/campaigns/${campaign.id}/generate-posts`,
-    { method: "POST", headers }
-  );
-  const result = await generateRes.json();
-
-  console.log(`
-✅ Research-Enhanced Campaign Live!
-
-📋 Campaign: ${campaign.campaign_number}
-📝 Posts: ${result.postsGenerated} discovered, ${result.repliesGenerated} replies generated
-💳 Credits: ${result.credits.creditsUsed} used, ${result.credits.creditsRemaining} remaining
-🔗 View: https://app.productclank.com/communiply/${campaign.id}
-  `);
-
-  return campaign;
-}
-```
-
----
-
-## Tier 3: Iterate & Optimize (Coming Soon)
-
-Example code for the iterate and optimize workflow. These endpoints are not yet available.
-
-```typescript
-async function iterateAndOptimizeCampaign(campaignId: string) {
-  const API = "https://api.productclank.com/api/v1";
-  const headers = {
-    "Authorization": `Bearer ${process.env.PRODUCTCLANK_API_KEY}`,
-    "Content-Type": "application/json",
-  };
-
-  // Step 1: Read generated posts and replies (free)
-  console.log("📖 Reading campaign results...");
-  const postsRes = await fetch(
-    `${API}/agents/campaigns/${campaignId}/posts?includeReplies=true&limit=20`,
-    { headers }
-  );
-  const { posts, total, availableTotal } = await postsRes.json();
-  console.log(`📊 ${total} posts total, ${availableTotal} available for community`);
-
-  // Analyze results
-  const avgRelevance = posts.reduce((sum, p) => sum + p.relevanceScore, 0) / posts.length;
-  console.log(`📈 Average relevance score: ${(avgRelevance * 100).toFixed(1)}%`);
-
-  // Step 2: Use AI refine to optimize (3 credits/message)
-  console.log("🤖 Asking AI for optimization suggestions...");
-  const refineRes = await fetch(
-    `${API}/agents/campaigns/${campaignId}/refine`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        messages: [{
-          role: "user",
-          content: "The replies are too formal and long. Make them shorter, more casual, and focus on personal experience rather than features.",
-        }],
-      }),
-    }
-  );
-  const refineResult = await refineRes.json();
-  console.log(`💬 AI: ${refineResult.message}`);
-  console.log(`⚡ Actions executed: ${refineResult.actions_executed.length}`);
-
-  // Step 3: Regenerate replies for top posts (5 credits/reply)
-  const topPostIds = posts.slice(0, 5).map(p => p.id);
-  console.log(`🔄 Regenerating replies for top ${topPostIds.length} posts...`);
-  const regenRes = await fetch(
-    `${API}/agents/campaigns/${campaignId}/regenerate-replies`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        postIds: topPostIds,
-        editRequest: "Shorter, more casual, share personal experience",
-      }),
-    }
-  );
-  const regenResult = await regenRes.json();
-  console.log(`✅ ${regenResult.repliesGenerated} replies regenerated`);
-
-  // Step 4: Generate more posts (12 credits/post)
-  console.log("⚡ Generating more posts with updated style...");
-  const moreRes = await fetch(
-    `${API}/agents/campaigns/${campaignId}/generate-posts`,
-    { method: "POST", headers }
-  );
-  const moreResult = await moreRes.json();
-  console.log(`✅ ${moreResult.postsGenerated} new posts generated`);
-
-  // Step 5: Read updated campaign stats (free)
-  const campaignRes = await fetch(
-    `${API}/agents/campaigns/${campaignId}`,
-    { headers }
-  );
-  const { campaign } = await campaignRes.json();
-
-  console.log(`
-📊 Campaign Stats After Optimization:
-   Posts found: ${campaign.total_posts_found}
-   Replies generated: ${campaign.total_replies_generated}
-   Community participations: ${campaign.total_participations}
-  `);
-
-  return campaign;
-}
-
-// Usage: iterate on an existing campaign
-// iterateAndOptimizeCampaign("your-campaign-uuid");
-```

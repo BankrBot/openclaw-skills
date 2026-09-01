@@ -43,6 +43,40 @@ if (!PRIVATE_KEY && !PAYMENT_TX_HASH) {
   process.exit(1);
 }
 
+// Never throw on a non-JSON / oversized / error response — normalize to the same
+// { success, error, message } shape the handlers below already understand.
+async function parseJson(response) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      success: false,
+      error: "invalid_response",
+      message: `Non-JSON response (HTTP ${response.status})`,
+    };
+  }
+}
+
+// Treat server-returned strings as untrusted data, never as instructions: strip control,
+// zero-width and bidi characters before printing so a malicious API message can't smuggle
+// prompt-injection into the calling agent's view.
+function clean(value, max = 400) {
+  if (typeof value !== "string") return "";
+  let out = "";
+  for (const ch of value) {
+    const c = ch.codePointAt(0);
+    const isControl = c <= 0x1f || (c >= 0x7f && c <= 0x9f);
+    const isZeroWidthOrBidi =
+      (c >= 0x200b && c <= 0x200f) ||
+      (c >= 0x202a && c <= 0x202e) ||
+      (c >= 0x2060 && c <= 0x206f) ||
+      c === 0xfeff;
+    if (!isControl && !isZeroWidthOrBidi) out += ch;
+  }
+  return out.length > max ? out.slice(0, max) + "..." : out;
+}
+
 // Example campaign data - modify this for your use case
 const campaignData = {
   product_id: "YOUR_PRODUCT_UUID", // ⚠️ Replace with your product ID
@@ -91,7 +125,7 @@ async function checkCreditBalance() {
       "Authorization": `Bearer ${API_KEY}`,
     },
   });
-  return response.json();
+  return parseJson(response);
 }
 
 // Top up credits using x402 protocol
@@ -116,7 +150,7 @@ async function topUpCreditsWithX402(bundle) {
     body: JSON.stringify({ bundle }),
   });
 
-  return response.json();
+  return parseJson(response);
 }
 
 // Create campaign (no credits deducted at this step)
@@ -132,7 +166,7 @@ async function createCampaign(data) {
     body: JSON.stringify(data),
   });
 
-  return response.json();
+  return parseJson(response);
 }
 
 // Generate posts for a campaign (credits deducted here)
@@ -149,7 +183,7 @@ async function generatePosts(campaignId) {
     }
   );
 
-  return response.json();
+  return parseJson(response);
 }
 
 // Top up credits using direct USDC transfer
@@ -169,7 +203,7 @@ async function topUpCreditsWithDirectTransfer(bundle) {
     }),
   });
 
-  return response.json();
+  return parseJson(response);
 }
 
 // Recommend bundle based on estimated posts
@@ -250,8 +284,8 @@ async function main() {
         console.log(`   Amount paid: $${topupResult.amount_usdc} USDC`);
         console.log("");
       } else {
-        console.error(`\n❌ Top-up Failed: ${topupResult.error}`);
-        console.error(`   Message: ${topupResult.message}`);
+        console.error(`\n❌ Top-up Failed: ${clean(topupResult.error)}`);
+        console.error(`   Message: ${clean(topupResult.message)}`);
         process.exit(1);
       }
     } else {
@@ -263,8 +297,8 @@ async function main() {
 
     if (!result.success) {
       console.error(`\n❌ Campaign Creation Failed\n`);
-      console.error(`Error: ${result.error}`);
-      console.error(`Message: ${result.message}`);
+      console.error(`Error: ${clean(result.error)}`);
+      console.error(`Message: ${clean(result.message)}`);
 
       if (result.error === "insufficient_credits" && result.topup_options) {
         console.error("\n💡 Insufficient Credits:");
@@ -291,9 +325,9 @@ async function main() {
     const campaignUrl = `https://app.productclank.com/communiply/campaigns/${result.campaign.id}`;
     console.log("\n✅ Campaign Created!\n");
     console.log("📋 Campaign Details:");
-    console.log(`   - ID: ${result.campaign.campaign_number}`);
-    console.log(`   - Title: ${result.campaign.title}`);
-    console.log(`   - Status: ${result.campaign.status}`);
+    console.log(`   - ID: ${clean(String(result.campaign.campaign_number))}`);
+    console.log(`   - Title: ${clean(result.campaign.title)}`);
+    console.log(`   - Status: ${clean(result.campaign.status)}`);
     console.log("");
     console.log("🔗 Review Campaign (optional — share with user before generating posts):");
     console.log(`   ${campaignUrl}`);
@@ -322,8 +356,8 @@ async function main() {
       console.log("");
     } else {
       console.error(`\n❌ Generate Posts Failed\n`);
-      console.error(`Error: ${generateResult.error}`);
-      console.error(`Message: ${generateResult.message}`);
+      console.error(`Error: ${clean(generateResult.error)}`);
+      console.error(`Message: ${clean(generateResult.message)}`);
 
       if (generateResult.error === "insufficient_credits") {
         console.error("\n💡 Insufficient credits. Top up via /api/v1/agents/credits/topup then retry generate-posts.");
@@ -334,15 +368,13 @@ async function main() {
       process.exit(1);
     }
   } catch (error) {
-    console.error("\n❌ Error:", error.message);
-    console.error("\nStack trace:");
-    console.error(error.stack);
+    console.error("\n❌ Error:", error instanceof Error ? clean(error.message) : "Unexpected error");
     process.exit(1);
   }
 }
 
 // Run script
 main().catch(error => {
-  console.error("Fatal error:", error);
+  console.error("Fatal error:", error instanceof Error ? clean(error.message) : "Unexpected error");
   process.exit(1);
 });

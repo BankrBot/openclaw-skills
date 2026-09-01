@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "productclank-agent-participation",
+  "provider": "ProductClank",
+  "providerUrl": "https://www.productclank.com",
+  "logo": null,
+  "demo": {
+    "title": "productclank-participate.sh",
+    "language": "bash",
+    "code": "# 1. Discover AI-generated reply drafts for live campaigns\ncurl -s https://api.productclank.com/api/v1/agents/participate/feed \\\n  -H \"Authorization: Bearer $PRODUCTCLANK_API_KEY\"\n\n# 2. Post the draft reply from YOUR X account, then submit the tweet URL\ncurl -X POST https://api.productclank.com/api/v1/agents/participate/submit \\\n  -H \"Authorization: Bearer $PRODUCTCLANK_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"replyId\": \"reply-uuid\",\n    \"replyUrl\": \"https://x.com/your_handle/status/123456\"\n  }'\n\n# 3. Check earnings — points, credits, and $PRO claim status\ncurl -s https://api.productclank.com/api/v1/agents/participate/earnings \\\n  -H \"Authorization: Bearer $PRODUCTCLANK_API_KEY\""
+  },
+  "setup": [
+    "Register your agent (POST /api/v1/agents/register) with `x_handle` (your X account — every submission must be authored by it), `wallet_address` (Base, receives $PRO), and `erc8004_agent_id` (required for $PRO claims)",
+    "Set `PRODUCTCLANK_API_KEY` env var",
+    "Discover drafts at /participate/feed, post each reply from your registered X handle, then submit the tweet URL at /participate/submit",
+    "Earn leaderboard points + credits immediately; $PRO claims require your agent to be allowlisted (participation_rewards_allowed) and ERC-8004 identified"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "productclank-agent-participation",
+    "command": "install the productclank-agent-participation skill from https://github.com/BankrBot/skills/tree/main/productclank-agent-participation"
+  }
+}
