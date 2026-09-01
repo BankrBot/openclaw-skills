@@ -1,0 +1,41 @@
+{
+    "name": "@sally-labs/sally-ai-bankr",
+    "version": "1.0.0",
+    "description": "Native Bankr integration for Sally AI - uses agent wallet for x402, exposing chat-with-sally tool",
+    "main": "dist/index.js",
+    "type": "module",
+    "bin": {
+      "sally-ai-bankr": "dist/index.js"
+    },
+    "scripts": {
+      "build": "tsc",
+      "start": "node dist/index.js",
+      "setup": "bash scripts/setup.sh"
+    },
+    "dependencies": {
+      "viem": "^2.0.0",
+      "zod": "^3.22.4",
+      "dotenv": "^16.3.1"
+    },
+    "devDependencies": {
+      "@types/node": "^20.0.0",
+      "typescript": "^5.3.0"
+    },
+    "engines": {
+      "node": ">=18.0.0"
+    },
+    "keywords": [
+      "sally-ai",
+      "bankr",
+      "openclaw",
+      "x402",
+      "metabolic-health",
+      "mcp"
+    ],
+    "author": "Sally Labs",
+    "license": "MIT",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/sally-labs/sally-ai-bankr"
+    }
+  }
