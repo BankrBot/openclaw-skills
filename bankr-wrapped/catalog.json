@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "slug": "bankr-wrapped",
+  "provider": "Bankr Wrapped",
+  "providerUrl": "https://bankrwrapped.com",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "install the bankr-wrapped skill from https://github.com/bankrwrapped/wrapped/tree/main/skills/bankr-wrapped\n\n> show me my bankr wrapped"
+  },
+  "setup": [
+    "Install the skill",
+    "Ask for your Bankr Wrapped — no API key or extra setup required"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "bankr-wrapped",
+    "command": "install the bankr-wrapped skill from https://github.com/bankrwrapped/wrapped/tree/main/skills/bankr-wrapped"
+  }
+}
