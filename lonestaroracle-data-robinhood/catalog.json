@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "lonestaroracle-data-robinhood",
+  "provider": "LoneStarOracle",
+  "providerUrl": "https://lonestaroracle.xyz",
+  "logo": null,
+  "demo": {
+    "title": "lonestaroracle-robinhood-x402.sh",
+    "language": "bash",
+    "code": "# LoneStarOracle on Robinhood Chain: pay-per-call data over x402 (USDG on chain 4663). No signup, no API key.\n# 1) Call any endpoint - you get HTTP 402 with payment terms\ncurl -s \"https://equity.lonestaroracle.xyz/equity?symbol=NVDA\"\n\n# 2) Pay the advertised USDG amount on Robinhood Chain (4663) with your x402-capable agent/wallet,\n#    then retry the same URL with the payment proof header to receive JSON.\n\n# More examples:\ncurl -s \"https://ta.lonestaroracle.xyz/scan?symbol=AAPL\"       # technical-analysis scan\ncurl -s \"https://macro.lonestaroracle.xyz/macro\"             # macro regime signal\ncurl -s \"https://rwa.lonestaroracle.xyz/rwa-risk?vault=ousg\" # tokenized-RWA vault risk\n\n# 16 Robinhood-Chain services: https://lonestaroracle.xyz  |  Base (USDC) catalog: lonestaroracle-data skill"
+  },
+  "setup": [
+    "No signup or API key. You need an x402-capable agent or wallet that can pay USDG on Robinhood Chain (chain 4663).",
+    "Call any endpoint, e.g. `GET https://equity.lonestaroracle.xyz/equity?symbol=NVDA`",
+    "On HTTP 402, pay the advertised USDG amount on Robinhood Chain and retry to receive structured JSON.",
+    "Payee is 0xeF2a4B6756895aAf1374640dcFCD4947959442ab; token is USDG (0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168). Verify both before signing.",
+    "Browse all services at https://lonestaroracle.xyz. The full 49-service Base (USDC) catalog is the lonestaroracle-data skill."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "lonestaroracle-data-robinhood",
+    "command": "install the lonestaroracle-data-robinhood skill from https://github.com/BankrBot/skills/tree/main/lonestaroracle-data-robinhood"
+  }
+}
