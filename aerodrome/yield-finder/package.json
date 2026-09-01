@@ -1,0 +1,13 @@
+{
+    "name": "aerodrome-yield-finder",
+    "version": "1.0.0",
+    "description": "OpenClaw skill to find high-yield liquidity pools on Aerodrome Finance (Base)",
+    "main": "scripts/fetch_pools.js",
+    "scripts": {
+        "start": "node scripts/fetch_pools.js"
+    },
+    "dependencies": {
+        "viem": "^2.0.0"
+    },
+    "type": "module"
+}
