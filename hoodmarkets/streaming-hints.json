@@ -40,9 +40,9 @@
     "secondDeployIn24h": "warning rate_limit_would_force_platform_fee — proceed after user yes; fees on new token go to hood.markets platform"
   },
   "feeClaim": {
-    "forAnyone": "POST /api/agent/claim-for-recipient { tokenAddress } — verify token-info first — NO Bankr /wallet/submit",
-    "ownWallet": "POST /api/agent/claim — JWT or X wallet — NO Bankr /wallet/submit",
-    "preVerify": "GET /api/agent/token-info before claim-for-recipient — confirm feeRecipientAddress and catalog membership",
+    "forAnyone": "DEFAULT: POST /api/agent/claim-for-recipient { tokenSymbol: TEST } or { tokenAddress: 0x… } — no JWT, no NFTs, no deploy — NO Bankr /wallet/submit",
+    "ownWallet": "RARE: POST /api/agent/claim only when user says MY fees AND wallet = fee recipient",
+    "preVerify": "Optional: GET /api/agent/token-info?symbol=TEST or ?token=0x… before claim — show feeRecipientAddress in reply",
     "abuse": "Catalog-only tokens; idempotent when no fees; do not batch without per-token user intent",
     "v3Modern": "v0.7+ tokens: API calls claimTradingFees() on Holder NFT — pro-rata to all share holders",
     "v3Legacy": "v0.6 tokens: HoodMarketsV3.claimRewards(token) — fee wallet only",
@@ -63,6 +63,17 @@
     "noFundLpOnSite": "Launch LP locked — users buy/sell token on Uniswap, not fund LP on hood.markets",
     "agentRestrictions": "Agents: claim fees via API only — NO airdropShares, buyShares, listShares, fundBuyerRewardPool via Bankr submit",
     "seeAlso": "references/HOLDER-NFTS.md"
+  },
+  "communityLaunch": {
+    "aliases": ["petition", "community round", "Holder NFT pre-sale", "crowdfund launch"],
+    "apiPrefix": "https://api.hood.markets/api/community-launch",
+    "webUi": "https://hood.markets/community-launch",
+    "critical": "use_skill READ-ONLY is not a blocker — create requires HTTP POST /create (no wallet submit)",
+    "create": "GET /preflight → POST /create — reply with petition.shareUrl — NO JWT, NO /wallet/submit",
+    "back": "GET /prepare-deposit → Bankr /wallet/submit (native ETH, data 0x, chainId 4663) → POST /confirm",
+    "escrow": "Always use nextStep.to / petition.escrowWallet from API — never hardcode",
+    "shares": "1,000 Holder NFT shares airdropped pro-rata on finalize",
+    "seeAlso": "references/COMMUNITY-LAUNCH.md"
   },
   "hoodmarketsV3Factory": {
     "currentVersion": "0.11.0",

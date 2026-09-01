@@ -1,4 +1,4 @@
-# hood.markets Bankr skill (v18)
+# hood.markets Bankr skill (v20)
 
 Bankr-compatible agent skill for [hood.markets](https://hood.markets) on Robinhood Chain **4663**.
 
@@ -38,6 +38,8 @@ No fee on sends, batch airdrops (`airdropShares`), or list/cancel escrow (v0.11 
 | Buy/sell Pro (V4) | Yes — prepare-buy/sell → TX-VALIDATION → submit chain 4663 |
 | Claim swap fees | No — POST /api/agent/claim or claim-for-recipient |
 | Holder NFT marketplace / airdrop | **No** — token page only (`HOLDER-NFTS.md`) |
+| Community Launch create / status / refund | No JWT — public API (`COMMUNITY-LAUNCH.md`) |
+| Community Launch deposit | Yes — prepare-deposit `nextStep` → native ETH submit → confirm |
 
 **Chain 4663 required** — abort if Bankr wallet does not support Robinhood Chain (`CHAIN-4663.md`).
 
@@ -50,6 +52,7 @@ No fee on sends, batch airdrops (`airdropShares`), or list/cancel escrow (v0.11 
 | `references/AUTH-BOUNDARY.md` | Deploy/claim auth + replay |
 | `references/CHAIN-4663.md` | Mandatory chain support check |
 | `references/HOLDER-NFTS.md` | Shares, fees — agent restrictions |
+| `references/COMMUNITY-LAUNCH.md` | Petition create / back / refund / cancel |
 | `references/CLAIM-BANKR.md` | Claim without Bankr submit |
 | `references/TX-VALIDATION.md` | Selector allowlist before submit |
 | `references/BANKR-SUBMIT.md` | No scanner bypass |
@@ -68,4 +71,5 @@ PR this folder to [BankrBot/skills](https://github.com/BankrBot/skills) → `hoo
 
 - [hood.markets/sdk.md](https://hood.markets/sdk.md) — contracts + SDK + capabilities
 - [hood.markets/agent.md](https://hood.markets/agent.md) — agent API summary
+- [hood.markets/docs#community-launch](https://hood.markets/docs#community-launch) — Community Launch API
 - [docs/HOODMARKETS_V3.md](https://github.com/anondevv69/hoodmarkets/blob/main/docs/HOODMARKETS_V3.md) — full V3 reference

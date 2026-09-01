@@ -2,27 +2,45 @@
 
 hood.markets **server-broadcasts** fee claims (launcher wallet pays gas). Same pattern as **deploy** — not buy/sell.
 
-## Endpoints
+## Default — almost always use this
+
+When the user says **claim fees for $TICKER** or **claim fees for 0x…** (with or without "my", "help", etc.):
 
 | Who asks | Endpoint | Auth | Bankr submit? |
 |----------|----------|------|---------------|
-| Anyone helping (e.g. claim for EA's token) | `POST /api/agent/claim-for-recipient` | None | **NO** |
-| Fee recipient claiming own token | `POST /api/agent/claim` | Haiku JWT or X wallet | **NO** |
+| **Anyone** — no deploy, no NFTs required | `POST /api/agent/claim-for-recipient` | None | **NO** |
 
-## Pre-call verification (claim-for-recipient)
+```json
+{ "tokenSymbol": "TEST" }
+```
 
-This endpoint is **permissionless** — any caller can trigger an on-chain claim. Funds go to the **catalog fee recipient**, not the caller. Before calling:
+```json
+{ "tokenAddress": "0x426bB0A71fB3C49D893cA9896B0b45347AA8a004" }
+```
 
-1. **`GET /api/agent/token-info?token=0x…`** — confirm token exists in hood.markets catalog
-2. Read `feeRecipientAddress`, `tokenName`, `tokenSymbol`, `launchType` — confirm they match user intent
-3. Explain to user: fees will be sent to **catalog fee recipient** (show address), not the caller's wallet
-4. Only call when user asked to claim/pull trading fees for that token
+Send **either** field. Ticker lookup uses the **newest** hood.markets catalog match (same as `token-info`). If both are sent, they must match.
 
-**Do not** call for random addresses, non-catalog tokens, or when user intent is buy/sell/deploy.
+**Do not require** the caller to be fee recipient, deployer, or share holder. This matches the hood.markets website.
+
+## Rare — fee recipient claims via authenticated endpoint
+
+| Who asks | Endpoint | Auth | Bankr submit? |
+|----------|----------|------|---------------|
+| Fee recipient says **my** fees | `POST /api/agent/claim` | Haiku JWT or X wallet = fee recipient | **NO** |
+
+Only use when the user explicitly claims **their own** token **and** the linked wallet is the catalog fee recipient. If unsure, use **`claim-for-recipient`**.
+
+## Pre-call verification (optional but recommended)
+
+1. **`GET /api/agent/token-info?symbol=TEST`** or **`?token=0x…`** — confirm catalog membership
+2. Read `feeRecipientAddress`, `tokenName`, `tokenSymbol` — mention in reply that fees go there / to share holders
+3. Only call when user asked to claim/pull trading fees for that token
+
+**Do not** call for random non-catalog addresses, buy/sell/deploy intents, or batch unrelated tokens.
 
 ## Abuse / rate limits
 
-- Server only claims for tokens in the hood.markets deployment catalog (`tokenAddress` must match a known launch)
+- Server only claims for tokens in the hood.markets deployment catalog
 - On-chain claim is **idempotent** when no fees accrued (API returns 400 with friendly error)
 - Infrastructure may apply IP/request rate limits — if **429**, wait and retry once; do not spam
 - Agents must not batch-claim unrelated tokens without per-token user intent

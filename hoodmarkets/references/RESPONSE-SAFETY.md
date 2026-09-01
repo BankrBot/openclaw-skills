@@ -8,7 +8,7 @@ These fields are **server-generated outcome copy** with a fixed schema — safe 
 
 | Field | When |
 |-------|------|
-| `replyHint` | Claim success (`ok: true`) |
+| `replyHint` | Claim success (`ok: true`); token discussion post success |
 | `deployReplyHint` | Deploy success |
 | `confirmReplyHint` | Deploy confirm (before user says yes) |
 | `blocks[].replyHint` | Preflight / prepare-deploy **409** blockers |
