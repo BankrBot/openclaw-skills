@@ -2,6 +2,37 @@
 
 Every **simple** (`launchMode: "simple"`) token gets an embedded **1,000-share** ERC-1155 vault (10% of token supply).
 
+## What shares represent
+
+| Piece | Meaning |
+|-------|---------|
+| **1,000 ERC-1155 shares** | Rights to **10% of supply** in the fraction vault + **pro-rata rights to 95%** of Uniswap swap fees (after 5% platform cut in locker) |
+| **Locked Uniswap V3 LP** | Other **90%** of supply — fees accrue here; shares are how holders participate in the fee stream |
+| **Per share** | `1/1000` vault tokens via `redeem` + `1/1000` of each post-platform fee payout |
+| **At launch** | All shares → **fee recipient**. Community Launch → backers get shares pro-rata to ETH raised |
+
+Shares are **not** LP tokens. Users cannot “fund launch LP” on hood.markets.
+
+## What you can do (token page / on-chain)
+
+| Action | Function | Platform fee |
+|--------|----------|--------------|
+| Send shares | `safeTransferFrom` | None (v0.11+) |
+| Batch airdrop | `airdropShares` | None (v0.11+) |
+| List / buy / cancel | `listShares` / `buyShares` / `cancelListing` | **5%** on `buyShares` sale price only |
+| Redeem vault | `redeem` | Burn shares → underlying tokens |
+| Buyer rewards | `fundBuyerRewardPool` / `cancelBuyerRewardPool` | Fee recipient only; post-launch |
+| Claim swap fees | `claimTradingFees` | 5%/95% split in locker first |
+
+## How claiming works
+
+1. Uniswap swaps accrue fees in the locked LP.
+2. Anyone calls **`claimTradingFees()`** on the fraction contract (`factory.fractionCollectionForToken(token)`).
+3. Locker: **5%** → platform, **95%** → fraction contract.
+4. Fraction pays **all holders pro-rata** in one tx.
+
+Agents: `POST /api/agent/claim` or `POST /api/agent/claim-for-recipient` only. Legacy v0.6: `factory.claimRewards(token)` (fee wallet only).
+
 ## Platform fees — only two
 
 | Fee | Split |
@@ -66,11 +97,13 @@ Holder NFT / share actions are **on-chain on the hood.markets token page only**.
 | Claim trading fees | `claimTradingFees()` via API | **Yes** — `POST /api/agent/claim` or `claim-for-recipient` only |
 | Batch airdrop | `airdropShares` | **No** — token page + user wallet |
 | List / buy shares | `listShares`, `buyShares`, `cancelListing` | **No** |
-| Buyer rewards | `fundBuyerRewardPool`, `cancelBuyerRewardPool` | **No** |
+| Buyer rewards | `fundBuyerRewardPool`, `cancelBuyerRewardPool` | **Yes** — `POST /api/agent/prepare-fund-buyer-rewards` / `prepare-cancel-buyer-rewards` then Bankr `/wallet/submit` (fee recipient wallet only) |
 | Transfer shares | ERC-1155 `safeTransferFrom` | **No** |
 
 **Do not** call `prepare-buy`/`prepare-sell`, Bankr `/wallet/submit`, or invent calldata for these flows.
 
-If a user asks to airdrop shares, list shares, or fund buyer rewards → direct them to **https://hood.markets/?token=0x…** and their connected wallet. No agent API exists for these actions today.
+If a user asks to airdrop shares or list shares → direct them to **https://hood.markets/?token=0x…** and their connected wallet.
+
+**Buyer rewards (fund/cancel pool):** use `POST /api/agent/prepare-fund-buyer-rewards` with `wallet`, `tokenAddress` (or `symbol`), and `shareAmount` (e.g. `999`). Submit the returned tx via Bankr `/wallet/submit`. Only the **fee recipient** wallet may sign. After funding, hood.markets issues shares to unique pool buyers automatically.
 
 See `references/PROMPT-INJECTION.md`.

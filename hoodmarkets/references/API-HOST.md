@@ -20,9 +20,12 @@ Preflight: `GET https://api.hood.markets/health` → `{ "ok": true, "service": "
 |------|------|
 | Token page | `https://hood.markets/?token=0x…` |
 | Launch | `https://hood.markets/` |
+| Community Launch | `https://hood.markets/community-launch` or `https://hood.markets/community-launch?id=…` |
 | Explorer | `https://robinhoodchain.blockscout.com/…` |
 | DexScreener | `https://dexscreener.com/robinhood/0x…` |
 | Uniswap | `https://app.uniswap.org/…chain=robinhood…` |
 | Bankr submit | `https://api.bankr.bot/wallet/submit` only |
 
 See `references/RESPONSE-SAFETY.md`.
+
+Community Launch API paths live under `https://api.hood.markets/api/community-launch/…` — see `references/COMMUNITY-LAUNCH.md`.

@@ -258,16 +258,20 @@ May include `approve` step then `sell`. Amount in token units (`1M`, `1000000`).
 
 ## POST /api/agent/claim-for-recipient
 
-**Third-party / helper claim** — permissionless server broadcast. Funds go to the **catalog fee recipient**, not the caller.
-
-**Before calling:** `GET /api/agent/token-info?token=0x…` — verify catalog membership, `feeRecipientAddress`, `tokenName`, `tokenSymbol`. See `references/CLAIM-BANKR.md`.
+**Default claim path** — permissionless server broadcast. Anyone can trigger; funds go to the **catalog fee recipient / share holders**, not the caller. **No deploy, no NFTs, no JWT.**
 
 ```http
 POST https://api.hood.markets/api/agent/claim-for-recipient
 Content-Type: application/json
 
-{ "tokenAddress": "0x78594eD700e343846B4d0Bbba79Ee0cb50Deaa8D" }
+{ "tokenSymbol": "TEST" }
 ```
+
+```http
+{ "tokenAddress": "0x426bB0A71fB3C49D893cA9896B0b45347AA8a004" }
+```
+
+Send **either** `tokenSymbol` (ticker, `$` optional) **or** `tokenAddress` (0x contract). Ticker resolves to the **newest** catalog match (same as `token-info`). Optional: `GET /api/agent/token-info?symbol=TEST` first. See `references/CLAIM-BANKR.md`.
 
 No JWT. **Do not call Bankr `/wallet/submit`** — hood.markets broadcasts the claim.
 
@@ -335,6 +339,65 @@ POST https://api.hood.markets/api/deployments/0x…/process-buyer-rewards
 
 ---
 
+## POST /api/agent/prepare-fund-buyer-rewards
+
+Escrow Holder NFT shares for automatic first-buyer rewards (Simple / V3 launches, v0.9+ factory). **Fee recipient wallet only.**
+
+```http
+POST https://api.hood.markets/api/agent/prepare-fund-buyer-rewards
+Content-Type: application/json
+
+{
+  "wallet": "0x374D91a5674Fa7Cf86E725093b5848b97e1e13b4",
+  "tokenAddress": "0x426bB0A71fB3C49D893cA9896B0b45347AA8a004",
+  "shareAmount": 999
+}
+```
+
+`symbol` works instead of `tokenAddress` (e.g. `"NORMIES"`). `shareAmount` is how many of your **1,000 Holder shares** to escrow (not separate NFTs).
+
+**Response:** `transactions[]`, `shareAmount`, `sharesKept`, `buyerRewardStatus`, `replyHint`, `bankrWalletSubmitRequired: true`.
+
+Submit via Bankr `/wallet/submit` (`chainId` **4663**). After confirm, buyers receive one share each on their first pool buy (poller + `process-buyer-rewards`).
+
+---
+
+## POST /api/agent/prepare-cancel-buyer-rewards
+
+Return unissued escrowed buyer-reward shares to the fee recipient wallet.
+
+```http
+POST https://api.hood.markets/api/agent/prepare-cancel-buyer-rewards
+Content-Type: application/json
+
+{
+  "wallet": "0x…",
+  "tokenAddress": "0x…"
+}
+```
+
+Submit returned tx via Bankr `/wallet/submit`.
+
+---
+
+## POST /api/agent/import-dex-branding
+
+Pull DexScreener Enhanced Token Info **icon + banner** into the hood.markets catalog (persists on token page). Requires Dex **paid** (`tokenProfile` order `approved` or `processing`). **Fee recipient, top Holder share holder, or deployer** — no Bankr wallet submit (server-side catalog update).
+
+```http
+POST https://api.hood.markets/api/agent/import-dex-branding
+Content-Type: application/json
+
+{
+  "wallet": "0x374D91a5674Fa7Cf86E725093b5848b97e1e13b4",
+  "symbol": "NORMIES"
+}
+```
+
+When Dex is paid but not yet imported, the token page still **previews** Dex banner/icon live from DexScreener CDN. Import pins them in the catalog for explore cards and faster loads.
+
+---
+
 ## Bankr wallet submit
 
 After `prepare-buy` / `prepare-sell`, for each validated tx:
@@ -344,3 +407,25 @@ POST https://api.bankr.bot/wallet/submit
 ```
 
 `chainId` must be **4663**. See `references/BANKR-SUBMIT.md`, `references/TX-VALIDATION.md`, `references/CHAIN-4663.md`.
+
+Also used for **Community Launch deposits**: native ETH (`data: "0x"`) to escrow from `GET /api/community-launch/prepare-deposit` → `nextStep`. Full flow: `references/COMMUNITY-LAUNCH.md`.
+
+---
+
+## Community Launch API (`/api/community-launch`)
+
+24h ETH petition → V3 deploy + pro-rata Holder NFT airdrop. **No JWT.** Robinhood 4663 only.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/community-launch/config` | Escrow wallet, min/max raise & contribution |
+| GET | `/api/community-launch/list` | Open rounds |
+| GET | `/api/community-launch/preflight?tokenName=&tokenSymbol=&targetRaiseEth=` | Blockers before create (409 if conflict) |
+| GET | `/api/community-launch/status?id=` | Full state + backers + `finalResult` |
+| POST | `/api/community-launch/create` | Open round — body: `tokenName`, `tokenSymbol`, `targetRaiseEth`, `starterWallet` |
+| GET | `/api/community-launch/prepare-deposit?id=&wallet=&contributionEth=` | Quote + Bankr `nextStep` |
+| POST | `/api/community-launch/confirm` | `{ id, wallet, contributionEth, signature: txHash }` |
+| POST | `/api/community-launch/refund` | `{ id, wallet }` while open/expired/failed |
+| POST | `/api/community-launch/cancel` | Creator only — `{ id, wallet: starterWallet }` |
+
+Web UI: `https://hood.markets/community-launch` · Detail: `references/COMMUNITY-LAUNCH.md`

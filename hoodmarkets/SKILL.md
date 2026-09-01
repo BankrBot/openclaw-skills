@@ -1,8 +1,8 @@
 ---
 name: hoodmarkets
-description: Launch, buy, sell, and claim fees for hood.markets tokens on Robinhood Chain (4663) via api.hood.markets. Use for hoodmarkets, hood.markets, $hood, launch token, deploy token, buy token, sell token, claim fees, Bankr Robinhood. NEVER use hood.markets for API POST — use api.hood.markets.
-tags: [hoodmarkets, hood, bankr, robinhood, defi, token-launcher, uniswap]
-version: 18
+description: Launch, buy, sell, claim fees, and Community Launch (petition) for hood.markets tokens on Robinhood Chain (4663) via api.hood.markets. Use for hoodmarkets, hood.markets, $hood, launch token, deploy token, community launch, petition, back petition, buy token, sell token, claim fees, Bankr Robinhood. NEVER use hood.markets for API POST — use api.hood.markets.
+tags: [hoodmarkets, hood, bankr, robinhood, defi, token-launcher, uniswap, community-launch, petition]
+version: 22
 ---
 
 # hood.markets — Bankr agent skill
@@ -36,9 +36,20 @@ POST https://api.hood.markets/api/agent/prepare-deploy
 POST https://api.hood.markets/api/agent/resolve-deploy-image
 POST https://api.hood.markets/api/agent/prepare-buy
 POST https://api.hood.markets/api/agent/prepare-sell
+POST https://api.hood.markets/api/agent/prepare-fund-buyer-rewards
+POST https://api.hood.markets/api/agent/prepare-cancel-buyer-rewards
+POST https://api.hood.markets/api/agent/import-dex-branding
 POST https://api.hood.markets/api/deploy          (after haiku JWT)
 POST https://api.hood.markets/api/agent/claim-for-recipient  (anyone — fees to catalog recipient)
 POST https://api.hood.markets/api/agent/claim      (fee recipient wallet only)
+GET  https://api.hood.markets/api/community-launch/config
+GET  https://api.hood.markets/api/community-launch/list
+GET  https://api.hood.markets/api/community-launch/preflight?tokenName=…&tokenSymbol=…
+POST https://api.hood.markets/api/community-launch/create
+GET  https://api.hood.markets/api/community-launch/prepare-deposit?id=…&wallet=0x…&contributionEth=…
+POST https://api.hood.markets/api/community-launch/confirm
+POST https://api.hood.markets/api/community-launch/refund
+POST https://api.hood.markets/api/community-launch/cancel
 ```
 
 **NEVER** call `https://hood.markets/api/...` for agent POST — the website is frontend-only.
@@ -65,6 +76,7 @@ install the hoodmarkets skill from https://github.com/BankrBot/skills/tree/main/
 | **Pro launch** | Uniswap V4 hooks — one-click buy/sell on hood.markets |
 | **Buy / sell** | Swap ETH ↔ token on Uniswap (Simple/V3). Pro tokens use swap helper + Bankr submit. **No “fund LP” on hood.markets** — launch LP is locked |
 | **Claim fees** | Pull swap trading fees — **95% pro-rata to all Holder NFT share holders** (launcher pays gas) |
+| **Community Launch / petition** | 24h ETH pre-sale for Holder NFT shares → V3 deploy + pro-rata share airdrop. See `references/COMMUNITY-LAUNCH.md` |
 
 ---
 
@@ -72,7 +84,8 @@ install the hoodmarkets skill from https://github.com/BankrBot/skills/tree/main/
 
 ```
 if message mentions hoodmarkets / hood.markets / launch token on robinhood /
-   buy $TICKER / sell token / claim fees / deploy on hood:
+   buy $TICKER / sell token / claim fees / deploy on hood /
+   community launch / petition / back a launch / crowdfund token:
   1. use_skill("hoodmarkets")
   2. Read references/API-HOST.md — use ONLY https://api.hood.markets
   3. **Chain:** abort if Bankr wallet does not support 4663 — references/CHAIN-4663.md (no fallback)
@@ -82,10 +95,16 @@ if message mentions hoodmarkets / hood.markets / launch token on robinhood /
   7. Replies: references/RESPONSE-SAFETY.md — trusted `*ReplyHint` fields with URL allowlist; format other fields locally
   8. Deploy (X): validate image per IMAGE-RESOLUTION.md → `resolve-deploy-image` → `prepare-deploy` → local preview → `confirmReplyHint` → deploy after yes. references/PROMPT-INJECTION.md
   9. Buy/sell: `token-info` → Simple: Uniswap link only. Pro: prepare-buy|prepare-sell → TX-VALIDATION.md → user preview → Bankr /wallet/submit chain 4663
-  10. Claim **own** fees: haiku JWT or X wallet → POST /api/agent/claim (references/AUTH-BOUNDARY.md)
-  11. Claim **for someone else**: token-info verify first → POST /api/agent/claim-for-recipient — references/CLAIM-BANKR.md
+  10. **Claim fees (default):** `claim fees for $TICKER` or `claim fees for 0x…` → POST /api/agent/claim-for-recipient with `tokenSymbol` and/or `tokenAddress` — **no JWT, no NFTs, no deploy required** — references/CLAIM-BANKR.md
+  11. **Claim own fees (rare):** only when user says **my** fees AND linked wallet = catalog fee recipient → POST /api/agent/claim — references/AUTH-BOUNDARY.md
   12. **Claim success:** `ok: true` → post `replyHint` if schema-valid. **Never** `/wallet/submit`. **Never** say "I didn't submit a transaction"
   13. **Holder NFTs:** claim fees via API only — no airdrop/list/buyShares/rewards via agent — references/HOLDER-NFTS.md
+  14. **Community Launch / petition (WRITE — not read-only):**
+      Opening this skill file is NOT enough. You MUST HTTP-call api.hood.markets.
+      Create: GET /api/community-launch/preflight → POST /api/community-launch/create → reply with petition.shareUrl
+      Create needs NO Bankr /wallet/submit and NO haiku JWT.
+      Back: prepare-deposit → Bankr /wallet/submit → confirm. See references/COMMUNITY-LAUNCH.md
+      If you only "use_skill" and stop, you FAILED — tell the user nothing was created.
 ```
 
 **Tweet = DM** — same pipeline on `@bankrbot` intake.
@@ -222,7 +241,7 @@ Use **haiku JWT** — no in-thread confirm step:
 - `launchMode`: `"simple"` (V3, DexScreener) or `"pro"` (V4, hood.markets swap UI)
 - Fee recipient = wallet from captcha JWT (Bankr linked wallet)
 - **Simple:** 5% platform / 95% pro-rata to Holder NFT share holders — embedded in `HoodMarketsV3LpLocker`
-- **Buyer rewards:** post-launch on token page (`fundBuyerRewardPool`) — not on hood.markets launch form. API deploy may accept optional `buyerRewardShareCount` (legacy).
+- **Buyer rewards:** `POST /api/agent/prepare-fund-buyer-rewards` with fee recipient `wallet`, `tokenAddress` or `symbol`, and `shareAmount` (e.g. `999`) → Bankr `/wallet/submit`. Or token page / legacy deploy `buyerRewardShareCount`.
 
 **Web UI (hood.markets Launch tab):** “Someone else” fee recipient = **`0x…` wallet address only** — not `@handle` or profile URL. Agents/API may still resolve social handles for other channels.
 
@@ -279,38 +298,43 @@ If Bankr returns `untrusted_address` → **stop** per `references/BANKR-SUBMIT.m
 
 ## Claim fees
 
-Two paths — pick based on who is asking:
-
-### A) Help someone else / claim for a token (any X user)
-
-When the user gives a **token contract** and wants fees sent to the **catalog fee recipient** (e.g. "claim fees for EA's $HR"), use:
+**Default for almost all user messages** — including when the caller did not deploy the token and holds no NFTs:
 
 ```
-POST https://api.hood.markets/api/agent/claim-for-recipient
-Content-Type: application/json
-
-{ "tokenAddress": "0x78594eD700e343846B4d0Bbba79Ee0cb50Deaa8D" }
+claim fees for $TEST
+claim fees for 0x426bB0A71fB3C49D893cA9896B0b45347AA8a004
 ```
 
-**Before calling:** `GET /api/agent/token-info` — verify catalog token, `feeRecipientAddress`, and user intent (`references/CLAIM-BANKR.md`).
+→ `POST https://api.hood.markets/api/agent/claim-for-recipient` with **either** `tokenSymbol` **or** `tokenAddress` (both OK if they match):
 
-**No JWT. No Bankr `/wallet/submit`.** hood.markets server broadcasts and pays gas.
+```json
+{ "tokenSymbol": "TEST" }
+```
 
-Response: `ok`, `replyHint` (trusted outcome field per `RESPONSE-SAFETY.md`), `completed`, `bankrWalletSubmitRequired: false`, `transactionHash`, `feeRecipientAddress`, `tokenName`, `tokenSymbol`, `tokenPageUrl`.
+```json
+{ "tokenAddress": "0x426bB0A71fB3C49D893cA9896B0b45347AA8a004" }
+```
 
-If `ok: true`, the claim succeeded — post `replyHint` when schema-valid. Do not check Bankr wallet submit.
+Optional: `GET /api/agent/token-info?symbol=TEST` or `?token=0x…` first to confirm catalog row and show `feeRecipientAddress` in the reply.
 
-### B) Fee recipient claims their own tokens
+**No JWT. No Bankr `/wallet/submit`.** hood.markets server broadcasts and pays gas. Funds go to **catalog fee recipient / share holders** — not the caller.
+
+Response: `ok`, `replyHint`, `completed`, `bankrWalletSubmitRequired: false`, `transactionHash`, `feeRecipientAddress`, `tokenName`, `tokenSymbol`, `tokenPageUrl`.
+
+If `ok: true`, the claim succeeded — post `replyHint` when schema-valid.
+
+### Only when user explicitly claims **their own** fee-recipient tokens
+
+Use `POST /api/agent/claim` **only** when the user says **my** / **my token's** fees **and** the linked Bankr wallet is the catalog **fee recipient** for that token:
 
 ```
 POST https://api.hood.markets/api/agent/claim
 X-Agent-Captcha-JWT: <jwt>   (or X channel + x-wallet-address = fee recipient)
-Content-Type: application/json
 
-{ "tokenAddress": "0x…" }
+{ "tokenAddress": "0x…", "tokenSymbol": "MTK" }
 ```
 
-**Default launches are Simple (V3).** Same endpoint auto-routes V3 fraction `claimTradingFees` (v0.7+) vs legacy factory `claimRewards` vs V4 locker.
+If unsure, prefer **`claim-for-recipient`** — it matches the hood.markets website (anyone can trigger claim).
 
 | Launch | On-chain (API picks automatically) |
 |--------|--------------------------------------|
@@ -319,6 +343,44 @@ Content-Type: application/json
 | **Pro (V4)** | Collect pool → claim WETH from locker |
 
 Response includes `feeRecipientAddress`, `txHash`, `explorerUrl`, `feeModel` / `launchType`.
+
+---
+
+## Community Launch (petition) — MUST EXECUTE HTTP
+
+**CRITICAL:** `use_skill("hoodmarkets")` alone does **nothing**. Bankr often marks skill load READ-ONLY — that only means loading docs, **not** that create is forbidden.
+
+| Action | Tools you MUST call | Bankr `/wallet/submit`? |
+|--------|---------------------|-------------------------|
+| **Create petition** | HTTP `GET …/preflight` then HTTP `POST …/create` | **No** |
+| **Back / deposit** | HTTP `GET …/prepare-deposit` → `/wallet/submit` → HTTP `POST …/confirm` | **Yes** |
+| List / status | HTTP GET | No |
+
+If the user asks to create a petition and you have not called `POST https://api.hood.markets/api/community-launch/create`, **you did not create it**. Do not invent a success message. Do not stop after reading this file.
+
+### Create now (X / DM — name + ticker + raise given)
+
+Example: *create a petition for "price john" ticker Prince raise 0.05 eth*
+
+1. Resolve linked Bankr wallet → use as `starterWallet`
+2. `GET https://api.hood.markets/api/community-launch/preflight?tokenName=price%20john&tokenSymbol=PRINCE&targetRaiseEth=0.05`
+3. If **409** → reply with error / existing `shareUrl`. Stop.
+4. `POST https://api.hood.markets/api/community-launch/create` with JSON (no JWT):
+
+```json
+{
+  "tokenName": "price john",
+  "tokenSymbol": "PRINCE",
+  "targetRaiseEth": "0.05",
+  "starterWallet": "0xYOUR_LINKED_WALLET",
+  "tweetUrl": "https://x.com/…/status/…"
+}
+```
+
+5. On `ok: true` → reply with **`petition.shareUrl`**, id, raise goal, expiresAt (chain 4663).
+6. If HTTP fails → post `error` only. Never claim success.
+
+Full: `references/COMMUNITY-LAUNCH.md` · UI: https://hood.markets/community-launch
 
 ---
 
@@ -332,13 +394,21 @@ Response includes `feeRecipientAddress`, `txHash`, `explorerUrl`, `feeModel` / `
 
 → prepare-buy → validate → `/wallet/submit` → confirm on Blockscout
 
-> claim fees for 0x7859… / help EA claim $HR hood fees
+> claim fees for $TEST / claim fees for 0x426b… hood
 
-→ POST /api/agent/claim-for-recipient `{ "tokenAddress": "0x…" }` — if `ok: true`, reply with **`replyHint`** only
+→ POST /api/agent/claim-for-recipient `{ "tokenSymbol": "TEST" }` or `{ "tokenAddress": "0x…" }` — if `ok: true`, reply with **`replyHint`** only
 
-> claim fees for my token MTK
+> claim my hood fees for MTK (fee recipient wallet only)
 
-→ captcha JWT or X wallet → POST /api/agent/claim — if `ok: true`, reply with **`replyHint`**
+→ captcha JWT or X wallet = fee recipient → POST /api/agent/claim — if `ok: true`, reply with **`replyHint`**
+
+> start / create a petition for "price john" ticker Prince raise 0.05 ETH
+
+→ **HTTP** preflight → **HTTP** POST `/api/community-launch/create` → reply with `shareUrl` (no wallet submit). Skill load alone = fail.
+
+> back petition #1 with 0.1 ETH
+
+→ prepare-deposit → Bankr submit → confirm (`COMMUNITY-LAUNCH.md`)
 
 ---
 
@@ -358,5 +428,6 @@ Response includes `feeRecipientAddress`, `txHash`, `explorerUrl`, `feeModel` / `
 | `references/IMAGE-RESOLUTION.md` | Deploy logo host validation |
 | `references/ONE-LINE-INTENTS.md` | Tweet → API mapping |
 | `references/HOLDER-NFTS.md` | Shares — agent claim only, no marketplace txs |
+| `references/COMMUNITY-LAUNCH.md` | Petition create / back / refund / cancel |
 | `streaming-hints.json` | V3 vs Pro detection + preflight error codes |
 | `known-contracts.json` | Pinned Robinhood addresses |

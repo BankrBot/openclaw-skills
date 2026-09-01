@@ -64,12 +64,13 @@ Server resolves token by `tokenAddress` and/or `tokenSymbol` / `tokenName`, veri
 
 **No replay nonce on claim** — on-chain claim is idempotent when no fees accrued (returns 400). Repeated successful claims only move newly accrued fees.
 
-### `POST /api/agent/claim-for-recipient` (permissionless helper)
+### `POST /api/agent/claim-for-recipient` (default — permissionless)
 
-- **No JWT, no caller wallet required**
-- Caller supplies `tokenAddress` only
-- Server looks up hood.markets catalog row; on-chain claim sends WETH to **catalog fee recipient** (not caller)
-- See `references/CLAIM-BANKR.md` for pre-call verification and abuse notes
+- **No JWT, no caller wallet required** — caller need not be deployer, fee recipient, or share holder
+- Caller supplies **`tokenAddress` (0x…)** and/or **`tokenSymbol` (ticker, e.g. $TEST)** — same as hood.markets website
+- Server looks up hood.markets catalog row; on-chain claim pays **catalog fee recipient / share holders** (not caller)
+- **Prefer this endpoint** for `claim fees for $TICKER` unless user explicitly says **my** fees and wallet = fee recipient
+- See `references/CLAIM-BANKR.md` for optional pre-call verification and abuse notes
 
 ---
 
@@ -92,5 +93,6 @@ See `references/PROMPT-INJECTION.md`.
 1. Confirm Bankr supports **chain 4663** before any swap
 2. Run `preflight-deploy` before captcha or X confirm
 3. For deploy: captcha JWT **or** X yes — never both skipped
-4. For own claim: JWT or X wallet = fee recipient
-5. For helper claim: verify token in catalog first (`token-info`) — see `CLAIM-BANKR.md`
+4. **Claim fees (default):** `claim-for-recipient` with `tokenSymbol` and/or `tokenAddress` — no auth
+5. **Claim own fees (rare):** JWT or X wallet = fee recipient → `POST /api/agent/claim`
+6. Optional: `token-info` before claim to show fee recipient in reply — see `CLAIM-BANKR.md`
