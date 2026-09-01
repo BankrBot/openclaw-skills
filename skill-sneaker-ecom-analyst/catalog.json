@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "skill-sneaker-ecom-analyst",
+  "provider": "ReVaultDrops",
+  "providerUrl": "https://github.com/ReVaultDrops",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "skill-sneaker-ecom-analyst",
+    "command": "install the skill-sneaker-ecom-analyst skill from https://github.com/BankrBot/skills/tree/main/skill-sneaker-ecom-analyst"
+  }
+}
