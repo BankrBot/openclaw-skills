@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "drop-day-war-room",
+  "provider": "ReVaultDrops",
+  "providerUrl": "https://github.com/ReVaultDrops",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "drop-day-war-room",
+    "command": "install the drop-day-war-room skill from https://github.com/BankrBot/skills/tree/main/drop-day-war-room"
+  }
+}
