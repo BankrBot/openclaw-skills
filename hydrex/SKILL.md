@@ -1,6 +1,6 @@
 ---
 name: hydrex
-description: Interact with Hydrex liquidity pools on Base. Use when the user wants to lock HYDX for voting power, check voting power for gauge voting, vote on liquidity pool strategies, view pool information, check voting weights, participate in Hydrex governance, deposit single-sided liquidity into auto-managed vaults to earn Hydrex yields, claim oHYDX rewards from incentive campaigns, or exercise oHYDX into veHYDX. Uses Bankr for transaction execution.
+description: Interact with Hydrex on Base — liquidity pools, governance, and synths. Use when the user wants to lock HYDX for voting power, check voting power for gauge voting, vote on liquidity pool strategies, view pool information, check voting weights, participate in Hydrex governance, deposit single-sided liquidity into auto-managed vaults to earn Hydrex yields, claim oHYDX rewards from incentive campaigns, exercise oHYDX into veHYDX, or interact with Hydrex Synths (bridge USDC ↔ Solana assets via the multichain router, look up synth addresses from the validator, or read on-chain synth balances on Base). Synth intent input is restricted to USDC or an existing synth. Uses Bankr for transaction execution.
 metadata:
   {
     "clawdbot":
@@ -64,6 +64,32 @@ Claim my Hydrex oHYDX rewards
 Convert my oHYDX to veHYDX on Hydrex
 ```
 
+### Synths
+
+```
+Show me all Hydrex synths
+```
+
+```
+What's the Base address of the WIF synth on Hydrex?
+```
+
+```
+Check my Hydrex synth balances on Base
+```
+
+```
+Quote 100 USDC into the WIF synth on Hydrex
+```
+
+```
+Buy 100 USDC of WIF on Hydrex
+```
+
+```
+Sell my 25 WIF synth into USDC on Hydrex
+```
+
 ## Core Capabilities
 
 ### Locking HYDX
@@ -95,6 +121,10 @@ Convert my oHYDX to veHYDX on Hydrex
 - Withdraw with up to 70/30 split (deposit token / counter token)
 - No need to source both sides of a pair
 
+**Checking position value** — fetch the strategy from `https://api.hydrex.fi/strategies?depositTokens=<TOKEN>`, find the matching object by `title` (e.g., `"BNKR/WETH"`), then `balanceOf(userAddress)` on the vault `address`. Value = `(rawBalance / 1e18) × lpPriceUsd`. Full breakdown in [references/single-sided-liquidity.md](references/single-sided-liquidity.md).
+
+**Important**: The deposit token is required to look up a position. If a user asks something open-ended like `"What are my Hydrex deposits?"`, **ask which token to check** (e.g., BNKR, USDC, WETH, HYDX) and encourage them to phrase it as `"check my deposit for [TOKEN]"`.
+
 **Reference**: [references/single-sided-liquidity.md](references/single-sided-liquidity.md)
 
 ### Claiming and Managing Rewards
@@ -105,6 +135,34 @@ Convert my oHYDX to veHYDX on Hydrex
 - Exercising oHYDX requires a discounted ETH payment and produces a rolling veHYDX lock
 
 **Reference**: [references/rewards.md](references/rewards.md)
+
+### Synths (Multichain Router + Validator)
+
+Synths are ERC-20 tokens on Base that wrap Solana SPL tokens via the Hydrex bridge. This skill supports three synth operations only:
+
+1. **Create an intent** — auction-based cross-chain swap between USDC and a Solana asset. **Input must be USDC or an existing synth** — no other inputs are accepted (the `send-app` frontend enforces this in `useSpendOptions.ts`).
+2. **Get a quote** via the multichain router — the same intent endpoint returns both the quote and the ready-to-sign transaction.
+3. **Look up synth addresses and balances** — the validator's `/tokens` endpoint is the source of truth for `(solana mint ↔ base evmAddress)`; balances are read on-chain via plain `balanceOf` on the Base ERC-20.
+
+**Key endpoints:**
+
+| Purpose | URL |
+|---|---|
+| Validator registry | `https://synths-validator-1.onrender.com/tokens` |
+| Deterministic wrapped address | `https://synths-validator-1.onrender.com/relayer/wrapped-address/:solanaTokenAddress` |
+| Buy intent (USDC → Solana asset) | `https://router.api.hydrex.fi/multichain-auction/intent/buy` |
+| Sell intent (Solana asset → USDC) | `https://router.api.hydrex.fi/multichain-auction/intent/sell` |
+| Intent status (poll after submit) | `https://router.api.hydrex.fi/multichain-auction/status?transactionHash=…` |
+
+**USDC on Base:** `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
+**Hydrex Solana chain id:** `501474`
+
+**If the user wants to spend anything other than USDC or a synth**, refuse to build an intent and tell them to swap into USDC first on Base. Do not auto-chain a same-chain swap into an intent.
+
+**References**:
+- [references/synths.md](references/synths.md) — validator `/tokens` registry, address lookup, balance reads
+- [references/synths-intents.md](references/synths-intents.md) — full intent request/response shape, examples, post-submit status polling
+- [references/synths-multichain-router.md](references/synths-multichain-router.md) — quote semantics, decimal-by-direction table, slippage guidance
 
 ## Contracts (Base Mainnet)
 
@@ -117,6 +175,9 @@ Convert my oHYDX to veHYDX on Hydrex
 | Vault Deployer         | `0x7d11De61c219b70428Bb3199F0DD88bA9E76bfEE` |
 | Incentive Distributor  | `0x8604d646df5A15074876fc2825CfeE306473dD45` |
 | oHYDX Token            | `0xA1136031150E50B015b41f1ca6B2e99e49D8cB78` |
+| Hydrex Intent Router   | `0xBa29b52084E1f363D830E5e8c9370046D76eF62A` |
+| Hydrex Bridge          | `0x06F57053638546A0E6cc94A6986bf61F35524278` |
+| Wrapper Factory        | `0x60f912c8b696eab5693058402002b7369e272117` |
 
 ## Pool Information API
 
@@ -328,6 +389,18 @@ Hydrex operates on epochs:
 - "Convert my oHYDX to veHYDX on Hydrex"
 - "Exercise my oHYDX rewards into veHYDX"
 
+### Synths
+
+- "List all Hydrex synths"
+- "Find the Hydrex synth for mint EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm"
+- "What's the Base address for the WIF synth?"
+- "Check my Hydrex synth balances"
+- "How much WIF synth do I hold on Base?"
+- "Quote 100 USDC into WIF on Hydrex"
+- "Quote 25 WIF synth back to USDC on Hydrex"
+- "Buy 100 USDC of WIF on Hydrex"
+- "Sell my 50 WIF synth into USDC on Hydrex"
+
 ## Tips
 
 ### For New Users
@@ -397,6 +470,9 @@ curl -s https://api.hydrex.fi/strategies | jq '[.[] |
 - **[Voting on Pools](references/voting.md)** — Comprehensive voting mechanics and optimization
 - **[Single-Sided Liquidity](references/single-sided-liquidity.md)** — ICHI vault deposits, withdrawals, and position management
 - **[Rewards](references/rewards.md)** — Claiming oHYDX incentives and exercising into veHYDX
+- **[Synths](references/synths.md)** — Validator `/tokens` registry, address lookup, on-chain balance reads
+- **[Synth Intents](references/synths-intents.md)** — Multichain auction intent endpoint, request/response shape, status polling
+- **[Synth Multichain Router](references/synths-multichain-router.md)** — Quote semantics, decimals, slippage, fee fields
 
 ---
 

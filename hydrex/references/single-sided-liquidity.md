@@ -132,34 +132,86 @@ Send transaction to 0x9A0EBEc47c85fD30F1fdc90F57d2b178e84DC8d8 on Base calling f
 
 ### Natural Language
 
+The deposit token is the key input for finding a position — without it, there's no efficient way to look up vaults. Encourage prompts like **"check my deposit for [TOKEN]"** rather than open-ended ones.
+
+**Good prompts (specify the deposit token):**
+
 ```bash
-bankr agent "Show my Hydrex single-sided liquidity positions"
+bankr agent "Check my Hydrex deposit for BNKR"
 bankr agent "What's my BNKR/WETH vault balance on Hydrex?"
-bankr agent "How much is my Hydrex BNKR single-sided position worth?"
+bankr agent "How much is my Hydrex USDC single-sided position worth?"
 ```
 
-### Calculating Underlying Tokens
+**Vague prompts (require a follow-up):**
 
-**Step 1 — Get user LP shares:**
-**Function**: `balanceOf(address)` — standard ERC20, selector `0x70a08231`
-**Contract**: Vault address (from API `address` field)
+If a user asks something like `"What are my Hydrex deposits?"` or `"Show my Hydrex single-sided positions"`, **ask them which deposit token(s) to check** before proceeding. The API requires a `depositTokens` filter — there's no global "list all my positions across every strategy" endpoint without iterating every supported token.
 
-To read directly — encode user address as 32-byte padded hex and call `eth_call` on the vault. Returns `uint256` LP share balance.
+Suggested clarification:
 
-**Step 2 — Get vault totals:**
+> "Which deposit token(s) should I check? For example: BNKR, USDC, WETH, HYDX. You can say 'check my deposit for BNKR' to look up a specific one."
 
-**`totalSupply()`** — selector `0x18160ddd`, no parameters. Returns total LP shares outstanding.
+### Checking Balance and USD Value
 
-**`getTotalAmounts()`** — returns `(uint256 totalToken0, uint256 totalToken1)`. Total underlying tokens in the vault.
+The simplest way to value a position: get your LP share balance on-chain, then multiply by `lpPriceUsd` from the API.
 
-**Step 3 — Calculate user's underlying:**
+**Step 1 — Find the strategy in the API**
+
+Query by deposit token:
 
 ```
-userToken0 = (userShares × totalToken0) / totalSupply
-userToken1 = (userShares × totalToken1) / totalSupply
+GET https://api.hydrex.fi/strategies?depositTokens=0x22aF33FE49fD1Fa80c7149773dDe5890D3c76F3b
 ```
 
-Multiply by `lpPriceUsd / totalSupply` from the API to get USD value.
+The response is an array of strategies for that deposit token. Locate the one you want by `title` (e.g., `"BNKR/WETH"`):
+
+```json
+{
+  "address": "0xed14CC089C687695565079E816fBAd4132BcaccE",
+  "title": "BNKR/WETH",
+  "depositToken": "0x22aF33FE49fD1Fa80c7149773dDe5890D3c76F3b",
+  "lpPriceUsd": 1.2955258547,
+  "totalSupply": 6917.17573045859,
+  "totalSupplyRaw": "6917175730458589475992",
+  "tvlUsd": 8961.38,
+  "childApr": 97.86172988601074,
+  "rawTotal0": "15550864461774049747853445",
+  "rawTotal1": "1082559751422063922",
+  "type": "Single Sided"
+}
+```
+
+**Step 2 — Grab the vault `address`** from that object.
+
+**Step 3 — Query `balanceOf(userAddress)` on the vault**
+
+**Function**: `balanceOf(address)` — selector `0x70a08231`
+**Contract**: Vault `address` from Step 2
+
+Encode the user address as 32-byte padded hex (strip `0x`, left-pad with 24 zeros) and `eth_call` the vault. Returns `uint256` raw LP shares (18 decimals).
+
+**Step 4 — Normalize and value**
+
+```
+userShares = rawBalance / 1e18              # Vault LP tokens are 18 decimals
+positionUsd = userShares × lpPriceUsd
+```
+
+**Example:** If `balanceOf` returns `5000000000000000000000` (raw) on the BNKR/WETH vault:
+- `userShares = 5000` (after dividing by 1e18)
+- `positionUsd = 5000 × 1.2955258547 ≈ $6,477.63`
+
+### Breaking Down Underlying Tokens (Optional)
+
+If you need to know how many of each underlying token your position represents (not just total USD), use the on-chain `getTotalAmounts()` call or the API's `rawTotal0` / `rawTotal1` fields:
+
+```
+userToken0 = (userShares × rawTotal0) / totalSupplyRaw
+userToken1 = (userShares × rawTotal1) / totalSupplyRaw
+```
+
+Where `userShares` is the **raw** LP balance from `balanceOf` (don't normalize first when using `totalSupplyRaw`).
+
+Alternatively, query `getTotalAmounts()` on-chain (selector returns `(uint256 totalToken0, uint256 totalToken1)`) for live totals instead of API-cached values.
 
 ## Function Reference
 
@@ -250,12 +302,24 @@ When a user requests single-sided liquidity operations:
 
 ### View Position Flow
 
+**For total USD value (recommended):**
+
 ```
-1. eth_call balanceOf(userAddress) on vault → userShares
-2. eth_call totalSupply() on vault → totalShares
-3. eth_call getTotalAmounts() on vault → (totalToken0, totalToken1)
-4. userToken0 = (userShares × totalToken0) / totalShares
-   userToken1 = (userShares × totalToken1) / totalShares
+1. GET https://api.hydrex.fi/strategies?depositTokens=<DEPOSIT_TOKEN_ADDRESS>
+2. Find target strategy in the response array by title (e.g., "BNKR/WETH")
+3. Extract vault `address` and `lpPriceUsd` from the matched object
+4. eth_call balanceOf(userAddress) on vault → rawShares
+5. userShares = rawShares / 1e18
+   positionUsd = userShares × lpPriceUsd
+```
+
+**For underlying token breakdown:**
+
+```
+1. Steps 1-4 above to get rawShares, plus pull `totalSupplyRaw`, `rawTotal0`, `rawTotal1` from the API object
+2. userToken0 = (rawShares × rawTotal0) / totalSupplyRaw
+   userToken1 = (rawShares × rawTotal1) / totalSupplyRaw
+   (or eth_call getTotalAmounts() / totalSupply() on the vault for live values)
 ```
 
 ## Tips
