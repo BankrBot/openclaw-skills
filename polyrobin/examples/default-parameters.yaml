@@ -1,0 +1,69 @@
+# PolyRobin default parameters — DECISION PARAMETERS ONLY.
+# This is a read-only reference of the defaults the skill ships with (mirrored in
+# SKILL.md). It is NOT a config file you create or edit: PolyRobin has no local
+# filesystem. Adjust any of these in conversation with @bankrbot instead.
+# Execution runs through BankrBot's existing rails. No private keys are ever involved;
+# signing and custody stay with BankrBot / your own wallet.
+
+# --- Bankroll ---------------------------------------------------------------
+bankroll_source: robinhood-chain   # home chain for funds
+
+# --- Risk: the 7 hard gates -------------------------------------------------
+# Fractions of bankroll unless suffixed _usd.
+risk:
+  daily_loss_limit: 0.05             # gate 1 — HALT if daily drawdown hits this
+  max_per_market: 0.10               # gate 2 — cap on any single market
+  max_per_category: 0.25             # gate 3 — cap per category (crypto/sports/…)
+  conviction_threshold: 65           # gate 4a — min conviction score (0–100)
+  min_edge: 0.04                     # gate 4b — min net EV to recommend a trade
+  confirm_all_material_actions: true # gate 5 — ALWAYS ON, cannot be disabled
+  total_deployed_cap: 0.60           # gate 6 — keep dry powder + hedge buffer
+  min_liquidity_usd: 50000           # gate 7 — order-book depth floor
+  min_volume_usd: 250000             # gate 7 — market volume floor
+  kelly_fraction: 0.25               # fractional Kelly (¼-Kelly default)
+
+# --- HALT / kill-switch tuning ----------------------------------------------
+halt:
+  volatility_band: 0.15              # HALT if price/underlying moves beyond this fast
+  feed_staleness_seconds: 90         # HALT on oracle data older than this
+  max_consecutive_losses: 3          # rolling-24h streak that trips the kill-switch
+
+# --- Venues (discovery vs execution scope) ----------------------------------
+venues:
+  polymarket:
+    discovery: true
+    execution: true                  # live betting via BankrBot
+  robinhood_chain:
+    discovery: true
+    execution: true                  # tokenized stocks / swaps / bridging via BankrBot
+  meridian_predict:
+    discovery: true
+    execution: false                 # analysis-only (no native BankrBot Meridian Predict execution yet)
+    fallback: polymarket             # execute equivalent on Polymarket where it exists
+
+# --- Execution routing & chain targeting ------------------------------------
+# Prevents the "landed on Base instead of Robinhood Chain" failure mode.
+execution:
+  default_chain: robinhood-chain     # everything below routes here by default
+  forbid_silent_fallback: true       # never fall back to another chain without asking
+  bet_execution_chain: polygon       # the ONE exception: Polymarket bets
+  per_action_chain:
+    morpho_lend_borrow: robinhood-chain   # NOT base
+    swap: robinhood-chain                 # NOT base
+    bridge: robinhood-chain               # destination
+    tokenized_stocks: robinhood-chain     # NOT base
+
+# --- Rails PolyRobin can guide (all live in BankrBot) -----------------------
+rails:
+  hyperliquid: hedging               # perp hedges (on confirmation)
+  morpho: financing                  # borrow/lend financing or hedge — on Robinhood Chain
+  bridging:
+    destination: robinhood-chain     # guide bridging funds INTO RH Chain
+    routing: optimal
+
+# --- Audit ------------------------------------------------------------------
+# Every recommendation is emitted as a Rationale Card (structured JSON + a
+# human-readable summary) INLINE in the @bankrbot reply, surfaced in full behind
+# `why`. Nothing is written to a local directory.
+audit:
+  format: both                       # json | human | both — both returned inline

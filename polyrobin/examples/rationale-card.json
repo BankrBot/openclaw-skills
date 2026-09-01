@@ -1,0 +1,98 @@
+{
+  "$comment": "SAMPLE PolyRobin Rationale Card — illustrative output, not a live recommendation. One of these is returned inline (as JSON) in the @bankrbot reply for every recommendation, whether it results in a trade or a stand-down. Nothing is written to a local directory.",
+  "schema_version": "1.0",
+  "card_id": "rc_2026-07-13_ufc-main_0001",
+  "created_at": "2026-07-13T21:42:10Z",
+  "decision": "RECOMMEND_BET",
+  "market": {
+    "question": "Will Fighter A win tonight's main event?",
+    "venue": "polymarket",
+    "chain": "polygon",
+    "outcome": "YES",
+    "resolution_criteria": "Official result declared by the promotion; a win by KO/TKO, submission, or decision resolves YES. A draw or no-contest resolves NO.",
+    "resolution_source": "official promotion result feed",
+    "ambiguity_assessment": {
+      "rating": "low",
+      "notes": "Single authoritative result source, binary outcome, clear draw/no-contest handling. No manipulability concerns."
+    },
+    "close_time": "2026-07-14T05:00:00Z"
+  },
+  "independent_estimate": {
+    "probability_yes": 0.58,
+    "market_price_yes": 0.52,
+    "conviction_score": 68,
+    "conviction_scale": "0-100",
+    "method": "Weighted blend of source signals below; resolution is clean so no ambiguity discount applied. Estimate is formed independently of the market price."
+  },
+  "inputs": [
+    {
+      "source": "historical_matchup_and_form",
+      "signal": "Fighter A: 4-1 last 5, favorable stylistic matchup (wrestling vs. orthodox striker); Fighter B coming off 9-month layoff.",
+      "weight": 0.55,
+      "direction": "supports_YES",
+      "timestamp": "2026-07-13T21:30:00Z"
+    },
+    {
+      "source": "news_sentiment",
+      "signal": "Beat-writer consensus mildly favors A; no reported injury or weight-cut issues for either camp.",
+      "weight": 0.25,
+      "direction": "supports_YES",
+      "timestamp": "2026-07-13T20:55:00Z"
+    },
+    {
+      "source": "market_microstructure",
+      "signal": "Line drifted 0.54 -> 0.52 on modest YES-side volume in the last 2h; no sharp reversal.",
+      "weight": 0.20,
+      "direction": "neutral",
+      "timestamp": "2026-07-13T21:40:00Z"
+    }
+  ],
+  "edge_math": {
+    "probability_yes": 0.58,
+    "market_price_yes": 0.52,
+    "raw_edge_pts": 0.06,
+    "gross_ev_pct": 11.5,
+    "gross_ev_formula": "EV_gross = (p - c) / c = (0.58 - 0.52) / 0.52 = 0.1154",
+    "fees_pct": 0.0,
+    "est_slippage_pct": 0.0,
+    "fees_notes": "Read from the market's live feeSchedule: feesEnabled=false, so taker fee is genuinely 0 here (not assumed). Where feesEnabled=true, taker cost is rate x c x (1 - c) per share and is subtracted below.",
+    "slippage_notes": "$20 order is far smaller than ~$120k book depth, so slippage is negligible (~0).",
+    "net_ev_pct": 11.5,
+    "net_ev_formula": "EV_net = EV_gross - slippage - fees = 11.5 - ~0 - 0 = ~11.5%",
+    "notes": "Net EV clears the +4% gate comfortably; size still kept conservative."
+  },
+  "size_math": {
+    "bankroll_usd": 1000.0,
+    "kelly_formula": "f* = (p - c) / (1 - c) = (0.58 - 0.52) / (1 - 0.52) = 0.125",
+    "full_kelly_fraction_of_bankroll": 0.125,
+    "kelly_fraction_setting": 0.25,
+    "fractional_kelly_fraction_of_bankroll": 0.031,
+    "volatility_adjustment": 0.95,
+    "raw_size_usd": 29.7,
+    "recommended_size_usd": 20.0,
+    "pct_of_bankroll": 0.02,
+    "notes": "1/4-Kelly (0.031 x $1000 = ~$31), volatility-trimmed to ~$29.7, then rounded DOWN to a conservative $20 -- well inside the 10% per-market cap."
+  },
+  "gates": [
+    { "id": 1, "name": "Daily loss limit", "threshold": "5% of bankroll", "status": "PASS", "detail": "Day drawdown 0.0%; no HALT." },
+    { "id": 2, "name": "Max exposure per market", "threshold": "10% of bankroll", "status": "PASS", "detail": "$20 = 2.0% of bankroll." },
+    { "id": 3, "name": "Max exposure per category", "threshold": "25% of bankroll", "status": "PASS", "detail": "Sports category exposure 2.0% after this bet." },
+    { "id": 4, "name": "Conviction + edge threshold", "threshold": "conviction >= 65 AND net EV >= +4%", "status": "PASS", "detail": "Conviction 68 and net EV ~+11.5%; both clear." },
+    { "id": 5, "name": "Confirmation requirement", "threshold": "always on", "status": "PENDING", "detail": "Awaiting explicit user 'yes' before any execution. Cannot be bypassed." },
+    { "id": 6, "name": "Total deployed capital cap", "threshold": "60% of bankroll", "status": "PASS", "detail": "Deployed 12% -> 14% after this bet." },
+    { "id": 7, "name": "Liquidity / exitability floor", "threshold": "$50k depth AND $250k volume", "status": "PASS", "detail": "Depth ~$120k, volume ~$1.4M; exitable." }
+  ],
+  "state": {
+    "halt": false,
+    "pause": false,
+    "kill_switch": false
+  },
+  "recommended_instruction": "Place $20 YES on \"Will Fighter A win tonight's main event?\" on Polymarket, at or better than 0.52, pending user confirmation.",
+  "execution": {
+    "status": "not_executed",
+    "reason": "Awaiting user confirmation (gate 5). No funds have moved.",
+    "confirmed_instruction": null,
+    "fill": null
+  },
+  "disclaimer": "Decision-support only, not financial advice. Prediction markets can lose 100% of staked capital. PolyRobin never custodies funds or keys; execution runs through BankrBot from the user's own wallet on explicit confirmation."
+}

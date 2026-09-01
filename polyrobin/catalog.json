@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "slug": "polyrobin",
+  "provider": "Phantom Capital",
+  "providerUrl": "https://phantomcapital.live",
+  "logo": "logo.png",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "@bankrbot using the polyrobin skill, find crypto markets resolving this week\n\n@bankrbot using the polyrobin skill, should I put $20 on tonight's fight? size it and show the math\n# -> est 0.58 vs price 0.52 -> edge +6pts, gross EV ~ +11.5%\n# -> taker fee read live from the market's feeSchedule (this market feesEnabled=false -> fee 0, so net ~ +11.5%); never assumed\n# -> conviction 68/100, $20 (1/4-Kelly), within all 7 gates. Confirm?"
+  },
+  "setup": [
+    "Install: `install the polyrobin skill from https://github.com/BankrBot/skills/tree/main/polyrobin`",
+    "Use it on X by tagging @bankrbot, e.g. `@bankrbot using the polyrobin skill, what's the edge on <market>?`",
+    "Tune the 7 risk gates in conversation (e.g. `@bankrbot using the polyrobin skill, set my daily loss limit to 3%`) — gate 5 (confirmation) can never be disabled",
+    "No private keys are ever needed — execution runs through BankrBot's rails and every trade waits for your explicit yes",
+    "Utility token: $PR — separate from the skill; analysis and gates work identically whether or not you hold it (contract address to be announced after verification)",
+    "Source: https://github.com/BankrBot/skills/tree/main/polyrobin"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "polyrobin",
+    "command": "install the polyrobin skill from https://github.com/BankrBot/skills/tree/main/polyrobin"
+  }
+}
