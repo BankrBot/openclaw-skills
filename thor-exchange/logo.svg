@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Thor Exchange">
+  <defs>
+    <linearGradient id="t" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#059669"/>
+      <stop offset="1" stop-color="#022c22"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#t)"/>
+  <path d="M35 9 L20 35 h9 l-4 20 19-28 h-9 l5-18 Z" fill="#d1fae5"/>
+</svg>

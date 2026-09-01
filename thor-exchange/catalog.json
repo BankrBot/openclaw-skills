@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "thor-exchange",
+  "provider": "Thor Exchange",
+  "providerUrl": "https://thorexchange.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "thor-trade.sh",
+    "language": "bash",
+    "code": "# Quote a buy (read-only, no key): 0.01 ETH into a Thor token\npython3 scripts/thor-quote.py buy \\\n  0x5e798Dd12eDbcD5566cd3772aE5CE682e700750e 0.01\n\n# Execute: buy 0.05 ETH of the token (2% slippage default)\npython3 scripts/thor-trade.py buy \\\n  0x5e798Dd12eDbcD5566cd3772aE5CE682e700750e 0.05\n\n# Execute: sell 2,000,000 tokens with a tighter 1% slippage\npython3 scripts/thor-trade.py sell \\\n  0x5e798Dd12eDbcD5566cd3772aE5CE682e700750e 2000000 100"
+  },
+  "setup": [
+    "Set `BANKR_API_KEY` env var (or `~/.bankr/config.json`) — Thor Exchange uses Bankr to submit transactions",
+    "Requires Bankr wallet support for Robinhood Chain (chainId 4663); quotes work without it",
+    "Install Python 3 and the scripts from the thor-exchange skill directory",
+    "Run thor-quote.py to preview output before trading",
+    "Run thor-trade.py buy|sell — outputs a tx hash and Blockscout link"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "thor-exchange",
+    "command": "install the thor-exchange skill from https://github.com/BankrBot/skills/tree/main/thor-exchange"
+  }
+}
