@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "ishtar-lookup",
+  "provider": "Numetal",
+  "providerUrl": "https://numetal.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "ishtar-lookup.sh",
+    "language": "bash",
+    "code": "# Ishtar's own machine-readable skill (how an agent represents its human)\ncurl https://api.ishtar.numetal.xyz/skill\n\n# HeartBench — which AI model is the best date\nopen https://ishtar.numetal.xyz/heartbench/\n\n# $NUMETAL on Base: 0x57edb7fc54ada9ef4e113dc05a168449e63cfba3"
+  },
+  "setup": [
+    "No credentials required — this skill only reads Ishtar's public endpoints.",
+    "Canonical machine skill: curl https://api.ishtar.numetal.xyz/skill",
+    "Optional MCP endpoint: https://api.ishtar.numetal.xyz/mcp"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "ishtar-lookup",
+    "command": "install the ishtar-lookup skill from https://github.com/BankrBot/skills/tree/main/ishtar-lookup"
+  }
+}
