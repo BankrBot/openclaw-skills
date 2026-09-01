@@ -1,0 +1,11 @@
+{
+  "name": "voidly-pay-skill-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Runtime for the voidly-pay skill's read-only scripts. npm install here, then run scripts/*.mjs with node.",
+  "dependencies": {
+    "@voidly/session": "1.0.0",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1"
+  }
+}
