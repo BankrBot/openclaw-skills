@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "cryoshot-volatility-monitor",
+  "provider": "ReVaultDrops",
+  "providerUrl": "https://github.com/ReVaultDrops",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "cryoshot-volatility-monitor",
+    "command": "install the cryoshot-volatility-monitor skill from https://github.com/BankrBot/skills/tree/main/cryoshot-volatility-monitor"
+  }
+}
