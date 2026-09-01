@@ -1,136 +1,148 @@
 ---
-name: blueagent-x402
+name: blueagent
 description: >
-  Security OS for autonomous agents and builders on Base.
-  31 pay-per-use tools across Quantum Security, Agent Safety, Research, Data, and Earn.
-  Built for AI agents, Zero-Human Companies (ZHC), and Base ecosystem builders.
-  Pay USDC per call via x402 protocol — no subscription, no API key needed.
+  Base-native AI agent for builders — idea, build, audit, ship, raise.
+  31 CLI commands and 6 MCP tools grounded in real Base knowledge.
+  Powered by Bankr LLM. Collab-ready: accepts signals from Aeon, feeds scenarios to MiroShark.
+  x402 pay-per-call via USDC on Base — no subscription, no API key needed.
 metadata:
   {
     "clawdbot":
       {
-        "emoji": "🟦",
-        "homepage": "https://github.com/madebyshun/blueagent-x402-services",
+        "emoji": "🔵",
+        "homepage": "https://github.com/madebyshun/blue-agent",
         "requires": { "bins": ["bankr"] },
       },
   }
 ---
 
-# BlueAgent x402 — Security OS for Autonomous Agents
+# Blue Agent — Base-native AI for Builders
 
-**31 pay-per-use AI tools on Base** — Quantum Security · Agent Safety · Research · Data · Earn
+**31 CLI commands · 6 MCP tools · x402 pay-per-call on Base**
 
-**Base URL:** `https://x402.bankr.bot/0xf31f59e7b8b58555f7871f71973a394c8f1bffe5/`
+Idea → Build → Audit → Ship → Raise. Grounded in real Base knowledge, powered by Bankr LLM.
 
----
-
-## QUANTUM SECURITY
-
-| Service | Price | Description |
-|---------|-------|-------------|
-| `quantum-premium` | $1.50 | Wallet quantum vulnerability score — public key exposure, threat timeline, migration steps |
-| `quantum-batch` | up to $2.50 | Scan 1–10 wallets at $0.25 each — pay only for what you scan |
-| `quantum-migrate` | $2.00 | Step-by-step quantum-safe migration plan with tools and timeline |
-| `quantum-timeline` | $0.40 | Evidence-based quantum threat timeline — when CRQC arrives and what it means |
-| `key-exposure` | $0.50 | Check if wallet's public key is exposed on-chain — the #1 quantum risk factor |
+**Discovery:** `curl https://blueagent.dev/.well-known/agent.json`
+**Collab hub:** `https://github.com/madebyshun/blue-agent/tree/main/collab`
 
 ---
 
-## AGENT SAFETY
+## MCP Tools (via `npx skills add blueagent`)
 
-| Service | Price | Description |
-|---------|-------|-------------|
-| `risk-gate` | $0.05 | Pre-transaction safety check — APPROVE / WARN / BLOCK with risk score |
-| `honeypot-check` | $0.05 | Detect honeypot or rug pull contracts before buying |
-| `allowance-audit` | $0.20 | Audit dangerous token approvals — find unlimited allowances to revoke |
-| `phishing-scan` | $0.10 | Scan URL, address, or @handle for phishing and scam indicators |
-| `mev-shield` | $0.30 | MEV sandwich attack risk before large swaps — protection strategies |
-| `contract-trust` | $0.25 | Trust score for any contract — verified, audited, safe for agent interaction? |
-| `aml-screen` | $0.25 | AML compliance screening — transaction patterns, risk flags |
-| `circuit-breaker` | $0.50 | CONTINUE / PAUSE / HALT decision for autonomous agents and ZHC |
+| Tool | Price | Description |
+|------|-------|-------------|
+| `blue_idea` | $0.05 | Turn a rough concept into a fundable brief — problem, why now, why Base, MVP scope, risks, 24h plan |
+| `blue_build` | $0.50 | Architecture, stack, folder structure, integrations, and test plan |
+| `blue_audit` | $1.00 | Security and product risk review — critical issues, suggested fixes, go/no-go |
+| `blue_ship` | $0.10 | Deployment checklist, verification steps, release notes, monitoring plan |
+| `blue_raise` | $0.20 | Pitch narrative — market framing, why this wins, traction, ask, target investors |
+| `blue_score` | Free | Builder Score for any Base wallet or Farcaster handle |
 
 ---
 
-## RESEARCH
+## CLI (via `npm install -g @blueagent/cli`)
 
-| Service | Price | Description |
-|---------|-------|-------------|
-| `deep-analysis` | $0.35 | Deep due diligence for any Base token or project — risk score, rug probability |
-| `tokenomics-score` | $0.50 | Supply, inflation, unlock cliff analysis — sustainability score, sell pressure |
-| `whitepaper-tldr` | $0.20 | Summarize any whitepaper into 5 key bullets — thesis, moat, risks |
-| `narrative-pulse` | $0.40 | Trending crypto narratives — momentum scores, Base ecosystem themes |
-| `vc-tracker` | $1.00 | VC investment activity — hot sectors, thesis, signals for builders and traders |
-| `launch-advisor` | $3.00 | Full token launch playbook — tokenomics, 8-week timeline, marketing, KPIs |
-| `grant-evaluator` | $5.00 | Base ecosystem grant scoring — innovation, feasibility, impact, team quality |
-| `x402-readiness` | $1.00 | Audit any API for x402 payment protocol readiness — gaps, steps, pricing |
-| `base-deploy-check` | $0.50 | Pre-deployment security check — vulnerabilities, centralization risks, go/no-go |
+**Workflow**
+```bash
+blue idea "USDC streaming payroll for DAOs on Base"
+blue build "token-gated API with x402 payments"
+blue audit "review this ERC-20 contract"
+blue ship "deploy my Uniswap v4 hook to Base mainnet"
+blue raise "pre-seed for my Base DeFi protocol"
+```
 
----
+**Score & Discovery**
+```bash
+blue score madebyshun          # Builder Score by GitHub/Farcaster handle
+blue agent-score 0xADDRESS     # Agent reliability score
+blue compare addr1 addr2       # Side-by-side reputation comparison
+blue trending                  # Trending agents and tokens on Base
+blue search "payroll"          # Search Base ecosystem
+```
 
-## DATA & ALERTS
+**Project Setup**
+```bash
+blue init                      # Install skills into current repo
+blue new my-agent base-agent   # Scaffold new Base agent project
+blue doctor                    # Check environment and API key
+blue validate                  # Validate project health
+```
 
-| Service | Price | Description |
-|---------|-------|-------------|
-| `wallet-pnl` | $1.00 | Wallet PnL report — win rate, trading style, smart money score |
-| `whale-tracker` | $0.10 | Smart money flow analysis — accumulation vs distribution signal |
-| `dex-flow` | $0.15 | DEX buy/sell pressure and volume flow — live DexScreener data |
-| `airdrop-check` | $0.10 | Base airdrop eligibility — which protocols, activity score, estimated value |
-| `alert-check` | $0.10 | Check active alert triggers for any address |
+**Work Hub**
+```bash
+blue tasks                     # Browse open tasks
+blue post-task @handle         # Post a task with USDC escrow
+blue accept <taskId> @handle   # Accept a task
+blue submit <taskId> @handle <proof>  # Submit completed work
+```
 
----
+**Microtasks**
+```bash
+blue micro list                # Browse microtasks
+blue micro post "description" --reward 1 --slots 3 --platform x
+blue micro accept <id> @handle
+blue micro submit <id> @handle <proof>
+blue micro approve <id> @handle
+blue micro profile @handle
+```
 
-## EARN
-
-| Service | Price | Description |
-|---------|-------|-------------|
-| `yield-optimizer` | $0.15 | Best APY on Base DeFi — live DeFiLlama data, risk-adjusted recommendations |
-| `lp-analyzer` | $0.25 | LP position analysis — impermanent loss, fee income, rebalance recommendation |
-| `tax-report` | $2.00 | On-chain tax summary — realized gains, taxable events, P&L |
-| `alert-subscribe` | $0.50 | Subscribe to real-time alerts via webhook — whale, circuit breaker, quantum |
+**Other**
+```bash
+blue watch 0xADDRESS           # Watch wallet for activity
+blue history 0xADDRESS        # Transaction and interaction history
+blue alert                     # Manage alerts
+blue chat                      # Interactive Bankr LLM chat
+blue launch                    # Token or agent launch wizard
+blue market                    # Browse agent marketplace
+```
 
 ---
 
 ## Quick Start
 
-### CLI
 ```bash
+# Install
 npm install -g @blueagent/cli
-blueagent setup
-blueagent honeypot-check 0xTOKEN
-blueagent risk-gate "approve USDC to Uniswap"
-blueagent analyze "$BRETT"
+
+# Configure API key
+blue init
+# → creates ~/.blue-agent/config.toml
+
+# Verify
+blue doctor
+
+# Run your first command
+blue idea "my Base project idea"
 ```
 
-### SDK
-```typescript
-import { BlueAgent } from '@blueagent/sdk'
+---
 
-const ba = new BlueAgent({ privateKey: process.env.WALLET_PRIVATE_KEY })
-await ba.security.riskcheck({ action: 'swap 100 USDC' })
-await ba.research.analyze({ projectName: '$BRETT' })
-await ba.earn.yieldOptimizer({ token: 'USDC' })
-```
+## Agent Collab
 
-### MCP (Claude Code / AgentKit)
+Blue Agent is collab-ready. It accepts signals from Aeon and feeds scenarios to MiroShark.
+
 ```bash
-npx @blueagent/skill install --claude
+# Discover Blue Agent
+curl https://blueagent.dev/.well-known/agent.json
+
+# Send a signal
+POST https://blueagent.dev/api/signal
+
+# Request a simulation
+POST https://blueagent.dev/api/simulate
 ```
 
-### ZHC Circuit Breaker
-```typescript
-const status = await ba.security.circuitBreaker({
-  agentId: 'my-zhc',
-  context: 'consecutive losses detected',
-  recentLosses: '$340'
-})
-// { decision: "PAUSE", cooldownPeriod: "30 minutes", requiresHumanReview: false }
-```
+Bridge files and shared schemas:
+`https://github.com/madebyshun/blue-agent/tree/main/collab`
 
 ---
 
 ## Resources
 
-- **GitHub:** https://github.com/madebyshun/blueagent-x402-services
-- **Token:** $BLUEAGENT on Base
-- **Community:** https://t.me/blueagent_hub
-- **Skills:** https://skills.bankr.bot
+- **Web:** https://blueagent.dev
+- **GitHub:** https://github.com/madebyshun/blue-agent
+- **npm:** https://npmjs.com/package/@blueagent/cli
+- **Token:** $BLUEAGENT — `0xf895783b2931c919955e18b5e3343e7c7c456ba3` (Base)
+- **Telegram:** https://t.me/blueagent_hub
+- **X:** https://x.com/blocky_agent
+- **Bankr:** https://bankr.bot/agent/blue-agent
