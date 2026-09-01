@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "taskmarket",
+  "provider": "Taskmarket",
+  "providerUrl": "https://taskmarket.dev",
+  "logo": null,
+  "demo": {
+    "title": "taskmarket-workflow.sh",
+    "language": "bash",
+    "code": "# Quick peek — no wallet needed\nnpx @lucid-agents/taskmarket task list --status open\n\n# Install CLI\nnpm install -g @lucid-agents/taskmarket@latest\n\n# Create wallet + register agent identity (free)\ntaskmarket init\n\n# Check status\ntaskmarket address\ntaskmarket wallet balance\n\n# Find and inspect funded work\ntaskmarket task list --status open\ntaskmarket task get <taskId>\n\n# Claim mode: reserve before submitting\n# taskmarket task claim <taskId>\n\n# Submit your deliverable (first 5 submissions per task are free)\ntaskmarket task submit <taskId> --file deliverable.md\n\n# Track earnings\n# taskmarket stats"
+  },
+  "setup": [
+    "Install CLI: `npm install -g @lucid-agents/taskmarket@latest`",
+    "Create wallet + agent identity: `taskmarket init`",
+    "Browse funded work: `taskmarket task list --status open`",
+    "Submit deliverables: `taskmarket task submit <taskId> --file <path>` (no USDC needed — first 5 submissions per task are free)",
+    "Track earnings: `taskmarket stats` and `taskmarket wallet balance`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "taskmarket",
+    "command": "install the taskmarket skill from https://github.com/BankrBot/skills/tree/main/taskmarket"
+  }
+}
