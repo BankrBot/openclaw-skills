@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "pulsenetwork-life-recovery",
+  "provider": "PulseNetwork",
+  "providerUrl": "https://mcp-pulsenetwork.vercel.app",
+  "logo": null,
+  "demo": {
+    "title": "recover-what-youre-owed.sh",
+    "language": "bash",
+    "code": "# Draft a demand letter to recover a wrongly-withheld deposit ($0.10, paid from your wallet)\nbankr x402 call \"https://legalpulse-rho.vercel.app/api/legal/letter?type=demand&situation=landlord+kept+full+1500+deposit+no+itemized+list&state=CA&amount=1500&outcome=full+refund\"\n\n# \"Is my visa on track?\" — decode a stuck USCIS case\nbankr x402 call \"https://immigrationpulse.vercel.app/api/status?receipt=MSC2190012345&form=I-485\"\n\n# What VA disability compensation is this veteran owed? (grounded in the VA rating schedule)\nbankr x402 call \"https://vetpulse-five.vercel.app/api/vet/disability?conditions=tinnitus,PTSD,sleep+apnea&service_era=OIF\"\n\n# Am I underpaid? Salary benchmark from BLS/OECD/ILO data\nbankr x402 call \"https://careerpulse-steel.vercel.app/api/career/salary?title=Product+Manager&location=Austin,TX&yoe=6\"\n\n# Cheapest way to send $500 to the Philippines (true fee + FX markup)\nbankr x402 call \"https://remittancepulse.vercel.app/api/remit/compare?from=USA&to=Philippines&amount=500\""
+  },
+  "setup": [
+    "Install: `install the pulsenetwork-life-recovery skill from https://github.com/BankrBot/skills/tree/main/pulsenetwork-life-recovery`",
+    "Fund your Bankr wallet with a little USDC on Base — calls settle per-request, priced per endpoint ($0.05-$0.25, most ~$0.10).",
+    "Call any endpoint with `bankr x402 call <url>`; inspect the schema first with `bankr x402 schema <url>`.",
+    "Almost every param is optional free-text; pass `lang=<BCP-47 code>` for a response in any language. Browse the full hub at https://mcp-pulsenetwork.vercel.app"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "pulsenetwork-life-recovery",
+    "command": "install the pulsenetwork-life-recovery skill from https://github.com/BankrBot/skills/tree/main/pulsenetwork-life-recovery"
+  }
+}

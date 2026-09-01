@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "pulsenetwork-crypto",
+  "provider": "PulseNetwork",
+  "providerUrl": "https://mcp-pulsenetwork.vercel.app",
+  "logo": null,
+  "demo": {
+    "title": "scan-before-you-swap.sh",
+    "language": "bash",
+    "code": "# Gate every buy on a fresh honeypot/rug check (~$0.015, paid from your wallet)\nbankr x402 call \"https://x402.bankr.bot/0x7132eb021647675076fdf37f333d8a015770f095/memecoin?mint=<SPL_MINT>\"\n\n# EVM tokens by contract + chain (Base/Ethereum/BSC/Arbitrum/Polygon/Optimism/Avalanche)\nbankr x402 call \"https://x402.bankr.bot/0x7132eb021647675076fdf37f333d8a015770f095/evmtoken?address=<0x...>&chain=base\"\n\n# Returns: { verdict: CLEAR|CAUTION|AVOID, risk_score, one_liner, red_flags, green_flags }\n\n# Then, if CLEAR — live DeFi yield to route the capital ($0.10)\nbankr x402 call \"https://cryptopulse-xi-five.vercel.app/api/yield?chain=base&risk=conservative\""
+  },
+  "setup": [
+    "Install: `install the pulsenetwork-crypto skill from https://github.com/BankrBot/skills/tree/main/pulsenetwork-crypto`",
+    "Fund your Bankr wallet with a little USDC on Base — calls settle per-request (token-safety scans are ~$0.015; all other crypto endpoints $0.10).",
+    "Call any endpoint with `bankr x402 call <url>`; inspect first with `bankr x402 schema <url>`.",
+    "Wire the flagship scanners as a pre-trade gate: scan the mint/contract, only proceed to swap when `verdict === CLEAR`.",
+    "Browse the full crypto catalog and the wider 68-vertical fleet at https://mcp-pulsenetwork.vercel.app"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "pulsenetwork-crypto",
+    "command": "install the pulsenetwork-crypto skill from https://github.com/BankrBot/skills/tree/main/pulsenetwork-crypto"
+  }
+}
