@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "copy-snipe-launch",
+  "provider": "Johnsnowshayankh",
+  "providerUrl": "https://github.com/Johnsnowshayankh",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "copy-snipe-launch",
+    "command": "install the copy-snipe-launch skill from https://github.com/BankrBot/skills/tree/main/copy-snipe-launch"
+  }
+}
