@@ -1,11 +1,11 @@
 ---
 name: erc-8004
-description: Register AI agents on Ethereum mainnet using ERC-8004 (Trustless Agents). Use when the user wants to register their agent identity on-chain, create an agent profile, claim an agent NFT, set up agent reputation, or make their agent discoverable. Handles bridging ETH to mainnet, IPFS upload, and on-chain registration.
+description: Register AI agents using ERC-8004 (Trustless Agents) on Ethereum, Base, Polygon, Monad, or BSC. Use when the user wants to register their agent identity on-chain, create an agent profile, claim an agent NFT, set up agent reputation, or make their agent discoverable. Handles IPFS upload and on-chain registration.
 ---
 
 # ERC-8004: Trustless Agents
 
-Register your AI agent on Ethereum mainnet with a verifiable on-chain identity, making it discoverable and enabling trust signals.
+Register your AI agent with a verifiable on-chain identity on **Ethereum, Base, Polygon, Monad, or BSC**, making it discoverable and enabling trust signals.
 
 ## What is ERC-8004?
 
@@ -20,32 +20,61 @@ Spec: https://eips.ethereum.org/EIPS/eip-8004
 
 ## Contract Addresses
 
-| Chain | Identity Registry | Reputation Registry |
-|-------|-------------------|---------------------|
-| Ethereum Mainnet | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` | `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63` |
-| Sepolia Testnet | `0x8004A818BFB912233c491871b3d84c89A494BD9e` | `0x8004B663056A597Dffe9eCcC1965A193B7388713` |
+All contracts use the same addresses across chains (deterministic deployment).
+
+**Mainnets** (Identity: `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` | Reputation: `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63`)
+
+| Chain | Chain ID | Explorer |
+|-------|----------|----------|
+| Ethereum | 1 | etherscan.io |
+| Base | 8453 | basescan.org |
+| Polygon | 137 | polygonscan.com |
+| Monad | 10143 | monadscan.com |
+| BSC | 56 | bscscan.com |
+
+**Testnets** (Identity: `0x8004A818BFB912233c491871b3d84c89A494BD9e` | Reputation: `0x8004B663056A597Dffe9eCcC1965A193B7388713`)
+
+| Chain | Chain ID | Explorer |
+|-------|----------|----------|
+| Sepolia | 11155111 | sepolia.etherscan.io |
+| Base Sepolia | 84532 | sepolia.basescan.org |
+| Polygon Amoy | 80002 | amoy.polygonscan.com |
+| Monad Testnet | 10143 | monad-testnet.socialscan.io |
+| BSC Testnet | 97 | testnet.bscscan.com |
 
 ## Quick Start
 
 ### 1. Register Your Agent
 
 ```bash
-# Full registration (creates profile, uploads to IPFS, registers on-chain)
-./scripts/register.sh
+# Register on Base (recommended - lowest gas fees)
+./scripts/register.sh --chain base
+
+# Register on Ethereum mainnet
+./scripts/register.sh --chain ethereum
+
+# Register on Polygon
+./scripts/register.sh --chain polygon
 
 # Or with custom values
 NAME="My Agent" \
 DESCRIPTION="An AI agent that does cool stuff" \
 IMAGE="https://example.com/avatar.png" \
-./scripts/register.sh
+./scripts/register.sh --chain base
+
+# Testnet (for testing)
+./scripts/register.sh --chain base-sepolia
 ```
 
-### 2. Bridge ETH to Mainnet (if needed)
+### Supported Chains
 
-```bash
-# Bridge ETH from Base to Ethereum mainnet
-./scripts/bridge-to-mainnet.sh 0.01
-```
+| Chain | Flag | Gas Cost |
+|-------|------|----------|
+| Base | `--chain base` | Very Low ⭐ |
+| Polygon | `--chain polygon` | Very Low |
+| BSC | `--chain bsc` | Low |
+| Monad | `--chain monad` | Very Low |
+| Ethereum | `--chain ethereum` | High |
 
 ### 3. Update Agent Profile
 
@@ -58,32 +87,10 @@ IMAGE="https://example.com/avatar.png" \
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `PINATA_JWT` | Pinata API JWT for IPFS uploads | No (only for IPFS) |
+| `PINATA_JWT` | Pinata API JWT for IPFS uploads | Yes |
 | `AGENT_NAME` | Agent display name | No (defaults to wallet ENS or address) |
 | `AGENT_DESCRIPTION` | Agent description | No |
 | `AGENT_IMAGE` | Avatar URL | No |
-
-## Registration Options
-
-**Option 1: Use 8004.org frontend (easiest)**
-Visit https://www.8004.org and register through the UI — handles IPFS automatically.
-
-**Option 2: HTTP URL (no IPFS needed)**
-Host your registration JSON at any URL:
-```bash
-REGISTRATION_URL="https://myagent.xyz/agent.json" ./scripts/register-http.sh
-```
-
-**Option 3: IPFS via Pinata**
-```bash
-PINATA_JWT="your-jwt" ./scripts/register.sh
-```
-
-**Option 4: Data URI (fully on-chain)**
-Encode your registration as base64 — no external hosting needed:
-```bash
-./scripts/register-onchain.sh
-```
 
 ## Registration File Format
 
@@ -120,7 +127,7 @@ Your agent's registration file (stored on IPFS) follows this structure:
 
 ## Workflow
 
-1. **Bridge ETH** (if needed) - Use Bankr to bridge ETH from Base/L2 to mainnet
+1. **Choose Chain** - Base or Polygon recommended for low gas
 2. **Create Profile** - Generate a registration JSON file with agent info
 3. **Upload to IPFS** - Pin the file via Pinata (or other provider)
 4. **Register On-Chain** - Call `register(agentURI)` on the Identity Registry
@@ -128,7 +135,14 @@ Your agent's registration file (stored on IPFS) follows this structure:
 
 ## Costs
 
-- **Gas:** ~100-200k gas for registration (~$5-20 depending on gas prices)
+| Chain | Estimated Cost |
+|-------|----------------|
+| Base | ~$0.01-0.05 |
+| Polygon | ~$0.01-0.05 |
+| BSC | ~$0.10-0.50 |
+| Monad | ~$0.01-0.05 |
+| Ethereum | ~$5-20 |
+
 - **IPFS:** Free tier available on Pinata (1GB)
 
 ## Using the SDK
@@ -143,8 +157,8 @@ npm install agent0-sdk
 import { SDK } from 'agent0-sdk';
 
 const sdk = new SDK({
-  chainId: 1, // Ethereum Mainnet
-  rpcUrl: process.env.ETH_RPC_URL,
+  chainId: 8453, // Base (or 1 for Ethereum, 137 for Polygon)
+  rpcUrl: process.env.BASE_RPC_URL,
   privateKey: process.env.PRIVATE_KEY,
   ipfs: 'pinata',
   pinataJwt: process.env.PINATA_JWT
