@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "lens-b20",
+  "provider": "LENS",
+  "providerUrl": "https://lnsx.io",
+  "logo": null,
+  "demo": {
+    "title": "lens-cli.sh",
+    "language": "bash",
+    "code": "# Live Base chain status, gas + the B20 standard overview\nscripts/lens.sh info\n\n# Validate a B20 config + a LENS rug-risk read before you deploy\nscripts/lens.sh validate '{\"name\":\"TKN\",\"symbol\":\"TKN\",\"variant\":\"asset\",\"decimals\":18,\"admin\":\"0x...\",\"policies\":{\"freeze\":true}}'\n\n# Build a full UNSIGNED EIP-1559 deploy tx (live gas + nonce)\nscripts/lens.sh prepare '{\"name\":\"TKN\",\"symbol\":\"TKN\",\"supply_cap\":\"1000000000\",\"admin\":\"0x...\"}'\n\n# Read any ERC-20 on Base\nscripts/lens.sh token_info '{\"address\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\"}'"
+  },
+  "setup": [
+    "Install: `install the lens-b20 skill from https://github.com/BankrBot/skills/tree/main/lens-b20`",
+    "No API key or auth required",
+    "Read-only by default; `prepare` returns an unsigned transaction only, it never signs or broadcasts",
+    "B20 mainnet deploy activates with Base Beryl on 25 Jun 2026 18:00 UTC; until then validate/prepare or deploy on Base Sepolia"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "lens-b20",
+    "command": "install the lens-b20 skill from https://github.com/BankrBot/skills/tree/main/lens-b20"
+  }
+}
