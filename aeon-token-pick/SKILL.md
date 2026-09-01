@@ -52,6 +52,16 @@ Would tip the call: a dated catalyst on $XYZ; a specific committee date for EIGE
 - Falsifiable thesis or no pick.
 - Cite the catalyst by name and date. "Sentiment turning" is not a catalyst.
 - Crowdedness penalty — if every newsletter is recommending it, the asymmetry is gone.
+- **Pre-flight security check (Base tokens).** Before publishing a Base token pick, scan it against [VIGIL](https://github.com/vigilcodes/vigil-mcp) (`mcp.vigil.codes`, keyless). If `vigil_detect_honeypot` flags or `vigil_consensus` returns `high`/`critical`, return `NO_PICK` and surface the VIGIL evidence. Missing data (e.g. `lock_status: unknown`) is **not** treated as safe — it lowers conviction. Optional but strongly recommended: never recommend a token you haven't checked.
 - NO_PICK is a valid output. Manufactured picks burn capital.
 
-Pairs naturally with `aeon-narrative-tracker` (narrative fit), `aeon-monitor-runners` (momentum candidates), `aeon-unlock-monitor` (supply-side risk), and Bankr Submit / AgenticBets for execution.
+### Pre-flight VIGIL check (Base tokens)
+
+```bash
+curl -s -m 30 -X POST https://mcp.vigil.codes/tools/call \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call",
+       "params":{"name":"vigil_consensus","arguments":{"token":"0xTOKEN","chain":"base"}}}' | jq '.result'
+```
+
+Pairs naturally with `aeon-narrative-tracker` (narrative fit), `aeon-monitor-runners` (momentum candidates), `aeon-unlock-monitor` (supply-side risk), `vigil-security-scanner` (pre-flight rugpull/honeypot guard, see above), and Bankr Submit / AgenticBets for execution.
