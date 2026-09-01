@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "x-ca-username-tracker",
+  "provider": "drivesimulator54-pixel",
+  "providerUrl": "https://github.com/drivesimulator54-pixel",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "x-ca-username-tracker",
+    "command": "install the x-ca-username-tracker skill from https://github.com/BankrBot/skills/tree/main/x-ca-username-tracker"
+  }
+}
