@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "base-liquidity-deployment-planner",
+  "provider": "LEDGRAGENT",
+  "providerUrl": "https://github.com/LEDGRAGENT",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "base-liquidity-deployment-planner",
+    "command": "install the base-liquidity-deployment-planner skill from https://github.com/BankrBot/skills/tree/main/base-liquidity-deployment-planner"
+  }
+}
