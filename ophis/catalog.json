@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ophis",
+  "provider": "Ophis",
+  "providerUrl": "https://ophis.fi",
+  "logo": null,
+  "demo": {
+    "title": "ophis-swap.sh",
+    "language": "bash",
+    "code": "# Quote: how much WETH for 100 USDC on Base? (no execution)\n# Args: chain_id sell_token sell_decimals amount buy_token buy_decimals\npython3 scripts/ophis-quote.py \\\n  8453 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 6 100 \\\n  0x4200000000000000000000000000000000000006 18\n\n# Execute: MEV-protected swap of 100 USDC -> WETH on Base via Ophis\n# (approve + on-chain setPreSignature go through the Bankr Submit API;\n#  the order settles gaslessly in a CoW batch auction)\npython3 scripts/ophis-swap.py \\\n  8453 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 6 100 \\\n  0x4200000000000000000000000000000000000006 18 50"
+  },
+  "setup": [
+    "Set BANKR_API_KEY (or configure ~/.bankr/config.json) — Ophis uses the Bankr Submit API to sign + broadcast the ERC-20 approval and the on-chain order authorization from the Bankr wallet.",
+    "Install Python 3 and the scripts from this ophis skill directory.",
+    "Run ophis-quote.py to preview the buy amount + fee before swapping.",
+    "Run ophis-swap.py — it approves the CoW VaultRelayer (if needed), authorizes the order via setPreSignature, posts it to the CoW/Ophis orderbook, and prints the order UID + explorer.cow.fi tracking link.",
+    "Same-chain swaps only. For cross-chain, use a bridging skill."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "ophis",
+    "command": "install the ophis skill from https://github.com/BankrBot/skills/tree/main/ophis"
+  }
+}
