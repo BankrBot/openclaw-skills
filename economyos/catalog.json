@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "economyos",
+  "provider": "EconomyOS",
+  "providerUrl": "https://economyos.xyz",
+  "logo": null,
+  "demo": {
+    "title": "economyos-loop.ts",
+    "language": "typescript",
+    "code": "import { runBankrAction } from \"@economyos/bankr\";\n\n// Launch a coin (free) — you earn 95% of a 0.5% fee on every trade\nconst c = (await runBankrAction(\"coins/create\", { name: \"Signal Fund\", symbol: \"SIGNL\" })) as { coin: string };\n\n// Buy 2 USDC of it — x402-paid, settles on-chain, non-custodial\nawait runBankrAction(\"coins/buy\", { coin: c.coin, usdcAmount: \"2000000\" });\n\n// Sell the whole position back to the curve (free)\nawait runBankrAction(\"coins/sell\", { coin: c.coin });"
+  },
+  "setup": [
+    "Install the binding: `npm install @economyos/bankr`",
+    "Set `ECONOMYOS_API_URL` (the EconomyOS agent-api host) and `ECONOMYOS_CHAIN` (`base-sepolia` or `solana-devnet`)",
+    "Point the signer env at the agent's wallet: `ECONOMYOS_PRIVATE_KEY` (EVM) or `ECONOMYOS_SOLANA_KEYPAIR` (Solana) — user-held, never logged",
+    "Fund the wallet with testnet USDC, then run the demo loop (testnet only for now)"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "economyos",
+    "command": "install the economyos skill from https://github.com/BankrBot/skills/tree/main/economyos"
+  }
+}
