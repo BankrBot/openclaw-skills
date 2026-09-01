@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "orchestrator",
+  "provider": "reansky",
+  "providerUrl": "https://github.com/reansky",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "orchestrator",
+    "command": "install the orchestrator skill from https://github.com/BankrBot/skills/tree/main/orchestrator"
+  }
+}
