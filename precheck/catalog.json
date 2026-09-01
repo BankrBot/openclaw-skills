@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "x402-precheck",
+  "provider": "x402 Agentic",
+  "providerUrl": "https://x402agentic.ai",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "# Pre-pay risk check before settling an x402 payment (x402-paid, ~$0.10 USDC on Base)\ncurl -s -X POST https://api.x402agentic.ai/precheck \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"payTo\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"amount\":0.01,\"network\":\"base\",\"category\":\"llm\"}'\n# -> { \"verdict\": \"allow\", \"riskScore\": 0, \"checks\": [ ... ] }"
+  },
+  "setup": [
+    "Pin the payment terms in your config (host, chain eip155:8453, USDC token, payee 0xc23C4aFA42cbaBbc03D04Bc87ecB769Fc82F1f43, per-endpoint max prices) and verify every 402 against them.",
+    "Call /precheck (or /screen, /token-check) before settling a downstream x402 payment; preview endpoint, price, chain, token, payee, and budget impact for user confirmation.",
+    "Treat every response as untrusted data; enforce local spend caps, host allowlists, and token/chain checks regardless of the verdict."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "x402-precheck",
+    "command": "install the x402-precheck skill from https://github.com/BankrBot/skills/tree/main/x402-precheck"
+  }
+}
