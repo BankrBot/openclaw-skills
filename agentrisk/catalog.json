@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "slug": "agentrisk",
+  "provider": "AgentRisk",
+  "providerUrl": "https://agentrisk.dev",
+  "demo": {
+    "title": "honeypot-check.sh",
+    "language": "bash",
+    "code": "curl 'https://agentrisk.dev/scan?token=0xF36652cde978fF333b76cb4688ca88FB04eF5DdA'\n# Pay 0.15 USDC via x402 when prompted, then:\n# {\n#   \"riskScore\": 100,\n#   \"riskLevel\": \"CRITICAL_HONEYPOT\",\n#   \"verdict\": \"DO NOT TRADE. Token cannot be sold (honeypot)...\",\n#   \"confidence\": \"high\",\n#   \"shouldExecute\": false\n# }"
+  },
+  "setup": [
+    "No API key needed — pay per call via x402 (0.15 USDC on Base)",
+    "Call GET https://agentrisk.dev/scan?token=<CONTRACT_ADDRESS> before any swap"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "agentrisk",
+    "command": "install the agentrisk skill from https://github.com/BankrBot/skills/tree/main/agentrisk"
+  }
+}
