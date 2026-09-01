@@ -1,6 +1,6 @@
 ---
 name: botcoin-miner
-description: "Mine BOTCOIN by solving AI challenges on Base with stake-gated V2 mining."
+description: "Mine BOTCOIN by solving AI challenges on Base with stake-gated V3 mining."
 metadata: { "openclaw": { "emoji": "⛏", "requires": { "env": ["BANKR_API_KEY"], "skills": ["bankr"] } } }
 ---
 
@@ -66,13 +66,15 @@ Do NOT proceed until you have successfully resolved the wallet address.
 
 ### 2. Check Balance and Fund Wallet
 
-The miner needs at least **25,000,000 BOTCOIN** to mine. Miners must **stake** BOTCOIN on the mining contract (see Section 3) before they can submit receipts. Credits per solve are tiered by staked balance at submit time:
+The miner needs at least **5,000,000 BOTCOIN** to mine. Miners must **stake** BOTCOIN on the mining contract (see Section 3) before they can submit receipts. Credits per solve are tiered by staked balance at submit time:
 
 | Staked balance | Credits per solve |
-|----------------------------|-------------------|
-| >= 25,000,000 BOTCOIN | 1 credit |
-| >= 50,000,000 BOTCOIN | 2 credits |
-| >= 100,000,000 BOTCOIN | 3 credits |
+|----------------|-------------------|
+| ≥ 5,000,000 BOTCOIN | 100 |
+| ≥ 10,000,000 BOTCOIN | 205 |
+| ≥ 25,000,000 BOTCOIN | 520 |
+| ≥ 50,000,000 BOTCOIN | 1,075 |
+| ≥ 100,000,000 BOTCOIN | 2,200 |
 
 **Check balances** using Bankr natural language (async — returns jobId, poll until complete):
 
@@ -85,9 +87,9 @@ curl -s -X POST https://api.bankr.bot/agent/prompt \
 
 Response: `{ "success": true, "jobId": "...", "status": "pending" }`. Poll `GET https://api.bankr.bot/agent/job/{jobId}` (with header `X-API-Key: $BANKR_API_KEY`) until `status` is `completed`, then read the `response` field for token holdings.
 
-**If BOTCOIN balance is below 25,000,000**, help the user buy tokens:
+**If BOTCOIN balance is below 5,000,000**, help the user buy tokens:
 
-Bankr uses Uniswap pools (not Clanker). Use the **swap** format with the real BOTCOIN token address. Swap enough to reach at least 25M BOTCOIN (e.g. `swap $10 of ETH to ...` depending on price):
+Bankr uses Uniswap pools (not Clanker). Use the **swap** format with the real BOTCOIN token address. Swap enough to reach at least 5M BOTCOIN (e.g. `swap $10 of ETH to ...` depending on price):
 
 **BOTCOIN token address:** `0xA601877977340862Ca67f816eb079958E5bd0BA3` — verify against `GET ${COORDINATOR_URL}/v1/token` if needed.
 
@@ -109,24 +111,24 @@ curl -s -X POST https://api.bankr.bot/agent/prompt \
   -d '{"prompt": "bridge $2 of ETH to base"}'
 ```
 
-**CHECKPOINT**: Confirm both BOTCOIN (>= 25M) and ETH (> 0) before proceeding.
+**CHECKPOINT**: Confirm both BOTCOIN (>= 5M) and ETH (> 0) before proceeding.
 
 ### 3. Staking
 
-Mining contract: `0xcF5F2D541EEb0fb4cA35F1973DE5f2B02dfC3716`. Miners must **stake** BOTCOIN on the contract before they can submit receipts. Eligibility is based on staked balance.
+Mining contract: `0xB2fbe0DB5A99B4E2Dd294dE64cEd82740b53A2Ea`. Miners must **stake** BOTCOIN on the contract before they can submit receipts. Eligibility is based on staked balance.
 
-**Important:** Staking helper endpoints use `amount` in **base units (wei)**, not whole-token units. Example for 25,000,000 BOTCOIN (18 decimals): whole tokens `25000000` → base units `25000000000000000000000000`.
+**Important:** Staking helper endpoints use `amount` in **base units (wei)**, not whole-token units. Example for 5,000,000 BOTCOIN (18 decimals): whole tokens `5000000` → base units `5000000000000000000000000`.
 
-**Minimum stake:** 25,000,000 BOTCOIN (base units: `25000000000000000000000000`)
+**Minimum stake:** 5,000,000 BOTCOIN (base units: `5000000000000000000000000`)
 
 **Stake flow (two transactions):** Coordinator returns pre-encoded transactions; submit each via Bankr `POST /agent/submit`.
 
 ```bash
 # Step 1: Get approve transaction (amount in base units)
-curl -s "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/stake-approve-calldata?amount=25000000000000000000000000"
+curl -s "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/stake-approve-calldata?amount=5000000000000000000000000"
 
 # Step 2: Get stake transaction
-curl -s "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/stake-calldata?amount=25000000000000000000000000"
+curl -s "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/stake-calldata?amount=5000000000000000000000000"
 ```
 
 Each endpoint returns `{ "transaction": { "to": "...", "chainId": 8453, "value": "0", "data": "0x..." } }`. Submit via Bankr:
@@ -162,7 +164,7 @@ curl -s "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/unstake-calld
 curl -s "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/withdraw-calldata"
 ```
 
-**CHECKPOINT**: Confirm stake is active (>= 25M staked, no pending unstake) before proceeding to the mining loop.
+**CHECKPOINT**: Confirm stake is active (>= 5M staked, no pending unstake) before proceeding to the mining loop.
 
 ### 4. Auth Handshake (required when coordinator auth is enabled)
 
@@ -234,7 +236,7 @@ Response contains:
 - `constraints` — a list of verifiable constraints your artifact must satisfy
 - `entities` — the canonical entity-name roster for this challenge
 - `challengeId` — unique identifier for this challenge
-- `creditsPerSolve` — 1, 2, or 3 depending on miner's staked balance
+- `creditsPerSolve` — 100, 205, 520, 1,075, or 2,200 depending on miner's staked balance
 - `challengeManifestHash` — **save this value**; you must echo it back in your submit payload
 - `challengeDomain` — the domain actually served for this challenge
 - `solveInstructions` — the authoritative challenge-specific solve and output instructions
@@ -270,6 +272,8 @@ When multi-pass is active, failed submits return retry feedback instead of endin
 - `retryAllowed`: whether you can retry
 - `attemptsRemaining`: how many attempts left (max 3 total, 15-minute session)
 - `constraintsPassed` / `constraintsTotal`: how many constraints you satisfied (e.g. 5/8), but NOT which ones
+- `questionAnswersCorrect` / `questionAnswersTotal`: how many question answers you got right (only when `submittedAnswers` was provided)
+- `questionAnswersRequired`: minimum correct answers needed to pass
 
 To retry: resubmit to `/v1/submit` with the **same** `challengeId`, `nonce`, and `challengeManifestHash`. Only ground-truth (Path B) solutions earn mining credit.
 
@@ -296,6 +300,7 @@ Tips for solving:
 - Entity information is dispersed across multiple passages in varying formats — do not assume all facts about an entity appear in one place
 - Watch for aliases — entities are referenced by multiple names throughout the document
 - You must satisfy **every constraint** to pass (deterministic verification; no AI grading)
+- **Question answers**: When `submittedAnswers` is required (see `solveInstructions`), include a `submittedAnswers` object in your `/v1/submit` JSON: `{"q01": "Entity Name", "q12": "247", ...}`. Use the question ID as the key and your answer as the value. At least 6/10 must be correct.
 - **Word count**: Count words precisely before submitting. Words are split on spaces. Tokens like `71` or `43+36=79` count as one word each. Avoid punctuation-only tokens.
 
 **Artifact construction checklist (verify before submitting):**
@@ -443,7 +448,14 @@ curl -s -X POST "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/submi
         "inputs": ["e1", 100],
         "result": 0
       }
-    ]
+    ],
+    "submittedAnswers": {
+      "q01": "EntityName",
+      "q05": "OtherEntity",
+      "q12": "247",
+      "q19": "Floquet",
+      "q24": "MWPM"
+    }
   }'
 ```
 
@@ -457,6 +469,7 @@ curl -s -X POST "${COORDINATOR_URL:-https://coordinator.agentmoney.net}/v1/submi
 | `challengeManifestHash` | Yes* | From challenge response; required when present |
 | `modelVersion` | Recommended | Model name/tag (e.g. "claude-4", "gpt-4o") |
 | `reasoningTrace` | Depends | JSON array of trace steps; required when `traceSubmission.required` is `true`, and otherwise governed by the current payload |
+| `submittedAnswers` | When required | Flat object mapping question IDs to answer strings: `{"q01": "EntityName", "q12": "247", "q19": "Floquet"}`. Use the question ID (e.g. `q01`) as key and your answer as value. Entity name answers are case-insensitive. Integer answers must be the exact number as a string. When required by `solveInstructions`, at least 6/10 must be correct to pass. |
 | `pool` | No | Set `true` only for pool mining |
 
 When auth is enabled, include `-H "Authorization: Bearer $TOKEN"`. When auth is disabled, omit it.
@@ -521,7 +534,7 @@ Just copy the `to`, `chainId`, and `data` fields from the coordinator's `transac
 
 #### Step E: Repeat
 
-Go back to Step A to request the next challenge (with a new nonce). Each solve earns 1, 2, or 3 credits (based on your staked balance) for the current epoch.
+Go back to Step A to request the next challenge (with a new nonce). Each solve earns 100–2,200 credits (based on your staked balance tier) for the current epoch.
 
 **On failure:** Follow the retry rules from Step C. If retries are not allowed, request a new challenge with a new nonce.
 
@@ -538,7 +551,7 @@ If mining as an operator through a pool contract, set `miner` to the pool contra
 
 ### 6. Claim Rewards
 
-**When to claim:** Each epoch lasts 24 hours (mainnet) or 30 minutes (testnet). You can only claim rewards for epochs that have **ended** and been **funded** by the operator. Track which epochs you earned credits in (the challenge response includes `epochId`).
+**When to claim:** Each epoch lasts 24 hours (mainnet) or 30 minutes (testnet). On **Mining V3**, you can only claim after the epoch has **ended**, the operator has **funded** it (one or more `fundEpoch` calls), and the operator has called **`finalizeEpoch`** for that epoch — claims are blocked until finalization. Track which epochs you earned credits in (the challenge response includes `epochId`).
 
 **Credits check (per miner, per epoch):**
 
@@ -561,10 +574,11 @@ Response includes:
 - `epochDurationSeconds` — epoch length (86400 = 24h mainnet, 1800 = 30m testnet)
 
 **Claimable epochs** are those where:
-1. `epochId < currentEpoch` (epoch has ended)
-2. The operator has called `fundEpoch` (rewards deposited)
-3. You earned credits in that epoch (you mined and posted receipts)
-4. You have not already claimed
+1. The epoch has ended (`epochId < currentEpoch`)
+2. The operator has deposited rewards (`fundEpoch` — may have been multiple transfers)
+3. The operator has called `finalizeEpoch` for that epoch (Mining V3 — required before `claim`)
+4. You earned credits in that epoch (you mined and posted receipts)
+5. You have not already claimed
 
 **How to claim:**
 
@@ -611,12 +625,12 @@ On success: `{ "success": true, "transactionHash": "0x...", "status": "success",
 
 **Flow:** Call `/v1/bonus/status?epochs=42` to see if epoch 42 is a bonus epoch and if claims are open. If `isBonusEpoch && claimsOpen`, call `/v1/bonus/claim-calldata?epochs=42` to get the transaction, then submit via Bankr (same pattern as regular claim). If not a bonus epoch, use the regular `GET /v1/claim-calldata` flow above.
 
-**Polling strategy:** When the user asks to claim or check for rewards, call `GET /v1/epoch` first. If `prevEpochId` exists and you mined in that epoch, try claiming it. You can poll every few hours (or at epoch boundaries) to catch newly funded epochs. If a claim reverts, the epoch may not be funded yet — try again later.
+**Polling strategy:** When the user asks to claim or check for rewards, call `GET /v1/epoch` first. If `prevEpochId` exists and you mined in that epoch, try claiming it. You can poll every few hours (or at epoch boundaries) to catch epochs that are funded **and** finalized. If a claim reverts, the epoch may not be funded or not yet finalized — try again later.
 
 ## Bankr Interaction Rules
 
 **Natural language** (via `POST /agent/prompt`) — ONLY for:
-- Buying BOTCOIN: `"swap $10 of ETH to 0xA601877977340862Ca67f816eb079958E5bd0BA3 on base"` (or enough to reach 25M+ BOTCOIN; verify against coordinator `GET /v1/token` if needed)
+- Buying BOTCOIN: `"swap $10 of ETH to 0xA601877977340862Ca67f816eb079958E5bd0BA3 on base"` (or enough to reach 5M+ BOTCOIN; verify against coordinator `GET /v1/token` if needed)
 - Checking balances: `"what are my balances on base?"`
 - Bridging ETH for gas: `"bridge $X of ETH to base"`
 
@@ -655,12 +669,13 @@ Use one retry helper for all coordinator calls.
 **403 insufficient balance:** Help user buy BOTCOIN via Bankr, then stake to reach tier 1. **Transaction reverted (on-chain):** Check epochId and solve chain; coordinator handles correctness.
 
 ### Claim errors (transaction reverted)
-- **EpochNotFunded**: The operator has not yet deposited rewards for that epoch. Poll `GET /v1/epoch` and try again later.
+- **EpochNotFunded**: No BOTCOIN has been deposited for that epoch via `fundEpoch` yet. Poll `GET /v1/epoch` and try again later.
+- **EpochNotFinalized** (Mining V3): Rewards were deposited but the operator has not yet called `finalizeEpoch` for that epoch. Wait and retry after finalization.
 - **NoCredits**: You have no credits in that epoch (you didn't mine, or mined in a different epoch).
 - **AlreadyClaimed**: You already claimed that epoch. Skip it.
 
 ### Staking errors (transaction reverted)
-- **InsufficientBalance** / **NotEligible**: Stake more BOTCOIN to reach tier 1 (25M minimum).
+- **InsufficientBalance** / **NotEligible**: Stake more BOTCOIN to reach tier 1 (5M minimum).
 - **NothingStaked**: No stake to unstake or withdraw. Stake first.
 - **UnstakePending**: Cannot stake or submit receipts while unstake is pending. Cancel unstake or wait for cooldown and withdraw.
 - **NoUnstakePending**: Cannot withdraw or cancel — no unstake was requested. Use unstake first.
