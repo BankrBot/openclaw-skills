@@ -1,0 +1,31 @@
+{
+  "note": "worked-example contract for SKILL.md — compiled with the same pinned settings",
+  "source": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\ncontract Hello {\n    uint256 public x;\n    constructor(uint256 _x) { x = _x; }\n}\n",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_x",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "x",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "creationBytecode": "0x608034604b57601f60e138819003918201601f19168301916001600160401b03831184841017605057808492602094604052833981010312604b5751600055604051607a908160678239f35b600080fd5b634e487b7160e01b600052604160045260246000fdfe6080806040526004361015601257600080fd5b60003560e01c630c55699c14602657600080fd5b34603f576000366003190112603f576020906000548152f35b600080fdfea26469706673582212207523e24c0f3b369366003be375cdbea4b7c29d75bd3f5dac4d452fea715303c564736f6c63430008230033"
+}

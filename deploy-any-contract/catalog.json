@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "slug": "deploy-any-contract",
+  "provider": "MemeForTrees / Tasern",
+  "providerUrl": "https://tasern.quest",
+  "logo": null,
+  "demo": {
+    "title": "deploy-any-contract.ts",
+    "language": "typescript",
+    "code": "// Deploy ANY contract through DeployerFactory on Base — no creation tx needed.\n// initCode = creation bytecode ++ ABI-encoded constructor args (what a creation tx would carry).\nimport { createWalletClient, createPublicClient, http, encodeFunctionData, parseAbi } from \"viem\";\nimport { privateKeyToAccount } from \"viem/accounts\";\nimport { base } from \"viem/chains\";\n\nconst FACTORY = \"0xCF4357aFdC26fa028e77291CE2F97C9dAF93F75D\"; // DeployerFactory on Base (8453)\nconst abi = parseAbi([\n  \"function deploy(bytes initCode) payable returns (address)\",\n  \"function fee() view returns (uint256)\",\n  \"event Deployed(address indexed deployer, address indexed addr, uint256 feePaid)\",\n]);\n\nconst account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);\nconst pub = createPublicClient({ chain: base, transport: http() });\nconst wallet = createWalletClient({ account, chain: base, transport: http() });\n\nconst initCode = process.env.INIT_CODE as `0x${string}`; // your compiled creation bytecode (+ ctor args)\nconst fee = await pub.readContract({ address: FACTORY, abi, functionName: \"fee\" });\n\nconst hash = await wallet.sendTransaction({\n  to: FACTORY,\n  value: fee, // send exactly the fee unless your constructor is payable\n  data: encodeFunctionData({ abi, functionName: \"deploy\", args: [initCode] }),\n});\nconst receipt = await pub.waitForTransactionReceipt({ hash });\nconst log = receipt.logs.find((l) => l.address.toLowerCase() === FACTORY.toLowerCase());\nconst deployed = \"0x\" + log!.topics[2]!.slice(26); // Deployed event: topics[2] = new address\nconsole.log(\"deployed at:\", deployed);\nif ((await pub.getCode({ address: deployed as `0x${string}` })) === undefined) throw new Error(\"no code — verify failed\");\n"
+  },
+  "setup": [
+    "Install: install the deploy-any-contract skill from https://github.com/BankrBot/skills/tree/main/deploy-any-contract",
+    "npm install viem",
+    "Configure a signer: set PRIVATE_KEY (any wallet that can send a normal tx works — Bankr's submit_raw_transaction included: to = the factory, data = deploy(initCode), value = fee())",
+    "Build initCode = creation bytecode with ABI-encoded constructor args appended, then run the demo",
+    "Read fee() first and send exactly that value unless your constructor is payable",
+    "Source: https://github.com/BankrBot/skills/tree/main/deploy-any-contract"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "deploy-any-contract",
+    "command": "install the deploy-any-contract skill from https://github.com/BankrBot/skills/tree/main/deploy-any-contract"
+  }
+}
