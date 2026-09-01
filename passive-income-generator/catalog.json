@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "passive-income-generator",
+  "provider": "FallenOne269",
+  "providerUrl": "https://github.com/FallenOne269",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "passive-income-generator",
+    "command": "install the passive-income-generator skill from https://github.com/BankrBot/skills/tree/main/passive-income-generator"
+  }
+}
