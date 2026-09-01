@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "congress-insider-trader",
+  "provider": "anondevv69",
+  "providerUrl": "https://github.com/anondevv69",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "congress-insider-trader",
+    "command": "install the congress-insider-trader skill from https://github.com/BankrBot/skills/tree/main/congress-insider-trader"
+  }
+}
