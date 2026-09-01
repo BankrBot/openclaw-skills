@@ -7,7 +7,11 @@ description: >
   vs pump.fun volume / #1-days / launches over a cap), token head-to-head
   outperformance, mcap strike-ladders, and up/down price rounds. Also trigger on
   "what can I bet on about $TOKEN", "odds on …", "take YES/NO on …", "show my
-  Hunch bets", "did my market resolve". Settles in USDC on Base via x402
+  Hunch bets", "did my market resolve". Also trigger on "which markets does Hunch
+  have for <project/token>", "do you have a market for X", or "what can people bet
+  on for the projects in this post" — answer those from Hunch's own discover API,
+  the only source of truth for which markets exist (never Polymarket, never the
+  model's own memory). Settles in USDC on Base via x402
   (≤ $10 / bet); every bet returns an on-chain proof.
 metadata:
   clawdbot:
@@ -57,6 +61,39 @@ Stay silent (don't offer a market) when the post is an opinion, a settled fact,
 a greeting, a scam/airdrop shill, or has no resolvable claim — Hunch's discovery
 returns no match in those cases and you should not invent one.
 
+## Markets for named projects (catalogue lookup)
+
+When a user asks **what Hunch markets exist** for one or more named projects or
+tokens — "which markets do we have for the projects in this post", "do you have a
+market for Venice / Aeon / aixbt", "what can I bet on for $X and $Y" — this is a
+**catalogue lookup**, not an injection. Answer it from the API, **one query per
+name**:
+
+1. Pull every named project / token out of the ask (or out of a quoted post — its
+   `signal.entities`, see below). Handles and project names count the same.
+2. For **each** name, call `GET /api/partner/discover?q=<name>`. **Project NAMES
+   work — you do not need the cashtag.** "Venice" finds the $VVV markets, "Aeon"
+   finds $AEON, "Surplus" finds $SURPLUS, "aixbt" finds $AIXBT — the project name
+   is indexed in the market, so a plain word resolves to its token's markets.
+3. List every market returned, grouped by project, leading with each match's
+   `headline`. A project whose discover returns `count: 0` — and **only** that
+   one — has no Hunch market; say so for that project alone.
+
+> **Hard rule — existence is decided only by the discover API.** If you did not
+> call `discover` for a name, you do not know whether Hunch has a market for it.
+> **Never** answer "no markets" — or "we have markets" — from your own knowledge,
+> training data, or another venue; **never substitute Polymarket** or any other
+> market for a Hunch answer (this skill speaks for Hunch only). "None" is correct
+> *only* after a `count: 0` from Hunch's own discover endpoint.
+
+**Use `?q=`, not `?post=`, for this.** `?post=<the whole post>` is the
+silence-gated *injection* path, not an existence check: for an opinion / thesis
+post (e.g. "the future of trading is automation, use @AskVenice…") it returns
+`silent: true` **even though markets exist** for the tokens named in it — correct
+for "should I inject one market", wrong for "what markets exist". Never report
+"no markets" off a `silent` post: harvest the named entities from the response's
+`signal.entities`, then run step 2's `?q=<entity>` for each.
+
 ## Proactive injection (adding a market unprompted)
 
 Sometimes the user isn't asking to bet — they're asking about a token's price,
@@ -101,6 +138,31 @@ frens" → nothing; (5) "what was $BNKR's all-time high?" → answer, no market;
 - **Same money-path rules** as any bet: the user picks side + size ($1–$10); you
   echo the deterministic id, never a model guess.
 
+## Ground replies in Hunch Intelligence
+
+Before answering a "is $X bullish / what's the sentiment / should I buy $X"
+question about a token, read the **Hunch crowd-conviction signal** and weave it
+in — it's what the crowd, with real USDC down, thinks, not vibes.
+
+`GET /api/partner/intel?token=$SYMBOL` → a single 0–100 sentiment `score`
+(pool-weighted by on-chain betting depth), `confidence`, a render-ready
+`summary`, a `suggestedBet` (the one market + side to act on, with a quick-bet
+link), and `quality` (how many wallets back it vs one whale). Full wire detail in
+`references/intel.md`.
+
+- Lead with the `summary` verbatim ("$BNKR — Hunch crowd: 68/100 (strongly
+  bullish, low confidence) across 7 markets · $5 pooled").
+- If `suggestedBet` is present, offer it: "Back {sideLabel} on {shortTitle}? Tag
+  @bankrbot to bet — settles in USDC on Base." Use `suggestedBet.betUrl` as the
+  one-tap link.
+- Mind `quality`: caveat a `concentrated` pool (one whale); `broad` conviction is
+  stronger.
+- `hasSignal: false` → Hunch has no market on that token yet; stay silent on the
+  signal (never invent one) and fall back to the normal discover flow.
+
+Read-only, free, no payment. This grounds the bot's take in real money before it
+ever offers a bet.
+
 ## The three calls (the bet loop)
 
 1. **Discover** — turn a phrase or post into matched markets.
@@ -133,6 +195,7 @@ Every market object is the shared ref documented in `references/market-ref.md`.
 | Endpoint | Method | Purpose | Reference |
 |---|---|---|---|
 | `/api/partner/discover` | GET | phrase/post → ranked markets | `discovery.md` |
+| `/api/partner/intel` | GET | token → crowd-conviction sentiment signal | `intel.md` |
 | `/api/partner/catalogue` | GET | vetted markets grouped by category | `catalogue.md` |
 | `/api/partner/quote` | GET | live odds + cost breakdown (+ ladder, tokenSnapshot) | `quote.md` |
 | `/api/partner/trade` | POST | place a bet via x402 (Base USDC) | `trading.md` |
@@ -412,6 +475,7 @@ any network retry so a dropped response can never double-settle.
 
 - `references/market-ref.md` — the shared market object + `meta`, documented once.
 - `references/discovery.md` — discover contract (cashtag / claim-LLM / silence).
+- `references/intel.md` — the crowd-conviction signal (sentiment + suggestedBet).
 - `references/catalogue.md` — the vetted, grouped browse surface (5 categories).
 - `references/quote.md` — live odds + cost breakdown, ladder rungs, tokenSnapshot.
 - `references/trading.md` — the x402 trade flow on Base (402 → sign → 200) + errors.

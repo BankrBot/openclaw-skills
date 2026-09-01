@@ -162,12 +162,33 @@ loosely related market. Posts that correctly return no match: greetings ("gm"),
 opinions, already-settled facts, airdrop/scam shills, and anything with no
 resolvable future claim.
 
+> **Silence is the *injection* gate, not an existence check.** A `silent` `post`
+> means "don't inject a market into this reply" — **not** "no markets exist for
+> the tokens named in the post". An opinion post that name-drops several projects
+> returns `silent` while those projects' markets are alive and bettable. To answer
+> "which markets does Hunch have for X", query each named project with `?q=` (see
+> *Markets for named projects* below) — never report "no markets" off a `silent`.
+
 ### Multi-market
 
 A token with ≥2 live markets returns them all, ranked. Flip markets index **both**
 sides (the $HUNCH underdog *and* the target), so `$LFI` exact-matches
 "Will $HUNCH flip $LFI?" — not just a weak lexical hit. List each match; let the
 user pick; then `quote` → `trade`.
+
+### Markets for named projects (names work — one query per name)
+
+Discovery matches **project names**, not just cashtags: the project name and
+descriptive text are folded into the lexical haystack, so a plain `q=Venice`
+surfaces the `$VVV` markets, `q=Aeon` the `$AEON` markets, `q=Surplus` the
+`$SURPLUS` markets, `q=aixbt` the `$AIXBT` markets. To answer "which markets does
+Hunch have for these projects", call `?q=<name>` **once per named project** and
+union the results — don't pass the whole list as one query, and don't use `?post=`
+(that's the silence-gated injection path, which returns `silent` for an opinion
+post even when the named tokens have live markets). A name with `count: 0` is the
+*only* signal that Hunch has no market for it — never infer "no market", and never
+substitute Polymarket, from anything else. See SKILL.md → *Markets for named
+projects (catalogue lookup)*.
 
 ### Browse mode
 

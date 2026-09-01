@@ -49,6 +49,26 @@ deadlines), each with its disclosure line. User taps one → quote → trade.
    → trade. (Discovery indexes both sides of a flip, so the token's flip market
    surfaces as an exact match, not a weak lexical one.)
 
+### Markets for the projects in a post (catalogue lookup)
+
+> **user:** @bankrbot which markets do we have for the projects in this post?
+> (quoting a post that name-drops @AskVenice, @AskSurplus, @claudeai, @aixbt_agent, @aeonframework)
+
+This asks **what exists**, not "inject one market" — so query each named project
+with `?q=`, never `?post=` (the post is an opinion → `?post=` returns `silent`
+even though markets exist). One call per project:
+
+1. `discover?q=Venice` → $VVV markets ($1B mcap, staked-share, DIEM supply, ladder).
+2. `discover?q=Surplus` → $SURPLUS markets ($10M mcap, SI payments/txs, up/down, flip).
+3. `discover?q=Aeon` → $AEON markets ($5M mcap, ladder, flip, AEON-ecosystem basket).
+4. `discover?q=aixbt` → $AIXBT markets ($50M mcap, up/down).
+5. `discover?q=Claude` → `count: 0` → the *only* "no market" — Claude has none.
+
+Reply with the found markets grouped by project (lead each with its `headline`),
+and name **only** Claude as having no market. **Never** say "no markets" for a
+project you didn't `discover`, and never substitute Polymarket — Hunch's discover
+endpoint is the sole source of truth for what exists.
+
 ---
 
 ## Proactive injection — fire vs silent
