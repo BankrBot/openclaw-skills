@@ -1,0 +1,20 @@
+[
+  "function invokeSkill(bytes32 skillId)",
+  "function invokeSkill(bytes32 skillId, uint256 maxPrice)",
+  "function registerSkill(string cid, bytes32 didHash, uint256 pricePerCall, bytes32[] parentSkills, uint16[] parentBps) returns (bytes32 skillId)",
+  "function withdraw()",
+  "function deactivateSkill(bytes32 skillId)",
+  "function reactivateSkill(bytes32 skillId)",
+  "function attestBenchmark(bytes32 skillId, bytes32 benchmarkHash, uint16 successRate, uint128 sampleCount)",
+  "function skills(bytes32) view returns (string cid, address creator, bytes32 didHash, uint256 pricePerCall, uint64 createdAt, uint64 lastInvoked, uint128 totalInvocations, uint128 totalEarned, bool active)",
+  "function withdrawable(address) view returns (uint256)",
+  "function computeSkillId(string cid, bytes32 didHash, address creator) pure returns (bytes32)",
+  "function protocolFeeBps() view returns (uint16)",
+  "function totalSkillCount() view returns (uint256)",
+  "function listSkills(uint256 offset, uint256 limit) view returns (bytes32[])",
+  "function getSkillsByCreator(address) view returns (bytes32[])",
+  "event SkillRegistered(bytes32 indexed skillId, address indexed creator, bytes32 indexed didHash, string cid, uint256 pricePerCall, bytes32[] parentSkills, uint16[] parentBps)",
+  "event SkillInvoked(bytes32 indexed skillId, address indexed caller, uint256 amount, uint128 invocationNumber)",
+  "event RoyaltyPaid(bytes32 indexed parentSkillId, bytes32 indexed childSkillId, address indexed parentCreator, uint256 amount)",
+  "event Withdraw(address indexed user, uint256 amount)"
+]
