@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "morv",
+  "provider": "Morv Labs",
+  "providerUrl": "https://morv.run",
+  "logo": "logo.png",
+  "demo": {
+    "title": "morv-quickstart.sh",
+    "language": "bash",
+    "code": "npm install @morv-labs/morv\nnpx morv init\n# .env: GROQ_API_KEY, MORV_API_KEY, BANKR_API_KEY, BANKR_AGENT_ADDRESS\nnpx morv agent create dca-bot --tools base-x402-discovery --daily 200 --per-tx 50\nnpx morv add base-x402-discovery\nnpx morv run \"Aggregate DeFi TVL from x402 sources on Base\"\nnpx morv guard status dca-bot"
+  },
+  "setup": [
+    "Install SDK: `npm install @morv-labs/morv`",
+    "Init: `npx morv init` (sign in at https://morv.run for `MORV_API_KEY`)",
+    "Set `BANKR_API_KEY` + `BANKR_AGENT_ADDRESS` and a BYOM key e.g. `GROQ_API_KEY`",
+    "Create agent: `npx morv agent create <id> --daily 200 --per-tx 50 --tools base-x402-discovery`",
+    "Run: `npx morv run \"<prompt>\"` then `npx morv guard status <id>`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "morv",
+    "command": "install the morv skill from https://github.com/BankrBot/skills/tree/main/morv"
+  }
+}
