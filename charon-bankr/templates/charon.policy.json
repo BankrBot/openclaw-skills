@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "default": "PASS",
+  "allowlists": {
+    "commands": ["git", "node", "npm", "pnpm", "bun", "python", "python3", "curl"],
+    "domains": ["api.bankr.bot", "bankr.bot", "github.com", "api.github.com"],
+    "chains": ["base", "ethereum", "polygon", "arbitrum", "bnb", "solana", "unichain", "worldchain"],
+    "recipients": []
+  },
+  "blocklists": {
+    "commands": ["rm", "chmod", "chown", "kill", "pkill", "sudo", "dd"],
+    "domains": ["webhook.site", "pipedream.net", "interact.sh", "ngrok.io", "ngrok-free.app"]
+  },
+  "thresholds": {
+    "pause_amount_usd": 100,
+    "deny_amount_usd": 1000
+  },
+  "rules": [
+    {
+      "id": "deny-secret-exfil",
+      "action": "*",
+      "verdict": "DENY",
+      "when": {
+        "contains_secret": true,
+        "domain_not_in": "$allowlists.domains",
+        "field_exists": "domain"
+      }
+    },
+    {
+      "id": "deny-exfil-domain",
+      "action": ["http.request", "browser.open"],
+      "verdict": "DENY",
+      "when": {
+        "domain_in": "$blocklists.domains"
+      }
+    },
+    {
+      "id": "deny-protected-delete",
+      "action": ["code.delete", "shell.run"],
+      "verdict": "DENY",
+      "when": {
+        "operation_in": ["delete", "remove", "wipe"],
+        "path_glob": ["src/**", "package.json", "package-lock.json", "pnpm-lock.yaml", "bun.lockb", ".env", ".env.*", ".git/**", "charon.yml"]
+      }
+    },
+    {
+      "id": "deny-dangerous-command",
+      "action": "shell.run",
+      "verdict": "DENY",
+      "when": {
+        "command_in": "$blocklists.commands"
+      }
+    },
+    {
+      "id": "deny-wallet-hard-limit",
+      "action": ["wallet.transfer", "token.swap", "contract.call"],
+      "verdict": "DENY",
+      "when": {
+        "amount_usd_gt": "$thresholds.deny_amount_usd"
+      }
+    },
+    {
+      "id": "deny-unsupported-chain",
+      "action": ["wallet.transfer", "wallet.sign", "token.swap", "token.launch", "contract.call"],
+      "verdict": "DENY",
+      "when": {
+        "chain_not_in": "$allowlists.chains",
+        "field_exists": "chain"
+      }
+    },
+    {
+      "id": "pause-unknown-command",
+      "action": "shell.run",
+      "verdict": "PAUSE",
+      "when": {
+        "command_not_in": "$allowlists.commands",
+        "field_exists": "command"
+      }
+    },
+    {
+      "id": "pause-code-write",
+      "action": "code.write",
+      "verdict": "PAUSE",
+      "when": {}
+    },
+    {
+      "id": "pause-git-side-effect",
+      "action": ["git.commit", "git.push", "git.remote", "git.tag"],
+      "verdict": "PAUSE",
+      "when": {}
+    },
+    {
+      "id": "pause-unknown-domain",
+      "action": ["http.request", "browser.open"],
+      "verdict": "PAUSE",
+      "when": {
+        "domain_not_in": "$allowlists.domains",
+        "field_exists": "domain"
+      }
+    },
+    {
+      "id": "pause-automation",
+      "action": "automation.create",
+      "verdict": "PAUSE",
+      "when": {}
+    },
+    {
+      "id": "pause-signing",
+      "action": ["wallet.sign", "contract.call"],
+      "verdict": "PAUSE",
+      "when": {}
+    },
+    {
+      "id": "pause-medium-wallet-action",
+      "action": ["wallet.transfer", "token.swap"],
+      "verdict": "PAUSE",
+      "when": {
+        "amount_usd_gt": "$thresholds.pause_amount_usd"
+      }
+    },
+    {
+      "id": "pause-token-launch",
+      "action": "token.launch",
+      "verdict": "PAUSE",
+      "when": {}
+    }
+  ]
+}
