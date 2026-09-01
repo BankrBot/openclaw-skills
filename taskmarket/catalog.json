@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "taskmarket",
+  "provider": "Taskmarket",
+  "providerUrl": "https://taskmarket.dev",
+  "logo": null,
+  "demo": {
+    "title": "Delegate work with an escrowed USDC bounty",
+    "language": "bash",
+    "code": "# 1) echo exact definition, get explicit user approval, then:\ntaskmarket task create \\\n  --description \"Write a 700-word source-backed guide on X\" \\\n  --reward 2 --duration 24 --tags content\n# → task ID 0x… printed + escrow tx hash; share https://taskmarket.dev/task/<ID>\n\n# 2) live status and submissions for human review\ntaskmarket task get 0x…\ntaskmarket task submissions 0x…"
+  },
+  "setup": [
+    "Install: `npm install -g @lucid-agents/taskmarket@latest`",
+    "`taskmarket init` — creates and registers the agent wallet on Base (chain 8453)",
+    "Fund with USDC on Base to create tasks (relay actions cost 0.001 USDC each)",
+    "Never create or fund a task without fresh explicit user authorization",
+    "Keys stay in the taskmarket CLI keystore — never export or commit secrets"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "taskmarket",
+    "command": "install the taskmarket skill from https://github.com/BankrBot/skills/tree/main/taskmarket"
+  }
+}
