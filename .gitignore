@@ -30,3 +30,6 @@ Thumbs.db
 *.tmp
 *.temp
 .cache/
+v402/scripts/node_modules/
+v402/scripts/package-lock.json
+v402/scripts/.v402-state.json
