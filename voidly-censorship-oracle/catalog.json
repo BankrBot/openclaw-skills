@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "voidly-censorship-oracle",
+  "provider": "Voidly",
+  "providerUrl": "https://voidly.ai",
+  "logo": null,
+  "demo": {
+    "title": "Is twitter.com reachable in Iran?",
+    "language": "bash",
+    "code": "curl -s \"https://api.voidly.ai/v1/accessibility/check?domain=twitter.com&country=IR\" | jq .\n# => {\"status\":\"blocked\",\"blockingMethod\":\"tcp-reset\",\"evidenceCount\":155,\"confidence\":1,...}"
+  },
+  "setup": [
+    "No API key, wallet, or payment required — every endpoint is a public, read-only GET.",
+    "Requires curl and jq.",
+    "Install: `npx skills add voidly-censorship-oracle`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "voidly-censorship-oracle",
+    "command": "install the voidly-censorship-oracle skill from https://github.com/BankrBot/skills/tree/main/voidly-censorship-oracle"
+  }
+}

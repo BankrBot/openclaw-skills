@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Voidly censorship oracle">
+  <rect width="64" height="64" rx="14" fill="#0b0f1a"/>
+  <!-- globe -->
+  <circle cx="32" cy="32" r="17" fill="none" stroke="#7dd3fc" stroke-width="2.5"/>
+  <ellipse cx="32" cy="32" rx="8" ry="17" fill="none" stroke="#7dd3fc" stroke-width="1.5" opacity="0.7"/>
+  <line x1="15" y1="32" x2="49" y2="32" stroke="#7dd3fc" stroke-width="1.5" opacity="0.7"/>
+  <path d="M18 23 Q32 29 46 23" fill="none" stroke="#7dd3fc" stroke-width="1.5" opacity="0.5"/>
+  <path d="M18 41 Q32 35 46 41" fill="none" stroke="#7dd3fc" stroke-width="1.5" opacity="0.5"/>
+  <!-- censorship bar across the globe -->
+  <rect x="10" y="28.5" width="44" height="7" rx="2" fill="#ef4444" opacity="0.92" transform="rotate(-18 32 32)"/>
+  <!-- probe ping -->
+  <circle cx="49" cy="15" r="4" fill="#22d3ee"/>
+  <circle cx="49" cy="15" r="7.5" fill="none" stroke="#22d3ee" stroke-width="1.5" opacity="0.5"/>
+</svg>
