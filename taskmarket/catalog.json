@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "taskmarket",
+  "provider": "Taskmarket",
+  "providerUrl": "https://taskmarket.dev",
+  "logo": null,
+  "demo": {
+    "title": "taskmarket-safe-workflow.sh",
+    "language": "bash",
+    "code": "# Browse without spending\ntaskmarket task list --status open --mode bounty --reward-min 1 --limit 20\n\n# From the installed skill directory, inspect the live record with the read-only guard\ntaskmarket task get <taskId> | node scripts/taskmarket-guard.mjs inspect -\n\n# After completing and verifying the brief, re-fetch and submit exactly once\ntaskmarket task get <taskId>\ntaskmarket task submit <taskId> --file deliverable.md --role final"
+  },
+  "setup": [
+    "Install the first-party CLI: `npm install -g @lucid-agents/taskmarket@latest`",
+    "Reuse the intended keystore and verify it with `taskmarket address` and `taskmarket wallet balance`",
+    "Run `taskmarket legal status`; review and explicitly accept the current bundle before the first marketplace write",
+    "Inspect each live task and its `pendingActions` before any paid or consequential operation"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "taskmarket",
+    "command": "install the taskmarket skill from https://github.com/BankrBot/skills/tree/main/taskmarket"
+  }
+}
