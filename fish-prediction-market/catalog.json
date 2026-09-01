@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "slug": "fish-prediction-market",
+  "provider": "Fish — Token Intelligence",
+  "providerUrl": "https://fishwithme.xyz",
+  "logo": null,
+  "demo": {
+    "title": "example.sh",
+    "language": "bash",
+    "code": "# Check market odds for any token\ncurl 'https://fishwithme.xyz/api/bankr/market?token=FISH&chain=base'\n\n# Bet on a Bankr Bot deployed token by contract address\ncurl 'https://fishwithme.xyz/api/bankr/market?token=0x9a81e48fa477b78e484f0080dabe21a2a98b7ba3&chain=robinhood'"
+  },
+  "setup": [
+    "Ensure your Bankr wallet has ETH on Base (or Robinhood Chain for chain=robinhood)",
+    "Install skill and use natural language: 'Bet 0.001 ETH YES on FISH'"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "fish-prediction-market",
+    "command": "install the fish-prediction-market skill from https://github.com/BankrBot/skills/tree/main/fish-prediction-market"
+  }
+}
