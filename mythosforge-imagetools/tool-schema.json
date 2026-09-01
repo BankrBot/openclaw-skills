@@ -1,0 +1,52 @@
+{
+  "_comment": "Universal function-calling schema for mythosforge-imagetools. Hand the matching block to any tool-use LLM. Parameters identical across shapes; only the envelope differs. openai = OpenAI / Bankr LLM Gateway / Surplus / Codex / Cursor. anthropic = Claude Messages API tool-use.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "op": { "type": "string", "enum": ["upscale", "bg-remove"], "description": "Which operation to run." },
+      "image": { "type": "string", "description": "Path or URL to the input image." },
+      "scale": { "type": "number", "description": "Upscale factor 1..10 (upscale op only).", "default": 4 },
+      "out": { "type": "string", "description": "Optional output file path." },
+      "model": { "type": "string", "description": "Optional Replicate model slug override for the op." }
+    },
+    "required": ["op", "image"]
+  },
+  "openai": {
+    "type": "function",
+    "function": {
+      "name": "mythosforge_imagetools",
+      "description": "Upscale (real-esrgan) or remove the background (rembg) of an image via Replicate. Writes the result to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "op": { "type": "string", "enum": ["upscale", "bg-remove"], "description": "Which operation to run." },
+          "image": { "type": "string", "description": "Path or URL to the input image." },
+          "scale": { "type": "number", "description": "Upscale factor 1..10 (upscale op only)." },
+          "out": { "type": "string", "description": "Optional output file path." },
+          "model": { "type": "string", "description": "Optional Replicate model slug override." }
+        },
+        "required": ["op", "image"]
+      }
+    }
+  },
+  "anthropic": {
+    "name": "mythosforge_imagetools",
+    "description": "Upscale (real-esrgan) or remove the background (rembg) of an image via Replicate. Writes the result to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["upscale", "bg-remove"], "description": "Which operation to run." },
+        "image": { "type": "string", "description": "Path or URL to the input image." },
+        "scale": { "type": "number", "description": "Upscale factor 1..10 (upscale op only)." },
+        "out": { "type": "string", "description": "Optional output file path." },
+        "model": { "type": "string", "description": "Optional Replicate model slug override." }
+      },
+      "required": ["op", "image"]
+    }
+  },
+  "invocation": {
+    "note": "When the model emits a tool call with the args above, the host harness maps them to this shell command and runs it (REPLICATE_API_TOKEN must be set in that environment):",
+    "command": "node imagetools.mjs --op <op> --image <image> [--scale <scale>] [--out <out>] [--model <model>]",
+    "returns": "A JSON line: { ok, op, image, path, bytes }. Feed `path` back to the model as the tool result."
+  }
+}

@@ -1,0 +1,42 @@
+# {{NAME}} — agent instructions
+
+Runtime-agnostic instructions for **Codex, Cursor, and any shell-capable AI agent**.
+(Claude Code reads `SKILL.md`; tool-use LLMs read `tool-schema.json`. Same skill, one behavior.)
+
+## What this does
+
+{{DESCRIPTION}} You bring your own key — no wallet, no MythosForge account, no payment.
+
+## Setup
+
+- Node 18+ (built-in `fetch`; no `npm install`).
+- Export your own key: `{{PRIMARY_ENV}}` ({{ENV_LINK}}). Billed to your account.
+
+## Run
+
+```bash
+node generate.mjs --prompt "..." --aspect landscape
+```
+
+- `--prompt` (required, ≤2000 chars)
+- `--aspect` `square` (default) | `landscape` | `portrait`
+- `--out <path>` optional; defaults to `out/<aspect>.{{EXT}}`
+- `--dry-run` prints the request without spending or needing a key
+
+## Result
+
+Prints one JSON line and writes the output file:
+
+```json
+{ "ok": true, "aspect": "landscape", "prompt": "...", "path": "/abs/out/...", "bytes": 148213 }
+```
+
+Read `path`. On failure it prints `{ "ok": false, "error": "..." }` and exits non-zero. Never
+claim an output exists unless `ok` was `true`.
+
+## For hosted / tool-use LLMs (Bankr LLM, Surplus, OpenAI, Claude API)
+
+Those models can't run a shell themselves. The host harness hands the model `tool-schema.json`
+(the `openai` or `anthropic` block); when the model emits a `{{TOOL_NAME}}` tool call, the host
+runs the `node generate.mjs …` command above (with `{{PRIMARY_ENV}}` set) and feeds `path` back
+as the tool result.

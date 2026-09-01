@@ -1,0 +1,6 @@
+node_modules/
+out/
+*.webp
+*.png
+.env
+.DS_Store

@@ -1,0 +1,16 @@
+{
+  "name": "mythosforge-brandkit",
+  "version": "1.0.0",
+  "description": "Extract or author a reusable brand/style token (brandkit.json) that every generator + lookgate share for one consistent visual identity.",
+  "type": "module",
+  "bin": { "mythosforge-brandkit": "brandkit.mjs" },
+  "scripts": {
+    "test": "node selftest.mjs",
+    "schema": "node brandkit.mjs --schema",
+    "dry-run": "node brandkit.mjs --from ./example.png --dry-run"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "keywords": ["ai", "agent", "skill", "brand", "style-token", "theme", "byo-key", "mythosforge"],
+  "files": ["brandkit.mjs", "selftest.mjs", "SKILL.md", "AGENTS.md", "skill.json", "tool-schema.json", "references/", "README.md", "LICENSE"]
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "mythosforge-audio",
+  "provider": "MythosForge",
+  "providerUrl": "https://www.mythosforge.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "audio.sh",
+    "language": "bash",
+    "code": "# Dry-run first — needs no key, prints the exact Replicate request\nnode audio.mjs --op sfx --text \"heavy wooden door creaking open\" --duration 4 --dry-run\n\n# Text-to-speech — bring your own Replicate key\nREPLICATE_API_TOKEN=r8_xxx node audio.mjs \\\n  --op tts --text \"Welcome, traveler.\" --out out/line.mp3\n\n# Music / ambience and sound effects\nREPLICATE_API_TOKEN=r8_xxx node audio.mjs --op music --text \"calm lo-fi tavern loop\" --duration 20 --out out/tavern.wav\nREPLICATE_API_TOKEN=r8_xxx node audio.mjs --op sfx --text \"heavy wooden door creaking open\" --duration 4 --out out/door.wav"
+  },
+  "setup": [
+    "Install: `install the mythosforge-audio skill from https://github.com/BankrBot/skills/tree/main/mythosforge-audio`",
+    "Node 18+ — uses built-in fetch, zero dependencies (no npm install)",
+    "Bring your own Replicate API token: export REPLICATE_API_TOKEN (get one at https://replicate.com/account/api-tokens). Generation is billed to your Replicate account, not MythosForge.",
+    "Three ops: tts | music | sfx. tts default voice is a MiniMax system voice (--voice to change). Verify with `--dry-run` (needs no key) first.",
+    "Source: https://github.com/ryjin111/mythosforge-audio"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "mythosforge-audio",
+    "command": "install the mythosforge-audio skill from https://github.com/BankrBot/skills/tree/main/mythosforge-audio"
+  }
+}

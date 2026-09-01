@@ -1,0 +1,52 @@
+{
+  "_comment": "Universal function-calling schema for mythosforge-3d. Hand the matching block to any tool-use LLM. Parameters identical across shapes; only the envelope differs. openai = OpenAI / Bankr LLM Gateway / Surplus / Codex / Cursor. anthropic = Claude Messages API tool-use.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "image": { "type": "string", "description": "Path or URL to the source image to convert to 3D." },
+      "out": { "type": "string", "description": "Optional output file path (.glb)." },
+      "model": { "type": "string", "description": "Optional Replicate 3D model slug override (default firtoz/trellis)." },
+      "image-mode": { "type": "string", "enum": ["array", "single"], "description": "Image input mode for an unmapped --model." },
+      "output-key": { "type": "string", "description": "Named output key holding the GLB uri for an unmapped --model." }
+    },
+    "required": ["image"]
+  },
+  "openai": {
+    "type": "function",
+    "function": {
+      "name": "mythosforge_3d",
+      "description": "Convert an image into a 3D model (GLB) via Replicate (default firtoz/trellis). Writes the .glb to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment. Note: 3D generation can take minutes.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "image": { "type": "string", "description": "Path or URL to the source image." },
+          "out": { "type": "string", "description": "Optional output file path (.glb)." },
+          "model": { "type": "string", "description": "Optional Replicate 3D model slug override." },
+          "image-mode": { "type": "string", "enum": ["array", "single"], "description": "Image input mode for an unmapped --model." },
+          "output-key": { "type": "string", "description": "Named output key holding the GLB uri for an unmapped --model." }
+        },
+        "required": ["image"]
+      }
+    }
+  },
+  "anthropic": {
+    "name": "mythosforge_3d",
+    "description": "Convert an image into a 3D model (GLB) via Replicate (default firtoz/trellis). Writes the .glb to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment. Note: 3D generation can take minutes.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "image": { "type": "string", "description": "Path or URL to the source image." },
+        "out": { "type": "string", "description": "Optional output file path (.glb)." },
+        "model": { "type": "string", "description": "Optional Replicate 3D model slug override." },
+        "image-mode": { "type": "string", "enum": ["array", "single"], "description": "Image input mode for an unmapped --model." },
+        "output-key": { "type": "string", "description": "Named output key holding the GLB uri for an unmapped --model." }
+      },
+      "required": ["image"]
+    }
+  },
+  "invocation": {
+    "note": "When the model emits a tool call with the args above, the host harness maps them to this shell command and runs it (REPLICATE_API_TOKEN must be set in that environment):",
+    "command": "node to3d.mjs --image <image> [--out <out>] [--model <model>] [--image-mode <image-mode>] [--output-key <output-key>]",
+    "returns": "A JSON line: { ok, image, model, path, bytes }. Feed `path` back to the model as the tool result."
+  }
+}

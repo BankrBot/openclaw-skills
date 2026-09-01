@@ -1,0 +1,55 @@
+{
+  "_comment": "Universal function-calling schema for mythosforge-lookgate. Hand the matching block to any tool-use LLM. Parameters identical across shapes; only the envelope differs. openai = OpenAI / Bankr LLM Gateway / Surplus / Codex / Cursor. anthropic = Claude Messages API tool-use.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "image": { "type": "string", "description": "Path or URL to the image to score." },
+      "rubric": { "type": "string", "description": "Optional path to a JSON-array rubric; defaults to default-visual-v1." },
+      "palette": { "type": "string", "description": "Optional theme/palette (e.g. a brandkit.json) to check in_palette against." },
+      "threshold": { "type": "number", "description": "Optional 0..1; switches from strict-any-fail to a score threshold." },
+      "set": { "type": "boolean", "description": "Distinctness add-on when scoring a set of assets together." },
+      "out": { "type": "string", "description": "Optional path to write the verdict JSON." }
+    },
+    "required": ["image"]
+  },
+  "openai": {
+    "type": "function",
+    "function": {
+      "name": "mythosforge_lookgate",
+      "description": "Score an image against a visual-QA rubric and return a structured PASS/FAIL verdict (JSON: verdict, score, criteria, fails, suggestion). The self-verify half of the MythosForge suite. Requires the caller's own GEMINI_API_KEY (or LOOKGATE_API_KEY) in the execution environment — default provider is Google Gemini vision; any OpenAI-compatible vision endpoint via --base-url.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "image": { "type": "string", "description": "Path or URL to the image to score." },
+          "rubric": { "type": "string", "description": "Optional path to a JSON-array rubric." },
+          "palette": { "type": "string", "description": "Optional theme/palette to check in_palette against." },
+          "threshold": { "type": "number", "description": "Optional 0..1 score threshold." },
+          "set": { "type": "boolean", "description": "Distinctness add-on for scoring a set." },
+          "out": { "type": "string", "description": "Optional path to write the verdict JSON." }
+        },
+        "required": ["image"]
+      }
+    }
+  },
+  "anthropic": {
+    "name": "mythosforge_lookgate",
+    "description": "Score an image against a visual-QA rubric and return a structured PASS/FAIL verdict (JSON: verdict, score, criteria, fails, suggestion). The self-verify half of the MythosForge suite. Requires the caller's own GEMINI_API_KEY (or LOOKGATE_API_KEY) in the execution environment — default provider is Google Gemini vision; any OpenAI-compatible vision endpoint via --base-url.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "image": { "type": "string", "description": "Path or URL to the image to score." },
+        "rubric": { "type": "string", "description": "Optional path to a JSON-array rubric." },
+        "palette": { "type": "string", "description": "Optional theme/palette to check in_palette against." },
+        "threshold": { "type": "number", "description": "Optional 0..1 score threshold." },
+        "set": { "type": "boolean", "description": "Distinctness add-on for scoring a set." },
+        "out": { "type": "string", "description": "Optional path to write the verdict JSON." }
+      },
+      "required": ["image"]
+    }
+  },
+  "invocation": {
+    "note": "When the model emits a tool call with the args above, the host harness maps them to this shell command and runs it (GEMINI_API_KEY or LOOKGATE_API_KEY must be set in that environment):",
+    "command": "node gate.mjs --image <image> [--rubric <rubric>] [--palette <palette>] [--threshold <threshold>] [--set] [--out <out>]",
+    "returns": "Verdict JSON: { verdict, score, criteria, fails, suggestion, rubric_id, image }. Feed it back to the model as the tool result."
+  }
+}

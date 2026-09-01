@@ -1,0 +1,55 @@
+{
+  "_comment": "Universal function-calling schema for mythosforge-imageedit. Hand the matching block to any tool-use LLM. Parameters identical across shapes; only the envelope differs. openai = OpenAI / Bankr LLM Gateway / Surplus / Codex / Cursor. anthropic = Claude Messages API tool-use.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "op": { "type": "string", "enum": ["edit", "inpaint"], "description": "edit = instruction img2img; inpaint = fill a masked region." },
+      "image": { "type": "string", "description": "Path or URL to the input image." },
+      "prompt": { "type": "string", "description": "The edit instruction.", "maxLength": 2000 },
+      "mask": { "type": "string", "description": "Inpaint only: path or URL to the mask (white = area to fill)." },
+      "out": { "type": "string", "description": "Optional output file path." },
+      "model": { "type": "string", "description": "Optional Replicate model slug override." }
+    },
+    "required": ["op", "image", "prompt"]
+  },
+  "openai": {
+    "type": "function",
+    "function": {
+      "name": "mythosforge_imageedit",
+      "description": "Edit an image with a prompt (instruction img2img, flux-kontext) or inpaint a masked region (flux-fill) via Replicate. Writes the result to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "op": { "type": "string", "enum": ["edit", "inpaint"], "description": "edit = instruction img2img; inpaint = fill a masked region." },
+          "image": { "type": "string", "description": "Path or URL to the input image." },
+          "prompt": { "type": "string", "description": "The edit instruction." },
+          "mask": { "type": "string", "description": "Inpaint only: path or URL to the mask." },
+          "out": { "type": "string", "description": "Optional output file path." },
+          "model": { "type": "string", "description": "Optional Replicate model slug override." }
+        },
+        "required": ["op", "image", "prompt"]
+      }
+    }
+  },
+  "anthropic": {
+    "name": "mythosforge_imageedit",
+    "description": "Edit an image with a prompt (instruction img2img, flux-kontext) or inpaint a masked region (flux-fill) via Replicate. Writes the result to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["edit", "inpaint"], "description": "edit = instruction img2img; inpaint = fill a masked region." },
+        "image": { "type": "string", "description": "Path or URL to the input image." },
+        "prompt": { "type": "string", "description": "The edit instruction." },
+        "mask": { "type": "string", "description": "Inpaint only: path or URL to the mask." },
+        "out": { "type": "string", "description": "Optional output file path." },
+        "model": { "type": "string", "description": "Optional Replicate model slug override." }
+      },
+      "required": ["op", "image", "prompt"]
+    }
+  },
+  "invocation": {
+    "note": "When the model emits a tool call with the args above, the host harness maps them to this shell command and runs it (REPLICATE_API_TOKEN must be set in that environment):",
+    "command": "node imageedit.mjs --op <op> --image <image> --prompt <prompt> [--mask <mask>] [--out <out>] [--model <model>]",
+    "returns": "A JSON line: { ok, op, image, path, bytes }. Feed `path` back to the model as the tool result."
+  }
+}

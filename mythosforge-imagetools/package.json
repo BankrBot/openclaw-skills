@@ -1,0 +1,15 @@
+{
+  "name": "mythosforge-imagetools",
+  "version": "1.0.0",
+  "description": "Upscale or remove the background of an image via Replicate. Two utility ops in one skill.",
+  "type": "module",
+  "bin": { "mythosforge-imagetools": "imagetools.mjs" },
+  "scripts": {
+    "test": "node selftest.mjs",
+    "dry-run": "node imagetools.mjs --op upscale --image ./example.png --dry-run"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "keywords": ["ai", "agent", "skill", "upscale", "background-removal", "replicate", "byo-key", "mythosforge"],
+  "files": ["imagetools.mjs", "selftest.mjs", "SKILL.md", "AGENTS.md", "skill.json", "tool-schema.json", "references/", "README.md", "LICENSE"]
+}

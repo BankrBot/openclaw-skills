@@ -1,0 +1,66 @@
+[
+  {
+    "id": "concept-splash",
+    "title": "Concept-art splash",
+    "model": "flux",
+    "aspect": "landscape",
+    "template": "{subject}, epic concept art, dramatic composition, volumetric light, painterly detail, trending splash key art",
+    "negative": "flat, low detail, watermark, text, logo"
+  },
+  {
+    "id": "product-hero",
+    "title": "Product hero shot",
+    "model": "nano",
+    "aspect": "square",
+    "template": "{subject}, clean product hero shot, soft studio lighting, seamless background, crisp focus, high-detail commercial photography",
+    "negative": "clutter, harsh shadows, busy background, artifacts"
+  },
+  {
+    "id": "pixel-sprite",
+    "title": "Pixel-art sprite",
+    "model": "retro",
+    "aspect": "square",
+    "template": "{subject}, pixel art sprite, clean readable silhouette, limited palette, crisp pixels, game-ready, centered",
+    "negative": "blurry, antialiased, 3d render, photorealistic"
+  },
+  {
+    "id": "cozy-isometric",
+    "title": "Cozy isometric tile",
+    "model": "flux",
+    "aspect": "square",
+    "template": "{subject}, cozy isometric illustration, soft warm palette, rounded forms, clean edges, tabletop diorama, charming",
+    "negative": "harsh, gritty, dark, cluttered, text"
+  },
+  {
+    "id": "neon-noir",
+    "title": "Neon noir cinematic",
+    "model": "flux",
+    "aspect": "landscape",
+    "template": "{subject}, neon noir, rain-slick streets, dramatic rim light, moody cinematic atmosphere, high detail",
+    "negative": "flat, daytime, low contrast, cartoon, washed out"
+  },
+  {
+    "id": "flat-vector-icon",
+    "title": "Flat vector icon",
+    "model": "flux",
+    "aspect": "square",
+    "template": "{subject}, flat vector icon, bold simple shapes, minimal, centered, solid background, crisp edges, app-icon style",
+    "negative": "photorealistic, gradient noise, 3d, texture, busy detail"
+  },
+  {
+    "id": "storybook",
+    "title": "Storybook illustration",
+    "model": "flux",
+    "aspect": "portrait",
+    "template": "{subject}, children's storybook illustration, warm gouache texture, gentle lighting, whimsical, hand-illustrated",
+    "negative": "photorealistic, dark, scary, harsh lines, text"
+  },
+  {
+    "id": "seamless-texture",
+    "title": "Seamless texture / tile",
+    "model": "flux",
+    "aspect": "square",
+    "template": "{subject}, seamless tileable texture, top-down flat lighting, even detail, repeating pattern, material surface",
+    "negative": "seams, shadows, perspective, subject, watermark"
+  }
+]

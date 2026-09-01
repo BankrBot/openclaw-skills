@@ -1,0 +1,27 @@
+{
+  "name": "{{NAME}}",
+  "version": "1.0.0",
+  "description": "{{DESCRIPTION}} Bring your own {{PRIMARY_ENV}}. No wallet, no payment.",
+  "license": "MIT",
+  "runtime": "node>=18",
+  "entry": "generate.mjs",
+  "invoke": "node generate.mjs --prompt \"<prompt>\" [--aspect square|landscape|portrait] [--out <path>] [--dry-run]",
+  "env": {
+    "required": {{ENV_REQUIRED_JSON}},
+    "optional": []
+  },
+  "inputs": {
+    "prompt": { "type": "string", "required": true, "maxLength": 2000 },
+    "aspect": { "type": "string", "enum": ["square", "landscape", "portrait"], "default": "square" },
+    "out": { "type": "string", "default": "out/<aspect>.{{EXT}}" }
+  },
+  "output": "JSON line on stdout: { ok, aspect, prompt, path, bytes }. Read `path` for the written file.",
+  "tool_schema": "tool-schema.json",
+  "runtimes": {
+    "claude-code": "SKILL.md",
+    "codex": "AGENTS.md",
+    "cursor": "AGENTS.md",
+    "shell": "invoke command above",
+    "tool-use-llm": "hand tool-schema.json (openai or anthropic block) to the model; host runs invoke on the tool call. Works with OpenAI, Anthropic, Bankr LLM Gateway, Surplus, and any function-calling model."
+  }
+}

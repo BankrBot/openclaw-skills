@@ -1,0 +1,13 @@
+# references/ — {{NAME}}
+
+Design contract for this skill: the rubric, schema, palette, or spec an agent must read
+**before running** so its output meets the look/quality bar without a human in the loop.
+
+Drop the skill's design docs here, for example:
+- a visual-QA **rubric** (pass/fail criteria + a JSON verdict schema),
+- a portable **style/theme token** schema the generator's prompt should honor,
+- any per-skill design contract, examples, or failure cases.
+
+`SKILL.md` requires the agent read this folder before generating. Keep it machine-usable
+(rubric-as-data + a verdict/output schema), not just prose, so any runtime can consume it —
+not only a human reading the file.

@@ -1,0 +1,31 @@
+{
+  "name": "mythosforge-lookgate",
+  "version": "1.0.0",
+  "description": "Score an image against a visual-QA rubric and return a structured PASS/FAIL verdict (JSON). The self-verify half of the MythosForge suite. Bring your own Gemini API key (LOOKGATE_API_KEY or GEMINI_API_KEY); default provider is Google Gemini vision, any OpenAI-compatible vision endpoint via --base-url. No wallet, no payment.",
+  "license": "MIT",
+  "runtime": "node>=18",
+  "entry": "gate.mjs",
+  "invoke": "node gate.mjs --image <path|url> [--rubric r.json] [--palette p.json] [--threshold 0..1] [--set] [--model m] [--base-url url] [--auth bearer|x-api-key] [--out f] [--dry-run] [--schema]",
+  "env": {
+    "required": ["GEMINI_API_KEY"],
+    "optional": ["LOOKGATE_API_KEY", "LOOKGATE_MODEL", "LOOKGATE_BASE_URL"],
+    "note": "Default provider is Google Gemini vision — set GEMINI_API_KEY (https://aistudio.google.com/apikey). LOOKGATE_API_KEY is accepted as an alias; LOOKGATE_BASE_URL/LOOKGATE_MODEL target any other OpenAI-compatible vision endpoint."
+  },
+  "inputs": {
+    "image": { "type": "string", "required": true, "note": "path or URL to the image to score" },
+    "rubric": { "type": "string", "note": "optional JSON-array rubric file; defaults to references/lookgate-rubric.md (default-visual-v1)" },
+    "palette": { "type": "string", "note": "optional theme/palette file (e.g. a brandkit.json) to check in_palette against" },
+    "threshold": { "type": "number", "note": "optional 0..1; switches from strict-any-fail to score threshold" },
+    "set": { "type": "boolean", "default": false, "note": "distinctness add-on when scoring a set" },
+    "out": { "type": "string", "note": "optional path to write the verdict JSON" }
+  },
+  "output": "Verdict JSON on stdout (see references/lookgate-rubric.md): { verdict, score, criteria[], fails[], suggestion, rubric_id, image }. Errors: { ok:false, error }.",
+  "tool_schema": "tool-schema.json",
+  "runtimes": {
+    "claude-code": "SKILL.md",
+    "codex": "AGENTS.md",
+    "cursor": "AGENTS.md",
+    "shell": "invoke command above",
+    "tool-use-llm": "hand tool-schema.json (openai or anthropic block) to the model; host runs invoke on the tool call. Works with OpenAI, Anthropic, Bankr LLM Gateway, Surplus, and any function-calling model."
+  }
+}

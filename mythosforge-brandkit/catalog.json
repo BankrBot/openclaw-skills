@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "mythosforge-brandkit",
+  "provider": "MythosForge",
+  "providerUrl": "https://www.mythosforge.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "brandkit.sh",
+    "language": "bash",
+    "code": "# Author mode — NO key needed: validate/fill a hand-written style token\nnode brandkit.mjs --author --name \"Neon Noir\" --out brandkit.json\n\n# Extract mode — derive a token from a reference image (Gemini vision)\nGEMINI_API_KEY=AIza_xxx node brandkit.mjs \\\n  --from ref/moodboard.png --name \"Neon Noir\" --out brandkit.json\n\n# The brandkit.json feeds promptpack + every generator + lookgate for one consistent look"
+  },
+  "setup": [
+    "Install: `install the mythosforge-brandkit skill from https://github.com/BankrBot/skills/tree/main/mythosforge-brandkit`",
+    "Node 18+ — uses built-in fetch, zero dependencies (no npm install)",
+    "Author mode (--author) needs NO key. Extract mode (--from) uses Google Gemini vision: export GEMINI_API_KEY (get one at https://aistudio.google.com/apikey).",
+    "Retarget any OpenAI-compatible vision endpoint with --base-url / --model. Verify with `--dry-run` / `--schema` first.",
+    "Source: https://github.com/ryjin111/mythosforge-brandkit"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "mythosforge-brandkit",
+    "command": "install the mythosforge-brandkit skill from https://github.com/BankrBot/skills/tree/main/mythosforge-brandkit"
+  }
+}

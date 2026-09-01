@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "mythosforge-promptpack",
+  "provider": "MythosForge",
+  "providerUrl": "https://www.mythosforge.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "promptpack.sh",
+    "language": "bash",
+    "code": "# No key, no network — pure prompt composition\n# List the curated recipes\nnode promptpack.mjs --list\n\n# Compose a generator-ready prompt from a recipe + subject\nnode promptpack.mjs --recipe hero-concept --subject \"a storm-forged knight\" --out prompt.json\n\n# Theme it with a brandkit token for a consistent look, then feed to mythosforge-imagegen\nnode promptpack.mjs --recipe hero-concept --subject \"a storm-forged knight\" --theme brandkit.json"
+  },
+  "setup": [
+    "Install: `install the mythosforge-promptpack skill from https://github.com/BankrBot/skills/tree/main/mythosforge-promptpack`",
+    "Node 18+ — zero dependencies (no npm install)",
+    "No API key, no network — pure prompt composition from a curated recipe library",
+    "Output { prompt, model, aspect, negative } feeds directly into a generator like mythosforge-imagegen. Optionally fold in a brandkit.json via --theme.",
+    "Source: https://github.com/ryjin111/mythosforge-promptpack"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "mythosforge-promptpack",
+    "command": "install the mythosforge-promptpack skill from https://github.com/BankrBot/skills/tree/main/mythosforge-promptpack"
+  }
+}

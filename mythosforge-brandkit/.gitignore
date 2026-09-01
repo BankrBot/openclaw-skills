@@ -1,0 +1,10 @@
+node_modules/
+out/
+*.webp
+*.png
+*.jpg
+*.mp4
+*.wav
+*.glb
+.env
+.DS_Store

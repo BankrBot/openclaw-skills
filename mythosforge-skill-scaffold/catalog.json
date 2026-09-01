@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "mythosforge-skill-scaffold",
+  "provider": "MythosForge",
+  "providerUrl": "https://www.mythosforge.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "scaffold.sh",
+    "language": "bash",
+    "code": "# No key — writes a new skill folder locally on the locked universal template\n# Preview what would be written\nnode scaffold.mjs --name my-cool-skill --description \"Do a cool thing via Replicate\" --dry-run\n\n# Generate a full BYO-key skill folder (CLI + SKILL.md + AGENTS.md + skill.json + tool-schema.json + README + LICENSE)\nnode scaffold.mjs \\\n  --name my-cool-skill \\\n  --description \"Do a cool thing via Replicate\" \\\n  --model-slug black-forest-labs/flux-schnell --ext webp"
+  },
+  "setup": [
+    "Install: `install the mythosforge-skill-scaffold skill from https://github.com/BankrBot/skills/tree/main/mythosforge-skill-scaffold`",
+    "Node 18+ — zero dependencies (no npm install)",
+    "No API key — it writes files locally. The factory that produced every MythosForge skill, so each has an identical, drift-free shape.",
+    "Preview with `--dry-run` before writing. Generated skills are BYO-key + MIT by default.",
+    "Source: https://github.com/ryjin111/mythosforge-skill-scaffold"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "mythosforge-skill-scaffold",
+    "command": "install the mythosforge-skill-scaffold skill from https://github.com/BankrBot/skills/tree/main/mythosforge-skill-scaffold"
+  }
+}

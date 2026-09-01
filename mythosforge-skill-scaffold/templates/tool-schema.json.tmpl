@@ -1,0 +1,46 @@
+{
+  "_comment": "Universal function-calling schema for {{NAME}}. Hand the matching block to any tool-use LLM. Parameters identical across shapes; only the envelope differs. openai = OpenAI / Bankr LLM Gateway / Surplus / Codex / Cursor. anthropic = Claude Messages API tool-use.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "prompt": { "type": "string", "description": "Text description. Max 2000 characters.", "maxLength": 2000 },
+      "aspect": { "type": "string", "enum": ["square", "landscape", "portrait"], "description": "Aspect ratio.", "default": "square" },
+      "out": { "type": "string", "description": "Optional output file path." }
+    },
+    "required": ["prompt"]
+  },
+  "openai": {
+    "type": "function",
+    "function": {
+      "name": "{{TOOL_NAME}}",
+      "description": "{{DESCRIPTION}} Writes the output to disk and returns its local path. Requires the caller's own {{PRIMARY_ENV}} in the execution environment.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": { "type": "string", "description": "Text description. Max 2000 chars.", "maxLength": 2000 },
+          "aspect": { "type": "string", "enum": ["square", "landscape", "portrait"], "description": "Aspect ratio (default square)." },
+          "out": { "type": "string", "description": "Optional output file path." }
+        },
+        "required": ["prompt"]
+      }
+    }
+  },
+  "anthropic": {
+    "name": "{{TOOL_NAME}}",
+    "description": "{{DESCRIPTION}} Writes the output to disk and returns its local path. Requires the caller's own {{PRIMARY_ENV}} in the execution environment.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "prompt": { "type": "string", "description": "Text description. Max 2000 chars.", "maxLength": 2000 },
+        "aspect": { "type": "string", "enum": ["square", "landscape", "portrait"], "description": "Aspect ratio (default square)." },
+        "out": { "type": "string", "description": "Optional output file path." }
+      },
+      "required": ["prompt"]
+    }
+  },
+  "invocation": {
+    "note": "When the model emits a tool call with the args above, the host harness maps them to this shell command and runs it ({{PRIMARY_ENV}} must be set in that environment):",
+    "command": "node generate.mjs --prompt <prompt> [--aspect <aspect>] [--out <out>]",
+    "returns": "A JSON line: { ok, aspect, prompt, path, bytes }. Feed `path` back to the model as the tool result."
+  }
+}

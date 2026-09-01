@@ -1,0 +1,27 @@
+{
+  "name": "mythosforge-promptpack",
+  "version": "1.0.0",
+  "description": "Compose a generator-ready prompt from a curated recipe library, optionally themed with a brandkit token. No API key, no network — pure composition.",
+  "license": "MIT",
+  "runtime": "node>=18",
+  "entry": "promptpack.mjs",
+  "invoke": "node promptpack.mjs --list | (--recipe <id> --subject \"...\" [--theme brandkit.json] [--recipes file] [--out prompt.json]) | --schema",
+  "env": { "required": [], "optional": [], "note": "No key needed — pure prompt composition, no network." },
+  "inputs": {
+    "list": { "type": "boolean", "note": "list available recipes (id/title/model/aspect)" },
+    "recipe": { "type": "string", "note": "recipe id to compose (see --list)" },
+    "subject": { "type": "string", "note": "what to drop into the recipe's {subject} slot" },
+    "theme": { "type": "string", "note": "optional brandkit.json to fold in (feel_words + prompt_suffix -> prompt, anti_feel -> negative)" },
+    "recipes": { "type": "string", "note": "optional custom recipe library JSON (overrides bundled recipes.json)" },
+    "out": { "type": "string", "note": "optional path to write the composed prompt JSON" }
+  },
+  "output": "JSON on stdout: { ok, recipe, prompt, model, aspect, negative }. Feed `prompt` (+ model/aspect) to a generator like mythosforge-imagegen.",
+  "tool_schema": "tool-schema.json",
+  "runtimes": {
+    "claude-code": "SKILL.md",
+    "codex": "AGENTS.md",
+    "cursor": "AGENTS.md",
+    "shell": "invoke command above",
+    "tool-use-llm": "hand tool-schema.json (openai or anthropic block) to the model; host runs invoke on the tool call. Works with OpenAI, Anthropic, Bankr LLM Gateway, Surplus, and any function-calling model."
+  }
+}

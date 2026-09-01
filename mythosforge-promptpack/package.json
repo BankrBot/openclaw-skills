@@ -1,0 +1,16 @@
+{
+  "name": "mythosforge-promptpack",
+  "version": "1.0.0",
+  "description": "Compose a generator-ready prompt from a curated recipe library, optionally themed with a brandkit token. No API key required.",
+  "type": "module",
+  "bin": { "mythosforge-promptpack": "promptpack.mjs" },
+  "scripts": {
+    "test": "node selftest.mjs",
+    "list": "node promptpack.mjs --list",
+    "schema": "node promptpack.mjs --schema"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "keywords": ["ai", "agent", "skill", "prompt", "recipes", "no-key", "mythosforge"],
+  "files": ["promptpack.mjs", "recipes.json", "selftest.mjs", "SKILL.md", "AGENTS.md", "skill.json", "tool-schema.json", "references/", "README.md", "LICENSE"]
+}

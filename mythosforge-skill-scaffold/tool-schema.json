@@ -1,0 +1,58 @@
+{
+  "_comment": "Universal function-calling schema for mythosforge-skill-scaffold. openai = OpenAI / Bankr LLM Gateway / Surplus / Codex / Cursor. anthropic = Claude Messages API tool-use. Parameters identical; only the envelope differs.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "name": { "type": "string", "description": "Kebab-case skill name, e.g. mythosforge-video." },
+      "description": { "type": "string", "description": "One-line description of the new skill." },
+      "tool_name": { "type": "string", "description": "Function name for the generated tool-schema.json (default: name with hyphens as underscores)." },
+      "env": { "type": "string", "description": "Required env var(s), comma-separated.", "default": "REPLICATE_API_TOKEN" },
+      "model_slug": { "type": "string", "description": "Replicate model the generated skeleton drives.", "default": "black-forest-labs/flux-schnell" },
+      "ext": { "type": "string", "description": "Output file extension.", "default": "webp" },
+      "out": { "type": "string", "description": "Parent dir for the new skill." }
+    },
+    "required": ["name", "description"]
+  },
+  "openai": {
+    "type": "function",
+    "function": {
+      "name": "mythosforge_skill_scaffold",
+      "description": "Generate a new MythosForge skill folder on the locked universal template (cross-agent CLI + docs + schemas). Writes files locally and returns the new skill directory. No API key required.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Kebab-case skill name, e.g. mythosforge-video." },
+          "description": { "type": "string", "description": "One-line description." },
+          "tool_name": { "type": "string", "description": "Function name for generated tool-schema.json." },
+          "env": { "type": "string", "description": "Required env var(s), comma-separated." },
+          "model_slug": { "type": "string", "description": "Replicate model the skeleton drives." },
+          "ext": { "type": "string", "description": "Output file extension." },
+          "out": { "type": "string", "description": "Parent dir for the new skill." }
+        },
+        "required": ["name", "description"]
+      }
+    }
+  },
+  "anthropic": {
+    "name": "mythosforge_skill_scaffold",
+    "description": "Generate a new MythosForge skill folder on the locked universal template (cross-agent CLI + docs + schemas). Writes files locally and returns the new skill directory. No API key required.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Kebab-case skill name, e.g. mythosforge-video." },
+        "description": { "type": "string", "description": "One-line description." },
+        "tool_name": { "type": "string", "description": "Function name for generated tool-schema.json." },
+        "env": { "type": "string", "description": "Required env var(s), comma-separated." },
+        "model_slug": { "type": "string", "description": "Replicate model the skeleton drives." },
+        "ext": { "type": "string", "description": "Output file extension." },
+        "out": { "type": "string", "description": "Parent dir for the new skill." }
+      },
+      "required": ["name", "description"]
+    }
+  },
+  "invocation": {
+    "note": "When the model emits a tool call, the host maps the args to this shell command and runs it:",
+    "command": "node scaffold.mjs --name <name> --description <description> [--tool-name <tool_name>] [--env <env>] [--model-slug <model_slug>] [--ext <ext>] [--out <out>]",
+    "returns": "A JSON line: { ok, name, dir, files }. Feed `dir` back to the model as the tool result."
+  }
+}

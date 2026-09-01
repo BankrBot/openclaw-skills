@@ -1,0 +1,58 @@
+{
+  "_comment": "Universal function-calling schema for mythosforge-video. Hand the matching block to any tool-use LLM. Parameters identical across shapes; only the envelope differs. openai = OpenAI / Bankr LLM Gateway / Surplus / Codex / Cursor. anthropic = Claude Messages API tool-use.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "prompt": { "type": "string", "description": "The video description / motion instruction.", "maxLength": 4000 },
+      "image": { "type": "string", "description": "Optional first-frame image (path or URL) for image-to-video." },
+      "image-field": { "type": "string", "description": "Image-input key for a --model not in the built-in map (e.g. image, first_frame_image, start_image)." },
+      "duration": { "type": "integer", "description": "Optional model duration param, integer (sent only if provided; -1 = auto on Seedance)." },
+      "resolution": { "type": "string", "description": "Optional model resolution param, e.g. 720p (sent only if provided)." },
+      "out": { "type": "string", "description": "Optional output file path (.mp4)." },
+      "model": { "type": "string", "description": "Optional Replicate video model slug override (default bytedance/seedance-2.0)." }
+    },
+    "required": ["prompt"]
+  },
+  "openai": {
+    "type": "function",
+    "function": {
+      "name": "mythosforge_video",
+      "description": "Generate a short video from a text prompt (optionally image-to-video from a first frame) via Replicate. Writes the .mp4 to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment. Note: video generation can take minutes.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": { "type": "string", "description": "The video description / motion instruction." },
+          "image": { "type": "string", "description": "Optional first-frame image for image-to-video." },
+          "image-field": { "type": "string", "description": "Image-input key for a --model not in the built-in map." },
+          "duration": { "type": "integer", "description": "Optional model duration param, integer (sent only if provided; -1 = auto on Seedance)." },
+          "resolution": { "type": "string", "description": "Optional model resolution param, e.g. 720p." },
+          "out": { "type": "string", "description": "Optional output file path (.mp4)." },
+          "model": { "type": "string", "description": "Optional Replicate video model slug override." }
+        },
+        "required": ["prompt"]
+      }
+    }
+  },
+  "anthropic": {
+    "name": "mythosforge_video",
+    "description": "Generate a short video from a text prompt (optionally image-to-video from a first frame) via Replicate. Writes the .mp4 to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment. Note: video generation can take minutes.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "prompt": { "type": "string", "description": "The video description / motion instruction." },
+        "image": { "type": "string", "description": "Optional first-frame image for image-to-video." },
+        "image-field": { "type": "string", "description": "Image-input key for a --model not in the built-in map." },
+        "duration": { "type": "integer", "description": "Optional model duration param, integer (sent only if provided; -1 = auto on Seedance)." },
+        "resolution": { "type": "string", "description": "Optional model resolution param, e.g. 720p." },
+        "out": { "type": "string", "description": "Optional output file path (.mp4)." },
+        "model": { "type": "string", "description": "Optional Replicate video model slug override." }
+      },
+      "required": ["prompt"]
+    }
+  },
+  "invocation": {
+    "note": "When the model emits a tool call with the args above, the host harness maps them to this shell command and runs it (REPLICATE_API_TOKEN must be set in that environment):",
+    "command": "node video.mjs --prompt <prompt> [--image <image>] [--image-field <key>] [--duration <n>] [--resolution <resolution>] [--out <out>] [--model <model>]",
+    "returns": "A JSON line: { ok, prompt, image, path, bytes }. Feed `path` back to the model as the tool result."
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "mythosforge-audio",
+  "version": "1.0.0",
+  "description": "Generate audio via Replicate: text-to-speech (tts), music/ambience (music), or sound effects (sfx). Bring your own REPLICATE_API_TOKEN. No wallet, no payment.",
+  "license": "MIT",
+  "runtime": "node>=18",
+  "entry": "audio.mjs",
+  "invoke": "node audio.mjs --op tts|music|sfx --text \"...\" [--voice <id> (tts)] [--duration <sec> (music/sfx)] [--format <fmt>] [--out <path>] [--model <slug>] [--dry-run]",
+  "env": { "required": ["REPLICATE_API_TOKEN"], "optional": [] },
+  "inputs": {
+    "op": { "type": "string", "required": true, "enum": ["tts", "music", "sfx"] },
+    "text": { "type": "string", "required": true, "note": "speech text for tts, or the prompt for music/sfx" },
+    "voice": { "type": "string", "note": "tts only: MiniMax system voice id (default Wise_Woman)" },
+    "duration": { "type": "integer", "note": "music/sfx only: seconds, positive integer" },
+    "format": { "type": "string", "note": "tts audio_format (mp3/wav/flac/pcm) or music output_format (wav/mp3); sfx is wav" },
+    "out": { "type": "string", "default": "out/<op>.<ext>" },
+    "model": { "type": "string", "note": "override the Replicate model slug for the op (must match the op's input fields)" }
+  },
+  "output": "JSON line on stdout: { ok, op, text, path, bytes }. Read `path` for the written audio file.",
+  "tool_schema": "tool-schema.json",
+  "runtimes": {
+    "claude-code": "SKILL.md",
+    "codex": "AGENTS.md",
+    "cursor": "AGENTS.md",
+    "shell": "invoke command above",
+    "tool-use-llm": "hand tool-schema.json (openai or anthropic block) to the model; host runs invoke on the tool call. Works with OpenAI, Anthropic, Bankr LLM Gateway, Surplus, and any function-calling model."
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "_comment": "Universal function-calling schema for mythosforge-brandkit. Hand the matching block to any tool-use LLM. Parameters identical across shapes; only the envelope differs. openai = OpenAI / Bankr LLM Gateway / Surplus / Codex / Cursor. anthropic = Claude Messages API tool-use.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "from": { "type": "string", "description": "Extract mode: path or URL to a reference image to distill a style token from." },
+      "author": { "type": "boolean", "description": "Author mode: validate/fill a hand-written token (no key needed)." },
+      "in": { "type": "string", "description": "Author mode: optional path to a partial token JSON to fill from." },
+      "name": { "type": "string", "description": "Override the token name." },
+      "out": { "type": "string", "description": "Output path for brandkit.json (default brandkit.json)." }
+    }
+  },
+  "openai": {
+    "type": "function",
+    "function": {
+      "name": "mythosforge_brandkit",
+      "description": "Extract (from a reference image, via Gemini vision) or author a reusable brand/style token (brandkit.json) — palette, typography, feel words, prompt_suffix — that every generator + lookgate share for one consistent visual identity. Writes the token to disk and returns its path. Extract mode requires the caller's own GEMINI_API_KEY (or BRANDKIT_API_KEY); author mode needs no key.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "from": { "type": "string", "description": "Extract mode: path or URL to a reference image." },
+          "author": { "type": "boolean", "description": "Author mode: validate/fill a hand-written token (no key)." },
+          "in": { "type": "string", "description": "Author mode: optional partial token JSON to fill from." },
+          "name": { "type": "string", "description": "Override the token name." },
+          "out": { "type": "string", "description": "Output path for brandkit.json." }
+        }
+      }
+    }
+  },
+  "anthropic": {
+    "name": "mythosforge_brandkit",
+    "description": "Extract (from a reference image, via Gemini vision) or author a reusable brand/style token (brandkit.json) — palette, typography, feel words, prompt_suffix — that every generator + lookgate share for one consistent visual identity. Writes the token to disk and returns its path. Extract mode requires the caller's own GEMINI_API_KEY (or BRANDKIT_API_KEY); author mode needs no key.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "from": { "type": "string", "description": "Extract mode: path or URL to a reference image." },
+        "author": { "type": "boolean", "description": "Author mode: validate/fill a hand-written token (no key)." },
+        "in": { "type": "string", "description": "Author mode: optional partial token JSON to fill from." },
+        "name": { "type": "string", "description": "Override the token name." },
+        "out": { "type": "string", "description": "Output path for brandkit.json." }
+      }
+    }
+  },
+  "invocation": {
+    "note": "When the model emits a tool call with the args above, the host harness maps them to this shell command and runs it (extract mode: GEMINI_API_KEY or BRANDKIT_API_KEY must be set; author mode needs no key):",
+    "command": "node brandkit.mjs (--from <from> | --author [--in <in>]) [--name <name>] [--out <out>]",
+    "returns": "The style token JSON (and { ok, mode, name, path, token } wrapper). Feed the token / path back to the model as the tool result."
+  }
+}

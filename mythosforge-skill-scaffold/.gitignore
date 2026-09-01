@@ -1,0 +1,6 @@
+node_modules/
+out/
+.env
+.DS_Store
+# generated sample skills live outside this repo (see --out); ignore any local test output
+/_sample/

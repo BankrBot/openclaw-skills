@@ -1,0 +1,29 @@
+{
+  "name": "mythosforge-imagegen",
+  "version": "1.0.0",
+  "description": "Generate a 2D image from a text prompt via MythosForge's Replicate-backed engine. Bring your own REPLICATE_API_TOKEN. No wallet, no payment.",
+  "license": "MIT",
+  "homepage": "https://github.com/ryjin111/mythosforge-imagegen",
+  "runtime": "node>=18",
+  "entry": "generate.mjs",
+  "invoke": "node generate.mjs --prompt \"<prompt>\" [--model flux|retro|nano] [--aspect square|landscape|portrait] [--out <path>] [--dry-run]",
+  "env": {
+    "required": ["REPLICATE_API_TOKEN"],
+    "optional": []
+  },
+  "inputs": {
+    "prompt": { "type": "string", "required": true, "maxLength": 2000 },
+    "model": { "type": "string", "enum": ["flux", "retro", "nano"], "default": "flux" },
+    "aspect": { "type": "string", "enum": ["square", "landscape", "portrait"], "default": "square" },
+    "out": { "type": "string", "default": "out/<model>-<aspect>.<ext>" }
+  },
+  "output": "JSON line on stdout: { ok, model, aspect, prompt, path, bytes }. Read `path` for the written image file.",
+  "tool_schema": "tool-schema.json",
+  "runtimes": {
+    "claude-code": "SKILL.md (frontmatter name + description; drop folder into skills dir)",
+    "codex": "AGENTS.md",
+    "cursor": "AGENTS.md",
+    "shell": "invoke command above",
+    "tool-use-llm": "hand tool-schema.json (openai or anthropic block) to the model; host runs the invoke command on the tool call. Works with OpenAI, Anthropic, Bankr LLM Gateway, Surplus, and any function-calling model."
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "mythosforge-skill-scaffold",
+  "version": "1.0.0",
+  "description": "Generate a new MythosForge skill folder on the locked universal template. No key required — writes files locally.",
+  "license": "MIT",
+  "homepage": "https://github.com/ryjin111/mythosforge-skill-scaffold",
+  "runtime": "node>=18",
+  "entry": "scaffold.mjs",
+  "invoke": "node scaffold.mjs --name <kebab-name> --description \"<one line>\" [--tool-name x] [--env VAR] [--env-link url] [--model-slug owner/model] [--ext webp] [--out dir] [--force] [--dry-run]",
+  "env": { "required": [], "optional": [] },
+  "inputs": {
+    "name": { "type": "string", "required": true, "pattern": "kebab-case" },
+    "description": { "type": "string", "required": true },
+    "tool-name": { "type": "string", "default": "<name with - -> _>" },
+    "env": { "type": "string", "default": "REPLICATE_API_TOKEN" },
+    "env-link": { "type": "string", "default": "https://replicate.com/account/api-tokens" },
+    "model-slug": { "type": "string", "default": "black-forest-labs/flux-schnell" },
+    "ext": { "type": "string", "default": "webp" },
+    "out": { "type": "string", "default": "<sibling of this repo>" }
+  },
+  "output": "JSON line on stdout: { ok, name, dir, files }. Read `dir` for the generated skill.",
+  "tool_schema": "tool-schema.json",
+  "generates": ["generate.mjs", "SKILL.md", "AGENTS.md", "skill.json", "tool-schema.json", "references/README.md", "README.md", "package.json", "LICENSE", ".gitignore"],
+  "runtimes": {
+    "claude-code": "SKILL.md",
+    "codex": "AGENTS.md",
+    "cursor": "AGENTS.md",
+    "shell": "invoke command above",
+    "tool-use-llm": "hand tool-schema.json (openai or anthropic block) to the model; host runs invoke on the tool call."
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "mythosforge-imagetools",
+  "version": "1.0.0",
+  "description": "Upscale or remove the background of an image via Replicate. Two utility ops in one skill. Bring your own REPLICATE_API_TOKEN. No wallet, no payment.",
+  "license": "MIT",
+  "runtime": "node>=18",
+  "entry": "imagetools.mjs",
+  "invoke": "node imagetools.mjs --op upscale|bg-remove --image <path|url> [--scale 4] [--out <path>] [--model <slug>] [--dry-run]",
+  "env": {
+    "required": ["REPLICATE_API_TOKEN"],
+    "optional": []
+  },
+  "inputs": {
+    "op": { "type": "string", "required": true, "enum": ["upscale", "bg-remove"] },
+    "image": { "type": "string", "required": true, "note": "path or URL to the input image" },
+    "scale": { "type": "number", "default": 4, "note": "upscale factor (1..10), upscale op only" },
+    "out": { "type": "string", "default": "out/<op>.png" },
+    "model": { "type": "string", "note": "override the Replicate model slug for the op" }
+  },
+  "output": "JSON line on stdout: { ok, op, image, path, bytes }. Read `path` for the written file.",
+  "tool_schema": "tool-schema.json",
+  "runtimes": {
+    "claude-code": "SKILL.md",
+    "codex": "AGENTS.md",
+    "cursor": "AGENTS.md",
+    "shell": "invoke command above",
+    "tool-use-llm": "hand tool-schema.json (openai or anthropic block) to the model; host runs invoke on the tool call. Works with OpenAI, Anthropic, Bankr LLM Gateway, Surplus, and any function-calling model."
+  }
+}

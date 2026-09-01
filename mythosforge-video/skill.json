@@ -1,0 +1,28 @@
+{
+  "name": "mythosforge-video",
+  "version": "1.0.0",
+  "description": "Generate a short video from a text prompt (optionally image-to-video from a first frame) via Replicate. Bring your own REPLICATE_API_TOKEN. No wallet, no payment.",
+  "license": "MIT",
+  "runtime": "node>=18",
+  "entry": "video.mjs",
+  "invoke": "node video.mjs --prompt \"...\" [--image <first-frame path|url>] [--out <path>] [--model <slug>] [--dry-run]",
+  "env": { "required": ["REPLICATE_API_TOKEN"], "optional": [] },
+  "inputs": {
+    "prompt": { "type": "string", "required": true, "maxLength": 4000, "note": "the video description / motion instruction" },
+    "image": { "type": "string", "note": "optional first-frame image (path or URL) -> image-to-video" },
+    "image-field": { "type": "string", "note": "image-input key for a --model not in the built-in map (e.g. image, first_frame_image, start_image)" },
+    "duration": { "type": "integer", "note": "optional model duration param, integer only (-1 = auto on Seedance); sent when provided" },
+    "resolution": { "type": "string", "note": "optional model resolution param, e.g. 720p (only sent when provided)" },
+    "out": { "type": "string", "default": "out/video.mp4" },
+    "model": { "type": "string", "default": "bytedance/seedance-2.0", "note": "override the Replicate video model slug" }
+  },
+  "output": "JSON line on stdout: { ok, prompt, image, path, bytes }. Read `path` for the written .mp4.",
+  "tool_schema": "tool-schema.json",
+  "runtimes": {
+    "claude-code": "SKILL.md",
+    "codex": "AGENTS.md",
+    "cursor": "AGENTS.md",
+    "shell": "invoke command above",
+    "tool-use-llm": "hand tool-schema.json (openai or anthropic block) to the model; host runs invoke on the tool call. Works with OpenAI, Anthropic, Bankr LLM Gateway, Surplus, and any function-calling model."
+  }
+}

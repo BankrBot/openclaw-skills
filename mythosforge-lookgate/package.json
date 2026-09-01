@@ -1,0 +1,16 @@
+{
+  "name": "mythosforge-lookgate",
+  "version": "1.0.0",
+  "description": "Score an image against a visual-QA rubric and return a structured PASS/FAIL verdict (JSON). The self-verify half of the MythosForge suite.",
+  "type": "module",
+  "bin": { "mythosforge-lookgate": "gate.mjs" },
+  "scripts": {
+    "test": "node selftest.mjs",
+    "schema": "node gate.mjs --schema",
+    "dry-run": "node gate.mjs --image ./example.png --dry-run"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "keywords": ["ai", "agent", "skill", "visual-qa", "verify", "gate", "byo-key", "mythosforge"],
+  "files": ["gate.mjs", "selftest.mjs", "SKILL.md", "AGENTS.md", "skill.json", "tool-schema.json", "references/", "README.md", "LICENSE"]
+}

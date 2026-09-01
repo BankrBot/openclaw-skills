@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MythosForge">
+  <rect width="64" height="64" rx="12" fill="#0e1116"/>
+  <rect x="1" y="1" width="62" height="62" rx="11" fill="none" stroke="#2b3240" stroke-width="1"/>
+  <!-- forge spark -->
+  <circle cx="32" cy="20" r="6" fill="#ff8a3d"/>
+  <circle cx="32" cy="20" r="10" fill="none" stroke="#ff8a3d" stroke-width="1.5" opacity="0.5"/>
+  <!-- anvil -->
+  <path d="M18 36 h20 a6 6 0 0 1 -6 6 h-2 v4 h6 v3 H22 v-3 h6 v-4 h-4 a8 8 0 0 1 -8 -8 z" fill="#e8edf5"/>
+  <rect x="24" y="52" width="16" height="3" rx="1.5" fill="#e8edf5"/>
+</svg>

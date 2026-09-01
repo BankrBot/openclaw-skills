@@ -1,0 +1,26 @@
+{
+  "name": "mythosforge-3d",
+  "version": "1.0.0",
+  "description": "Convert an image into a 3D model (GLB) via Replicate. Bring your own REPLICATE_API_TOKEN. No wallet, no payment.",
+  "license": "MIT",
+  "runtime": "node>=18",
+  "entry": "to3d.mjs",
+  "invoke": "node to3d.mjs --image <path|url> [--out <path.glb>] [--model <slug>] [--image-mode array|single] [--output-key <key>] [--dry-run]",
+  "env": { "required": ["REPLICATE_API_TOKEN"], "optional": [] },
+  "inputs": {
+    "image": { "type": "string", "required": true, "note": "path or URL to the source image" },
+    "out": { "type": "string", "default": "out/model.glb" },
+    "model": { "type": "string", "default": "firtoz/trellis", "note": "override the Replicate 3D model slug" },
+    "image-mode": { "type": "string", "enum": ["array", "single"], "note": "how the image is passed for an unmapped --model (trellis=array, hunyuan=single)" },
+    "output-key": { "type": "string", "note": "named output key holding the GLB uri for an unmapped --model (trellis=model_file, hunyuan=mesh)" }
+  },
+  "output": "JSON line on stdout: { ok, image, model, path, bytes }. Read `path` for the written .glb.",
+  "tool_schema": "tool-schema.json",
+  "runtimes": {
+    "claude-code": "SKILL.md",
+    "codex": "AGENTS.md",
+    "cursor": "AGENTS.md",
+    "shell": "invoke command above",
+    "tool-use-llm": "hand tool-schema.json (openai or anthropic block) to the model; host runs invoke on the tool call. Works with OpenAI, Anthropic, Bankr LLM Gateway, Surplus, and any function-calling model."
+  }
+}

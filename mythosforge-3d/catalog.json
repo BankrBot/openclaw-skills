@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "mythosforge-3d",
+  "provider": "MythosForge",
+  "providerUrl": "https://www.mythosforge.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "to3d.sh",
+    "language": "bash",
+    "code": "# Dry-run first — needs no key, prints the exact Replicate request\nnode to3d.mjs --image in/prop.png --dry-run\n\n# Image -> 3D model (GLB) — bring your own Replicate key\nREPLICATE_API_TOKEN=r8_xxx node to3d.mjs \\\n  --image in/prop.png --out out/prop.glb\n\n# Use a different 3D model (e.g. hunyuan, single-image input)\nREPLICATE_API_TOKEN=r8_xxx node to3d.mjs \\\n  --image in/prop.png --model <owner/model> --image-mode single --output-key mesh --out out/prop.glb"
+  },
+  "setup": [
+    "Install: `install the mythosforge-3d skill from https://github.com/BankrBot/skills/tree/main/mythosforge-3d`",
+    "Node 18+ — uses built-in fetch, zero dependencies (no npm install)",
+    "Bring your own Replicate API token: export REPLICATE_API_TOKEN (get one at https://replicate.com/account/api-tokens). Generation is billed to your Replicate account, not MythosForge.",
+    "Default model firtoz/trellis (array input); for an unmapped --model pass --image-mode and --output-key. Verify with `--dry-run` (needs no key) first.",
+    "Source: https://github.com/ryjin111/mythosforge-3d"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "mythosforge-3d",
+    "command": "install the mythosforge-3d skill from https://github.com/BankrBot/skills/tree/main/mythosforge-3d"
+  }
+}

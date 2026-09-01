@@ -1,0 +1,66 @@
+{
+  "_comment": "Universal function-calling schema for mythosforge-imagegen. Hand the matching block to any tool-use LLM so it can invoke the skill. Parameters are identical across shapes; only the envelope differs. openai = OpenAI Chat Completions / Bankr LLM Gateway / Surplus / Codex / Cursor. anthropic = Claude Messages API tool-use.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "prompt": {
+        "type": "string",
+        "description": "Text description of the image to generate. Max 2000 characters.",
+        "maxLength": 2000
+      },
+      "model": {
+        "type": "string",
+        "enum": ["flux", "retro", "nano"],
+        "description": "flux = fast general image (default); retro = pixel-art sprite/tile; nano = high-detail 2K.",
+        "default": "flux"
+      },
+      "aspect": {
+        "type": "string",
+        "enum": ["square", "landscape", "portrait"],
+        "description": "Image aspect ratio.",
+        "default": "square"
+      },
+      "out": {
+        "type": "string",
+        "description": "Optional output file path. Defaults to out/<model>-<aspect>.<ext>."
+      }
+    },
+    "required": ["prompt"]
+  },
+  "openai": {
+    "type": "function",
+    "function": {
+      "name": "mythosforge_generate_image",
+      "description": "Generate a 2D image from a text prompt via MythosForge's Replicate-backed engine (flux-schnell / retro-diffusion / nano-banana-2). Writes the image to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": { "type": "string", "description": "Text description of the image. Max 2000 chars.", "maxLength": 2000 },
+          "model": { "type": "string", "enum": ["flux", "retro", "nano"], "description": "flux=fast general (default), retro=pixel-art, nano=2K detail." },
+          "aspect": { "type": "string", "enum": ["square", "landscape", "portrait"], "description": "Aspect ratio (default square)." },
+          "out": { "type": "string", "description": "Optional output file path." }
+        },
+        "required": ["prompt"]
+      }
+    }
+  },
+  "anthropic": {
+    "name": "mythosforge_generate_image",
+    "description": "Generate a 2D image from a text prompt via MythosForge's Replicate-backed engine (flux-schnell / retro-diffusion / nano-banana-2). Writes the image to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "prompt": { "type": "string", "description": "Text description of the image. Max 2000 chars.", "maxLength": 2000 },
+        "model": { "type": "string", "enum": ["flux", "retro", "nano"], "description": "flux=fast general (default), retro=pixel-art, nano=2K detail." },
+        "aspect": { "type": "string", "enum": ["square", "landscape", "portrait"], "description": "Aspect ratio (default square)." },
+        "out": { "type": "string", "description": "Optional output file path." }
+      },
+      "required": ["prompt"]
+    }
+  },
+  "invocation": {
+    "note": "When the model emits a tool call with the args above, the host harness maps them to this shell command and runs it (REPLICATE_API_TOKEN must be set in that environment):",
+    "command": "node generate.mjs --prompt <prompt> [--model <model>] [--aspect <aspect>] [--out <out>]",
+    "returns": "A JSON line: { ok, model, aspect, prompt, path, bytes }. Feed `path` back to the model as the tool result."
+  }
+}

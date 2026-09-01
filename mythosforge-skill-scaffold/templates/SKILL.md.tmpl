@@ -1,0 +1,49 @@
+---
+name: {{NAME}}
+description: {{DESCRIPTION}} The calling agent supplies its own {{PRIMARY_ENV}} — no MythosForge account, wallet, or payment.
+license: MIT
+---
+
+# {{NAME}}
+
+{{DESCRIPTION}} Self-contained skill on the MythosForge universal template — **you bring your own key.**
+
+> **Read `references/` before running.** It holds this skill's design contract (rubric / schema /
+> palette / spec). Follow it so the output meets the look/quality bar, and emit the required
+> self-report below.
+
+## Prerequisites
+
+- **Node 18+** (built-in `fetch`; no `npm install`).
+- **{{PRIMARY_ENV}}** — export your own key ({{ENV_LINK}}). Billed to your account, not MythosForge.
+
+## How to run
+
+```bash
+{{PRIMARY_ENV}}=xxx node generate.mjs --prompt "..." --aspect landscape --out out/result.{{EXT}}
+```
+
+On success it writes the output file and prints one JSON line:
+
+```json
+{ "ok": true, "aspect": "landscape", "prompt": "...", "path": "/abs/out/result.{{EXT}}", "bytes": 148213 }
+```
+
+Read `path` for the result. On failure it prints `{ "ok": false, "error": "..." }` and exits non-zero.
+
+## Options
+
+- `--prompt "..."` — **required**, max 2000 chars.
+- `--aspect square|landscape|portrait` — default `square`.
+- `--out <path>` — output file path. Default `out/<aspect>.{{EXT}}`.
+- `--dry-run` — print the exact request that WOULD be sent and exit. Spends nothing, needs no key.
+
+## Required self-report (for gated workflows)
+
+After running, report the `--aspect` used, the output `path`, `bytes` written, and whether
+it was a `--dry-run` or a live call. Do not claim an output exists unless JSON `ok` was `true`.
+
+## Notes
+
+- MIT wrapper. Calls the provider under *your* account/key; the underlying model carries its
+  own terms, which are your responsibility as the key holder. No model weights redistributed.

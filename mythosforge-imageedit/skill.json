@@ -1,0 +1,27 @@
+{
+  "name": "mythosforge-imageedit",
+  "version": "1.0.0",
+  "description": "Edit an image with a prompt (instruction img2img) or inpaint a masked region, via Replicate. Bring your own REPLICATE_API_TOKEN. No wallet, no payment.",
+  "license": "MIT",
+  "runtime": "node>=18",
+  "entry": "imageedit.mjs",
+  "invoke": "node imageedit.mjs --op edit|inpaint --image <path|url> --prompt \"...\" [--mask <path|url> (inpaint)] [--out <path>] [--model <slug>] [--dry-run]",
+  "env": { "required": ["REPLICATE_API_TOKEN"], "optional": [] },
+  "inputs": {
+    "op": { "type": "string", "required": true, "enum": ["edit", "inpaint"] },
+    "image": { "type": "string", "required": true, "note": "path or URL to the input image" },
+    "prompt": { "type": "string", "required": true, "maxLength": 2000, "note": "the edit instruction" },
+    "mask": { "type": "string", "note": "inpaint only: path or URL to the mask (white = area to fill)" },
+    "out": { "type": "string", "default": "out/<op>.png" },
+    "model": { "type": "string", "note": "override the Replicate model slug for the op" }
+  },
+  "output": "JSON line on stdout: { ok, op, image, path, bytes }. Read `path` for the written file.",
+  "tool_schema": "tool-schema.json",
+  "runtimes": {
+    "claude-code": "SKILL.md",
+    "codex": "AGENTS.md",
+    "cursor": "AGENTS.md",
+    "shell": "invoke command above",
+    "tool-use-llm": "hand tool-schema.json (openai or anthropic block) to the model; host runs invoke on the tool call. Works with OpenAI, Anthropic, Bankr LLM Gateway, Surplus, and any function-calling model."
+  }
+}

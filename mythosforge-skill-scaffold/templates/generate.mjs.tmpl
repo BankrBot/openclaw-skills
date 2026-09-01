@@ -1,0 +1,122 @@
+#!/usr/bin/env node
+// {{NAME}} — {{DESCRIPTION}}
+//
+// Self-contained, BYO-key skill on the MythosForge universal template.
+// The calling agent supplies its own {{PRIMARY_ENV}} — no wallet, no payment,
+// no MythosForge account. Zero npm dependencies (Node 18+ global fetch).
+//
+// Usage:
+//   {{PRIMARY_ENV}}=xxx node generate.mjs --prompt "..." [--aspect square|landscape|portrait] [--out path]
+//   node generate.mjs --prompt "..." --dry-run   # print the request, spend nothing
+//
+// Prints a JSON result line: { ok, aspect, prompt, path, bytes }
+
+import { writeFile, mkdir } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+
+const MAX_PROMPT_LEN = 2000;
+const ASPECTS = ["square", "landscape", "portrait"];
+const AR = { square: "1:1", landscape: "16:9", portrait: "3:4" };
+
+// The Replicate model this skill drives. Swap MODEL_SLUG / input shape / EXT
+// for the asset this skill produces. (Non-Replicate providers: replace the
+// startPrediction/waitForImage/download block below with the provider call,
+// keep the arg-parsing + JSON-stdout + fetch->write contract intact.)
+const MODEL_SLUG = "{{MODEL_SLUG}}";
+const EXT = "{{EXT}}";
+
+// TODO(builder): shape this to the model's Replicate input schema
+// (verify fields from https://replicate.com/{{MODEL_SLUG}}/llms.txt — do not guess).
+function buildInput(prompt, aspect) {
+  return { prompt, aspect_ratio: AR[aspect], output_format: EXT };
+}
+
+function parseArgs(argv) {
+  const a = { aspect: "square", prompt: "", out: "", dryRun: false };
+  for (let i = 0; i < argv.length; i++) {
+    const k = argv[i];
+    if (k === "--dry-run") { a.dryRun = true; continue; }
+    if (k === "--help" || k === "-h") { a.help = true; continue; }
+    const v = argv[i + 1];
+    if (k === "--prompt") { a.prompt = v; i++; }
+    else if (k === "--aspect") { a.aspect = v; i++; }
+    else if (k === "--out") { a.out = v; i++; }
+  }
+  return a;
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const fail = (msg) => { console.error(JSON.stringify({ ok: false, error: msg })); process.exit(1); };
+
+function pickUrl(output) {
+  if (!output) return null;
+  if (typeof output === "string") return output;
+  if (Array.isArray(output)) return output.find((x) => typeof x === "string") ?? null;
+  if (typeof output === "object" && typeof output.url === "string") return output.url;
+  return null;
+}
+
+async function startPrediction(token, input) {
+  const res = await fetch(`https://api.replicate.com/v1/models/${MODEL_SLUG}/predictions`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Prefer: "wait=60" },
+    body: JSON.stringify({ input }),
+  });
+  if (!res.ok) throw new Error(`replicate ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  return res.json();
+}
+
+async function waitForImage(token, pred) {
+  const deadline = Date.now() + 120_000;
+  while (!["succeeded", "failed", "canceled"].includes(pred.status)) {
+    if (Date.now() > deadline) throw new Error("timed out after 120s");
+    await sleep(1500);
+    const r = await fetch(pred.urls.get, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) throw new Error(`replicate poll ${r.status}`);
+    pred = await r.json();
+  }
+  if (pred.status !== "succeeded") throw new Error(`prediction ${pred.status}: ${pred.error ?? "no detail"}`);
+  return pred.output;
+}
+
+async function main() {
+  const a = parseArgs(process.argv.slice(2));
+  if (a.help) {
+    console.log('Usage: {{PRIMARY_ENV}}=xxx node generate.mjs --prompt "..." [--aspect square|landscape|portrait] [--out path] [--dry-run]');
+    return;
+  }
+
+  const prompt = (a.prompt ?? "").trim();
+  if (!prompt) fail('prompt required (--prompt "...")');
+  if (prompt.length > MAX_PROMPT_LEN) fail(`prompt too long (max ${MAX_PROMPT_LEN})`);
+  if (!ASPECTS.includes(a.aspect)) fail(`invalid aspect '${a.aspect}' (use ${ASPECTS.join(" | ")})`);
+
+  const input = buildInput(prompt, a.aspect);
+  const out = resolve(a.out || `out/${a.aspect}.${EXT}`);
+
+  if (a.dryRun) {
+    console.log(JSON.stringify({
+      ok: true, dryRun: true, aspect: a.aspect, out,
+      request: { endpoint: `https://api.replicate.com/v1/models/${MODEL_SLUG}/predictions`, input },
+    }, null, 2));
+    return;
+  }
+
+  const token = process.env.{{PRIMARY_ENV}};
+  if (!token) fail("{{PRIMARY_ENV}} not set — export your own key ({{ENV_LINK}})");
+
+  const pred = await startPrediction(token, input);
+  const output = pred.status === "succeeded" ? pred.output : await waitForImage(token, pred);
+  const url = pickUrl(output);
+  if (!url) fail("no output URL in prediction");
+
+  const dl = await fetch(url);
+  if (!dl.ok) fail(`download ${dl.status}`);
+  const bytes = Buffer.from(await dl.arrayBuffer());
+
+  await mkdir(dirname(out), { recursive: true });
+  await writeFile(out, bytes);
+  console.log(JSON.stringify({ ok: true, aspect: a.aspect, prompt, path: out, bytes: bytes.length }));
+}
+
+main().catch((err) => fail(err instanceof Error ? err.message : String(err)));

@@ -1,0 +1,58 @@
+{
+  "_comment": "Universal function-calling schema for mythosforge-audio. Hand the matching block to any tool-use LLM. Parameters identical across shapes; only the envelope differs. openai = OpenAI / Bankr LLM Gateway / Surplus / Codex / Cursor. anthropic = Claude Messages API tool-use.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "op": { "type": "string", "enum": ["tts", "music", "sfx"], "description": "tts = text-to-speech; music = music/ambience; sfx = sound effect." },
+      "text": { "type": "string", "description": "Speech text for tts, or the prompt for music/sfx." },
+      "voice": { "type": "string", "description": "tts only: MiniMax system voice id (default Wise_Woman)." },
+      "duration": { "type": "integer", "description": "music/sfx only: seconds, positive integer." },
+      "format": { "type": "string", "description": "tts audio_format (mp3/wav/flac/pcm) or music output_format (wav/mp3)." },
+      "out": { "type": "string", "description": "Optional output file path." },
+      "model": { "type": "string", "description": "Optional Replicate model slug override for the op." }
+    },
+    "required": ["op", "text"]
+  },
+  "openai": {
+    "type": "function",
+    "function": {
+      "name": "mythosforge_audio",
+      "description": "Generate audio via Replicate — tts (minimax/speech-02-turbo), music (meta/musicgen), or sfx (stackadoc/stable-audio-open). Writes the audio file to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "op": { "type": "string", "enum": ["tts", "music", "sfx"], "description": "tts / music / sfx." },
+          "text": { "type": "string", "description": "Speech text for tts, or the prompt for music/sfx." },
+          "voice": { "type": "string", "description": "tts only: MiniMax system voice id." },
+          "duration": { "type": "integer", "description": "music/sfx only: seconds, positive integer." },
+          "format": { "type": "string", "description": "Audio format where the op supports one." },
+          "out": { "type": "string", "description": "Optional output file path." },
+          "model": { "type": "string", "description": "Optional Replicate model slug override." }
+        },
+        "required": ["op", "text"]
+      }
+    }
+  },
+  "anthropic": {
+    "name": "mythosforge_audio",
+    "description": "Generate audio via Replicate — tts (minimax/speech-02-turbo), music (meta/musicgen), or sfx (stackadoc/stable-audio-open). Writes the audio file to disk and returns its local path. Requires the caller's own REPLICATE_API_TOKEN in the execution environment.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "op": { "type": "string", "enum": ["tts", "music", "sfx"], "description": "tts / music / sfx." },
+        "text": { "type": "string", "description": "Speech text for tts, or the prompt for music/sfx." },
+        "voice": { "type": "string", "description": "tts only: MiniMax system voice id." },
+        "duration": { "type": "integer", "description": "music/sfx only: seconds, positive integer." },
+        "format": { "type": "string", "description": "Audio format where the op supports one." },
+        "out": { "type": "string", "description": "Optional output file path." },
+        "model": { "type": "string", "description": "Optional Replicate model slug override." }
+      },
+      "required": ["op", "text"]
+    }
+  },
+  "invocation": {
+    "note": "When the model emits a tool call with the args above, the host harness maps them to this shell command and runs it (REPLICATE_API_TOKEN must be set in that environment):",
+    "command": "node audio.mjs --op <op> --text <text> [--voice <voice>] [--duration <duration>] [--format <format>] [--out <out>] [--model <model>]",
+    "returns": "A JSON line: { ok, op, text, path, bytes }. Feed `path` back to the model as the tool result."
+  }
+}

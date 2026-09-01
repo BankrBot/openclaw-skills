@@ -1,0 +1,44 @@
+# {{NAME}}
+
+{{DESCRIPTION}} Open-source, self-contained, and usable by any AI runtime — **you bring your own
+`{{PRIMARY_ENV}}`**, so there's no MythosForge account, wallet, or payment layer.
+
+Part of the [MythosForge](https://www.mythosforge.xyz) open-source skill suite.
+
+## Quick start
+
+```bash
+# Node 18+ required. No `npm install` — zero dependencies (built-in fetch).
+export {{PRIMARY_ENV}}=xxx   # {{ENV_LINK}}
+
+node generate.mjs --prompt "..." --aspect landscape
+# -> writes out/landscape.{{EXT}} and prints a JSON result line
+```
+
+Preview the request without spending anything (no key needed):
+
+```bash
+node generate.mjs --prompt "..." --dry-run
+```
+
+## Options
+
+| Flag        | Values                                | Default            |
+|-------------|---------------------------------------|--------------------|
+| `--prompt`  | text, max 2000 chars (**required**)   | —                  |
+| `--aspect`  | `square` \| `landscape` \| `portrait` | `square`           |
+| `--out`     | output file path                      | `out/<aspect>.{{EXT}}` |
+| `--dry-run` | print request, spend nothing          | off                |
+
+## Usable by any AI runtime
+
+- **Claude Code** — reads `SKILL.md`.
+- **Codex / Cursor / any shell agent** — read `AGENTS.md`, run the CLI.
+- **Tool-use / hosted LLMs** (Bankr LLM Gateway, Surplus, OpenAI, Claude API) — hand the model
+  `tool-schema.json` (`openai` or `anthropic` block); the host runs the CLI on the tool call.
+
+## Licensing
+
+- The wrapper (`generate.mjs`, docs) is **MIT**.
+- Generation runs on **your** account/key; the underlying model carries its own terms.
+- No model weights are redistributed — only the API-calling wrapper.

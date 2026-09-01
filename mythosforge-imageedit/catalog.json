@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "mythosforge-imageedit",
+  "provider": "MythosForge",
+  "providerUrl": "https://www.mythosforge.xyz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "imageedit.sh",
+    "language": "bash",
+    "code": "# Dry-run first — needs no key, prints the exact Replicate request\nnode imageedit.mjs --op edit --image in/photo.png --prompt \"make it a snowy night scene\" --dry-run\n\n# Instruction edit (img2img) — bring your own Replicate key\nREPLICATE_API_TOKEN=r8_xxx node imageedit.mjs \\\n  --op edit --image in/photo.png --prompt \"make it a snowy night scene\" --out out/edit.png\n\n# Inpaint a masked region (white = area to fill)\nREPLICATE_API_TOKEN=r8_xxx node imageedit.mjs \\\n  --op inpaint --image in/photo.png --mask in/mask.png --prompt \"a red door\" --out out/inpaint.png"
+  },
+  "setup": [
+    "Install: `install the mythosforge-imageedit skill from https://github.com/BankrBot/skills/tree/main/mythosforge-imageedit`",
+    "Node 18+ — uses built-in fetch, zero dependencies (no npm install)",
+    "Bring your own Replicate API token: export REPLICATE_API_TOKEN (get one at https://replicate.com/account/api-tokens). Edits are billed to your Replicate account, not MythosForge.",
+    "Verify with `--dry-run` (needs no key) before any live run",
+    "Source: https://github.com/ryjin111/mythosforge-imageedit"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "mythosforge-imageedit",
+    "command": "install the mythosforge-imageedit skill from https://github.com/BankrBot/skills/tree/main/mythosforge-imageedit"
+  }
+}

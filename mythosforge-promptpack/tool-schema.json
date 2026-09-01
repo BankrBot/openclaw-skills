@@ -1,0 +1,52 @@
+{
+  "_comment": "Universal function-calling schema for mythosforge-promptpack. Hand the matching block to any tool-use LLM. Parameters identical across shapes; only the envelope differs. openai = OpenAI / Bankr LLM Gateway / Surplus / Codex / Cursor. anthropic = Claude Messages API tool-use.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "list": { "type": "boolean", "description": "List available recipes (id/title/model/aspect)." },
+      "recipe": { "type": "string", "description": "Recipe id to compose (see list)." },
+      "subject": { "type": "string", "description": "What to drop into the recipe's {subject} slot." },
+      "theme": { "type": "string", "description": "Optional path to a brandkit.json to fold in (on-theme)." },
+      "recipes": { "type": "string", "description": "Optional custom recipe library JSON path." },
+      "out": { "type": "string", "description": "Optional path to write the composed prompt JSON." }
+    }
+  },
+  "openai": {
+    "type": "function",
+    "function": {
+      "name": "mythosforge_promptpack",
+      "description": "Compose a generator-ready prompt from a curated recipe library, optionally themed with a brandkit token. No API key — pure composition. Returns { recipe, prompt, model, aspect, negative }; feed prompt+model+aspect to a generator like mythosforge-imagegen.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "list": { "type": "boolean", "description": "List available recipes." },
+          "recipe": { "type": "string", "description": "Recipe id to compose." },
+          "subject": { "type": "string", "description": "What to put into the recipe's {subject} slot." },
+          "theme": { "type": "string", "description": "Optional path to a brandkit.json." },
+          "recipes": { "type": "string", "description": "Optional custom recipe library JSON path." },
+          "out": { "type": "string", "description": "Optional path to write the composed prompt JSON." }
+        }
+      }
+    }
+  },
+  "anthropic": {
+    "name": "mythosforge_promptpack",
+    "description": "Compose a generator-ready prompt from a curated recipe library, optionally themed with a brandkit token. No API key — pure composition. Returns { recipe, prompt, model, aspect, negative }; feed prompt+model+aspect to a generator like mythosforge-imagegen.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "list": { "type": "boolean", "description": "List available recipes." },
+        "recipe": { "type": "string", "description": "Recipe id to compose." },
+        "subject": { "type": "string", "description": "What to put into the recipe's {subject} slot." },
+        "theme": { "type": "string", "description": "Optional path to a brandkit.json." },
+        "recipes": { "type": "string", "description": "Optional custom recipe library JSON path." },
+        "out": { "type": "string", "description": "Optional path to write the composed prompt JSON." }
+      }
+    }
+  },
+  "invocation": {
+    "note": "When the model emits a tool call with the args above, the host harness maps them to this shell command and runs it (no key needed):",
+    "command": "node promptpack.mjs (--list | --recipe <recipe> --subject <subject> [--theme <theme>] [--recipes <recipes>] [--out <out>])",
+    "returns": "JSON: { ok, recipe, prompt, model, aspect, negative }. Feed prompt/model/aspect back to the model, or straight into a generator skill."
+  }
+}

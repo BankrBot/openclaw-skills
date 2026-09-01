@@ -1,0 +1,30 @@
+{
+  "name": "mythosforge-brandkit",
+  "version": "1.0.0",
+  "description": "Extract or author a reusable brand/style token (brandkit.json) that every generator + lookgate share for one consistent visual identity. Extract mode uses Google Gemini vision (GEMINI_API_KEY); author mode needs no key. No wallet, no payment.",
+  "license": "MIT",
+  "runtime": "node>=18",
+  "entry": "brandkit.mjs",
+  "invoke": "node brandkit.mjs (--from <img|url> | --author [--in partial.json]) [--name x] [--out brandkit.json] [--model m] [--base-url url] [--auth bearer|x-api-key] [--dry-run] [--schema]",
+  "env": {
+    "required": [],
+    "optional": ["GEMINI_API_KEY", "BRANDKIT_API_KEY", "BRANDKIT_MODEL", "BRANDKIT_BASE_URL"],
+    "note": "extract mode (--from) needs GEMINI_API_KEY (default Google Gemini vision; BRANDKIT_API_KEY accepted alias; BRANDKIT_BASE_URL/BRANDKIT_MODEL retarget any OpenAI-compatible vision endpoint). author mode (--author) needs no key."
+  },
+  "inputs": {
+    "from": { "type": "string", "note": "extract mode: path or URL to a reference image" },
+    "author": { "type": "boolean", "note": "author mode: validate/fill a hand-written token (no key)" },
+    "in": { "type": "string", "note": "author mode: optional partial token JSON to fill from" },
+    "name": { "type": "string", "note": "override the token name" },
+    "out": { "type": "string", "default": "brandkit.json" }
+  },
+  "output": "Style token JSON on stdout + written to --out (see references/brandkit-schema.md): { name, north_star, palette, typography, feel_words, anti_feel, lighting, emblem_refs, prompt_suffix }. Wrapper prints { ok, mode, name, path, token }.",
+  "tool_schema": "tool-schema.json",
+  "runtimes": {
+    "claude-code": "SKILL.md",
+    "codex": "AGENTS.md",
+    "cursor": "AGENTS.md",
+    "shell": "invoke command above",
+    "tool-use-llm": "hand tool-schema.json (openai or anthropic block) to the model; host runs invoke on the tool call. Works with OpenAI, Anthropic, Bankr LLM Gateway, Surplus, and any function-calling model."
+  }
+}
