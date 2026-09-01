@@ -67,7 +67,7 @@ server puts its poison entry first).
    domain separator).
 6. `payTo` equals the pinned Quotient payee address.
 7. `amount` parses as a positive integer of atomic units and is ≤ the route's published
-   price (from `/api/public/pricing`; 6 decimals — $0.02 = `20000`). The `exact` scheme
+   price (from `/api/public/pricing`; convert USD to the asset's 6-decimal atomic units). The `exact` scheme
    transfers exactly this value.
 8. `maxTimeoutSeconds ≤ 300` — it becomes your authorization's `validBefore`; an unbounded
    value is an unbounded-lifetime signed transfer authorization.
@@ -198,7 +198,7 @@ the key stays inside Bankr.
 
 Requirements for this adapter path:
 - Provide a Bankr API key through `X-API-Key`.
-- Ensure that key has Agent API access enabled and is not read-only, so `/agent/sign` can execute `eth_signTypedData_v4`.
+- Ensure that key has Wallet API access enabled (`walletApiEnabled`) and is not read-only, so `/wallet/sign` can execute `eth_signTypedData_v4`. The legacy `/agent/sign` and `/agent/me` endpoints were removed upstream; use `/wallet/sign` and `/wallet/me`.
 - Run the pre-sign validation checklist BEFORE calling the adapter — the adapter signs
   whatever typed data it is handed, so the checklist is the only thing standing between a
   hostile challenge and a signed transfer.
@@ -217,7 +217,7 @@ type TypedDataRequest = {
 };
 
 async function createBankrSigner(apiKey: string) {
-  const meRes = await fetch("https://api.bankr.bot/agent/me", {
+  const meRes = await fetch("https://api.bankr.bot/wallet/me", {
     headers: { "X-API-Key": apiKey }
   });
   if (!meRes.ok) throw new Error(`bankr_me_failed:${meRes.status}`);
@@ -228,7 +228,7 @@ async function createBankrSigner(apiKey: string) {
     address,
     // x402 schemes need an EIP-712 typed-data signer.
     async signTypedData(payload: TypedDataRequest): Promise<`0x${string}`> {
-      const signRes = await fetch("https://api.bankr.bot/agent/sign", {
+      const signRes = await fetch("https://api.bankr.bot/wallet/sign", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

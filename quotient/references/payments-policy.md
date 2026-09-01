@@ -6,6 +6,18 @@ Canonical spec for the skill's paid-call machinery. Two implementations follow t
 and must not drift: `scripts/payments.sh` (sourced by `quotient.sh` and
 `converge-monitor.sh`) and the inline mirror in `scripts/signal-strategy.mjs`.
 
+This protocol governs x402 mode only. When `QUOTIENT_API_KEY` is configured, clients send
+it as `x-quotient-api-key`, debit prepaid credits, and skip previews, autopay policy checks,
+and the local x402 spend ledger. The key stays off argv/output and is sent only to the
+pinned gateway (or an explicitly local test origin).
+
+When forecast coverage or identity is unresolved, use free
+`/api/public/forecast-availability`; a known stable market reference can use the forecast
+operation directly. Missing or upstream-error responses retain no charge: the gateway
+refunds an API-key debit and skips x402 settlement. The availability response either points
+to the paid read or supplies the authenticated generation request, preventing repeated
+payments for absent coverage.
+
 ## Payment Modes
 
 - **`report`** — paid calls run non-interactively within the pinned per-route caps and
@@ -33,36 +45,29 @@ pinned bound:
    that disagree with the pinned tuple are the attack signal, and nothing is paid. This
    also gives the `bankr x402 call` path tuple validation it otherwise could not have.
 2. The challenge's live price becomes the call's `--max-payment`, **clamped by a pinned
-   ceiling of 2× the published price** below. Price drops flow through automatically and
-   modest raises never brick the skill; a raise above the ceiling fails closed until the
-   user accepts it via a `route_overrides` entry (which replaces the ceiling).
-3. When the pre-flight is unavailable (network hiccup, missing header), the published
-   price is the fallback cap.
+   ceiling of 2× the reviewed operation price** in `contract-prices.json`. Price drops
+   flow through automatically and modest raises never brick the skill; a raise above the
+   ceiling fails closed until the user accepts it via a `route_overrides` entry (which
+   replaces the ceiling).
+3. When the pre-flight is unavailable (network hiccup, missing header), the reviewed
+   operation price is the fallback cap.
 4. Two-read caveat: the payer fetches the challenge again itself, so a server could show
    different terms to each read — the cap and the host allowlist still bound that
    residual risk.
 
 `QUOTIENT_MAX_PAYMENT_USD` may only lower the effective cap, never raise it.
 
-Published prices (ceiling = 2× these):
+`references/contract-prices.json` is generated from canonical OpenAPI. Its
+`operation_prices_usd` map is the complete reviewed baseline and its
+`operation_rate_limits` map owns client pacing. Routes absent from that artifact are
+refused (exit 2) rather than paid at a guessed cap.
 
-| Route | USD |
-|---|---|
-| `/api/v1/markets` | 0.005 |
-| `/api/v1/markets/mispriced` | 0.05 |
-| `/api/v1/markets/lookup` | 0.005 |
-| `/api/v1/markets/{slug}/forecast` | 0.01 |
-| `/api/v1/markets/{slug}/intelligence` | 0.025 |
-| `/api/v1/markets/{slug}/signals` | 0.025 |
-| `/api/v1/sources` | 0.01 |
-| `/api/v1/signals` | 0.02 |
-| `/api/v1/signals/featured` | 0.01 |
-| `/api/v1/signals/oil` | 0.025 |
-| `/api/v1/portfolio` | 0.0025 |
-| `/api/v1/narratives` | 0.01 |
-| `/api/v1/signal-score` | 0.005 |
-
-Routes not in this table are refused (exit 2) rather than paid at a guessed cap.
+The POST `/api/v1/x/search` and POST `/api/v1/x/profile` routes are priced above the
+default per-call policy cap; invoke them with API-key auth or an x402 client that supports
+paid POST bodies. They intentionally are not exposed through the
+vendored GET-only shell payer. Their cost also exceeds the default
+`per_call_max_usd: 0.05`, so an x402 client/policy must receive explicit authorization
+for those routes and amounts.
 
 ## Host Allowlist
 
@@ -118,7 +123,7 @@ policy.
 
 ### spend-ledger.json
 
-```json
+```text
 {
   "version": 1,
   "lifetime_spent_usd": 0.0825,
@@ -128,8 +133,8 @@ policy.
       "run_id": "r-20260804172100-7213",
       "route": "/api/v1/signals",
       "url": "https://quotient-api-gateway.onrender.com/api/v1/signals?window=24",
-      "max_payment_usd": 0.02,
-      "charged_usd_estimate": 0.02,
+      "max_payment_usd": "<reviewed operation price>",
+      "charged_usd_estimate": "<charged estimate>",
       "approval": "user-token | autopay | report-mode",
       "attempt": 1,
       "status": "paid | failed"
@@ -145,13 +150,13 @@ survives pruning. The ledger is the user's audit trail — never delete or rewri
 
 ### pending-approval.json
 
-```json
+```text
 {
   "token": "qpay-20260804172011-7f3a1b9c",
   "created_at": "2026-08-04T17:20:11Z",
   "command": "quotient.sh signals --window 24",
-  "calls": [ { "route": "/api/v1/signals", "count_max": 1, "max_payment_usd": 0.02, "subtotal_usd": 0.02 } ],
-  "total_max_usd": 0.02
+  "calls": [ { "route": "/api/v1/signals", "count_max": 1, "max_payment_usd": <number>, "subtotal_usd": <number> } ],
+  "total_max_usd": <number>
 }
 ```
 
@@ -164,14 +169,14 @@ that and the ledger records which approval kind each payment used.
 
 ## The payment_preview Object (stdout on exit 10/11)
 
-```json
+```text
 {
   "type": "payment_preview",
   "reason": "approval_required | cap_exceeded",
   "mode": "confirm | report",
   "command": "quotient.sh signals --window 24",
-  "calls": [ { "route": "/api/v1/signals", "count_max": 1, "max_payment_usd": 0.02, "subtotal_usd": 0.02 } ],
-  "total_max_usd": 0.02,
+  "calls": [ { "route": "/api/v1/signals", "count_max": 1, "max_payment_usd": <number>, "subtotal_usd": <number> } ],
+  "total_max_usd": <number>,
   "today_spent_usd": 0.0325,
   "caps": null,
   "cap_violations": [],
@@ -187,7 +192,10 @@ that and the ledger records which approval kind each payment used.
 ```
 
 `preauth_offer` appears only while no policy exists — it is the material for the
-first-time "pre-authorize $1.00 ≈ N requests like this one" offer.
+first-time "pre-authorize $1.00 ≈ N requests like this one" offer. The Bankr
+distribution's SKILL.md instructs the agent to relay this offer on the first paid call;
+the creation rule above is unchanged — a policy is written only on an explicit user
+instruction stating the amounts.
 
 ## Retry & Idempotency Rules
 
@@ -211,7 +219,7 @@ first-time "pre-authorize $1.00 ≈ N requests like this one" offer.
       "signal_id": "qs_…", "market_slug": "…", "question": "…",
       "condition_id": "0x…64hex", "outcome": "No", "token_id": "…",
       "side": "NO", "size_usd": 20, "expected_cost_cents": 64.0,
-      "live_book": { "best_bid": 0.62, "best_ask": 0.64, "spread": 0.02, "ask_notional_within_2c": 5400 },
+      "live_book": { "best_bid": 0.62, "best_ask": 0.65, "spread": 0.03, "ask_notional_within_2c": 5400 },
       "pct_of_live_depth": 0.37,
       "prompt": "Bet $20 on No for … on Polymarket"
     }
