@@ -3,15 +3,21 @@
 # Usage: ./bridge-to-mainnet.sh <amount-in-eth>
 # Example: ./bridge-to-mainnet.sh 0.01
 
-set -e
+set -euo pipefail
 
 # Require Bankr CLI
 if ! command -v bankr >/dev/null 2>&1; then
-  echo "Bankr CLI not found. Install with: bun install -g @bankr/cli" >&2
+  echo "Error: Bankr CLI not found. Install with: bun install -g @bankr/cli" >&2
   exit 1
 fi
 
 AMOUNT="${1:?Usage: bridge-to-mainnet.sh <amount-in-eth>}"
+
+# Validate amount is a positive number
+if ! echo "$AMOUNT" | grep -qE '^[0-9]+(\.[0-9]+)?$' || [ "$(echo "$AMOUNT <= 0" | bc -l)" = "1" ]; then
+  echo "Error: amount must be a positive number (e.g. 0.01)" >&2
+  exit 1
+fi
 
 echo "=== Bridging ETH to Mainnet ===" >&2
 echo "Amount: $AMOUNT ETH" >&2
