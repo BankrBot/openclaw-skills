@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# shellcheck source=_response-markers.sh disable=SC1091
+source "$(dirname "$0")/_response-markers.sh"
+
 if [ "$#" -lt 1 ]; then
   echo "Usage: opensea-get.sh <path> [query]" >&2
   echo "Example: opensea-get.sh /api/v2/collections/cool-cats-nft" >&2
@@ -45,7 +48,7 @@ for (( attempt=1; attempt<=max_attempts; attempt++ )); do
   }
 
   if [[ "$http_code" =~ ^2 ]]; then
-    cat "$tmp_body"
+    emit_response "$tmp_body"
     exit 0
   fi
 
@@ -57,6 +60,6 @@ for (( attempt=1; attempt<=max_attempts; attempt++ )); do
   fi
 
   echo "opensea-get.sh: HTTP $http_code error" >&2
-  cat "$tmp_body" >&2
+  emit_response "$tmp_body" >&2
   exit 1
 done

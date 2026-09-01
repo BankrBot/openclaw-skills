@@ -5,8 +5,11 @@
 ```
 Base URL: https://api.opensea.io
 OpenAPI spec: https://api.opensea.io/api/v2/openapi.json
-Auth header: x-api-key: $OPENSEA_API_KEY
+API key header: x-api-key: $OPENSEA_API_KEY
+Bearer token header: Authorization: Bearer <token>  (wallet-authenticated endpoints only)
 ```
+
+See [authentication.md](authentication.md) for the full auth flow and scope reference.
 
 ## Pagination
 
@@ -40,6 +43,10 @@ List endpoints support cursor-based pagination:
 | `/api/v2/collections` | GET | List multiple collections |
 | `/api/v2/collections/trending` | GET | Trending collections by sales activity |
 | `/api/v2/collections/top` | GET | Top collections by volume/sales/floor |
+| `/api/v2/collections/batch` | POST | Fetch multiple collections by slug in one request |
+| `/api/v2/collections/{slug}/offer_aggregates` | GET | Top offers grouped by price level |
+| `/api/v2/collections/{slug}/holders` | GET | Holders ranked by quantity owned |
+| `/api/v2/collections/{slug}/floor_prices` | GET | Floor-price history |
 
 ### NFTs
 
@@ -50,6 +57,9 @@ List endpoints support cursor-based pagination:
 | `/api/v2/chain/{chain}/account/{address}/nfts` | GET | NFTs by wallet |
 | `/api/v2/chain/{chain}/contract/{contract}/nfts` | GET | NFTs by contract |
 | `/api/v2/nft/{contract}/{token_id}/refresh` | POST | Refresh NFT metadata |
+| `/api/v2/nfts/batch` | POST | Fetch multiple NFTs in one request |
+| `/api/v2/chain/{chain}/contract/{contract}/nfts/{token_id}/owners` | GET | Owners of an NFT (paginated for ERC-1155s) |
+| `/api/v2/chain/{chain}/contract/{contract}/nfts/{token_id}/analytics` | GET | Historical sale points for an NFT |
 
 ### Listings
 
@@ -60,6 +70,7 @@ List endpoints support cursor-based pagination:
 | `/api/v2/orders/{chain}/seaport/listings` | POST | Create new listing |
 | `/api/v2/listings/fulfillment_data` | POST | Get buy transaction data |
 | `/api/v2/listings/sweep` | POST | Bulk-buy items from a collection |
+| `/api/v2/listings/actions` | POST | Ordered approval + sign actions to create listings |
 
 ### Offers
 
@@ -76,7 +87,7 @@ List endpoints support cursor-based pagination:
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/v2/orders/chain/{chain}/protocol/{protocol}/{hash}` | GET | Get order by hash |
-| `/api/v2/orders/chain/{chain}/protocol/{protocol}/{hash}/cancel` | POST | Cancel order |
+| `/api/v2/orders/chain/{chain}/protocol/{protocol}/{hash}/cancel` | POST | Cancel order (requires `write:orders` scope + Bearer token for authenticated cancel) |
 
 ### Events
 
@@ -93,6 +104,9 @@ List endpoints support cursor-based pagination:
 | `/api/v2/drops` | GET | List drops (featured, upcoming, recently_minted) |
 | `/api/v2/drops/{slug}` | GET | Detailed drop info with stages and supply |
 | `/api/v2/drops/{slug}/mint` | POST | Build mint transaction data |
+| `/api/v2/drops/eligibility/{slug}` | GET | Check drop eligibility (requires `read:eligibility` scope + Bearer token) |
+| `/api/v2/drops/deploy` | POST | Build deploy-contract transaction for a new drop |
+| `/api/v2/drops/deploy/{chain}/{tx_hash}/receipt` | GET | Receipt for a previously submitted deploy transaction |
 
 ### Accounts
 
@@ -100,6 +114,41 @@ List endpoints support cursor-based pagination:
 |----------|--------|-------------|
 | `/api/v2/accounts/{address}` | GET | Account profile |
 | `/api/v2/accounts/resolve/{identifier}` | GET | Resolve ENS name, username, or address |
+| `/api/v2/account/{address}/portfolio` | GET | Portfolio stats (net worth, P&L) |
+| `/api/v2/account/{address}/portfolio/history` | GET | Portfolio net-worth history |
+| `/api/v2/account/{address}/offers` | GET | Active offers made by an account |
+| `/api/v2/account/{address}/offers_received` | GET | Offers received by an account |
+| `/api/v2/account/{address}/listings` | GET | Active listings for an account |
+| `/api/v2/account/{address}/favorites` | GET | Items favorited by an account (requires `read:favorites` scope + Bearer token) |
+| `/api/v2/account/{address}/collections` | GET | Collections owned by an account |
+| `/api/v2/account/{address}/pnl` | GET | Aggregated trading P&L (realized + unrealized) for a wallet |
+| `/api/v2/account/{address}/pnl/closed-positions` | GET | Closed (realized) trading positions for a wallet |
+| `/api/v2/account/{address}/pnl/token-transfers` | GET | Token transfers contributing to a wallet's position in a currency (requires `contract_address` + `chain`) |
+
+### Tokens
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v2/tokens/batch` | POST | Fetch multiple tokens in one request |
+| `/api/v2/chain/{chain}/token/{address}/price_history` | GET | Token price history |
+| `/api/v2/chain/{chain}/token/{address}/ohlcv` | GET | OHLCV candles for a token |
+| `/api/v2/chain/{chain}/token/{address}/activity` | GET | Recent swap activity for a token |
+| `/api/v2/chain/{chain}/token/{address}/holders` | GET | Paginated holders + aggregate distribution health |
+| `/api/v2/chain/{chain}/token/{address}/liquidity-pools` | GET | Liquidity pools for a token |
+
+### Tools
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v2/tools` | GET | List registered tools (sort by newest/oldest, filter by type) |
+| `/api/v2/tools/search` | GET | Search tools by keyword, tags, creator, access type |
+| `/api/v2/tools/{registry_chain}/{registry_addr}/{tool_id}` | GET | Get a specific registered tool |
+
+### Assets
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v2/assets/transfer` | POST | Build transactions to transfer NFTs or tokens between wallets |
 
 ### Swap & Transactions
 
@@ -151,7 +200,8 @@ A `429` response includes these headers:
 | Code | Meaning |
 |------|---------|
 | 400 | Bad request - check parameters |
-| 401 | Unauthorized - missing/invalid API key |
+| 401 | Unauthorized - missing/invalid API key or Bearer token |
+| 403 | Forbidden - valid auth but insufficient scopes |
 | 404 | Resource not found |
 | 429 | Rate limited |
 | 500 | Server error |

@@ -1,11 +1,18 @@
 ---
 name: opensea
 description: Query NFT and token data, trade NFTs on Seaport, swap ERC20 tokens via DEX aggregator, configure wallet signing providers, and build/register/gate AI agent tools on Base. Covers the full OpenSea developer surface across CLI, MCP server, shell scripts, and SDK. Pick the right sub-skill using the routing table below, then read that sub-skill's SKILL.md for operational detail.
+homepage: https://github.com/ProjectOpenSea/opensea-skill
+repository: https://github.com/ProjectOpenSea/opensea-skill
 license: MIT
-compatibility: Requires network access and Node.js >= 18. Set $OPENSEA_API_KEY (free instant key at https://docs.opensea.io/reference/api-keys#instant-api-key-for-agents) for all read/write operations. Write operations (marketplace, swaps) additionally require a wallet provider — Bankr, Privy, Turnkey, Fireblocks, or a local PRIVATE_KEY — configured per opensea-wallet/SKILL.md. `curl` and `jq` recommended for shell-script flows.
-metadata:
-  author: ProjectOpenSea
-  version: "1.0"
+env:
+  OPENSEA_API_KEY:
+    description: API key for all OpenSea services
+    required: true
+    obtain: https://docs.opensea.io/reference/api-keys#instant-api-key-for-agents
+dependencies:
+  - node >= 18.0.0
+  - curl
+  - jq (recommended)
 ---
 
 # OpenSea (router)
@@ -29,7 +36,3 @@ Always read the sub-skill `SKILL.md` before executing. This router intentionally
 - **Token swaps** (ERC20 to ERC20, cross-chain): `opensea-swaps`
 - **Wallet setup** (before any write operation): `opensea-wallet`
 - **Tool building** (register, gate, monetize AI tools): `opensea-tool-sdk`
-
-## Source
-
-Maintained at [github.com/ProjectOpenSea/opensea-skill](https://github.com/ProjectOpenSea/opensea-skill). File issues and contributions there.

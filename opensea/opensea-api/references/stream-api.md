@@ -25,4 +25,4 @@ Send every ~30 seconds:
 
 ## Notes
 - Stream is WebSocket-based, not HTTP. curl is not suitable.
-- Use scripts/opensea-stream-collection.sh (websocat preferred).
+- Use scripts/stream/opensea-stream-collection.sh (websocat preferred).

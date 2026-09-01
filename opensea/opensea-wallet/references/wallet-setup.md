@@ -279,7 +279,7 @@ opensea swaps execute \
 import { createBankrAccount } from '@opensea/wallet-adapters';
 
 const account = await createBankrAccount(process.env.BANKR_API_KEY);
-// Use with authenticatedFetch, paidAuthenticatedFetch, or the OpenSeaCLI swaps API
+// Use with eip3009AuthenticatedFetch, paidAuthenticatedFetch, or the OpenSeaCLI swaps API
 ```
 
 ---

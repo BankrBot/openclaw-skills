@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# shellcheck source=_response-markers.sh disable=SC1091
+source "$(dirname "$0")/_response-markers.sh"
+
 if [ "$#" -lt 2 ]; then
   echo "Usage: opensea-post.sh <path> <json_body>" >&2
   echo "Example: opensea-post.sh /api/v2/listings/fulfillment_data '{\"listing\":{...}}'" >&2
@@ -40,10 +43,10 @@ http_code=$(curl -sS --connect-timeout 10 --max-time 30 -X POST \
 }
 
 if [[ "$http_code" =~ ^2 ]]; then
-  cat "$tmp_body"
+  emit_response "$tmp_body"
   exit 0
 fi
 
 echo "opensea-post.sh: HTTP $http_code error" >&2
-cat "$tmp_body" >&2
+emit_response "$tmp_body" >&2
 exit 1
