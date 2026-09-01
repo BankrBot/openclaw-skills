@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "peer",
+  "provider": "Peer",
+  "providerUrl": "https://peer.xyz",
+  "logo": null,
+  "demo": {
+    "title": "peer-agent-interface.sh",
+    "language": "bash",
+    "code": "# Verify the hosted read-only MCP server\ncurl -fsS https://mcp.peer.xyz/health\n\n# Query a live fiat-to-USDC quote through the official CLI\nnpx -y peer-protocol-cli@0.3.1 quote \\\n  --from USD --amount 100 --platform wise\n\n# Or start a local read-only MCP process\nnpx -y peer-protocol-cli@0.3.1 mcp --profile read-only"
+  },
+  "setup": [
+    "Hosted read-only MCP: `https://mcp.peer.xyz/mcp`",
+    "CLI: `npx -y peer-protocol-cli@0.3.1 --help` (Node.js 22 or newer)",
+    "Start with `read-only`; use local `cash` only for unsigned Peer Cash transaction plans",
+    "Official docs and machine-readable references: https://agents.peer.xyz"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "peer",
+    "command": "install the peer skill from https://github.com/BankrBot/skills/tree/main/peer"
+  }
+}
