@@ -1,0 +1,12 @@
+[
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function totalSupply() view returns (uint256)",
+  "function balanceOf(address) view returns (uint256)",
+  "function ownerOf(uint256) view returns (address)",
+  "function tokenURI(uint256) view returns (string)",
+  "function auction() view returns (address)",
+  "function transferFrom(address, address, uint256) external",
+  "function approve(address, uint256) external",
+  "function setApprovalForAll(address, bool) external"
+]

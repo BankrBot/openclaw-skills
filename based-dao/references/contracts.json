@@ -1,0 +1,35 @@
+{
+  "network": {
+    "name": "Base",
+    "chainId": 8453,
+    "rpc": "https://mainnet.base.org",
+    "explorer": "https://basescan.org"
+  },
+  "contracts": {
+    "token": {
+      "address": "0x10a5676ec8ae3d6b1f36a6f1a1526136ba7938bf",
+      "name": "BASED DAO",
+      "symbol": "BASED",
+      "type": "ERC721"
+    },
+    "auctionHouse": {
+      "address": "0x0D2790f4831bDFd6a8Fd21C6f591bB69496b5e91",
+      "type": "NounsAuctionHouse"
+    },
+    "governor": {
+      "address": "0x1b20dcfdf520176cfab22888f07ea3419d15779d",
+      "type": "NounsDAOLogic",
+      "votingDelay": "1 day",
+      "votingPeriod": "4 days",
+      "proposalThreshold": "4 NFTs"
+    }
+  },
+  "urls": {
+    "dao": "https://nouns.build/dao/base/0x10a5676ec8ae3d6b1f36a6f1a1526136ba7938bf",
+    "auction": "https://nouns.build/dao/base/0x10a5676ec8ae3d6b1f36a6f1a1526136ba7938bf/{auctionId}",
+    "proposal": "https://nouns.build/dao/base/0x10a5676ec8ae3d6b1f36a6f1a1526136ba7938bf/vote/{proposalId}",
+    "token_basescan": "https://basescan.org/address/0x10a5676ec8ae3d6b1f36a6f1a1526136ba7938bf",
+    "auction_basescan": "https://basescan.org/address/0x0D2790f4831bDFd6a8Fd21C6f591bB69496b5e91",
+    "governor_basescan": "https://basescan.org/address/0x1b20dcfdf520176cfab22888f07ea3419d15779d"
+  }
+}

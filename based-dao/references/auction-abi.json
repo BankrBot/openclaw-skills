@@ -1,0 +1,10 @@
+[
+  "function auction() view returns (uint256 tokenId, uint256 highestBid, address highestBidder, uint256 startTime, uint256 endTime, bool settled)",
+  "function createBid(uint256 tokenId) payable",
+  "function minBidIncrement() view returns (uint256)",
+  "function reservePrice() view returns (uint256)",
+  "function settleAuction() external",
+  "function settleCurrentAndCreateNewAuction() external",
+  "function duration() view returns (uint256)",
+  "function timeBuffer() view returns (uint256)"
+]

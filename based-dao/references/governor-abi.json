@@ -1,0 +1,14 @@
+[
+  "function proposalCount() view returns (uint256)",
+  "function proposals(uint256) view returns (uint256 proposer, uint256 eta, uint256 startBlock, uint256 endBlock, uint256 forVotes, uint256 againstVotes, uint256 abstainVotes, bool canceled, bool executed)",
+  "function state(uint256) view returns (uint8)",
+  "function castVote(uint256 proposalId, uint8 support) external returns (uint256)",
+  "function castVoteWithReason(uint256 proposalId, uint8 support, string reason) external returns (uint256)",
+  "function hasVoted(uint256 proposalId, address voter) view returns (bool)",
+  "function getActions(uint256) view returns (address[] targets, uint256[] values, string[] signatures, bytes[] calldatas)",
+  "function votingDelay() view returns (uint256)",
+  "function votingPeriod() view returns (uint256)",
+  "function proposalThreshold() view returns (uint256)",
+  "function quorumVotes() view returns (uint256)",
+  "function propose(address[] targets, uint256[] values, string[] signatures, bytes[] calldatas, string description) external returns (uint256)"
+]
