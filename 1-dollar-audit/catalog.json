@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "1-dollar-audit",
+  "provider": "One Dollar Audit",
+  "providerUrl": "https://onedollaraudit.com",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "commission-audit.ts",
+    "language": "typescript",
+    "code": "// Pay $1 USDC via x402, get a smart contract security audit\nimport { wrapFetchWithPaymentFromConfig } from \"@x402/fetch\";\n// ...wrap fetch with your Base wallet (see SKILL.md)...\n\nconst res = await fetchWithPayment(\"https://leftclaw.services/api/audit\", {\n  method: \"POST\",\n  headers: { \"Content-Type\": \"application/json\" },\n  body: JSON.stringify({ description: \"0xYourContract on Base — ERC20 with custom transfer logic\" }),\n});\nconst { jobId } = await res.json();\n\n// Persist jobId — resumable from any session, no auth\nconst job = await (await fetch(`https://onedollaraudit.com/api/jobs/${jobId}`)).json();\nconsole.log(job.status, job.reportUrl);"
+  },
+  "setup": [
+    "Fund an EVM wallet with ~$1 USDC on Base — no ETH needed (EIP-3009 is gasless)",
+    "Set `PRIVATE_KEY` in the environment (or use Bankr's native x402 payment support — no key on disk)",
+    "`npm install viem @x402/core @x402/evm @x402/fetch`",
+    "POST to `https://leftclaw.services/api/audit`, then poll `https://onedollaraudit.com/api/jobs/<jobId>`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "1-dollar-audit",
+    "command": "install the 1-dollar-audit skill from https://github.com/BankrBot/skills/tree/main/1-dollar-audit"
+  }
+}
