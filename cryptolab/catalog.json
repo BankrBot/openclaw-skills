@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "cryptolab",
+  "provider": "CryptoLab",
+  "providerUrl": "https://cryptolabhq.com/",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "cryptolab.sh",
+    "language": "bash",
+    "code": "# Today's plans — entry, stop, target and size, in your own money\ncurl -s -H \"X-API-Key: $CRYPTOLAB_KEY\" \\\n  https://cryptolabhq.com/api/today\n\n# What the model says about one pair\ncurl -s -H \"X-API-Key: $CRYPTOLAB_KEY\" \\\n  \"https://cryptolabhq.com/api/predict?symbol=BTCUSDT&timeframe=1h\"\n\n# How past signals actually performed — losses included\ncurl -s -H \"X-API-Key: $CRYPTOLAB_KEY\" \\\n  https://cryptolabhq.com/api/signals/performance"
+  },
+  "setup": [
+    "Register at https://cryptolabhq.com/register",
+    "Open Account → API keys, name a key and press Create a key",
+    "Copy the key — it is shown once and never again",
+    "Send it as `X-API-Key: clab_…` (or `Authorization: Bearer clab_…`) on every request"
+  ],
+  "install": {
+    "type": "http",
+    "repoPath": "cryptolab",
+    "command": "install the cryptolab skill from https://github.com/BankrBot/skills/tree/main/cryptolab"
+  }
+}
