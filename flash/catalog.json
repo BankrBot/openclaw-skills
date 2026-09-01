@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "flash",
+  "provider": "Definitive",
+  "providerUrl": "https://www.definitive.fi/flash-api",
+  "logo": null,
+  "demo": {
+    "title": "flash-quote.sh",
+    "language": "bash",
+    "code": "# Option A: add the official Flash MCP server\nclaude mcp add definitive-flash -- npx -y @definitive-fi/flash-mcp\n\n# Option B: call the REST API directly (quote -> sign -> submit)\n# 1) resolve the token\ncurl \"https://flash.definitive.fi/v1/search?query=weth&chain=base&limit=1\" \\\n  -H \"x-definitive-api-key: $FLASH_API_KEY\"\n\n# 2) quote a market buy of $500 into WETH on Base\ncurl -X POST https://flash.definitive.fi/v1/quote \\\n  -H \"x-definitive-api-key: $FLASH_API_KEY\" -H 'content-type: application/json' \\\n  -d '{\"side\":\"buy\",\"orderType\":\"market\",\"targetAsset\":\"0x4200000000000000000000000000000000000006\",\"targetChain\":\"base\",\"contraAsset\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"contraChain\":\"base\",\"qty\":\"500\",\"funderAddress\":\"0xYourWallet\"}'\n\n# 3) sign quote.evm.orderTypedData, then POST /order with quoteId + userSignature"
+  },
+  "setup": [
+    "Install: `install the flash skill from https://github.com/BankrBot/skills/tree/main/flash`",
+    "Get a Flash API key: https://www.definitive.fi/flash-api#contact (a shared integrator key is in the docs for testing)",
+    "Fastest integration: `claude mcp add definitive-flash -- npx -y @definitive-fi/flash-mcp`",
+    "Or call REST directly with the `x-definitive-api-key` header (no request signing)",
+    "Docs: https://flash.definitive.fi/docs/for-agents"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "flash",
+    "command": "install the flash skill from https://github.com/BankrBot/skills/tree/main/flash"
+  }
+}
