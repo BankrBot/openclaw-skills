@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "wallettriage",
+  "provider": "WalletTriage",
+  "providerUrl": "https://wallettriage.com",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "wallettriage.sh",
+    "language": "bash",
+    "code": "# Is this address safe to interact with? ($0.01)\nbankr prompt \"Use wallettriage to scan 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045 on eth\"\n\n# Audit my own wallet's approvals against live exploits ($0.01)\nbankr prompt \"Run a wallettriage scan on my wallet on base — what should I revoke first?\"\n\n# Gate a transfer on counterparty risk ($0.01)\nbankr prompt \"Before sending, wallettriage-scan the recipient; abort if risk_level is high or critical\"\n\n# Service status + threat feed freshness (free)\nbankr prompt \"GET https://api.wallettriage.com/health and report threat feed status\""
+  },
+  "setup": [
+    "No install required — one HTTP endpoint behind x402",
+    "TypeScript: `npm install x402-axios` — Python: `pip install x402`",
+    "Fund a Base wallet with USDC (~$0.01 per query)",
+    "Optional MCP: `npx wallettriage-mcp` for MCP-capable agents"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "wallettriage",
+    "command": "install the wallettriage skill from https://github.com/BankrBot/skills/tree/main/wallettriage"
+  }
+}

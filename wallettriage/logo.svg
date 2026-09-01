@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <rect width="128" height="128" rx="24" fill="#0E1116"/>
+  <!-- shield -->
+  <path d="M64 18 L100 32 V62 C100 86 84 102 64 110 C44 102 28 86 28 62 V32 Z"
+        fill="none" stroke="#2F6FED" stroke-width="6" stroke-linejoin="round"/>
+  <!-- pulse line (triage heartbeat) -->
+  <polyline points="38,66 52,66 58,48 68,82 74,60 90,60"
+            fill="none" stroke="#38D39F" stroke-width="6"
+            stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
