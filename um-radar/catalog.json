@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "slug": "um-radar",
+  "provider": "UnicornsMap",
+  "providerUrl": "https://unicornsmap.com",
+  "logo": null,
+  "demo": {
+    "title": "um-radar-demo.sh",
+    "language": "bash",
+    "code": "# Install (once, on your Bankr agent)\n# install the um-radar skill from https://github.com/BankrBot/skills/tree/main/um-radar\n\n# X.com — tag @bankrbot (examples):\n# @$bankrbot $UM-Radar whois @alexdolbun\n# @$bankrbot #UMRadar add Waleed Al-Balaa @wballaa\n# @$bankrbot $UM-Radar scan Hub71 dinner\n\n# Public GIS lookup (no key)\ncurl -sL \"https://unicornsmap.com/api/radar/alexdolbun.json\" | head -c 400\n\n# Whois / profile lookup via Zo bridge\ncurl -sL \"https://alexdolbun.zo.space/api/um-radar?handle=alexdolbun\"\n"
+  },
+  "setup": [
+    "Install: install the um-radar skill from https://github.com/BankrBot/skills/tree/main/um-radar",
+    "On X: tag @bankrbot with $UM-Radar … or #UMRadar … — skill MUST load before generic tools",
+    "$UM Base CA: 0x909851A8598f560F2F3B68Bb949D836E7dbb5e93",
+    "Bankr ref: RN982CZZ-BNKR — https://bankr.bot/terminal?refCode=RN982CZZ-BNKR",
+    "Public reads: https://unicornsmap.com/radar/{slug} + /api/radar/{slug}.json",
+    "Writes/upserts: POST https://alexdolbun.zo.space/api/um-radar/profile (additive registry; no Worker smash)",
+    "x402 deep/promote: settle in $UM on Base; never invent GIS URLs",
+    "Replies must include bare https://unicornsmap.com/… URLs (X does not render markdown links)"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "um-radar",
+    "command": "install the um-radar skill from https://github.com/BankrBot/skills/tree/main/um-radar"
+  }
+}
