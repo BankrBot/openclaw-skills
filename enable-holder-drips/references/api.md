@@ -7,54 +7,46 @@ Base: `https://gleaming-freedom-production-c89d.up.railway.app`
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/health` or `/` | Health + platform summary |
-| GET | `/v1/platform` | Fee bps, treasury, cron, `factory`, `canAutoDeploy` |
+| GET | `/v1/platform` | Fee bps, treasury, factory, **sources** |
 | GET | `/v1/drips` | List registered drips |
 | GET | `/v1/drips/:id` | One drip |
-| POST | `/v1/drips` | Create/register drip — omit router/distributor for factory deploy |
+| POST | `/v1/drips` | Create — omit router/distributor for factory; pass `source` |
 | POST | `/v1/drips/:id/test` | Signal test drip (fund distributor first) |
-| POST | `/v1/drips/:id/automate` | `{ "currentBeneficiary": "0x…" }` → Bankr retarget tx |
+| POST | `/v1/drips/:id/automate` | Source-specific fee routing instructions / Bankr retarget |
 
-## Platform check
+## Sources
 
-```bash
-curl -s https://gleaming-freedom-production-c89d.up.railway.app/v1/platform
-```
+| `source` | Launchpad |
+|---|---|
+| `bankr` | Bankr Doppler (default) |
+| `pools_fun` | pools.fun (Sushi × Bankr) |
+| `pools_trade` | pools.trade (Uniswap Labs) |
 
-Live factory: `0x5B5ade0E3b38842f1758DE629F0Cd35AF647fC28` — expect `canAutoDeploy: true`.
-
-## Create (factory auto-deploy — preferred)
-
-Omit `router` / `distributor`. API calls `createDrip(meme, paired)` onchain.
+## Create examples
 
 ```bash
+# Bankr
 curl -X POST https://gleaming-freedom-production-c89d.up.railway.app/v1/drips \
   -H 'content-type: application/json' \
-  -d '{
-    "memeToken": "0x…",
-    "pairedToken": "0x…",
-    "symbol": "TOKEN",
-    "pairedSymbol": "MSFT"
-  }'
-```
+  -d '{"memeToken":"0x…","pairedToken":"0x…","symbol":"T","pairedSymbol":"MSFT","source":"bankr"}'
 
-Response: `drip.router`, `drip.distributor`, optional `deployed.txHash`.
-
-## Register existing contracts
-
-```bash
+# pools.fun
 curl -X POST https://gleaming-freedom-production-c89d.up.railway.app/v1/drips \
   -H 'content-type: application/json' \
-  -d '{
-    "memeToken": "0x…",
-    "pairedToken": "0x…",
-    "router": "0x…",
-    "distributor": "0x…",
-    "symbol": "TOKEN",
-    "pairedSymbol": "MSFT"
-  }'
+  -d '{"memeToken":"0x…","pairedToken":"0x…","symbol":"T","pairedSymbol":"NVDA","source":"pools_fun"}'
+
+# pools.trade
+curl -X POST https://gleaming-freedom-production-c89d.up.railway.app/v1/drips \
+  -H 'content-type: application/json' \
+  -d '{"memeToken":"0x…","pairedToken":"0x…","symbol":"T","pairedSymbol":"AAPL","source":"pools_trade"}'
 ```
+
+## Automate
+
+- **bankr:** `{ "currentBeneficiary": "0x…" }` → Bankr `build-transfer-beneficiary` tx to sign
+- **pools_fun / pools_trade:** returns step instructions; marks `automated: true` so keeper will `route()` when balances sit on the router
 
 ## Test vs automate
 
-- **Test:** paired RWA → `distributor` → keeper pays holders. Fees can stay on user wallet.
-- **Automate:** user signs retarget → fees → `router` → keeper every 30m.
+- **Test:** paired RWA → `distributor` → keeper pays holders
+- **Automate:** fees → `router` → keeper `route()` (10% treasury) → distributor → holders

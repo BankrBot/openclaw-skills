@@ -1,6 +1,6 @@
 ---
 name: enable-holder-drips
-description: Enable holder drips for an existing Bankr token on Robinhood Chain. Auto-deploys router + distributor via factory, test by sending paired RWA to the distributor, optionally automate by retargeting Doppler fees to the router. Platform hosts a shared 30-minute keeper and takes 10% of each drip. Not the Universal Hub.
+description: Enable holder drips for stock-paired tokens on Robinhood Chain from Bankr/Doppler, pools.fun (Sushi×Bankr), or pools.trade (Uniswap Labs). Auto-deploys router + distributor, test by sending paired RWA to the distributor, optionally automate fee routing. Platform hosts a shared 30-minute keeper and takes 10% of each drip. Not the Universal Hub.
 metadata:
   {
     "clawdbot":
@@ -20,7 +20,7 @@ Natural-language triggers:
 - "Drip my token fees to holders"
 - "Enable holder drips"
 - "Test drip then automate"
-- "Create a holder drip for my token"
+- "Create a holder drip for my pools.fun / pools.trade / Bankr token"
 
 ## Platform (live)
 
@@ -29,25 +29,35 @@ Natural-language triggers:
 | API | `https://gleaming-freedom-production-c89d.up.railway.app` |
 | Factory | `0x5B5ade0E3b38842f1758DE629F0Cd35AF647fC28` |
 | Fee | **10%** of each paired-RWA drip → treasury `0x374d91a5674fa7cf86e725093b5848b97e1e13b4` |
-| Cron | every **30 minutes** (only after fee retarget / automate) |
-| One-per-RWA | No limit while testing |
-| Meme leg | Locked in TimeLockVault on route |
-
-Before creating, confirm factory is up:
+| Cron | every **30 minutes** (after automate / fees reach router) |
+| Eligible quote | Tokenized **stock/RWA** only — not WETH-only or USDG-only |
 
 ```http
 GET https://gleaming-freedom-production-c89d.up.railway.app/v1/platform
 ```
 
-Expect `canAutoDeploy: true` and a non-null `factory`. If false, tell the user the platform cannot auto-deploy yet.
+Expect `canAutoDeploy: true`. `sources` lists Bankr, pools.fun, and pools.trade.
+
+## Supported launchpads
+
+| `source` | Product | How fees reach the drip |
+|---|---|---|
+| `bankr` | Bankr / Doppler | Retarget Doppler beneficiary → drip **router** (Bankr API) |
+| `pools_fun` | [pools.fun](https://pools.fun) (Sushi × Bankr) | Prefer **Fee Recipient = router at launch**; else claim/distribute and forward paired RWA |
+| `pools_trade` | [pools.trade](https://pools.trade) (Uniswap Labs) | Enable creator fee → set creator fee wallet → drip **router** |
+
+Always pass `"source"` on create so automate + keeper use the right path.
 
 ## Who can use this
 
-Wallet must be (or control) the Doppler fee beneficiary with **≥95%** share for a Robinhood Chain token paired with a stock/RWA (e.g. MSFT, DDOG) — not WETH-only.
+- **Bankr:** wallet is Doppler fee beneficiary (≥95%) on a stock-paired Robinhood token
+- **pools.fun / pools.trade:** wallet is creator / fee recipient for a **stock-paired** launch
 
-## Agent flow (test first — automate optional)
+## Agent flow
 
-### 1. List eligible tokens
+### 1. Discover tokens
+
+**Bankr / Doppler**
 
 ```http
 GET https://api.bankr.bot/public/doppler/beneficiary-fees/{wallet}
@@ -55,19 +65,21 @@ GET https://api.bankr.bot/public/doppler/beneficiary-fees/{wallet}
 
 Filter: `chain === "robinhood"`, share ≥ 95%, quote leg is stock/RWA.
 
-Show the user the list and let them pick one meme + paired addresses.
+**pools.fun / pools.trade**
 
-### 2. Reuse existing drip if already registered
+Ask the user for the meme token + paired stock addresses (from the launch page). Confirm the quote is a stock/RWA, not WETH/USDG.
+
+### 2. Reuse if already registered
 
 ```http
 GET https://gleaming-freedom-production-c89d.up.railway.app/v1/drips
 ```
 
-If an item already matches the chosen `memeToken`, **do not** create again — use that `id` / `distributor` / `router` and go to test (step 4).
+If `memeToken` matches, reuse that drip — do not create again.
 
-### 3. Create drip (default — factory deploys router + distributor)
+### 3. Create drip (factory deploys router + distributor)
 
-**Omit** `router` and `distributor`. The API calls onchain `createDrip(meme, paired)` and returns new addresses.
+Omit `router` / `distributor`. Include `source`.
 
 ```http
 POST https://gleaming-freedom-production-c89d.up.railway.app/v1/drips
@@ -77,32 +89,23 @@ Content-Type: application/json
   "memeToken": "0x…",
   "pairedToken": "0x…",
   "symbol": "TOKEN",
-  "pairedSymbol": "DDOG"
+  "pairedSymbol": "MSFT",
+  "source": "bankr"
 }
 ```
 
-Success response includes:
+Use `"source": "pools_fun"` or `"pools_trade"` when applicable.
 
-- `drip.id` — e.g. `drip-d96cc6ab`
-- `drip.distributor` — **send paired RWA here to test**
-- `drip.router` — future fee recipient (do **not** retarget until user asks)
-- `deployed` — `{ txHash, factory, … }` when factory created the pair
+Response: `drip.distributor` (test fund address), `drip.router` (fee recipient for automate), optional `deployed.txHash`.
 
-Only pass `router` + `distributor` if the user already has contracts and wants to register those instead.
+### 4. Test (default — keep fees on user wallet)
 
-### 4. Test (default path — keep fees on user wallet)
+1. User sends a small amount of **paired RWA** to `drip.distributor`
+2. `POST …/v1/drips/{id}/test`
+3. Keeper pays holders (next cron / run)
+4. Confirm with user
 
-1. Tell the user to send a **small** amount of **paired RWA** (e.g. DDOG) to `drip.distributor` — not the router
-2. After they confirm the send:
-
-```http
-POST https://gleaming-freedom-production-c89d.up.railway.app/v1/drips/{id}/test
-```
-
-3. Platform keeper pays holders from that balance (may take until the next cron / keeper run)
-4. Confirm with the user that holders received tokens
-
-**Do not** retarget fees unless the user explicitly wants full automation.
+**Do not** retarget / change fee recipient unless the user wants automation.
 
 ### 5. Automate (only if user asks)
 
@@ -110,35 +113,30 @@ POST https://gleaming-freedom-production-c89d.up.railway.app/v1/drips/{id}/test
 POST https://gleaming-freedom-production-c89d.up.railway.app/v1/drips/{id}/automate
 Content-Type: application/json
 
-{ "currentBeneficiary": "0x…user-wallet" }
+{ "currentBeneficiary": "0x…", "source": "bankr" }
 ```
 
-Returns Bankr retarget tx (`to`, `data`, `chainId: 4663`). Have the user **sign** it → fees go to **router** → shared 30m keeper collects and drips.
-
-Until they sign, fees stay claimable to their wallet even if `automated: true` in the API.
-
-## Manual vs automated
-
-| Mode | Fees go to | Drip happens when |
+| Source | Body | What you do |
 |---|---|---|
-| **Test / manual** | User wallet (claim) | User sends paired RWA to distributor + keeper runs |
-| **Automated** | Router (after retarget) | Every 30m automatically |
+| `bankr` | `currentBeneficiary` required | Return Bankr retarget tx → user **signs** |
+| `pools_fun` | `source` optional if set on drip | Guide Fee Recipient = router (new launches) or forward claimed fees |
+| `pools_trade` | `source` optional if set on drip | Guide set creator fee wallet → router |
+
+Until fees actually hit the **router** (or user keeps funding the **distributor**), holders only get drips from manual test sends.
 
 ## Must NOT do
 
-- Retarget fees without explicit user confirmation
-- Promise Universal Hub / cross-RWA claims (different product)
-- Store Bankr API keys server-side
-- Tell users to configure Railway
-- Send test funds to the **router** (test = **distributor** only)
-- Call create again for a meme that already has a drip in `GET /v1/drips`
+- Retarget / change fee recipient without explicit user confirmation
+- Promise Universal Hub / cross-RWA claims
+- Accept WETH-only or USDG-only pairs
+- Send test funds to the **router** (test = **distributor**)
+- Recreate a drip for a meme already in `GET /v1/drips`
 
 ## Status
 
 ```http
 GET https://gleaming-freedom-production-c89d.up.railway.app/v1/platform
 GET https://gleaming-freedom-production-c89d.up.railway.app/v1/drips
-GET https://gleaming-freedom-production-c89d.up.railway.app/v1/drips/{id}
 ```
 
 See [references/api.md](references/api.md).

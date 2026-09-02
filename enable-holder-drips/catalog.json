@@ -11,12 +11,11 @@
   },
   "setup": [
     "API: https://gleaming-freedom-production-c89d.up.railway.app",
-    "Factory live: 0x5B5ade0E3b38842f1758DE629F0Cd35AF647fC28 (omit router/distributor on create)",
-    "Robinhood Chain (4663) Bankr/Doppler tokens paired with a stock/RWA",
-    "User must be ≥95% Doppler fee beneficiary to automate",
-    "Test first: send paired RWA to distributor — do not retarget until user confirms",
-    "Platform fee: 10% of each drip to treasury",
-    "Not Universal Hub enrollment — Lite push drips only"
+    "Sources: bankr (Doppler), pools_fun (Sushi×Bankr), pools_trade (Uniswap Labs)",
+    "Factory: 0x5B5ade0E3b38842f1758DE629F0Cd35AF647fC28 — omit router/distributor on create",
+    "Robinhood Chain stock/RWA-paired tokens only (not WETH-only)",
+    "Test first: paired RWA → distributor; automate only with user confirmation",
+    "Platform fee: 10% of each drip to treasury"
   ],
   "install": {
     "type": "bankr",
