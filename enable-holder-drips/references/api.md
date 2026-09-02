@@ -19,7 +19,22 @@ Base: `https://gleaming-freedom-production-c89d.up.railway.app`
 - **Test:** paired RWA → `distributor` → keeper pays holders. Fees can stay on user wallet.
 - **Automate:** user signs retarget → fees → `router` → keeper every 30m.
 
-## Example register
+## Example create (factory auto-deploy)
+
+```bash
+curl -X POST https://gleaming-freedom-production-c89d.up.railway.app/v1/drips \
+  -H 'content-type: application/json' \
+  -d '{
+    "memeToken": "0x…",
+    "pairedToken": "0x…",
+    "symbol": "TOKEN",
+    "pairedSymbol": "MSFT"
+  }'
+```
+
+Omit `router` / `distributor` when `DRIP_FACTORY` is set — API deploys both and returns them.
+
+## Example register (existing contracts)
 
 ```bash
 curl -X POST https://gleaming-freedom-production-c89d.up.railway.app/v1/drips \

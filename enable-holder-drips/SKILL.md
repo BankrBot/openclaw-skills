@@ -45,9 +45,7 @@ GET https://api.bankr.bot/public/doppler/beneficiary-fees/{wallet}
 
 Filter: `chain === "robinhood"`, share ≥ 95%, quote leg is stock/RWA.
 
-### 2. Register drip
-
-If the user already has a router + distributor (or platform deploys them), register:
+### 2. Create drip (deploys router + distributor when factory is live)
 
 ```http
 POST https://gleaming-freedom-production-c89d.up.railway.app/v1/drips
@@ -56,20 +54,23 @@ Content-Type: application/json
 {
   "memeToken": "0x…",
   "pairedToken": "0x…",
-  "router": "0x…",
-  "distributor": "0x…",
   "symbol": "bits",
   "pairedSymbol": "DDOG"
 }
 ```
+
+If `DRIP_FACTORY` is configured on the API, **omit** `router` / `distributor` — the API calls `createDrip` and returns new addresses.
+
+You may still pass existing `router` + `distributor` to register a manual deploy.
 
 Response includes:
 
 - `distributor` — **send paired RWA here to test**
 - `router` — future fee recipient (do **not** retarget until user asks)
 - `id` — e.g. `drip-d96cc6ab`
+- `deployed` — present when factory created the pair (`txHash`, etc.)
 
-If router/distributor are missing: tell the user platform must deploy a drip pair first (factory), or point them to ops.
+If factory is not configured and addresses are missing: tell the user platform must set `DRIP_FACTORY` / fund the deployer, or pass pre-deployed addresses.
 
 ### 3. Test (default path — keep fees on user wallet)
 
