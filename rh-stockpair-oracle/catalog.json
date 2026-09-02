@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "slug": "rh-stockpair-oracle",
+  "provider": "RH stock-pair oracle",
+  "providerUrl": "https://github.com/MeMikko/rh-stockpair-oracle",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "quote.sh",
+    "language": "bash",
+    "code": "curl -s 'https://oracle.sb4s.xyz/quote?pool=0xPOOL_ID&size=1000'\n\ncurl -s -X POST https://oracle.sb4s.xyz/ask \\n  -H 'content-type: application/json' \\n  -d '{\"question\":\"how many pools quote NVDA?\"}'"
+  },
+  "setup": [
+    "Base URL: https://oracle.sb4s.xyz — read-only, no key needed in launch mode",
+    "START HERE: GET /.well-known/agent.json — machine-readable endpoints, auth methods, payment details and limits. Also GET / with Accept: application/json",
+    "Auth, all live: x402 per call (402 -> pay -> retry with x-payment header, becomes prepaid credit); wallet signature for a session; $5.99/30d pro for direct Farcaster answers",
+    "NOT a free service: launch mode serves without charge; every response carries x-oracle-price-usd, x-oracle-charged-usd and x-oracle-pricing. Read them, do not hardcode a price",
+    "Chain: Robinhood (4663) — abort if the Bankr wallet does not support 4663",
+    "Covers Uniswap v4 AND v3: v3 carries ~37% of stock-paired volume, 3 of the top 5 pools",
+    "GET /price?symbol=TSLA — the stock's own Chainlink price; 404 with a reason where no feed exists",
+    "GET /pools?symbol=NVDA — pool counts split by protocol. GET /volume — 24h volume with measuredSecondsAgo",
+    "GET /quote?pool=&size= — implied USD, depth, price impact, Chainlink deviation, market hours",
+    "deviation: null is normal — 159 of 194 stock tokens have no feed. Read deviationReason; never treat null as zero",
+    "depth is an active-tick ESTIMATE and can mislead. Trust impact, which is a quoter simulation",
+    "POST /prepare-swap — unsigned UniversalRouter calldata, single-hop only, min-out from the quoter",
+    "422 from /prepare-swap means the swap could not be bounded — do not hand-roll calldata around it",
+    "Submit calldata via Bankr with chainId 4663 after your own tx validation. This service never signs or broadcasts",
+    "GET /gas — chain 4663 gas split into L2 and L1-data; subsidy flag is measured across a window, not assumed from a date",
+    "GET /corporate-actions?withinDays=30 — ERC-8056 multiplier changes reprice every pool in that stock at once (NVDA: 9,669 pools)",
+    "POST /ask {\"question\":\"...\"} — deterministic answer with facts + reproduce; answered:false when it cannot classify",
+    "Do not compare these volume figures against another dashboard's — denominators differ; see the repo README"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "rh-stockpair-oracle",
+    "command": "install the rh-stockpair-oracle skill from https://github.com/BankrBot/skills/tree/main/rh-stockpair-oracle"
+  }
+}
