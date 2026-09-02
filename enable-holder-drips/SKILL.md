@@ -26,6 +26,7 @@ Natural-language triggers:
 | Setting | Value |
 |---|---|
 | API | `https://gleaming-freedom-production-c89d.up.railway.app` |
+| Factory | `0x5B5ade0E3b38842f1758DE629F0Cd35AF647fC28` (auto-deploys router + distributor) |
 | Fee | **10%** of each paired-RWA drip → treasury `0x374d91a5674fa7cf86e725093b5848b97e1e13b4` |
 | Cron | every **30 minutes** (only after fee retarget / automate) |
 | One-per-RWA | No limit while testing |
