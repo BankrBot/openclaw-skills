@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "slug": "enable-holder-drips",
+  "provider": "Pay Me Dividends",
+  "providerUrl": "https://gleaming-freedom-production-c89d.up.railway.app",
+  "logo": null,
+  "demo": {
+    "title": "platform.sh",
+    "language": "bash",
+    "code": "curl -s https://gleaming-freedom-production-c89d.up.railway.app/v1/platform\ncurl -s https://gleaming-freedom-production-c89d.up.railway.app/v1/drips"
+  },
+  "setup": [
+    "API: https://gleaming-freedom-production-c89d.up.railway.app",
+    "Sources: bankr (Doppler), pools_fun (Sushi×Bankr), pools_trade (Uniswap Labs)",
+    "Factory: 0x5B5ade0E3b38842f1758DE629F0Cd35AF647fC28 — omit router/distributor on create",
+    "Robinhood Chain stock/RWA-paired tokens only (not WETH-only)",
+    "Test first: paired RWA → distributor; automate only with user confirmation",
+    "Platform fee: 10% of each drip to treasury"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "enable-holder-drips",
+    "command": "install the enable-holder-drips skill from https://github.com/BankrBot/skills/tree/main/enable-holder-drips"
+  }
+}
