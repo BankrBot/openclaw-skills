@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "slug": "rh-stockpair-oracle",
+  "provider": "RH stock-pair oracle",
+  "providerUrl": "https://github.com/MeMikko/rh-stockpair-oracle",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "oracle.sh",
+    "language": "bash",
+    "code": "# Free, no payment, no key. Which of the 194 stock tokens have a feed:\ncurl -s https://oracle.sb4s.xyz/coverage\n\n# Priced ($0.02). Called directly with no payment this answers 402 with\n# everything needed to pay it -- read the body, do not guess:\ncurl -s https://oracle.sb4s.xyz/quote?pool=0xPOOL_ID\n\n# Paying through Bankr instead: same route, same response, Bankr settles.\n# Get 0xPOOL_ID from /pools first; v3 addresses and v4 poolIds both work.\nG=https://x402.bankr.bot/0x4b19ee2a3de2521a3adc901989944c209c0a60ea/vates\nbankr x402 call \"$G/pools?symbol=NVDA\"\nbankr x402 call \"$G/quote?pool=0xPOOL_ID&size=1000\"\n\n# Do NOT call /health or /coverage through $G: it prices its whole path\n# space, so those cost $0.02 there and nothing at the origin above."
+  },
+  "setup": [
+    "Base URL: https://oracle.sb4s.xyz — read-only, never signs or broadcasts. Billing is ON as of 2026-09-03: a priced route called without payment answers 402 with everything needed to pay it",
+    "START HERE: GET /.well-known/agent.json — machine-readable endpoints, auth methods, payment details and limits. Also GET / with Accept: application/json",
+    "Pay through Bankr: call https://x402.bankr.bot/0x4b19ee2a3de2521a3adc901989944c209c0a60ea/vates/<route> instead of the origin — Bankr issues the 402, settles USDC on Base and forwards the paid request. Same routes under the same paths, same responses. It charges for /health and /coverage too, which are free here: call those directly at https://oracle.sb4s.xyz",
+    "Auth: x402 scheme `exact` settled through a standard open facilitator when paying the origin directly, offered only when a facilitator that settles it is configured -- check GET /x402/supported before signing (402 -> sign EIP-3009 -> retry with base64 X-PAYMENT; x402-fetch works as-is); prepaid credit for callers that prefer one transfer (POST /x402/topup); wallet signature for a session; $5.99/30d pro for direct Farcaster answers",
+    "GET /x402/supported — which schemes and network this deployment actually settles, before you sign anything. exactSettlement.advertised says whether `exact` is available right now and names the reason when it is not",
+    "NOT a free service: $0.02 per priced call, billing currently ON. /health and /coverage are free and stay free. Every response carries x-oracle-price-usd, x-oracle-charged-usd and x-oracle-pricing — read them, do not hardcode a price or assume a mode",
+    "Chain: Robinhood (4663) — abort if the Bankr wallet does not support 4663",
+    "Covers Uniswap v4 AND v3: v3 carries ~36% of stock-paired volume, and four of the five largest stock-paired pools by 24h volume are v3",
+    "GET /price?symbol=TSLA — the stock's own Chainlink price; 404 with a reason where no feed exists",
+    "GET /pools?symbol=NVDA — counts split by protocol PLUS the top 25 pool identifiers to quote, ordered by measured 24h swaps. GET /volume — 24h volume with measuredSecondsAgo",
+    "GET /quote?pool=&size= — implied USD, depth, price impact, Chainlink deviation, market hours. Takes a v4 poolId OR a v3 pool address; the response says which in `protocol`",
+    "deviation: null is normal — 159 of 194 stock tokens have no feed. Read deviationReason; never treat null as zero",
+    "depth is an active-tick ESTIMATE and can mislead. Trust impact, which is a quoter simulation",
+    "POST /prepare-swap — unsigned calldata, single-hop only, min-out from the quoter. v4 → UniversalRouter + Permit2; v3 → the v3 router + one plain ERC-20 approval and an explicit recipient. `router.variantSource` says whether the router shape was read off the chain",
+    "422 from /prepare-swap means the swap could not be bounded — do not hand-roll calldata around it",
+    "Submit calldata via Bankr with chainId 4663 after your own tx validation. This service never signs or broadcasts",
+    "GET /gas — chain 4663 gas split into L2 and L1-data; subsidy flag is measured across a window and reports the unbroken run of charged samples, not assumed from a date",
+    "GET /corporate-actions?withinDays=30 — ERC-8056 multiplier changes reprice every pool in that stock at once (NVDA: 10,394 indexed pools on 2026-09-03; GET /pools?symbol=NVDA for the live count)",
+    "POST /ask {\"question\":\"...\"} — deterministic answer with facts + reproduce; answered:false when it cannot classify",
+    "Do not compare these volume figures against another dashboard's — denominators differ; see the repo README"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "rh-stockpair-oracle",
+    "command": "install the rh-stockpair-oracle skill from https://github.com/BankrBot/skills/tree/main/rh-stockpair-oracle"
+  }
+}
