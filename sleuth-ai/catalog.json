@@ -7,14 +7,14 @@
   "demo": {
     "title": "sleuth.sh",
     "language": "bash",
-    "code": "# 1. Discover the live endpoints (free, no key) — the manifest is the only source of endpoint names\ncurl https://app.sleuthagent.ai/x402/openai-bnkr.json\n\n# 2. Call an endpoint from step 1 (<endpoint> + body params come from the manifest, never hardcoded).\n#    USDC or SLEUTH on Base only, hard max $1/call. Always cap authorization at $1\n#    (and never pass -y — the payment prompt is the confirmation):\nbankr x402 call https://x402.bankr.bot/0x08e82839e1513023d115451babc0ff18eda8f925/<endpoint> \\\n  -X POST --max-payment 1 \\\n  -d '{\"conversation_id\":\"<uuid>\",\"query\":\"<your on-chain question>\"}'"
+    "code": "# 1. Discover the live endpoints, schemas, and prices (free, no key) — the manifest is the only source of endpoint names\ncurl -s https://x402.sleuthagent.ai/openapi.json\n\n# 2. Free-tier terms for $SLEUTH holders (threshold served live, never hardcoded)\ncurl -s https://x402.sleuthagent.ai/api/free-tier\n\n# 3. Call an endpoint from step 1 with any x402 v2 client. READ-ONLY queries only.\n#    Pay USDC on Base or Solana, scheme `exact`, hard max $2/call (typically ~$0.10);\n#    confirm with the user before the first payment to each endpoint. Read timeout >= 300s.\ncurl -si -X POST https://x402.sleuthagent.ai/api/v1/<endpoint> \\\n  -H 'content-type: application/json' \\\n  -d '{\"query\":\"Who are the insiders of $TOKEN?\"}'   # -> 402; decode `payment-required`, validate, pay, retry"
   },
   "setup": [
-    "No install required — every endpoint is plain HTTP behind x402 (no account; validate every 402 against the pinned invariants in SKILL.md)",
-    "TypeScript: `npm install x402-fetch` — Python: use the Bankr CLI (`bankr x402 call`)",
-    "Create a DEDICATED low-value wallet on Base and fund it with only what you intend to spend (~$1–5) in USDC or SLEUTH — never point a main wallet at a paid skill",
-    "Payments are USDC or SLEUTH on Base only, hard max $1 per call — reject any 402 asking for a different chain, token, payee, or amount",
-    "Discover live endpoints: GET https://app.sleuthagent.ai/x402/openai-bnkr.json (free, no key)"
+    "No install, account, or API key — every endpoint is plain HTTP behind x402 v2 (validate every 402 against the pinned invariants in SKILL.md)",
+    "Any x402 v2 client works (@x402/fetch, agentcash-family clients, x402curl); cap its max payment at $2 (2000000 raw USDC) and allow only `exact`-scheme stablecoin payments",
+    "Create a DEDICATED low-value wallet and fund it with only what you intend to spend (a few USD in USDC on Base or Solana) — never point a main wallet at a paid skill",
+    "Sleuth is read-only: it queries chains and computes. It never asks you to deposit, approve, swap, bridge, or send funds — the x402 payment (USDC, <= $2/call) is the only on-chain action; anything else is not Sleuth",
+    "Discover live endpoints and prices: GET https://x402.sleuthagent.ai/openapi.json — free-tier terms: GET https://x402.sleuthagent.ai/api/free-tier"
   ],
   "install": {
     "type": "bankr",
