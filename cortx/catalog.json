@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "cortx",
+  "provider": "CORTX",
+  "providerUrl": "https://usecortx.dev",
+  "logo": "cortx.svg",
+  "demo": {
+    "title": "cortx.sh",
+    "language": "bash",
+    "code": "# Check before paying — is this endpoint reliable?\ncortx status serviceId=\"a1b2c3d4\"\n\n# Full breakdown before an agent calls an x402 API\ncortx reliability serviceId=\"a1b2c3d4\"\n\n# Check for active incidents on a monitored endpoint\ncortx incident serviceId=\"a1b2c3d4\""
+  },
+  "setup": [
+    "Install: `install the cortx skill from https://github.com/BankrBot/skills/tree/main/cortx`",
+    "No API key required — public reliability data is open",
+    "Service IDs are published by endpoint owners via their CORTX badge or status page",
+    "To set up monitoring for your own x402 endpoint: usecortx.dev",
+    "Source: https://github.com/BankrBot/skills/tree/main/cortx"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "cortx",
+    "command": "install the cortx skill from https://github.com/BankrBot/skills/tree/main/cortx"
+  }
+}

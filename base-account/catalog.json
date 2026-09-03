@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "base-account",
+  "provider": "Base",
+  "providerUrl": "https://base.org",
+  "logo": "base-account.png",
+  "demo": {
+    "title": "base-account.ts",
+    "language": "typescript",
+    "code": "import { createBaseAccountSDK } from '@base-org/account';\nimport { BasePayButton } from '@base-org/account-ui';\n\n// Initialize SDK\nconst sdk = createBaseAccountSDK({\n  appName: 'My App',\n  appLogoUrl: 'https://myapp.com/logo.png',\n  appChainIds: [8453], // Base Mainnet\n});\n\n// Sign in with Base (generate nonce BEFORE user click)\nconst nonce = await generateNonce(); // server-side\nconst { address, token } = await sdk.signIn({ nonce });\n\n// One-tap USDC payment\n<BasePayButton\n  chargeHandler={async () => ({\n    id: crypto.randomUUID(),\n    callData: { recipientAddress: '0x...', amount: '5000000' }, // $5 USDC\n  })}\n  onSuccess={({ paymentId }) => console.log('Paid:', paymentId)}\n/>"
+  },
+  "setup": [
+    "Install: `npm install @base-org/account @base-org/account-ui`",
+    "Generate nonces server-side before user clicks Sign in",
+    "Use proxy to protect Paymaster URLs from client-side exposure"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "Base",
+    "command": "npx skills add base/base-skills",
+    "reference": null
+  }
+}

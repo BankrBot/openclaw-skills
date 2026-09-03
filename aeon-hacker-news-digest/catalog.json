@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-hacker-news-digest",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "hn-digest.sh",
+    "language": "bash",
+    "code": "# Default 24h window, all interest tags\naeon-hacker-news-digest\n\n# AI + crypto only, score >= 200\naeon-hacker-news-digest interests=\"ai,crypto\" min_score=200\n\n# Threads with at least 100 comments\naeon-hacker-news-digest min_comments=100"
+  },
+  "setup": [
+    "Install: `install the aeon-hacker-news-digest skill from https://github.com/BankrBot/skills/tree/main/aeon-hacker-news-digest`",
+    "No API key required (uses public Algolia + Firebase endpoints)",
+    "Tune `interests`, `hours`, `min_score`, `min_comments`",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-hacker-news-digest"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-hacker-news-digest",
+    "command": "install the aeon-hacker-news-digest skill from https://github.com/BankrBot/skills/tree/main/aeon-hacker-news-digest"
+  }
+}

@@ -84,7 +84,7 @@ Before placing a bet, an agent should:
    test -f ~/.bankr/config.json && echo "OK" || echo "Run: bankr login email <email>"
    ```
 
-2. **Verify write access** — the script will return 403 if key is read-only. On 403, instruct user to regenerate key with `--read-write` or toggle off "Read-only" at bankr.bot/api.
+2. **Verify write access** — the script will return 403 if key is read-only. On 403, instruct user to regenerate key with `--read-write` or toggle off "Read-only" at bankr.bot/api-keys.
 
 3. **Verify ETH balance for gas** — `/wallet/submit` broadcasts raw txs, so the Bankr wallet needs native ETH on Base. If the tx fails with "insufficient funds for gas," surface this clearly.
 

@@ -1,0 +1,2022 @@
+[
+ {
+  "type": "constructor",
+  "inputs": [
+   {
+    "name": "controller",
+    "type": "address",
+    "internalType": "contract IJBController"
+   },
+   {
+    "name": "multiTerminal",
+    "type": "address",
+    "internalType": "contract IJBTerminal"
+   },
+   {
+    "name": "routerTerminalRegistry",
+    "type": "address",
+    "internalType": "contract IJBTerminal"
+   },
+   {
+    "name": "suckerRegistry",
+    "type": "address",
+    "internalType": "contract IJBSuckerRegistry"
+   },
+   {
+    "name": "feeRevnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "hookDeployer",
+    "type": "address",
+    "internalType": "contract IJB721TiersHookDeployer"
+   },
+   {
+    "name": "publisher",
+    "type": "address",
+    "internalType": "contract CTPublisher"
+   },
+   {
+    "name": "buybackHook",
+    "type": "address",
+    "internalType": "contract IJBBuybackHookRegistry"
+   },
+   {
+    "name": "loans",
+    "type": "address",
+    "internalType": "contract IREVLoans"
+   },
+   {
+    "name": "trustedForwarder",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "BUYBACK_HOOK",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBBuybackHookRegistry"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "CASH_OUT_DELAY",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "CONTROLLER",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBController"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "DEFAULT_BUYBACK_POOL_FEE",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint24",
+    "internalType": "uint24"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "DEFAULT_BUYBACK_TICK_SPACING",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "int24",
+    "internalType": "int24"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "DEFAULT_BUYBACK_TWAP_WINDOW",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint32",
+    "internalType": "uint32"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "DIRECTORY",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBDirectory"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "FEE_REVNET_ID",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "HOOK_DEPLOYER",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJB721TiersHookDeployer"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "LOANS",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IREVLoans"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "MULTI_TERMINAL",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBTerminal"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "OWNER",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "PERMISSIONS",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBPermissions"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "PROJECTS",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBProjects"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "PUBLISHER",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract CTPublisher"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "ROUTER_TERMINAL_REGISTRY",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBTerminal"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "SUCKER_REGISTRY",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBSuckerRegistry"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "deployFor",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "configuration",
+    "type": "tuple",
+    "internalType": "struct REVConfig",
+    "components": [
+     {
+      "name": "description",
+      "type": "tuple",
+      "internalType": "struct REVDescription",
+      "components": [
+       {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "ticker",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "uri",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "salt",
+        "type": "bytes32",
+        "internalType": "bytes32"
+       }
+      ]
+     },
+     {
+      "name": "baseCurrency",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "operator",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "scopeCashOutsToLocalBalances",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "stageConfigurations",
+      "type": "tuple[]",
+      "internalType": "struct REVStageConfig[]",
+      "components": [
+       {
+        "name": "startsAtOrAfter",
+        "type": "uint48",
+        "internalType": "uint48"
+       },
+       {
+        "name": "autoIssuances",
+        "type": "tuple[]",
+        "internalType": "struct REVAutoIssuance[]",
+        "components": [
+         {
+          "name": "chainId",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "count",
+          "type": "uint104",
+          "internalType": "uint104"
+         },
+         {
+          "name": "beneficiary",
+          "type": "address",
+          "internalType": "address"
+         }
+        ]
+       },
+       {
+        "name": "splitPercent",
+        "type": "uint16",
+        "internalType": "uint16"
+       },
+       {
+        "name": "splits",
+        "type": "tuple[]",
+        "internalType": "struct JBSplit[]",
+        "components": [
+         {
+          "name": "percent",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "projectId",
+          "type": "uint64",
+          "internalType": "uint64"
+         },
+         {
+          "name": "beneficiary",
+          "type": "address",
+          "internalType": "address payable"
+         },
+         {
+          "name": "preferAddToBalance",
+          "type": "bool",
+          "internalType": "bool"
+         },
+         {
+          "name": "lockedUntil",
+          "type": "uint48",
+          "internalType": "uint48"
+         },
+         {
+          "name": "hook",
+          "type": "address",
+          "internalType": "contract IJBSplitHook"
+         }
+        ]
+       },
+       {
+        "name": "initialIssuance",
+        "type": "uint112",
+        "internalType": "uint112"
+       },
+       {
+        "name": "issuanceCutFrequency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "issuanceCutPercent",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "cashOutTaxRate",
+        "type": "uint16",
+        "internalType": "uint16"
+       },
+       {
+        "name": "extraMetadata",
+        "type": "uint16",
+        "internalType": "uint16"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "accountingContextsToAccept",
+    "type": "tuple[]",
+    "internalType": "struct JBAccountingContext[]",
+    "components": [
+     {
+      "name": "token",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "decimals",
+      "type": "uint8",
+      "internalType": "uint8"
+     },
+     {
+      "name": "currency",
+      "type": "uint32",
+      "internalType": "uint32"
+     }
+    ]
+   },
+   {
+    "name": "suckerDeploymentConfiguration",
+    "type": "tuple",
+    "internalType": "struct REVSuckerDeploymentConfig",
+    "components": [
+     {
+      "name": "deployerConfigurations",
+      "type": "tuple[]",
+      "internalType": "struct JBSuckerDeployerConfig[]",
+      "components": [
+       {
+        "name": "deployer",
+        "type": "address",
+        "internalType": "contract IJBSuckerDeployer"
+       },
+       {
+        "name": "peer",
+        "type": "bytes32",
+        "internalType": "bytes32"
+       },
+       {
+        "name": "mappings",
+        "type": "tuple[]",
+        "internalType": "struct JBTokenMapping[]",
+        "components": [
+         {
+          "name": "localToken",
+          "type": "address",
+          "internalType": "address"
+         },
+         {
+          "name": "minGas",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "remoteToken",
+          "type": "bytes32",
+          "internalType": "bytes32"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "salt",
+      "type": "bytes32",
+      "internalType": "bytes32"
+     }
+    ]
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJB721TiersHook"
+   }
+  ],
+  "stateMutability": "payable"
+ },
+ {
+  "type": "function",
+  "name": "deployFor",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "configuration",
+    "type": "tuple",
+    "internalType": "struct REVConfig",
+    "components": [
+     {
+      "name": "description",
+      "type": "tuple",
+      "internalType": "struct REVDescription",
+      "components": [
+       {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "ticker",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "uri",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "salt",
+        "type": "bytes32",
+        "internalType": "bytes32"
+       }
+      ]
+     },
+     {
+      "name": "baseCurrency",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "operator",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "scopeCashOutsToLocalBalances",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "stageConfigurations",
+      "type": "tuple[]",
+      "internalType": "struct REVStageConfig[]",
+      "components": [
+       {
+        "name": "startsAtOrAfter",
+        "type": "uint48",
+        "internalType": "uint48"
+       },
+       {
+        "name": "autoIssuances",
+        "type": "tuple[]",
+        "internalType": "struct REVAutoIssuance[]",
+        "components": [
+         {
+          "name": "chainId",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "count",
+          "type": "uint104",
+          "internalType": "uint104"
+         },
+         {
+          "name": "beneficiary",
+          "type": "address",
+          "internalType": "address"
+         }
+        ]
+       },
+       {
+        "name": "splitPercent",
+        "type": "uint16",
+        "internalType": "uint16"
+       },
+       {
+        "name": "splits",
+        "type": "tuple[]",
+        "internalType": "struct JBSplit[]",
+        "components": [
+         {
+          "name": "percent",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "projectId",
+          "type": "uint64",
+          "internalType": "uint64"
+         },
+         {
+          "name": "beneficiary",
+          "type": "address",
+          "internalType": "address payable"
+         },
+         {
+          "name": "preferAddToBalance",
+          "type": "bool",
+          "internalType": "bool"
+         },
+         {
+          "name": "lockedUntil",
+          "type": "uint48",
+          "internalType": "uint48"
+         },
+         {
+          "name": "hook",
+          "type": "address",
+          "internalType": "contract IJBSplitHook"
+         }
+        ]
+       },
+       {
+        "name": "initialIssuance",
+        "type": "uint112",
+        "internalType": "uint112"
+       },
+       {
+        "name": "issuanceCutFrequency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "issuanceCutPercent",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "cashOutTaxRate",
+        "type": "uint16",
+        "internalType": "uint16"
+       },
+       {
+        "name": "extraMetadata",
+        "type": "uint16",
+        "internalType": "uint16"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "accountingContextsToAccept",
+    "type": "tuple[]",
+    "internalType": "struct JBAccountingContext[]",
+    "components": [
+     {
+      "name": "token",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "decimals",
+      "type": "uint8",
+      "internalType": "uint8"
+     },
+     {
+      "name": "currency",
+      "type": "uint32",
+      "internalType": "uint32"
+     }
+    ]
+   },
+   {
+    "name": "suckerDeploymentConfiguration",
+    "type": "tuple",
+    "internalType": "struct REVSuckerDeploymentConfig",
+    "components": [
+     {
+      "name": "deployerConfigurations",
+      "type": "tuple[]",
+      "internalType": "struct JBSuckerDeployerConfig[]",
+      "components": [
+       {
+        "name": "deployer",
+        "type": "address",
+        "internalType": "contract IJBSuckerDeployer"
+       },
+       {
+        "name": "peer",
+        "type": "bytes32",
+        "internalType": "bytes32"
+       },
+       {
+        "name": "mappings",
+        "type": "tuple[]",
+        "internalType": "struct JBTokenMapping[]",
+        "components": [
+         {
+          "name": "localToken",
+          "type": "address",
+          "internalType": "address"
+         },
+         {
+          "name": "minGas",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "remoteToken",
+          "type": "bytes32",
+          "internalType": "bytes32"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "salt",
+      "type": "bytes32",
+      "internalType": "bytes32"
+     }
+    ]
+   },
+   {
+    "name": "tiered721HookConfiguration",
+    "type": "tuple",
+    "internalType": "struct REVDeploy721TiersHookConfig",
+    "components": [
+     {
+      "name": "baseline721HookConfiguration",
+      "type": "tuple",
+      "internalType": "struct REVBaseline721HookConfig",
+      "components": [
+       {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "symbol",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "baseUri",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "tokenUriResolver",
+        "type": "address",
+        "internalType": "contract IJB721TokenUriResolver"
+       },
+       {
+        "name": "contractUri",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "tiersConfig",
+        "type": "tuple",
+        "internalType": "struct JB721InitTiersConfig",
+        "components": [
+         {
+          "name": "tiers",
+          "type": "tuple[]",
+          "internalType": "struct JB721TierConfig[]",
+          "components": [
+           {
+            "name": "price",
+            "type": "uint104",
+            "internalType": "uint104"
+           },
+           {
+            "name": "initialSupply",
+            "type": "uint32",
+            "internalType": "uint32"
+           },
+           {
+            "name": "votingUnits",
+            "type": "uint32",
+            "internalType": "uint32"
+           },
+           {
+            "name": "reserveFrequency",
+            "type": "uint16",
+            "internalType": "uint16"
+           },
+           {
+            "name": "reserveBeneficiary",
+            "type": "address",
+            "internalType": "address"
+           },
+           {
+            "name": "encodedIpfsUri",
+            "type": "bytes32",
+            "internalType": "bytes32"
+           },
+           {
+            "name": "category",
+            "type": "uint24",
+            "internalType": "uint24"
+           },
+           {
+            "name": "discountPercent",
+            "type": "uint8",
+            "internalType": "uint8"
+           },
+           {
+            "name": "flags",
+            "type": "tuple",
+            "internalType": "struct JB721TierConfigFlags",
+            "components": [
+             {
+              "name": "allowOwnerMint",
+              "type": "bool",
+              "internalType": "bool"
+             },
+             {
+              "name": "useReserveBeneficiaryAsDefault",
+              "type": "bool",
+              "internalType": "bool"
+             },
+             {
+              "name": "transfersPausable",
+              "type": "bool",
+              "internalType": "bool"
+             },
+             {
+              "name": "useVotingUnits",
+              "type": "bool",
+              "internalType": "bool"
+             },
+             {
+              "name": "cantBeRemoved",
+              "type": "bool",
+              "internalType": "bool"
+             },
+             {
+              "name": "cantIncreaseDiscountPercent",
+              "type": "bool",
+              "internalType": "bool"
+             },
+             {
+              "name": "cantBuyWithCredits",
+              "type": "bool",
+              "internalType": "bool"
+             }
+            ]
+           },
+           {
+            "name": "splitPercent",
+            "type": "uint32",
+            "internalType": "uint32"
+           },
+           {
+            "name": "splits",
+            "type": "tuple[]",
+            "internalType": "struct JBSplit[]",
+            "components": [
+             {
+              "name": "percent",
+              "type": "uint32",
+              "internalType": "uint32"
+             },
+             {
+              "name": "projectId",
+              "type": "uint64",
+              "internalType": "uint64"
+             },
+             {
+              "name": "beneficiary",
+              "type": "address",
+              "internalType": "address payable"
+             },
+             {
+              "name": "preferAddToBalance",
+              "type": "bool",
+              "internalType": "bool"
+             },
+             {
+              "name": "lockedUntil",
+              "type": "uint48",
+              "internalType": "uint48"
+             },
+             {
+              "name": "hook",
+              "type": "address",
+              "internalType": "contract IJBSplitHook"
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "name": "currency",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "decimals",
+          "type": "uint8",
+          "internalType": "uint8"
+         }
+        ]
+       },
+       {
+        "name": "flags",
+        "type": "tuple",
+        "internalType": "struct REV721TiersHookFlags",
+        "components": [
+         {
+          "name": "noNewTiersWithReserves",
+          "type": "bool",
+          "internalType": "bool"
+         },
+         {
+          "name": "noNewTiersWithVotes",
+          "type": "bool",
+          "internalType": "bool"
+         },
+         {
+          "name": "noNewTiersWithOwnerMinting",
+          "type": "bool",
+          "internalType": "bool"
+         },
+         {
+          "name": "preventOverspending",
+          "type": "bool",
+          "internalType": "bool"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "salt",
+      "type": "bytes32",
+      "internalType": "bytes32"
+     },
+     {
+      "name": "preventOperatorAdjustingTiers",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "preventOperatorUpdatingMetadata",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "preventOperatorMinting",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "preventOperatorIncreasingDiscountPercent",
+      "type": "bool",
+      "internalType": "bool"
+     }
+    ]
+   },
+   {
+    "name": "allowedPosts",
+    "type": "tuple[]",
+    "internalType": "struct REVCroptopAllowedPost[]",
+    "components": [
+     {
+      "name": "category",
+      "type": "uint24",
+      "internalType": "uint24"
+     },
+     {
+      "name": "minimumPrice",
+      "type": "uint104",
+      "internalType": "uint104"
+     },
+     {
+      "name": "minimumTotalSupply",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "maximumTotalSupply",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "maximumSplitPercent",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "allowedAddresses",
+      "type": "address[]",
+      "internalType": "address[]"
+     }
+    ]
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJB721TiersHook"
+   }
+  ],
+  "stateMutability": "payable"
+ },
+ {
+  "type": "function",
+  "name": "deploySuckersFor",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "suckerDeploymentConfiguration",
+    "type": "tuple",
+    "internalType": "struct REVSuckerDeploymentConfig",
+    "components": [
+     {
+      "name": "deployerConfigurations",
+      "type": "tuple[]",
+      "internalType": "struct JBSuckerDeployerConfig[]",
+      "components": [
+       {
+        "name": "deployer",
+        "type": "address",
+        "internalType": "contract IJBSuckerDeployer"
+       },
+       {
+        "name": "peer",
+        "type": "bytes32",
+        "internalType": "bytes32"
+       },
+       {
+        "name": "mappings",
+        "type": "tuple[]",
+        "internalType": "struct JBTokenMapping[]",
+        "components": [
+         {
+          "name": "localToken",
+          "type": "address",
+          "internalType": "address"
+         },
+         {
+          "name": "minGas",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "remoteToken",
+          "type": "bytes32",
+          "internalType": "bytes32"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "salt",
+      "type": "bytes32",
+      "internalType": "bytes32"
+     }
+    ]
+   }
+  ],
+  "outputs": [
+   {
+    "name": "suckers",
+    "type": "address[]",
+    "internalType": "address[]"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "hashedEncodedConfigurationOf",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "hashedEncodedConfiguration",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "isTrustedForwarder",
+  "inputs": [
+   {
+    "name": "forwarder",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "onERC721Received",
+  "inputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "",
+    "type": "bytes",
+    "internalType": "bytes"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bytes4",
+    "internalType": "bytes4"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "originalPayer",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "supportsInterface",
+  "inputs": [
+   {
+    "name": "interfaceId",
+    "type": "bytes4",
+    "internalType": "bytes4"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "trustedForwarder",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "event",
+  "name": "DeployRevnet",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "configuration",
+    "type": "tuple",
+    "indexed": false,
+    "internalType": "struct REVConfig",
+    "components": [
+     {
+      "name": "description",
+      "type": "tuple",
+      "internalType": "struct REVDescription",
+      "components": [
+       {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "ticker",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "uri",
+        "type": "string",
+        "internalType": "string"
+       },
+       {
+        "name": "salt",
+        "type": "bytes32",
+        "internalType": "bytes32"
+       }
+      ]
+     },
+     {
+      "name": "baseCurrency",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "operator",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "scopeCashOutsToLocalBalances",
+      "type": "bool",
+      "internalType": "bool"
+     },
+     {
+      "name": "stageConfigurations",
+      "type": "tuple[]",
+      "internalType": "struct REVStageConfig[]",
+      "components": [
+       {
+        "name": "startsAtOrAfter",
+        "type": "uint48",
+        "internalType": "uint48"
+       },
+       {
+        "name": "autoIssuances",
+        "type": "tuple[]",
+        "internalType": "struct REVAutoIssuance[]",
+        "components": [
+         {
+          "name": "chainId",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "count",
+          "type": "uint104",
+          "internalType": "uint104"
+         },
+         {
+          "name": "beneficiary",
+          "type": "address",
+          "internalType": "address"
+         }
+        ]
+       },
+       {
+        "name": "splitPercent",
+        "type": "uint16",
+        "internalType": "uint16"
+       },
+       {
+        "name": "splits",
+        "type": "tuple[]",
+        "internalType": "struct JBSplit[]",
+        "components": [
+         {
+          "name": "percent",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "projectId",
+          "type": "uint64",
+          "internalType": "uint64"
+         },
+         {
+          "name": "beneficiary",
+          "type": "address",
+          "internalType": "address payable"
+         },
+         {
+          "name": "preferAddToBalance",
+          "type": "bool",
+          "internalType": "bool"
+         },
+         {
+          "name": "lockedUntil",
+          "type": "uint48",
+          "internalType": "uint48"
+         },
+         {
+          "name": "hook",
+          "type": "address",
+          "internalType": "contract IJBSplitHook"
+         }
+        ]
+       },
+       {
+        "name": "initialIssuance",
+        "type": "uint112",
+        "internalType": "uint112"
+       },
+       {
+        "name": "issuanceCutFrequency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "issuanceCutPercent",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "cashOutTaxRate",
+        "type": "uint16",
+        "internalType": "uint16"
+       },
+       {
+        "name": "extraMetadata",
+        "type": "uint16",
+        "internalType": "uint16"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "terminalConfigurations",
+    "type": "tuple[]",
+    "indexed": false,
+    "internalType": "struct JBTerminalConfig[]",
+    "components": [
+     {
+      "name": "terminal",
+      "type": "address",
+      "internalType": "contract IJBTerminal"
+     },
+     {
+      "name": "accountingContextsToAccept",
+      "type": "tuple[]",
+      "internalType": "struct JBAccountingContext[]",
+      "components": [
+       {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "decimals",
+        "type": "uint8",
+        "internalType": "uint8"
+       },
+       {
+        "name": "currency",
+        "type": "uint32",
+        "internalType": "uint32"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "suckerDeploymentConfiguration",
+    "type": "tuple",
+    "indexed": false,
+    "internalType": "struct REVSuckerDeploymentConfig",
+    "components": [
+     {
+      "name": "deployerConfigurations",
+      "type": "tuple[]",
+      "internalType": "struct JBSuckerDeployerConfig[]",
+      "components": [
+       {
+        "name": "deployer",
+        "type": "address",
+        "internalType": "contract IJBSuckerDeployer"
+       },
+       {
+        "name": "peer",
+        "type": "bytes32",
+        "internalType": "bytes32"
+       },
+       {
+        "name": "mappings",
+        "type": "tuple[]",
+        "internalType": "struct JBTokenMapping[]",
+        "components": [
+         {
+          "name": "localToken",
+          "type": "address",
+          "internalType": "address"
+         },
+         {
+          "name": "minGas",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "remoteToken",
+          "type": "bytes32",
+          "internalType": "bytes32"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "salt",
+      "type": "bytes32",
+      "internalType": "bytes32"
+     }
+    ]
+   },
+   {
+    "name": "rulesetConfigurations",
+    "type": "tuple[]",
+    "indexed": false,
+    "internalType": "struct JBRulesetConfig[]",
+    "components": [
+     {
+      "name": "mustStartAtOrAfter",
+      "type": "uint48",
+      "internalType": "uint48"
+     },
+     {
+      "name": "duration",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "weight",
+      "type": "uint112",
+      "internalType": "uint112"
+     },
+     {
+      "name": "weightCutPercent",
+      "type": "uint32",
+      "internalType": "uint32"
+     },
+     {
+      "name": "approvalHook",
+      "type": "address",
+      "internalType": "contract IJBRulesetApprovalHook"
+     },
+     {
+      "name": "metadata",
+      "type": "tuple",
+      "internalType": "struct JBRulesetMetadata",
+      "components": [
+       {
+        "name": "reservedPercent",
+        "type": "uint16",
+        "internalType": "uint16"
+       },
+       {
+        "name": "cashOutTaxRate",
+        "type": "uint16",
+        "internalType": "uint16"
+       },
+       {
+        "name": "baseCurrency",
+        "type": "uint32",
+        "internalType": "uint32"
+       },
+       {
+        "name": "pausePay",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "pauseCreditTransfers",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "allowOwnerMinting",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "allowSetCustomToken",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "allowTerminalMigration",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "allowSetTerminals",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "allowSetController",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "allowAddAccountingContext",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "allowAddPriceFeed",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "ownerMustSendPayouts",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "holdFees",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "scopeCashOutsToLocalBalances",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "useDataHookForPay",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "useDataHookForCashOut",
+        "type": "bool",
+        "internalType": "bool"
+       },
+       {
+        "name": "dataHook",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "metadata",
+        "type": "uint16",
+        "internalType": "uint16"
+       }
+      ]
+     },
+     {
+      "name": "splitGroups",
+      "type": "tuple[]",
+      "internalType": "struct JBSplitGroup[]",
+      "components": [
+       {
+        "name": "groupId",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "splits",
+        "type": "tuple[]",
+        "internalType": "struct JBSplit[]",
+        "components": [
+         {
+          "name": "percent",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "projectId",
+          "type": "uint64",
+          "internalType": "uint64"
+         },
+         {
+          "name": "beneficiary",
+          "type": "address",
+          "internalType": "address payable"
+         },
+         {
+          "name": "preferAddToBalance",
+          "type": "bool",
+          "internalType": "bool"
+         },
+         {
+          "name": "lockedUntil",
+          "type": "uint48",
+          "internalType": "uint48"
+         },
+         {
+          "name": "hook",
+          "type": "address",
+          "internalType": "contract IJBSplitHook"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "fundAccessLimitGroups",
+      "type": "tuple[]",
+      "internalType": "struct JBFundAccessLimitGroup[]",
+      "components": [
+       {
+        "name": "terminal",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "payoutLimits",
+        "type": "tuple[]",
+        "internalType": "struct JBCurrencyAmount[]",
+        "components": [
+         {
+          "name": "amount",
+          "type": "uint224",
+          "internalType": "uint224"
+         },
+         {
+          "name": "currency",
+          "type": "uint32",
+          "internalType": "uint32"
+         }
+        ]
+       },
+       {
+        "name": "surplusAllowances",
+        "type": "tuple[]",
+        "internalType": "struct JBCurrencyAmount[]",
+        "components": [
+         {
+          "name": "amount",
+          "type": "uint224",
+          "internalType": "uint224"
+         },
+         {
+          "name": "currency",
+          "type": "uint32",
+          "internalType": "uint32"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "encodedConfigurationHash",
+    "type": "bytes32",
+    "indexed": false,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "DeploySuckers",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "encodedConfigurationHash",
+    "type": "bytes32",
+    "indexed": false,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "suckerDeploymentConfiguration",
+    "type": "tuple",
+    "indexed": false,
+    "internalType": "struct REVSuckerDeploymentConfig",
+    "components": [
+     {
+      "name": "deployerConfigurations",
+      "type": "tuple[]",
+      "internalType": "struct JBSuckerDeployerConfig[]",
+      "components": [
+       {
+        "name": "deployer",
+        "type": "address",
+        "internalType": "contract IJBSuckerDeployer"
+       },
+       {
+        "name": "peer",
+        "type": "bytes32",
+        "internalType": "bytes32"
+       },
+       {
+        "name": "mappings",
+        "type": "tuple[]",
+        "internalType": "struct JBTokenMapping[]",
+        "components": [
+         {
+          "name": "localToken",
+          "type": "address",
+          "internalType": "address"
+         },
+         {
+          "name": "minGas",
+          "type": "uint32",
+          "internalType": "uint32"
+         },
+         {
+          "name": "remoteToken",
+          "type": "bytes32",
+          "internalType": "bytes32"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "salt",
+      "type": "bytes32",
+      "internalType": "bytes32"
+     }
+    ]
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "SetCashOutDelay",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "cashOutDelay",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "event",
+  "name": "StoreAutoIssuanceAmount",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "stageId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "beneficiary",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "count",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "error",
+  "name": "PRBMath_MulDiv_Overflow",
+  "inputs": [
+   {
+    "name": "x",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "y",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "denominator",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVDeployer_AutoIssuanceBeneficiaryZeroAddress",
+  "inputs": [
+   {
+    "name": "stageIndex",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "autoIssuanceIndex",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVDeployer_CashOutsCantBeTurnedOffCompletely",
+  "inputs": [
+   {
+    "name": "cashOutTaxRate",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "maxCashOutTaxRate",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVDeployer_MustHaveSplits",
+  "inputs": [
+   {
+    "name": "stageIndex",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "splitPercent",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVDeployer_ProjectCreationFeeNotNeeded",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "value",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVDeployer_RulesetDoesNotAllowDeployingSuckers",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVDeployer_StageTimesMustIncrease",
+  "inputs": [
+   {
+    "name": "stageIndex",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "previousStageStart",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "effectiveStart",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVDeployer_StagesRequired",
+  "inputs": [
+   {
+    "name": "stageCount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "type": "error",
+  "name": "REVDeployer_Unauthorized",
+  "inputs": [
+   {
+    "name": "revnetId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ }
+]

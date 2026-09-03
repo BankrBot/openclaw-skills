@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "quicknode",
+  "provider": "Quicknode",
+  "providerUrl": "https://quicknode.com",
+  "logo": null,
+  "demo": {
+    "title": "x402 Pay-Per-Request RPC",
+    "language": "typescript",
+    "code": "import { createQuicknodeX402Client } from \"@quicknode/x402\";\n\nconst client = await createQuicknodeX402Client({\n  baseUrl: 'https://x402.quicknode.com',\n  network: \"eip155:8453\",   // Base mainnet\n  evmPrivateKey: process.env.PRIVATE_KEY,\n  preAuth: true,\n});\n\n// Check ETH balance\nconst res = await client.fetch(\"https://x402.quicknode.com/ethereum-mainnet\", {\n  method: \"POST\",\n  headers: { \"Content-Type\": \"application/json\" },\n  body: JSON.stringify({\n    jsonrpc: \"2.0\",\n    method: \"eth_getBalance\",\n    params: [\"0x...\", \"latest\"],\n    id: 1,\n  }),\n});\nconst data = await res.json();\nconsole.log(data.result);"
+  },
+  "setup": [
+    "Install: `npm install @quicknode/x402`",
+    "For x402: fund wallet with USDC on Base, Polygon, or Solana — no account needed",
+    "For API key: create an endpoint at quicknode.com and set `QUICKNODE_RPC_URL` in your environment",
+    "Treat your RPC URL as a secret — it contains your API key"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "quicknode",
+    "command": "install the quicknode skill from https://github.com/BankrBot/skills/tree/main/quicknode"
+  }
+}

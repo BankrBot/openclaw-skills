@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "slug": "rider-battle",
+  "name": "Rider Battle (Bankr CryptoRider)",
+  "description": "Create and accept $RIDER 1v1 wager battles in Bankr CryptoRider on Base, claim wins or refunds, browse open challenges, and view leaderboards — from a tweet.",
+  "provider": "BankrBot",
+  "providerUrl": "https://github.com/BankrBot/skills",
+  "logo": "https://basescan.org/token/images/riderbattle_32.png",
+  "tags": ["gaming", "wager", "base", "pvp"],
+  "install": "install the rider-battle skill from https://github.com/BankrBot/skills/tree/main/rider-battle"
+}

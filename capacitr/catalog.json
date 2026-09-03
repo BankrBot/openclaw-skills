@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "capacitr",
+  "provider": "Capacitr",
+  "providerUrl": "https://app.capacitr.xyz",
+  "logo": null,
+  "demo": {
+    "title": "capacitr.sh",
+    "language": "bash",
+    "code": "# Preflight — current prices, accepted assets, EIP-712 domain hints\nbankr prompt \"Using the capacitr skill, run discovery\"\n\n# Discover markets from a URL — pays in $CAPACITR by default\nbankr prompt \"Using the capacitr skill, what are the trades around https://example.com/article\"\n\n# Free-text query — falls back to USDC if wallet has no $CAPACITR\nbankr prompt \"Using the capacitr skill, find markets for the oil narrative\"\n\n# Pre-signed header path (for platforms that don't auto-sign)\nX_PAYMENT=<base64> ./scripts/analyze.sh \"oil\""
+  },
+  "setup": [
+    "Install: `npx skills add capacitr`",
+    "Requires a Base mainnet wallet (chain ID `8453`) that can sign EIP-712 typed data — Bankr platform, Coinbase x402 SDK, Privy, MetaMask Delegation Toolkit, or vanilla viem/ethers all work",
+    "Optional: hold `$CAPACITR` for the cheaper default settlement path; otherwise USDC fallback is signed automatically",
+    "Source: https://github.com/BankrBot/skills/tree/main/capacitr"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "capacitr",
+    "command": "install the capacitr skill from https://github.com/BankrBot/skills/tree/main/capacitr"
+  }
+}

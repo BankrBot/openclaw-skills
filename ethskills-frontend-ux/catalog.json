@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-frontend-ux",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "OnchainButton.tsx",
+    "language": "tsx",
+    "code": "// Four-state flow: Connect → Network → Approve → Action\n// Button MUST disable + show spinner through block confirmation\n<button\n  disabled={isPending || isConfirming}\n  onClick={handleWrite}\n>\n  {!isConnected        ? 'Connect Wallet'\n  : chain.id !== TARGET ? 'Switch Network'\n  : needsApproval      ? 'Approve Token'\n  : isPending          ? <span className=\"loading loading-spinner\" />\n  :                      'Confirm Swap'}\n</button>"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/frontend-ux/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/frontend-ux/SKILL.md before building UI\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/frontend-ux/SKILL.md",
+    "reference": "https://ethskills.com/frontend-ux/SKILL.md"
+  }
+}

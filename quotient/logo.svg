@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Quotient">
+  <rect width="128" height="128" rx="28" fill="#0B0E14"/>
+  <circle cx="62" cy="59" r="27" fill="none" stroke="#8B7CFF" stroke-width="9"/>
+  <line x1="76" y1="74" x2="97" y2="97" stroke="#C6BDFF" stroke-width="9" stroke-linecap="round"/>
+</svg>

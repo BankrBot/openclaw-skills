@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "slug": "onair-shoutout",
+  "provider": "GM Farcaster",
+  "providerUrl": "https://gmfarcaster.com/shoutout",
+  "logo": "logo.png",
+  "demo": {
+    "title": "onair-shoutout.sh",
+    "language": "bash",
+    "code": "# One-time: deps + a wallet holding USDC on Base (no ETH needed)\npip install -r scripts/requirements.txt\nexport GMFARCASTER_PRIVATE_KEY=0x...\n\n# Step 1: preview — validates + prints exactly what will air, pays NOTHING\npython scripts/request.py \\\n  --sponsor \"Acme Frames\" \\\n  --read \"Today's GM is brought to you by Acme Frames — ship a Farcaster mini app fast.\" \\\n  --url \"https://acmeframes.xyz\"\n\n# Step 2: confirm — pays $5 USDC via x402, returns a RECEIPT (pending_review),\n# not a confirmed read; declines are refunded\npython scripts/request.py --sponsor \"Acme Frames\" --read \"...\" --url \"https://acmeframes.xyz\" --confirm\n\n# Check status later (free) — pending_review -> approved -> aired\npython scripts/request.py --status sho_8f3c2a1b9d4e"
+  },
+  "setup": [
+    "No signup, no API key — payment via x402 is the authorization ($5 USDC per submission on Base)",
+    "Payments are pinned: the script only pays a 402 challenge matching Base USDC, GM Farcaster's wallet, and max $5 — anything else is refused before signing",
+    "Install deps: `pip install -r scripts/requirements.txt`",
+    "Set `GMFARCASTER_PRIVATE_KEY` to a dedicated low-balance wallet holding USDC on Base (gasless for the signer — no ETH needed)",
+    "Preview with `python scripts/request.py --sponsor ... --read ...` (pays nothing), get the user's approval, then re-run with `--confirm` to pay — you get a receipt; GM Farcaster reviews every read and refunds declines",
+    "Poll `python scripts/request.py --status <request_id>` (free) — never re-submit to check progress"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "onair-shoutout",
+    "command": "install the onair-shoutout skill from https://github.com/BankrBot/skills/tree/main/onair-shoutout"
+  }
+}

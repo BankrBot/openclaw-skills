@@ -1,0 +1,36 @@
+{
+  "siteUrl": "https://bankr.space",
+  "COMMUNITIES_SITE_URL": "https://bankr.space",
+  "urlTemplate": "https://bankr.space/community/{tokenContractAddress}",
+  "linkApiTemplate": "https://bankr.space/api/agent/link?q={TICKER}",
+  "linkApiExamples": {
+    "TMP": "https://bankr.space/api/agent/link?q=TMP",
+    "ARCHIVE": "https://bankr.space/api/agent/link?q=ARCHIVE"
+  },
+  "communities": {
+    "TMP": {
+      "symbol": "TMP",
+      "tokenAddress": "0x935e13a28849095db45e63040f109c34b757aba3",
+      "communityLink": "https://bankr.space/community/0x935e13a28849095db45e63040f109c34b757aba3",
+      "linkApi": "https://bankr.space/api/agent/link?q=TMP"
+    },
+    "ARCHIVE": {
+      "symbol": "ARCHIVE",
+      "tokenAddress": "0x76aba8089e4ba07f705fb886d17dd41793ad2ba3",
+      "communityLink": "https://bankr.space/community/0x76aba8089e4ba07f705fb886d17dd41793ad2ba3",
+      "linkApi": "https://bankr.space/api/agent/link?q=ARCHIVE"
+    },
+    "PMFI": {
+      "symbol": "PMFI",
+      "tokenAddress": "0xd77ce6d3137342bb5174673bdab5f51db16fcba3",
+      "communityLink": "https://bankr.space/community/0xd77ce6d3137342bb5174673bdab5f51db16fcba3",
+      "linkApi": "https://bankr.space/api/agent/link?q=PMFI"
+    },
+    "SPACE": {
+      "symbol": "Space",
+      "tokenAddress": "0xef703b860a6d422fa00cc67bbbb2662297cb6ba3",
+      "communityLink": "https://bankr.space/community/0xef703b860a6d422fa00cc67bbbb2662297cb6ba3",
+      "linkApi": "https://bankr.space/api/agent/link?q=SPACE"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-why",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "agent-economy.ts",
+    "language": "typescript",
+    "code": "// Autonomous agent economy loop: identity → earn → spend\n// 1. Register on-chain identity (ERC-8004)\nconst { agentId } = await sdk.createAgent(\"TradingBot\").registerIPFS();\n\n// 2. Agent calls a paid API (x402 protocol)\n//    HTTP 402 → agent pays USDC → retries → gets data\nconst prices = await fetchWithPayment('https://api.example.com/prices');\n\n// 3. Agent earns from trading fees (Bankr)\n//    57% of fees auto-sent to agent wallet\n\n// Permissionless: no approval, no company, no gatekeeping"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/why/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/why/SKILL.md\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/why/SKILL.md",
+    "reference": "https://ethskills.com/why/SKILL.md"
+  }
+}

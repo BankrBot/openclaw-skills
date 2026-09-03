@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "gmfarcaster",
+  "provider": "GM Farcaster",
+  "providerUrl": "https://gmfarcaster.com",
+  "logo": "logo.png",
+  "demo": {
+    "title": "gmfarcaster-query.sh",
+    "language": "bash",
+    "code": "# One-time: deps + a wallet holding USDC on Base (no ETH needed)\npip install -r scripts/requirements.txt\nexport GMFARCASTER_PRIVATE_KEY=0x...\n\n# Ask the GM Farcaster archive anything — pays ~$0.005 USDC via x402\npython scripts/query.py \"What have the hosts said about prediction markets?\"\n\n# Returns a grounded answer + timestamped episode links\npython scripts/query.py \"Which episodes covered the Clanker Ecosystem Fund?\""
+  },
+  "setup": [
+    "No signup, no API key — payment via x402 is the authorization (~$0.005 USDC per query on Base)",
+    "Payments are pinned: the script only pays a 402 challenge matching Base USDC, GM Farcaster's wallet, and max $0.005 — anything else is refused before signing",
+    "Install deps: `pip install -r scripts/requirements.txt`",
+    "Set `GMFARCASTER_PRIVATE_KEY` to a dedicated low-balance wallet holding USDC on Base (gasless for the signer — no ETH needed)",
+    "Run `python scripts/query.py \"your question\"` — answers are live-generated and can take up to a few minutes"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "gmfarcaster",
+    "command": "install the gmfarcaster skill from https://github.com/BankrBot/skills/tree/main/gmfarcaster"
+  }
+}

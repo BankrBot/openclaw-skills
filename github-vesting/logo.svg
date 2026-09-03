@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="GitHub Vesting">
+  <rect width="128" height="128" rx="24" fill="#0d1117"/>
+  <circle cx="64" cy="52" r="22" fill="none" stroke="#58a6ff" stroke-width="6"/>
+  <path d="M44 78c8 10 32 10 40 0" fill="none" stroke="#3fb950" stroke-width="6" stroke-linecap="round"/>
+  <rect x="34" y="92" width="60" height="10" rx="5" fill="#f0883e"/>
+</svg>

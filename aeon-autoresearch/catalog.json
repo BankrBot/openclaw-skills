@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-autoresearch",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "autoresearch.sh",
+    "language": "bash",
+    "code": "# Evolve an installed skill (writes the diff)\naeon-autoresearch target=aeon-token-movers\n\n# Score variations without writing anything\naeon-autoresearch target=aeon-token-movers mode=dry-run"
+  },
+  "setup": [
+    "Install the `aeon-autoresearch` skill from https://github.com/BankrBot/skills/tree/main/aeon-autoresearch",
+    "Run with a target skill path: `target=<skill-name>`",
+    "Use `mode=dry-run` to score without writing the diff",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-autoresearch"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-autoresearch",
+    "command": "install the aeon-autoresearch skill from https://github.com/BankrBot/skills/tree/main/aeon-autoresearch"
+  }
+}

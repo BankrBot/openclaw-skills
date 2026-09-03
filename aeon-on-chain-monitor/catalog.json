@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-on-chain-monitor",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "on-chain-monitor.sh",
+    "language": "bash",
+    "code": "# Run the configured watchlist\naeon-on-chain-monitor\n\n# Watchlist entry:\n#   address: 0xTreasury\n#   alert_transfer_min_usd: 100000\n#   alert_new_approval: true"
+  },
+  "setup": [
+    "Install: `install the aeon-on-chain-monitor skill from https://github.com/BankrBot/skills/tree/main/aeon-on-chain-monitor`",
+    "Configure RPC endpoint(s) per chain — Bankr / Quicknode / Alchemy recommended",
+    "Populate the watchlist YAML with addresses + filters",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-on-chain-monitor"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-on-chain-monitor",
+    "command": "install the aeon-on-chain-monitor skill from https://github.com/BankrBot/skills/tree/main/aeon-on-chain-monitor"
+  }
+}

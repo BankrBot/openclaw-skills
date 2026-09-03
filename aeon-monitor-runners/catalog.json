@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-monitor-runners",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "monitor-runners.sh",
+    "language": "bash",
+    "code": "# All chains\naeon-monitor-runners\n\n# Base only with a $250k pool TVL floor\naeon-monitor-runners chain=base pool_min_tvl=250000"
+  },
+  "setup": [
+    "Install: `install the aeon-monitor-runners skill from https://github.com/BankrBot/skills/tree/main/aeon-monitor-runners`",
+    "Tune `pool_min_tvl` (default $100k) to filter honeypots",
+    "No credentials required (public GeckoTerminal endpoints)",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-monitor-runners"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-monitor-runners",
+    "command": "install the aeon-monitor-runners skill from https://github.com/BankrBot/skills/tree/main/aeon-monitor-runners"
+  }
+}

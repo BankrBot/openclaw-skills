@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "delu-oracle",
+  "provider": "deluonchain",
+  "providerUrl": "https://github.com/deluonchain/deluskill",
+  "logo": "delu.png",
+  "demo": {
+    "title": "delu-oracle.sh",
+    "language": "bash",
+    "code": "# Analyze a Base token by contract address\nbankr prompt \"Use delu-oracle to analyze 0x22af33fe49fd1fa80c7149773dde5890d3c76f3b\"\n\n# Analyze a token by cashtag\nbankr prompt \"Use delu-oracle to analyze $BNKR and show the decision, conviction, entry, stop, and risks\"\n\n# Add checkr social enrichment (+$0.45 USDC)\nbankr prompt \"Use delu-oracle with social enrichment to analyze $BNKR\"\n\n# Analyze a watchlist sequentially\nbankr prompt \"Use delu-oracle to analyze $BNKR, $DELU, and $CLANKER one at a time, then compare their decisions\""
+  },
+  "setup": [
+    "No API key or account required — the endpoint uses x402 on Base",
+    "Fund a Base wallet with DELU plus ETH for gas; social enrichment also requires USDC",
+    "Calls settle at 0, 50,000, or 250,000 DELU based on the paying wallet's DELU balance",
+    "Call sequentially — each x402 Permit2 authorization is single-use"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "delu-oracle",
+    "command": "install the delu-oracle skill from https://github.com/BankrBot/skills/tree/main/delu-oracle"
+  }
+}

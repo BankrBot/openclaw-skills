@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "wake-token-spotter-analysis",
+  "provider": "WakeOnBase",
+  "providerUrl": "https://wakeonbase.com",
+  "logo": null,
+  "demo": {
+    "title": "wake-spotter.sh",
+    "language": "bash",
+    "code": "# Fetch cached analysis for a Base token (no auth required)\ncurl -s https://wakeonbase.com/api/spotter/0x4ed4e862860bed51a9570b96d89af5e1b0efefed | jq .\n\n# Agent flow — let Bankr drive the lookup\nbankr prompt \"Using the wake-token-spotter-analysis skill, analyze 0x4ed4e862860bed51a9570b96d89af5e1b0efefed\"\n\n# Quota exhausted? Direct the user to the terminal\nbankr prompt \"Using the wake-token-spotter-analysis skill, where can I request fresh analysis if the daily quota is hit?\""
+  },
+  "setup": [
+    "Install: `npx skills add wake-token-spotter-analysis`",
+    "No API key or wallet required — the `/api/spotter/{address}` endpoint is public and read-only",
+    "Send the lowercase 0x-prefixed contract address; Base mainnet only (chain ID `8453`)",
+    "Source: https://github.com/BankrBot/skills/tree/main/wake-token-spotter-analysis"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "wake-token-spotter-analysis",
+    "command": "install the wake-token-spotter-analysis skill from https://github.com/BankrBot/skills/tree/main/wake-token-spotter-analysis"
+  }
+}

@@ -14,7 +14,7 @@ Hyperliquid is a high-performance L1 DEX with an on-chain order book. It support
 
 | Account | Purpose |
 |---------|---------|
-| **Spot** | Receives bridge deposits, holds spot tokens |
+| **Spot** | Receives venue deposits, holds spot tokens |
 | **Perps** | USDC margin for perpetual trading |
 
 Perps trading requires USDC in the perps account. Bankr auto-transfers from spot to perps when needed.
@@ -24,7 +24,7 @@ Perps trading requires USDC in the perps account. Bankr auto-transfers from spot
 | Category | Examples | Max Leverage |
 |----------|----------|-------------|
 | Crypto | BTC, ETH, SOL, HYPE, 100+ more | Varies per asset (up to 50x) |
-| Stocks | TSLA, AAPL, NVDA, GOOGL (via HIP-3) | Varies per asset |
+| Stocks | TSLA, AAPL, NVDA, GOOGL, SPCX (via HIP-3) | Varies per asset |
 | Spot | HYPE, PURR, and other HL-native tokens | N/A (no leverage) |
 
 ## Prompt Examples
@@ -80,10 +80,19 @@ Perps trading requires USDC in the perps account. Bankr auto-transfers from spot
 - "Transfer $500 from spot to perps on hyperliquid"
 - "Move $200 from perps to spot"
 
-**Bridge funds:**
+**Fund the venue (deposit / withdraw):**
 - "Deposit $500 USDC to hyperliquid"
-- "Bridge $1000 to hyperliquid from arbitrum"
+- "Deposit $1000 to hyperliquid from arbitrum"
 - "Withdraw $500 from hyperliquid"
+
+Hyperliquid is a trading **venue**, not a chain, so moving USDC in and out of it is venue funding rather than bridging — and deposit and withdraw are separate operations with fixed destinations. A deposit only ever reaches Hyperliquid; a withdrawal only ever lands on **Arbitrum**. To get withdrawn funds somewhere else, follow it with an ordinary cross-chain swap ("withdraw $500 from hyperliquid, then move it to Base") — it composes as two steps.
+
+**Withdrawal fee.** Hyperliquid charges a flat **1 USDC** withdrawal fee and takes it **out of the amount you request** — request 100, receive 99. Two consequences worth knowing:
+
+- Your **full withdrawable balance is requestable**. You don't need to leave a dollar behind to cover the fee, so "withdraw everything" works as stated.
+- **Withdrawals under $1 are refused** rather than netting to zero or a negative amount.
+
+**Name the venue when you mean the venue.** Say "hyperliquid" (or "hl") rather than a bare "bridge" or "withdraw"; a generic verb with a non-Hyperliquid destination is a request for that destination, and Bankr will treat it as one.
 
 **Market data:**
 - "BTC price on hyperliquid"
@@ -119,7 +128,7 @@ Perps trading requires USDC in the perps account. Bankr auto-transfers from spot
 |--------|---------|-------------|
 | Absolute Price | "Set TP at $70000 on my BTC position" | Trigger at exact price |
 
-## Bridge Operations
+## Venue Funding Operations
 
 | Operation | Min Amount | Fee | Time | Destination |
 |-----------|-----------|-----|------|-------------|
@@ -146,13 +155,14 @@ Perps trading requires USDC in the perps account. Bankr auto-transfers from spot
 
 | Issue | Resolution |
 |-------|------------|
-| Insufficient USDC on HL | Bridge USDC from any EVM chain |
+| Insufficient USDC on HL | Deposit USDC from any supported source chain |
 | USDC in spot, not perps | Transfer spot to perps (auto-handled for perps trades) |
 | Asset not found | Check available assets, use correct symbol |
 | Leverage exceeds max | Each asset has its own max leverage |
 | Margin update rejected | Only works on isolated positions |
-| Bridge deposit too small | Minimum 5 USDC |
+| Deposit too small | Minimum 5 USDC |
 | Withdrawal delayed | Normal: ~3-4 minutes to land on Arbitrum |
+| Withdrawal fee | 1 USDC, deducted by Hyperliquid |
 
 ## HIP-3 Assets (Stocks, RWAs)
 
@@ -160,17 +170,18 @@ Hyperliquid supports equities and real-world assets via HIP-3 builder-deployed d
 - Trade stocks like TSLA, AAPL, NVDA as perpetual futures
 - Same tools and workflow as crypto perps
 - Dex abstraction is enabled automatically on first trade
+- Company names resolve to their HIP-3 ticker — e.g. "spacex" maps to **SPCX**, so "Long spacex on hyperliquid" works without knowing the symbol
 - Search with: "Search for TSLA on hyperliquid" or "What stocks can I trade on hyperliquid?"
 
 ## Trading Flow
 
 1. **Check balances** — "Show my hyperliquid balances"
-2. **Bridge if needed** — "Deposit $500 USDC to hyperliquid"
+2. **Fund if needed** — "Deposit $500 USDC to hyperliquid"
 3. **Open position** — "Long $100 of BTC on hyperliquid with 10x"
 4. **Set risk management** — "Set TP at $70000 and SL at $55000 on my BTC position"
 5. **Monitor** — "Show my hyperliquid positions"
 6. **Close** — "Close my BTC position on hyperliquid"
-7. **Withdraw** — "Withdraw $500 from hyperliquid"
+7. **Withdraw** — "Withdraw $500 from hyperliquid" (lands on Arbitrum; add a cross-chain swap to move it on)
 
 ## Risk Warnings
 
@@ -178,4 +189,4 @@ Hyperliquid supports equities and real-world assets via HIP-3 builder-deployed d
 - Positions can be liquidated if margin is insufficient
 - 50x leverage means 2% price move = 100% gain/loss
 - Funding rates can erode profits on long-held positions
-- Bridge deposits/withdrawals take a few minutes to process
+- Venue deposits/withdrawals take a few minutes to process

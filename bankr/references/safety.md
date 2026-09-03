@@ -2,7 +2,7 @@
 
 Comprehensive safety guidance for building agents and integrations with the Bankr API and CLI. Covers wallet-level security settings, API key access controls, wallet separation, rate limits, and operational best practices.
 
-Bankr has two independent layers of safety controls: **wallet-level** (configured at [bankr.bot](https://bankr.bot) → Security; applies to every surface) and **per-API-key** (configured at [bankr.bot/api](https://bankr.bot/api); applies to one key). Both run independently — a transaction must satisfy both to broadcast.
+Bankr has two independent layers of safety controls: **wallet-level** (configured at [bankr.bot](https://bankr.bot) → Security; applies to every surface) and **per-API-key** (configured at [bankr.bot/api-keys](https://bankr.bot/api-keys); applies to one key). Both run independently — a transaction must satisfy both to broadcast.
 
 ## Wallet-Level Security Settings
 
@@ -15,10 +15,41 @@ User-controlled wallet safety features configured at [bankr.bot](https://bankr.b
 | Pause all transactions | Off | Blocks every outbound transaction until unpaused |
 | Daily spending limit | $500 / 24h | Rejects any tx that pushes rolling-24h USD outflow past the limit |
 | Per-transaction limit | $500 | Rejects any single tx priced above the limit |
+| Price impact limit | On (15%) | Rejects a swap whose estimated price impact exceeds the limit |
 | Permitted recipients | Off | Restricts transfers/swaps to an allowlist; new entries enter a configurable cooldown |
-| Disable arbitrary contract calls | Off | Blocks `write_contract`, raw `/wallet/submit`, and arbitrary transaction tools (named operations like swaps still work) |
+| Arbitrary contract calls | Off (blocked) | While off, blocks `write_contract`, raw `/wallet/submit`, and arbitrary transaction tools (named operations like swaps still work). Enabling is a timed opt-in |
+| Response channels | All on | Per-channel control over where the agent may reply — X, Farcaster, Telegram. A disabled channel is skipped silently |
 
 USD limits accept `1` to `1,000,000`. Setting `0` is rejected — disable the limit instead. Cooldown accepts `0` to `168` hours (default 24h).
+
+### Defaults Are Enforced, Everywhere
+
+A wallet that has never opened the Security page still has a **$500 daily and $500 per-transaction limit**, and those defaults are enforced on every signing path — including the ones that don't run the agent's preflight: **x402 paid calls**, **raw `/wallet/submit`**, and direct signer callers. Don't design an integration around the idea that an unconfigured wallet is uncapped; if it needs to sign above $500, raise the limit deliberately.
+
+(System-owned vesting wallets are the one exception — they have no Security screen and no user to configure them, and are governed by their signing policy's authorized-caller gate instead.)
+
+### Timed Windows (auto-restoring)
+
+Most controls can be turned off for a bounded window instead of indefinitely, after which they restore themselves. Supported on the **daily limit**, **per-transaction limit**, **price impact limit**, **arbitrary contract calls**, and each **response channel**. Durations are a fixed vocabulary: **10, 30, 60, or 1440 minutes**.
+
+| Property | Behaviour |
+|----------|-----------|
+| Direction | A deadline only ever resolves toward the **safer** state. On a protection the timer runs while it is *off* and restores it at the deadline; on arbitrary contract calls the framing inverts — the timer runs while calls are *enabled* and revokes them. Neither can turn an enabled protection off, or hold one off past its deadline. |
+| Resolution | Read-time, not swept. An expired window is already in effect at the next transaction evaluation — there is no window to race. |
+| Replacement | Every explicit write replaces the timer. Toggling a control or editing its amount clears any running window, so a stale off-window can't outlive an edit you thought was unrelated. |
+| Authority | The deadline is computed server-side from the duration you choose. A client-supplied timestamp is rejected, and a duration is only accepted on the write direction that starts a timer. |
+
+`/user` and `/user/security` expose the resolved state, so an API key can *read* whether a protection is currently off and when it returns — but not change it. Long-running integrations should re-read rather than cache what they saw at startup: "the limit is off" is a fact with an expiry attached.
+
+### Price Impact Limit
+
+Enabled by default at **15%**, adjustable from **1% to 100%** or turned off on the Security page. Before a swap is signed, Bankr estimates its price impact (how far the trade moves the pool price) and rejects it when the estimate exceeds the limit — this protects against catastrophic fills on thin or low-liquidity pools while leaving normal trading (well under the threshold) untouched. The guard applies to user-initiated swaps across chains; when impact can't be estimated it fails open, and slippage plus minimum-received bounds still protect the fill.
+
+The check runs against the **fee-exclusive** pool impact, not the display estimate — over the Wallet API that's the quote's `swapImpactBps` (`priceImpactBps` is the display figure, which folds in token taxes). Your configured ceiling comes back on the quote as `maxPriceImpactBps` (`null` when protection is off), so you can decide before spending an execution call.
+
+Distinguish the two rejections you can get: a **`400`** is the venue refusing the trade because the pool can't absorb it (retry smaller); a **`403`** is your own price-impact protection rejecting the fresh execution quote. The `403` is not an auth or location failure.
+
+**One venue fails closed rather than open.** A brand-new Solana token still on its Raydium LaunchLab bonding curve exposes no impact figure at all, so it can't be checked against your limit. Rather than fill an unguardable venue, Bankr refuses and surfaces a clean no-route — so with price-impact protection enabled, those bonding-curve fallback swaps are rejected by design. Turn the limit off if you need them; the `minBuyAmount` floor still applies inside the fill.
 
 ### Pricing & Fail-Closed Behavior
 
@@ -39,12 +70,24 @@ The wallet-level permitted-recipients list is independent from the API-key `allo
 - **API-key allowlist** = where this key is allowed to send
 - **Wallet allowlist** = where this wallet is allowed to send, regardless of key
 
+### Allowlists Disable Uncontrolled-Counterparty Operations
+
+Some operations pay an address that can't be meaningfully checked against an allowlist — a marketplace escrow, a mint contract, a prediction-market exchange. Rather than let those slip past a restriction the operator deliberately configured, Bankr **refuses them outright** whenever the key carries a non-empty `allowedRecipients` list (EVM or Solana):
+
+- **Polymarket** — buying and selling shares
+- **NFTs** — purchases, Seadrop and Manifold mints, listing for sale, accepting offers, creating collection offers
+- **Airdrops** — both the general airdrop tool and the top-members variant
+
+The error names the action and points at the key administrator; it is not a transient failure and retrying won't help. Swaps and transfers are unaffected — their recipient *is* checkable, and the allowlist gates them normally.
+
+If an agent needs these operations, give it a key **without** a recipient allowlist and constrain it with spend limits, read-only scoping, or IP whitelisting instead. Trying to have both is the case this rule exists to refuse.
+
 ### Incident Response
 
 If you suspect a key is compromised:
 
 1. **Pause** the wallet at [bankr.bot](https://bankr.bot) → Security. Halts every outbound transaction immediately, including in-flight broadcasts. Revoking the key alone does not stop transactions already past auth.
-2. **Revoke** the key at [bankr.bot/api](https://bankr.bot/api).
+2. **Revoke** the key at [bankr.bot/api-keys](https://bankr.bot/api-keys).
 3. **Rotate** — generate a new key with the same access profile and update deployments.
 4. **Audit** — review recent transactions and agent job history before unpausing.
 
@@ -54,11 +97,11 @@ Bankr uses a single key format (`bk_...`) with **capability flags** that control
 
 ### Capability Flags
 
-Each API key has independent toggles managed at [bankr.bot/api](https://bankr.bot/api):
+Each API key has independent toggles managed at [bankr.bot/api-keys](https://bankr.bot/api-keys):
 
 | Flag | Controls Access To | Default |
 |------|-------------------|---------|
-| `walletApiEnabled` | `/wallet/*` write endpoints (transfer, sign, submit) | true |
+| `walletApiEnabled` | `/wallet/*` endpoints: swap, swap-quote, transfer, sign, submit | true |
 | `agentApiEnabled` | `/agent/*` AI endpoints (prompt, job status, profile) | false |
 | `tokenLaunchApiEnabled` | Token deployment (`/token-launches/deploy`) and agent deploy tool | true |
 | `llmGatewayEnabled` | LLM Gateway at `llm.bankr.bot` (chat completions, model access) | false |
@@ -91,7 +134,7 @@ For full LLM Gateway setup details, see [llm-gateway.md](llm-gateway.md).
 
 ## API Key Access Control
 
-Bankr API keys support granular access control configured at [bankr.bot/api](https://bankr.bot/api). Two key security features: **read-only mode** and **IP whitelisting**.
+Bankr API keys support granular access control configured at [bankr.bot/api-keys](https://bankr.bot/api-keys). Two key security features: **read-only mode** and **IP whitelisting**.
 
 ### Read-Only API Keys
 
@@ -113,7 +156,7 @@ For `/agent/sign`:
 ```json
 {
   "error": "Read-only API key",
-  "message": "This API key has read-only access and cannot sign messages or transactions. Update your API key permissions at https://bankr.bot/api"
+  "message": "This API key has read-only access and cannot sign messages or transactions. Update your API key permissions at https://bankr.bot/api-keys"
 }
 ```
 
@@ -121,7 +164,7 @@ For `/agent/submit`:
 ```json
 {
   "error": "Read-only API key",
-  "message": "This API key has read-only access and cannot submit transactions. Update your API key permissions at https://bankr.bot/api"
+  "message": "This API key has read-only access and cannot submit transactions. Update your API key permissions at https://bankr.bot/api-keys"
 }
 ```
 
@@ -132,7 +175,7 @@ For `/agent/submit`:
 | Swaps | Token buy/sell/swap across all chains |
 | Transfers | Send tokens, NFTs |
 | NFT Operations | Purchase, mint NFTs |
-| Staking | Stake/unstake operations |
+| Staking | Unstake / redeem operations (BNKR staking is withdraw-only — new deposits are deprecated) |
 | Orders | Limit orders, stop losses |
 | Token Launches | Deploy ERC20/SPL tokens |
 | Leverage | Open/close/modify positions |
@@ -161,7 +204,7 @@ API keys support an `allowedIps` whitelist with both individual IPs and CIDR ran
 
 ### Configuring Access Control
 
-Manage API key settings at [bankr.bot/api](https://bankr.bot/api):
+Manage API key settings at [bankr.bot/api-keys](https://bankr.bot/api-keys):
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -235,7 +278,7 @@ When building autonomous agents that execute transactions, use a **separate Bank
 
 ### Setup Steps
 
-1. **Create a new Bankr account** — Sign up at [bankr.bot/api](https://bankr.bot/api) with a different email. This provisions fresh EVM and Solana wallets automatically.
+1. **Create a new Bankr account** — Sign up at [bankr.bot/api-keys](https://bankr.bot/api-keys) with a different email. This provisions fresh EVM and Solana wallets automatically.
 2. **Generate an API key** — Enable **Agent API** access for the key
 3. **Configure access controls** — Set `readOnly`, `allowedIps`, or both as appropriate for your use case
 4. **Fund with limited amounts** — Transfer only what the agent needs for its operations
@@ -274,8 +317,11 @@ The `/agent/prompt` endpoint enforces daily message limits per account:
 | Tier | Daily Limit |
 |------|-------------|
 | Standard | 100 messages/day |
+| Standard + Max Mode | 100 messages/day (Max Mode does not raise the API cap) |
 | Bankr Club | 1,000 messages/day |
 | Custom | Set per API key |
+
+These are Agent API limits. The web terminal is capped separately at 5 messages/day without a subscription, and unlimited with Bankr Club or Max Mode.
 
 **429 response when limit exceeded:**
 ```json
@@ -310,6 +356,7 @@ Blockchain transactions are **irreversible** once confirmed. Key safety rules:
 - **Wait for confirmation** — Use `waitForConfirmation: true` with `/agent/submit` to ensure transactions are confirmed before proceeding. See [sign-submit-api.md](sign-submit-api.md).
 - **Immediate execution** — `/agent/submit` executes transactions immediately with no confirmation prompt. For safety with the prompt API, the AI agent may ask for confirmation on large or unusual operations.
 - **Understand calldata** — When using arbitrary transactions, verify the calldata source is trusted. See [arbitrary-transaction.md](arbitrary-transaction.md).
+- **Never trade an address you copied out of a balance listing.** Airdropped dust that reports a canonical ticker (`USDG`, `USDC`, `USDT`, `EURC`, a native or wrapped symbol) from the wrong address is a standing attack against agents. Bankr keeps a negative security verdict decisive for that shape, so impostor dust drops out of the portfolio listing instead of reaching the agent as a clean-looking entry — but the durable habit is to name the **ticker** and let Bankr resolve it to the vetted contract. Genuine canonical tokens and tokens you bought through Bankr are never hidden.
 
 ## Key Management
 
@@ -321,7 +368,7 @@ Blockchain transactions are **irreversible** once confirmed. Key safety rules:
 
 ### Rotation & Revocation
 
-- **Rotate periodically** — Rotate keys via the dashboard at [bankr.bot/api](https://bankr.bot/api) or programmatically via the API key rotation endpoint. Rotation atomically generates a new key and deactivates the old one. After rotating, update both env vars and CLI config (`bankr login --api-key NEW_KEY`)
+- **Rotate periodically** — Rotate keys via the dashboard at [bankr.bot/api-keys](https://bankr.bot/api-keys) or programmatically via the API key rotation endpoint. Rotation atomically generates a new key and deactivates the old one. After rotating, update both env vars and CLI config (`bankr login --api-key NEW_KEY`)
 - **Revoke immediately** — If any key (API or LLM) is leaked, deactivate it immediately at the dashboard
 - **One key per purpose** — Use separate keys for different agents, environments, and services (Agent API vs LLM Gateway) so you can revoke individually without disrupting unrelated systems
 

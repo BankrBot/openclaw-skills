@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "slug": "quotient",
+  "provider": "Quotient",
+  "providerUrl": "https://quotient.social",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "# Active Quotient signals updated by Q in the last 24h\n./scripts/quotient.sh signals\n\n# The featured signal\n./scripts/quotient.sh featured\n\n# Hold-or-sell read on a Polymarket wallet\n./scripts/converge-monitor.sh 0xYourPolymarketWallet"
+  },
+  "setup": [
+    "Log in to the Bankr CLI and fund a payment option advertised by the runtime PAYMENT-REQUIRED challenge: Base USDC or Robinhood Chain USDG. Confirm the installed client supports the selected offer (see references/vanilla-x402-flow.md).",
+    "To pay USDG, require scheme exact on eip155:4663 with the canonical 6-decimal asset 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168; match network and asset, not symbol alone.",
+    "Install jq and node >= 18.",
+    "Paid reads are confirmation-first: with no autopay policy the scripts print a cost preview and exit 10; relay it, then re-run with --approve <token>, or on the user's explicit acceptance pre-authorize with `./scripts/quotient.sh autopay init --total-budget 1.00` (see SKILL.md, Paid Calls).",
+    "Trade execution is two-phase: `signal-strategy.mjs --execute` previews a hashed plan (exit 12) with the risk disclosure; only `--execute --confirm <hash>` submits, then verifies on-chain receipts and position changes.",
+    "Optional: `bankr login email <addr> --code <otp> --accept-terms --agent-api --read-write` and export BANKR_API_KEY if you want signal-strategy.mjs to execute (default is dry-run)."
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "quotient",
+    "command": "install the quotient skill from https://github.com/BankrBot/skills/tree/main/quotient"
+  }
+}

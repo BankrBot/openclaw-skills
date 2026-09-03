@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "neynar",
+  "provider": "Neynar",
+  "providerUrl": "https://neynar.com",
+  "logo": null,
+  "demo": {
+    "title": "neynar-cli.sh",
+    "language": "bash",
+    "code": "# Post a cast to Farcaster\nscripts/neynar.sh post \"gm farcaster\" --channel gm\n\n# Look up any user\nscripts/neynar.sh user vitalik.eth\n\n# Search casts\nscripts/neynar.sh search \"ethereum\" --limit 10\n\n# Read channel feed\nscripts/neynar.sh feed --channel base"
+  },
+  "setup": [
+    "Install: `npx skills add neynar`",
+    "Get API key from [dev.neynar.com](https://dev.neynar.com)",
+    "Set `NEYNAR_API_KEY` in config",
+    "Set up signer UUID for write operations (posting, liking)"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "neynar",
+    "command": "install the neynar skill from https://github.com/BankrBot/skills/tree/main/neynar"
+  }
+}

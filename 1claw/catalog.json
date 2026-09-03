@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "1claw",
+  "provider": "1Claw",
+  "providerUrl": "https://1claw.xyz",
+  "logo": null,
+  "demo": {
+    "title": "1claw-secrets.sh",
+    "language": "bash",
+    "code": "# Validate API connectivity and credential setup\n./1claw/scripts/validate-setup.sh\n\n# Exchange an ocv_ agent key for a short-lived JWT\nTOKEN=$(curl -s -X POST https://api.1claw.xyz/v1/auth/agent-token \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"api_key\":\"ocv_...\"}' | jq -r '.access_token')\n\n# Store a Bankr key in the vault\ncurl -s -X PUT \"https://api.1claw.xyz/v1/vaults/$VAULT_ID/secrets/keys/bankr-api-key\" \\\n  -H \"Authorization: Bearer $TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"value\":\"bk_...\",\"type\":\"api_key\"}'"
+  },
+  "setup": [
+    "Install: `npx skills add 1claw`",
+    "Set `ONECLAW_AGENT_API_KEY=ocv_...` from the 1Claw dashboard",
+    "Configure MCP with a pinned package version: `@1claw/mcp@0.31.1`",
+    "Run setup validation: `./1claw/scripts/validate-setup.sh`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "1claw",
+    "command": "install the 1claw skill from https://github.com/BankrBot/skills/tree/main/1claw"
+  }
+}

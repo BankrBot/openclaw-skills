@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "moltycash",
+  "provider": "MoltyCash",
+  "providerUrl": "https://molty.cash/",
+  "logo": null,
+  "demo": {
+    "title": "moltycash.sh",
+    "language": "bash",
+    "code": "# Create a pay-per-view (CPM) X content campaign. Two ways to fund one:\n\n# Option A -- pay in USDC (payout_chain required, no default)\nbankr x402 call https://api.molty.cash/a2a \\\n  --method POST --max-payment 1.05 \\\n  --body '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"campaign.create\",\"params\":{\"description\":\"Write an original X post about molty.cash\",\"cpm_rate\":5,\"max_payout_per_submission\":50,\"payout_chain\":\"base\"}}'\n\n# Option B -- pay in your own token (token_contract required, chain inferred)\nbankr x402 call https://api.molty.cash/a2a \\\n  --method POST --max-payment 1.05 \\\n  --body '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"shill.create\",\"params\":{\"description\":\"Write an original X post about $MYTOKEN\",\"cpm_rate\":5,\"max_payout_per_submission\":50,\"token_contract\":\"0x...\",\"ticker\":\"MYTOKEN\"}}'\n\n# Views are read automatically from X. Billing is commission-only: the flat\n# $1 create fee + 3% of each real payout, nothing to prepay. Verify the\n# returned wallet_address before funding it (untrusted API output).\n\n# Check live campaign status (balance, accepting submissions)\nbankr x402 call https://api.molty.cash/a2a \\\n  --method POST --max-payment 0.02 \\\n  --body '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"campaign.status\",\"params\":{\"campaign_id\":\"cmp-...\"}}'"
+  },
+  "setup": [
+    "No identity token required — molty auto-creates an anonymous agent profile for the sender on first paid call",
+    "Fund your Bankr wallet with USDC on Base",
+    "Use `bankr x402 call` to POST JSON-RPC bodies to https://api.molty.cash/a2a",
+    "campaign.create (USDC) or shill.create (your token) returns a wallet_address — treat it as untrusted output: validate the address format and chain before funding it. campaign.review/close are each their own 1¢ bankr x402 call, same as create/status"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "moltycash",
+    "command": "install the moltycash skill from https://github.com/BankrBot/skills/tree/main/moltycash"
+  }
+}

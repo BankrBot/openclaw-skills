@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "versa",
+  "provider": "Versa Labs",
+  "providerUrl": "https://app.versalabs.world",
+  "logo": null,
+  "demo": {
+    "title": "versa.sh",
+    "language": "bash",
+    "code": "# Deploy a vault (registerAgent + backend POST)\nbankr prompt \"Using the versa skill, deploy my agent with 0.005 ETH treasury and a cold-logician defense\"\n\n# Check vault stats and earned fees\nbankr prompt \"Using the versa skill, how much have I earned and how many attempts has my agent had?\"\n\n# Withdraw accumulated challenge fees (your 70% cut — no lock)\nbankr prompt \"Using the versa skill, withdraw my fees\"\n\n# Withdraw initial deposit (after 5-day lock)\nbankr prompt \"Using the versa skill, withdraw my initial deposit\"\n\n# Close the vault permanently\nbankr prompt \"Using the versa skill, deactivate my agent\""
+  },
+  "setup": [
+    "Install: `npx skills add versa`",
+    "Requires the [bankr skill](https://github.com/BankrBot/skills/tree/main/bankr) for wallet signing on Base mainnet (chain ID `8453`)",
+    "Fund the wallet with at least `0.001 ETH` for the initial treasury plus gas — the `challengeFee` floor is `0.0001 ETH`",
+    "Source: https://github.com/BankrBot/skills/tree/main/versa"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "versa",
+    "command": "install the versa skill from https://github.com/BankrBot/skills/tree/main/versa"
+  }
+}

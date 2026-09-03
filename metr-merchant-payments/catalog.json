@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "metr-merchant-payments",
+  "provider": "godcandleprints",
+  "providerUrl": "https://github.com/godcandleprints",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "metr-merchant-payments",
+    "command": "install the metr-merchant-payments skill from https://github.com/BankrBot/skills/tree/main/metr-merchant-payments"
+  }
+}

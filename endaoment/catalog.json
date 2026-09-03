@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "endaoment",
+  "provider": "Endaoment",
+  "providerUrl": "https://endaoment.org",
+  "logo": null,
+  "demo": {
+    "title": "donate.sh",
+    "language": "bash",
+    "code": "# Search charities by EIN or name\n./scripts/search.sh \"27-1661997\"  # GiveDirectly\n./scripts/search.sh \"Red Cross\"\n\n# Donate USDC to any 501(c)(3) on Base\n./scripts/donate.sh 27-1661997 5  # $5 to GiveDirectly\n./scripts/donate.sh 13-1623829 10 # $10 to ASPCA"
+  },
+  "setup": [
+    "Install: `npx skills add endaoment`",
+    "Requires Bankr skill with API key configured",
+    "Fund wallet with USDC on Base",
+    "Search charities by EIN or name, then donate"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "endaoment",
+    "command": "install the endaoment skill from https://github.com/BankrBot/skills/tree/main/endaoment"
+  }
+}

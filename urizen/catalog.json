@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "slug": "urizen",
+  "provider": "URIZEN",
+  "providerUrl": "https://urizenfund.com",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "urizen.sh",
+    "language": "bash",
+    "code": "# Research any tokenized stock\ncurl \"https://urizenfund.com/api/quant/fundamentals?symbol=NVDA\"\ncurl \"https://urizenfund.com/api/quant/ratings?symbol=NVDA\"\n\n# Macro + this week's economic calendar\ncurl https://urizenfund.com/api/quant/macro\n\n# The fund's live book\ncurl https://urizenfund.com/api/fund/book\n\n# A ready-to-sign buy of 0.01 ETH of $URI\ncurl \"https://urizenfund.com/api/fund/quote?side=buy&amount=0.01&taker=0xYOURWALLET\""
+  },
+  "setup": [
+    "No signup — every endpoint is public, key-less and CORS-open",
+    "Research: `GET /api/quant/{ohlc,fundamentals,filings,ratings,news,macro,market,onchain,predictions}`",
+    "The fund: `GET /api/fund/{strategies,book,mirror,trades,signals,stats}`",
+    "Buy $URI: `@bankrbot buy $URI` — validate chain 4663 + the $URI address + router before signing"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "urizen",
+    "command": "install the urizen skill from https://github.com/BankrBot/skills/tree/main/urizen"
+  },
+  "token": {
+    "symbol": "URI",
+    "address": "0x970078468807853bc316432e745165eb34398ba3",
+    "chainId": 4663
+  }
+}

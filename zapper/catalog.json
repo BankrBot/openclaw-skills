@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "zapper",
+  "provider": "Zapper",
+  "providerUrl": "https://zapper.xyz",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "zapper",
+    "command": "install the zapper skill from https://github.com/BankrBot/skills/tree/main/zapper"
+  }
+}

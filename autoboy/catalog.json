@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "slug": "autoboy",
+  "provider": "The Firm",
+  "providerUrl": "https://thefirm.biz",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "autoboy.sh",
+    "language": "bash",
+    "code": "# AutoBoy prompts for your agent — examples only\n# Any POST/PATCH/DELETE needs the user's explicit approval first\n\n# Buyers: Choose pre-token projects, auto-buy their tokens the instant they launch\nbankr prompt \"Show me the newest projects on AutoBoy I can pre-buy\"          # GET /projects\nbankr prompt \"Create an AutoBoy buy order for The Firm: $500, max $2m mcap\"  # POST /orders — ask first\nbankr prompt \"List my open AutoBoy orders and cancel the one for The Firm\"   # GET + DELETE /orders — ask first\n\n# Projects: Launch your Bankr with maximum volume and distribution\nbankr prompt \"How many buy orders since my last tweet?\"                      # GET /projects/{slug}/buyers\nbankr prompt \"Show me my buyers sorted by follower count\"                    # GET /projects/{slug}/buyers\nbankr prompt \"What launch market cap does AutoBoy simulate for my project?\"  # GET /projects/{slug}"
+  },
+  "setup": [
+    "Install & read the AutoBoy skill from https://github.com/BankrBot/skills/tree/main/autoboy",
+    "Buyers: Request an API key: `POST https://thefirm.biz/api/public/v1/api-key-requests`.",
+    "Projects: Register your pre-token project: `POST https://thefirm.biz/api/public/v1/projects`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "autoboy",
+    "command": "install the AutoBoy skill from https://github.com/BankrBot/skills/tree/main/autoboy"
+  }
+}

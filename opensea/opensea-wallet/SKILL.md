@@ -155,7 +155,7 @@ Each provider has a different out-of-band credential that gates mutation:
 | Privy | `owner_id` key quorum on the wallet — owner key held off-machine |
 | Turnkey | Root user quorum — non-root API user used for signing |
 | Fireblocks | Admin quorum for TAP changes; API user role set to `Signer` only |
-| Bankr | Dashboard re-scoping at bankr.bot/api — no API to mutate scope |
+| Bankr | Dashboard re-scoping at bankr.bot/api-keys — no API to mutate scope |
 
 Setting these up is part of the happy path in `references/wallet-setup.md`, not optional hardening. `opensea wallet info` reports whether the structural gate is in place where it can be detected via API; for Fireblocks and Bankr, where it cannot, the command prints a static reminder to verify at the console.
 

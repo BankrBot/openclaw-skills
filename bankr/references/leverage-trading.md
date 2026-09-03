@@ -7,12 +7,18 @@ Trade with leverage on Hyperliquid (primary) or Avantis on Base (secondary).
 Two leverage platforms are available:
 
 - **Hyperliquid** (primary) — High-performance L1 DEX with on-chain order book. Supports perpetual futures for crypto, stocks (via HIP-3), and spot trading. See [hyperliquid.md](hyperliquid.md) for the full Hyperliquid reference.
-- **Avantis** (secondary) — Perpetuals on Base for crypto, forex, and commodities.
+- **Avantis** (secondary) — Perpetuals on Base for crypto, equities, forex, and commodities.
+
+> For **spot ownership** of tokenized stocks (rather than leveraged exposure), see [tokenized-stocks.md](tokenized-stocks.md).
 
 ### Avantis Details
 
 **Chain**: Base
 **Protocol**: [Avantis](https://docs.avantisfi.com/)
+
+Avantis prices come from **Avantis' own price feed**, keyed by the pair — one bounded fetch, with no third-party price oracle and no on-chain read in the price path, so a slow Base RPC can't stall a quote.
+
+**Closing a position never depends on the price feed.** A close is encoded as a market close and doesn't read a price to execute — the quote is only used to render the PnL card. If pricing is unavailable, the close still goes through and the card is simply less detailed. An open position is never stranded by a pricing outage.
 
 ### Leverage Limits
 
@@ -26,6 +32,9 @@ Two leverage platforms are available:
 
 ### Cryptocurrency
 BTC, ETH, SOL, ARB, AVAX, BNB, DOGE, LINK, OP, MATIC
+
+### Equities
+NVDA, TSLA, AAPL, AMZN, MSFT, META, COIN, HOOD, and more. Equity pairs trade **during their underlying market hours only** — orders placed while the market is closed will fail.
 
 ### Forex
 - EUR/USD - Euro vs US Dollar
@@ -47,6 +56,8 @@ BTC, ETH, SOL, ARB, AVAX, BNB, DOGE, LINK, OP, MATIC
 - "Short Bitcoin with 10x leverage using $50"
 - "Long Gold with 2x leverage"
 - "Open 3x long SOL position"
+- "Long TSLA with 5x leverage on avantis" (equity perp — market hours only)
+- "Short $50 of NVDA on avantis"
 
 **With risk management:**
 - "Long ETH 5x with stop loss at $3000"

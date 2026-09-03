@@ -1,0 +1,66 @@
+[
+ {
+  "type": "event",
+  "name": "ReturnHeldFees",
+  "inputs": [
+   {
+    "name": "projectId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "token",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "amount",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "returnedFees",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "leftoverAmount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "error",
+  "name": "PRBMath_MulDiv_Overflow",
+  "inputs": [
+   {
+    "name": "x",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "y",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "denominator",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ }
+]

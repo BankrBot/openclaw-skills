@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "nexus-trading-labs",
+  "provider": "Nexus Trading Labs",
+  "providerUrl": "https://trade.nexustradinglabs.com",
+  "logo": null,
+  "demo": {
+    "title": "nexus.sh",
+    "language": "bash",
+    "code": "# Open a 5x long on BTC perp (50 USDC notional)\nbankr prompt \"Using the nexus-trading-labs skill, long BTC with 50 USDC at 5x leverage\"\n\n# Check positions and balance\nbankr prompt \"Using the nexus-trading-labs skill, show my open positions and balance\"\n\n# Publish a thesis on-chain and view the analyst feed\nbankr prompt \"Using the nexus-trading-labs skill, post my thesis on ETH and pull the top traders from the feed\""
+  },
+  "setup": [
+    "Install: `npx skills add nexus-trading-labs`",
+    "Requires a wallet that can sign messages — one `sign_message(\"nexus-trading-key-v1\")` per session authorizes every authenticated call",
+    "Deposit/withdraw/register endpoints additionally require a Bankr API key (used transiently per call, never persisted)",
+    "Arbitrum mainnet only — perp settlement runs on Orderly Network",
+    "Source: https://github.com/BankrBot/skills/tree/main/nexus-trading-labs"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "nexus-trading-labs",
+    "command": "install the nexus-trading-labs skill from https://github.com/BankrBot/skills/tree/main/nexus-trading-labs"
+  }
+}

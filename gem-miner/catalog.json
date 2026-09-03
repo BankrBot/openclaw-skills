@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "gem-miner",
+  "provider": "Gem Miner",
+  "providerUrl": "https://gemminer.app",
+  "logo": null,
+  "demo": {
+    "title": "gem-miner.sh",
+    "language": "bash",
+    "code": "# Check staking position and unclaimed rewards\nbankr \"on Base, call balanceOf(address), earned(address), and pendingOf(address) on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A with my wallet\"\n\n# Stake 25M GEM (gate minimum) — approve then stake\nbankr \"on Base, approve 0xff293DEc665949a3a1a80fBA6a602da3be702C1A to spend 25000000000000000000000000 of token 0xD3776969966B340d72d75731eF890A3Bc9F21bA3, then call stake(uint256) on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A with 25000000000000000000000000\"\n\n# Claim accrued rewards without unstaking\nbankr \"on Base, call getReward() on 0xff293DEc665949a3a1a80fBA6a602da3be702C1A\""
+  },
+  "setup": [
+    "Install: `install the gem-miner skill from https://github.com/BankrBot/skills/tree/main/gem-miner`",
+    "Base mainnet only — `$GEM` token: `0xD3776969966B340d72d75731eF890A3Bc9F21bA3`",
+    "`GemStaking` contract: `0xff293DEc665949a3a1a80fBA6a602da3be702C1A`",
+    "Requires `bankr` configured with a wallet holding $GEM and ETH for gas on Base",
+    "Source: https://github.com/BankrBot/skills/tree/main/gem-miner"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "gem-miner",
+    "command": "install the gem-miner skill from https://github.com/BankrBot/skills/tree/main/gem-miner"
+  }
+}

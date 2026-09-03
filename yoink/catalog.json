@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "yoink",
+  "provider": "Yoink",
+  "providerUrl": null,
+  "logo": null,
+  "demo": {
+    "title": "yoink.sh",
+    "language": "bash",
+    "code": "# Yoink the flag! (raw contract call via Bankr)\nbankr prompt 'Submit this transaction:\n  {\"to\":\"0x4bBFD120d9f352A0BEd7a014bd67913a2007a878\",\n   \"data\":\"0x9846cd9e\",\"value\":\"0\",\"chainId\":8453}'\n\n# Check who holds the flag\nbankr prompt \"Call lastYoinkedBy() on \\\n  0x4bBFD120d9f352A0BEd7a014bd67913a2007a878 on Base\""
+  },
+  "setup": [
+    "Install: `npx skills add yoink`",
+    "Requires Bankr skill for transaction execution",
+    "Fund wallet with ETH on Base for gas",
+    "Wait 10 min cooldown between yoinks"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "yoink",
+    "command": "install the yoink skill from https://github.com/BankrBot/skills/tree/main/yoink"
+  }
+}

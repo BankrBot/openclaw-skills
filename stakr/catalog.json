@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "stakr",
+  "provider": "Stakr",
+  "providerUrl": "https://stakrbot.xyz/",
+  "logo": null,
+  "demo": {
+    "title": "stakr-vault.sh",
+    "language": "bash",
+    "code": "# Create an agent-owned vault on Base via Bankr\nbankr agent prompt \"Create a Stakr vault on Base for USDC using factory 0x7Ef55108fa37472296DA59D2287FdA92cd21A0d0, set me as owner\"\n\n# Add a new reward token (1000 USDC, 7-day window starting tomorrow)\nbankr agent prompt \"Call addRewardToken on Stakr vault 0x... with token 0x... amount 1000 USDC starting tomorrow for 7 days\"\n\n# Or submit raw calldata directly\nbankr wallet submit --to <vault-address> --data <encoded-calldata> --chain base\n\n# Extend an existing reward (top up + extend window)\nbankr agent prompt \"Call modifyRewardToken on vault 0x... add 500 USDC and extend endTime by 7 days\"\n\n# Stream rewards weekly (fund in chunks)\nbankr agent prompt \"Call modifyRewardToken on vault 0x... add 200 USDC and push endTime one more week\""
+  },
+  "setup": [
+    "Factory on Base mainnet: `0x7Ef55108fa37472296DA59D2287FdA92cd21A0d0`",
+    "Create vault: call `createStakrVault(underlying, name, symbol, description, owner)` via Bankr",
+    "Approve the vault to pull reward tokens before calling `addRewardToken`",
+    "Use `bankr agent prompt` for natural-language vault interactions",
+    "Use `bankr wallet submit --to <vault> --data <calldata> --chain base` for raw calldata"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "stakr",
+    "command": "install the stakr skill from https://github.com/BankrBot/skills/tree/main/stakr"
+  }
+}

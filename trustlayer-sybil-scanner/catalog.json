@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "trustlayer-sybil-scanner",
+  "provider": "TrustLayer",
+  "providerUrl": "https://thetrustlayer.xyz",
+  "logo": null,
+  "demo": {
+    "title": "trustlayer-sybil-scanner.sh",
+    "language": "bash",
+    "code": "# Sybil scan an ERC-8004 agent on Base\ncurl -s \"https://api.thetrustlayer.xyz/trust/base:1378\"\n\n# Check a reviewer's credibility\ncurl -s \"https://api.thetrustlayer.xyz/reviewer/0xABC...123\"\n\n# See all agents owned by a wallet across chains\ncurl -s \"https://api.thetrustlayer.xyz/owner/0xABC...123\"\n\n# Get network-wide Sybil stats\ncurl -s \"https://api.thetrustlayer.xyz/stats\""
+  },
+  "setup": [
+    "No install required — all endpoints are plain HTTP",
+    "Free tier: `/trust/<chain>:<agentId>`, `/stats`, `/leaderboard` (5/hr)",
+    "Paid endpoints ($0.001 USDC via x402): `/agent`, `/reviewer`, `/owner`, `/history`",
+    "Try it: `curl -s \"https://api.thetrustlayer.xyz/trust/base:1378\" | jq`"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "trustlayer-sybil-scanner",
+    "command": "install the trustlayer-sybil-scanner skill from https://github.com/BankrBot/skills/tree/main/trustlayer-sybil-scanner"
+  }
+}

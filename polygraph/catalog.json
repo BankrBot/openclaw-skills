@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "polygraph",
+  "provider": "Polygraph",
+  "providerUrl": "https://polygraph.so",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "demo.sh",
+    "language": "bash",
+    "code": "# Check a server's published grade before your agent uses it\nnpx polygraphso check npm/@modelcontextprotocol/server-filesystem\n# → polygraph: A · litmus-v9\n\n# Grade your own MCP server end-to-end (A–F + reproducible evidence)\nnpx -y -p @polygraphso/litmus polygraphso-litmus litmus npm/@your-scope/your-mcp-server\n\n# Gate CI: fail the build on a D/F MCP server or skill\nnpx @polygraphso/litmus ci"
+  },
+  "setup": [
+    "Install: `install the polygraph skill from https://github.com/BankrBot/skills/tree/main/polygraph`",
+    "Check any MCP server before your agent uses it: `npx polygraphso check <registry>/<owner>/<name>`",
+    "Verify before you trust: require the live tool-surface fingerprint to match the attestation before executing",
+    "Gate CI on grades with the GitHub Action `polygraphso/litmus@v1`, or run `npx @polygraphso/litmus ci` in any pipeline",
+    "Source: https://github.com/BankrBot/skills/tree/main/polygraph"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "polygraph",
+    "command": "install the polygraph skill from https://github.com/BankrBot/skills/tree/main/polygraph"
+  }
+}

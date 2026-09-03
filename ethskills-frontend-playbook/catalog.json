@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-frontend-playbook",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "deploy.sh",
+    "language": "bash",
+    "code": "# Always fork with --network, never yarn chain\nyarn fork --network base\n# Chain ID inside fork: use chains.foundry (31337), not 8453\n# Enable block mining or transactions hang\ncast rpc anvil_setIntervalMining 1\n\n# IPFS build (Node 25+ needs localStorage polyfill)\nyarn build\n\n# ENS subdomain — 2 transactions\n# 1. Set contenthash on your ENS name\n# 2. Set text record pointing to IPFS hash"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/frontend-playbook/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/frontend-playbook/SKILL.md before deploying\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/frontend-playbook/SKILL.md",
+    "reference": "https://ethskills.com/frontend-playbook/SKILL.md"
+  }
+}

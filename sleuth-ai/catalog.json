@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "sleuth-ai",
+  "provider": "Sleuth AI",
+  "providerUrl": "https://sleuthagent.ai/",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "sleuth.sh",
+    "language": "bash",
+    "code": "# 1. Discover the live endpoints (free, no key)\ncurl https://app.sleuthagent.ai/x402/openai-bnkr.json\n\n# 2. Call any endpoint — USDC or SLEUTH on Base only, hard max $1/call.\n#    Always cap authorization at $1 (and never pass -y — the payment prompt is the confirmation):\nbankr x402 call https://x402.bankr.bot/0x08e82839e1513023d115451babc0ff18eda8f925/insiders \\\n  -X POST --max-payment 1 \\\n  -d '{\"conversation_id\":\"<uuid>\",\"token\":\"$HUSTLE\"}'"
+  },
+  "setup": [
+    "No install required — every endpoint is plain HTTP behind x402 (no account; validate every 402 against the pinned invariants in SKILL.md)",
+    "TypeScript: `npm install x402-fetch` — Python: use the Bankr CLI (`bankr x402 call`)",
+    "Create a DEDICATED low-value wallet on Base and fund it with only what you intend to spend (~$1–5) in USDC or SLEUTH — never point a main wallet at a paid skill",
+    "Payments are USDC or SLEUTH on Base only, hard max $1 per call — reject any 402 asking for a different chain, token, payee, or amount",
+    "Discover live endpoints: GET https://app.sleuthagent.ai/x402/openai-bnkr.json (free, no key)"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "sleuth-ai",
+    "command": "install the sleuth-ai skill from https://github.com/BankrBot/skills/tree/main/sleuth-ai"
+  }
+}

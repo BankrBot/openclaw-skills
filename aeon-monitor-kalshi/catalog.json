@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-monitor-kalshi",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "monitor-kalshi.sh",
+    "language": "bash",
+    "code": "# Run watchlist; alerts only on movement\naeon-monitor-kalshi\n\n# Watchlist entry shape:\n#   ticker: PRES-2028-DEM\n#   side: NO\n#   entry: 0.62\n#   target: 0.45\n#   kill: 0.78"
+  },
+  "setup": [
+    "Install: `install the aeon-monitor-kalshi skill from https://github.com/BankrBot/skills/tree/main/aeon-monitor-kalshi`",
+    "Set `KALSHI_API_KEY` / credentials; account must satisfy CFTC eligibility",
+    "Configure the watchlist YAML with side, entry, target, kill per ticker",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-monitor-kalshi"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-monitor-kalshi",
+    "command": "install the aeon-monitor-kalshi skill from https://github.com/BankrBot/skills/tree/main/aeon-monitor-kalshi"
+  }
+}

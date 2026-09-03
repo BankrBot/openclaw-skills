@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "zyfai",
+  "provider": "Zyfai",
+  "providerUrl": "https://sdk.zyf.ai",
+  "logo": null,
+  "demo": {
+    "title": "zyfai-setup.ts",
+    "language": "typescript",
+    "code": "import { ZyfaiSDK } from '@zyfai/sdk';\n\nconst sdk = new ZyfaiSDK({ apiKey: process.env.ZYFAI_API_KEY });\nconst userAddress = '0xYourEOA';\n\n// 1. Deploy deterministic subaccount (Safe) linked to EOA\nconst subaccount = await sdk.deploy({ userAddress });\nconsole.log('Subaccount:', subaccount.address);\n\n// 2. Enable automated yield optimization via session key\nawait sdk.enableSession({ userAddress });\n\n// 3. Deposit funds — subaccount starts earning immediately\nawait sdk.deposit({ userAddress, amount: '1000', token: 'USDC' });\n\n// 4. Check current yield and positions\nconst positions = await sdk.getPositions({ userAddress });\n\n// 5. Withdraw anytime — only EOA owner can initiate\nawait sdk.withdraw({ userAddress, amount: '500', token: 'USDC' });"
+  },
+  "setup": [
+    "Create API key programmatically: POST sdk.zyf.ai/api/sdk-api-keys/create with wallet address",
+    "Or get key manually at sdk.zyf.ai",
+    "Install SDK: `npm install @zyfai/sdk viem`",
+    "Deploy subaccount, enable session, deposit — yield starts automatically"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "zyfai",
+    "command": "install the zyfai skill from https://github.com/BankrBot/skills/tree/main/zyfai"
+  }
+}

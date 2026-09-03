@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "productclank",
+  "provider": "ProductClank",
+  "providerUrl": "https://www.productclank.com",
+  "logo": null,
+  "demo": {
+    "title": "productclank-boost.sh",
+    "language": "bash",
+    "code": "# Boost a specific post with community engagement\ncurl -X POST https://app.productclank.com/api/v1/agents/campaigns/boost \\\n  -H \"Authorization: Bearer $PRODUCTCLANK_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"post_url\": \"https://x.com/user/status/123456\",\n    \"product_id\": \"your-product-uuid\",\n    \"action_type\": \"replies\",\n    \"reply_guidelines\": \"enthusiastic, builder-focused tone\"\n  }'\n\n# Discover relevant conversations about your product\ncurl -X POST https://app.productclank.com/api/v1/agents/campaigns/discover \\\n  -H \"Authorization: Bearer $PRODUCTCLANK_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"product_id\": \"your-product-uuid\",\n    \"keywords\": [\"your-product\", \"competitor\", \"pain-point\"],\n    \"action_type\": \"replies\"\n  }'"
+  },
+  "setup": [
+    "Sign up at app.productclank.com — 300 free credits, no approval needed",
+    "Get API key from your ProductClank dashboard",
+    "Set `PRODUCTCLANK_API_KEY` env var",
+    "Top up credits: purchase in webapp or send USDC on Base via x402 protocol"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "productclank",
+    "command": "install the productclank skill from https://github.com/BankrBot/skills/tree/main/productclank"
+  }
+}

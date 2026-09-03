@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-deal-flow",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "deal-flow.sh",
+    "language": "bash",
+    "code": "# Weekly funding scan across two verticals\naeon-deal-flow verticals=\"ai,crypto\" min_round_usd=1000000\n\n# US-only, last week, prediction-markets focus\naeon-deal-flow verticals=\"prediction-markets\" geo=us"
+  },
+  "setup": [
+    "Install: `install the aeon-deal-flow skill from https://github.com/BankrBot/skills/tree/main/aeon-deal-flow`",
+    "Set `verticals`, `min_round_usd` (default $1M), and optional `geo`",
+    "Recommend a weekly cron — rounds are announced in batches",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-deal-flow"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-deal-flow",
+    "command": "install the aeon-deal-flow skill from https://github.com/BankrBot/skills/tree/main/aeon-deal-flow"
+  }
+}

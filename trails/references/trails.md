@@ -285,7 +285,7 @@ Auth header: `X-Access-Key: $TRAILS_API`
 
 ```bash
 export TRAILS_API=<your-sequence-project-access-key>   # from https://sequence.build
-export BANKR_API_KEY=<your-bankr-key>                  # from bankr.bot/api (Agent API access required)
+export BANKR_API_KEY=<your-bankr-key>                  # from bankr.bot/api-keys (Agent API access required)
 ```
 
 ## References

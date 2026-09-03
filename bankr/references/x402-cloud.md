@@ -1,6 +1,6 @@
 # x402 Cloud Reference
 
-x402 Cloud lets you deploy paid API endpoints that agents and developers pay for automatically using the x402 payment protocol. Write a handler, set a price, deploy with one command — callers pay in USDC on Base per request.
+x402 Cloud lets you deploy paid API endpoints that agents and developers pay for automatically using the x402 payment protocol. Write a handler, set a price, deploy with one command — callers pay per request in USDC or any supported ERC-20 token on Base.
 
 **Base URL:** `https://x402.bankr.bot`
 
@@ -16,7 +16,7 @@ x402 Cloud lets you deploy paid API endpoints that agents and developers pay for
 | Pro | 5% | Unlimited |
 | Enterprise | 3% | Contact sales |
 
-No credit card required. First 1,000 settled requests each month are free. Payments settle on-chain in USDC on Base — your share goes directly to your wallet.
+No credit card required. First 1,000 settled requests each month are free. Payments settle on-chain on Base — in USDC or the token your endpoint is priced in — and your share goes directly to your wallet. Revenue is accounted in USD at settlement time.
 
 ## Deploying via Agent
 
@@ -160,6 +160,7 @@ Service config lives in `bankr.x402.json` at the project root:
 ```
 
 - **price**: USD per request (e.g. "0.001" = $0.001)
+- **tokenAddress** (optional): price the endpoint in a specific ERC-20 instead of USDC. Symbol and decimals are resolved server-side; revenue is still accounted in USD at settlement.
 - **methods**: HTTP methods accepted (default: all). Use `["POST"]` for body-based endpoints.
 - **schema**: Input/output schema for agent discovery. Agents use this to understand how to call your endpoint.
 - **category/tags**: Improve discoverability for agents searching for services.
@@ -181,7 +182,22 @@ bankr agent prompt "Call the sentiment analysis endpoint on x402 with text 'Bitc
 bankr agent prompt "What does the x402 weather endpoint cost?"
 ```
 
-The agent uses USDC on Base for all x402 payments. Maximum payment per request is $10. The agent will always confirm payment amount before calling.
+The agent pays in the token each endpoint requires (USDC or any supported ERC-20) on Base. Maximum payment per request is $10. The agent will always confirm the payment amount and token before calling.
+
+### Via the CLI
+
+```bash
+bankr x402 schema <url>                           # Inspect pricing and input/output schema
+bankr x402 call <url>                             # Call with automatic payment (GET)
+bankr x402 call <url> -X POST -d '{"text":"hi"}'  # With a method and JSON body
+bankr x402 call <url> --max-payment 0.50          # Your cap in USD (default 1, ceiling 10)
+bankr x402 call <url> -i                          # Fetch the schema and prompt for input values
+bankr x402 call <url> -y                          # Skip the payment confirmation
+```
+
+**`--max-payment` is your cap, and your cap is what gets sent.** The price an endpoint advertises is display-only — it can never raise your cap, and a call whose advertised price exceeds the cap fails closed instead of paying. In non-interactive mode the price probe is skipped entirely, so `--ni` behaves the same as `-y`.
+
+**Smart-contract wallets can pay.** Payment signatures are verified through an ERC-1271/6492-aware path as well as plain ECDSA recovery, so gas-sponsored and 7702-delegated wallets settle x402 payments normally rather than failing verification.
 
 ### With x402-fetch (for developers)
 
@@ -214,6 +230,8 @@ curl -s https://x402.bankr.bot/0xOwner/service | jq .
 
 Returns `{ x402Version, accepts: [{ scheme, network, maxAmountRequired, asset, payTo }] }`.
 
+The Bankr agent can pay both **x402 v1 and v2** endpoints (Bankr-hosted or external), signing the payment in whichever protocol version the endpoint advertises.
+
 ## Endpoint URL Format
 
 ```
@@ -226,8 +244,8 @@ https://x402.bankr.bot/<walletAddress>/<serviceName>[/path]
 
 ## How Payment Works
 
-1. Client calls your endpoint — gets 402 with payment requirements
-2. Client's wallet signs a USDC payment on Base
+1. Client calls your endpoint — gets 402 with payment requirements (including the accepted token)
+2. Client's wallet signs a payment in the endpoint's token on Base
 3. Client retries with `X-PAYMENT` header containing the signed payment
 4. Payment is verified, your handler runs, payment settles on-chain
 5. Your share goes to your wallet, platform fee (if any) goes to Bankr

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "qrcoin",
+  "provider": "QRCoin",
+  "providerUrl": "https://qrcoin.fun",
+  "logo": null,
+  "demo": {
+    "title": "qr-bid.sh",
+    "language": "bash",
+    "code": "# Bid to display your URL on a QR code (~11 USDC)\nbankr prompt \"Send tx to 0x7309...A176 on Base \\\n  calling createBid(329, 'https://mysite.com', 'MyBot')\"\n\n# Boost an existing bid (~1 USDC per contribution)\nbankr prompt \"Send tx to 0x7309...A176 on Base \\\n  calling contributeToBid(329, 'https://mysite.com', 'MyBot')\""
+  },
+  "setup": [
+    "Install: `npx skills add qrcoin`",
+    "Requires Bankr skill for transaction execution",
+    "Fund wallet with USDC on Base for bids",
+    "Query `currentTokenId()` to get active auction ID"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "qrcoin",
+    "command": "install the qrcoin skill from https://github.com/BankrBot/skills/tree/main/qrcoin"
+  }
+}

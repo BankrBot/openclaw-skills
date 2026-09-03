@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "ethskills-standards",
+  "provider": "EthSkills",
+  "providerUrl": "https://ethskills.com",
+  "logo": "ethskills.png",
+  "demo": {
+    "title": "erc8004-x402.ts",
+    "language": "typescript",
+    "code": "import { SDK } from \"agent0-sdk\";\n\n// Register agent identity on-chain (ERC-8004, Base)\nconst sdk = new SDK({ chainId: 8453, privateKey: process.env.KEY });\nconst { agentId } = await sdk.createAgent(\"MyBot\", \"AI agent\").registerIPFS();\n// agentId: did:erc8004:8453:<address>:<tokenId>\n\n// x402 — HTTP 402 machine-to-machine payments\n// Agent calls paid API → receives 402 → pays → retries\nconst res = await fetchWithPayment('https://api.example.com/data', {\n  maxAmount: parseUnits('0.10', 6), // max $0.10 USDC\n});"
+  },
+  "setup": [
+    "Read: `curl -s https://ethskills.com/standards/SKILL.md`",
+    "Tell your agent: \"Read https://ethskills.com/standards/SKILL.md for Ethereum standards\"",
+    "Claude Code: `claude plugin install https://github.com/austintgriffith/ethskills`",
+    "ClawHub: `clawhub install ethskills`"
+  ],
+  "install": {
+    "type": "external",
+    "provider": "EthSkills",
+    "command": "curl -s https://ethskills.com/standards/SKILL.md",
+    "reference": "https://ethskills.com/standards/SKILL.md"
+  }
+}

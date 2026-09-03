@@ -16,7 +16,7 @@ Cross-chain swap, bridge, and DeFi orchestration powered by Sequence. Agents spe
 
 ```bash
 export TRAILS_API=<your-sequence-project-access-key>   # from https://sequence.build
-export BANKR_API_KEY=<your-bankr-key>                  # from bankr.bot/api
+export BANKR_API_KEY=<your-bankr-key>                  # from bankr.bot/api-keys
 ```
 
 ## Quick Start

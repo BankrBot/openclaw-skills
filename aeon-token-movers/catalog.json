@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-token-movers",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "token-movers.sh",
+    "language": "bash",
+    "code": "# Default top 10 each side, $1M mcap floor\naeon-token-movers\n\n# Custom floors\naeon-token-movers limit=20 min_mcap=10000000"
+  },
+  "setup": [
+    "Install: `install the aeon-token-movers skill from https://github.com/BankrBot/skills/tree/main/aeon-token-movers`",
+    "No API key required (uses CoinGecko public endpoints)",
+    "Tune `limit` and `min_mcap` per your trading universe",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-token-movers"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-token-movers",
+    "command": "install the aeon-token-movers skill from https://github.com/BankrBot/skills/tree/main/aeon-token-movers"
+  }
+}

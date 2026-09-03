@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-monitor-polymarket",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "monitor-polymarket.sh",
+    "language": "bash",
+    "code": "# Run the configured watchlist\naeon-monitor-polymarket\n\n# Watchlist entry:\n#   slug: us-election-2028-winner\n#   side: NO\n#   entry: 0.62\n#   target: 0.45\n#   kill: 0.78"
+  },
+  "setup": [
+    "Install: `install the aeon-monitor-polymarket skill from https://github.com/BankrBot/skills/tree/main/aeon-monitor-polymarket`",
+    "Configure the watchlist YAML by market slug + side + entry/target/kill",
+    "Set `BANKR_API_KEY` for attached Submit payloads",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-monitor-polymarket"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-monitor-polymarket",
+    "command": "install the aeon-monitor-polymarket skill from https://github.com/BankrBot/skills/tree/main/aeon-monitor-polymarket"
+  }
+}

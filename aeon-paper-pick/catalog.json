@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "aeon-paper-pick",
+  "provider": "Aeon",
+  "providerUrl": "https://github.com/aaronjmars/aeon",
+  "logo": null,
+  "demo": {
+    "title": "paper-pick.sh",
+    "language": "bash",
+    "code": "# Today's one pick\naeon-paper-pick\n\n# Output structure:\n#   Central claim → Why an hour → Where it might be wrong → Read order"
+  },
+  "setup": [
+    "Install: `install the aeon-paper-pick skill from https://github.com/BankrBot/skills/tree/main/aeon-paper-pick`",
+    "No API key required (uses public HF Papers endpoints)",
+    "Schedule daily, ideally before your reading window",
+    "Source: https://github.com/BankrBot/skills/tree/main/aeon-paper-pick"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "aeon-paper-pick",
+    "command": "install the aeon-paper-pick skill from https://github.com/BankrBot/skills/tree/main/aeon-paper-pick"
+  }
+}

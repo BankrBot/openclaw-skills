@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "slug": "hoodmarkets",
+  "provider": "hood.markets",
+  "providerUrl": "https://hood.markets",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "briefing.sh",
+    "language": "bash",
+    "code": "curl -s 'https://api.hood.markets/api/agent/briefing?wallet=0xYOUR_WALLET' \\\n  -H 'x-wallet-address: 0xYOUR_WALLET'"
+  },
+  "setup": [
+    "Dev hub: https://hood.markets/Dev · sdk.md · agent.md",
+    "API: https://api.hood.markets",
+    "Site: https://hood.markets",
+    "Chain: Robinhood (4663) — abort if Bankr wallet does not support 4663 (references/CHAIN-4663.md)",
+    "V3 factory: 0x9BDdC8ddf28f5629C989A36Eb5bb6C73cBA60Df5 (v0.11.0 — two fees only: swap + marketplace sales)",
+    "Legacy V3 factories still valid in catalog — see known-contracts.json legacyHoodmarketsV3Factories",
+    "Holder NFTs: claim via API only — no agent airdrop/list/buyShares (references/HOLDER-NFTS.md)",
+    "Web launch: Someone else fee recipient = 0x wallet only (not @handle)",
+    "Platform fees only: (1) swap trading fees 5% platform / 95% holders, (2) share listings 5% of sale price on buyShares",
+    "Deploy on X: IMAGE-RESOLUTION.md → resolve-deploy-image → prepare-deploy → confirm → deploy (PROMPT-INJECTION.md)",
+    "Deploy via API agent: preflight-deploy → haiku captcha → POST /api/deploy (AUTH-BOUNDARY.md)",
+    "Buy/sell: token-info (V3 vs Pro) → Pro: prepare-buy|prepare-sell → TX-VALIDATION.md → Bankr submit chainId 4663",
+    "Simple (V3) tokens: Uniswap link from token-info — not Bankr submit",
+    "Claim for someone: token-info verify → POST /api/agent/claim-for-recipient (CLAIM-BANKR.md)",
+    "Claim own fees: POST /api/agent/claim — ok:true → replyHint per RESPONSE-SAFETY.md",
+    "Bankr untrusted_address: stop — no Uniswap/web bypass (BANKR-SUBMIT.md)"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "hoodmarkets",
+    "command": "install the hoodmarkets skill from https://github.com/BankrBot/skills/tree/main/hoodmarkets"
+  }
+}

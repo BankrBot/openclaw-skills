@@ -1,0 +1,197 @@
+[
+ {
+  "type": "constructor",
+  "inputs": [
+   {
+    "name": "addressRegistry",
+    "type": "address",
+    "internalType": "contract IJBAddressRegistry"
+   },
+   {
+    "name": "newHookImplementation",
+    "type": "address",
+    "internalType": "contract JBUniswapV4LPSplitHook"
+   },
+   {
+    "name": "deployer",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "ADDRESS_REGISTRY",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IJBAddressRegistry"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "deployHookFor",
+  "inputs": [
+   {
+    "name": "feeProjectId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "feePercent",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "buybackHook",
+    "type": "address",
+    "internalType": "contract IJBBuybackHookRegistry"
+   },
+   {
+    "name": "salt",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "hook",
+    "type": "address",
+    "internalType": "contract IJBUniswapV4LPSplitHook"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "hookImplementation",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract JBUniswapV4LPSplitHook"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "oracleHook",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IHooks"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "poolManager",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IPoolManager"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "positionManager",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract IPositionManager"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "setChainSpecificConstants",
+  "inputs": [
+   {
+    "name": "newPoolManager",
+    "type": "address",
+    "internalType": "contract IPoolManager"
+   },
+   {
+    "name": "newPositionManager",
+    "type": "address",
+    "internalType": "contract IPositionManager"
+   },
+   {
+    "name": "newOracleHook",
+    "type": "address",
+    "internalType": "contract IHooks"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "event",
+  "name": "HookDeployed",
+  "inputs": [
+   {
+    "name": "feeProjectId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   },
+   {
+    "name": "feePercent",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "hook",
+    "type": "address",
+    "indexed": false,
+    "internalType": "contract IJBUniswapV4LPSplitHook"
+   },
+   {
+    "name": "caller",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "type": "error",
+  "name": "JBUniswapV4LPSplitHookDeployer_AlreadyConfigured",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "JBUniswapV4LPSplitHookDeployer_NotConfigured",
+  "inputs": []
+ },
+ {
+  "type": "error",
+  "name": "JBUniswapV4LPSplitHookDeployer_Unauthorized",
+  "inputs": [
+   {
+    "name": "caller",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ }
+]
