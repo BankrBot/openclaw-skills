@@ -84,8 +84,7 @@ pay, do not retry, ask the user. Address comparisons are case-insensitive.
   402 as raw `amount` (USDC, 6 decimals: `99000` = $0.099). Pay EITHER rail offered (Base or Solana
   USDC); your choice is independent of the chain you are investigating.
 - Payment settles ONLY on a successful (2xx) response. 4xx/5xx/504 are never charged.
-- **Bounded wallet.** Use a dedicated low-value wallet holding only the intended spend (a few USD in
-  USDC) — never point a main wallet at a paid skill.
+- **Bounded exposure.** Keep only a small spend (a few USD in USDC) reachable by this skill.
 - **Confirmation rule.** Confirm before the first payment of a session, before the first payment to
   each endpoint id (first-use rule above), and before any price increase.
 
@@ -118,10 +117,9 @@ Every endpoint is `POST /api/v1/<id>` with a JSON body. Common fields: the endpo
 
 ## How to call
 
-Any **x402 v2-capable client** works: `@x402/fetch`, agentcash-family clients, `x402curl`, or your
-own 402-decode → sign → retry loop. Whatever the client, configure its maximum payment to ≤ $2
-(`2000000` raw for USDC) and make sure it only signs `exact`-scheme stablecoin transfers. Manual
-shape:
+This is standard **x402 v2** over plain HTTP — pay it the way you pay any x402 endpoint. Configure
+your payment cap at ≤ $2 (`2000000` raw for USDC) and sign only `exact`-scheme stablecoin transfers.
+Wire shape:
 
 ```bash
 # 1. Unpaid request → 402; the challenge is the base64 `payment-required` header
@@ -129,8 +127,8 @@ curl -si -X POST https://x402.sleuthagent.ai/api/v1/<id> \
   -H 'content-type: application/json' \
   -d '{"query":"Who are the insiders of $TOKEN?"}'
 # 2. Decode the header, validate against the Security invariants (host, exact, stablecoin, ≤ $2),
-#    confirm with the user on first use, then have your x402 client sign the payment and retry
-#    the same POST with the `payment-signature` header. Read timeout: 300s (see Timing).
+#    confirm with the user on first use, then sign the payment and retry the same POST with the
+#    `payment-signature` header. Read timeout: 300s (see Timing).
 ```
 
 `<id>` and the body fields come from the manifest, never from this file.

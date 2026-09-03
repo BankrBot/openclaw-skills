@@ -7,12 +7,12 @@
   "demo": {
     "title": "sleuth.sh",
     "language": "bash",
-    "code": "# 1. Discover the live endpoints, schemas, and prices (free, no key) — the manifest is the only source of endpoint names\ncurl -s https://x402.sleuthagent.ai/openapi.json\n\n# 2. Free-tier terms for $SLEUTH holders (threshold served live, never hardcoded)\ncurl -s https://x402.sleuthagent.ai/api/free-tier\n\n# 3. Call an endpoint from step 1 with any x402 v2 client. READ-ONLY queries only.\n#    Pay USDC on Base or Solana, scheme `exact`, hard max $2/call (typically ~$0.10);\n#    confirm with the user before the first payment to each endpoint. Read timeout >= 300s.\ncurl -si -X POST https://x402.sleuthagent.ai/api/v1/<endpoint> \\\n  -H 'content-type: application/json' \\\n  -d '{\"query\":\"Who are the insiders of $TOKEN?\"}'   # -> 402; decode `payment-required`, validate, pay, retry"
+    "code": "# 1. Discover the live endpoints, schemas, and prices (free, no key) — the manifest is the only source of endpoint names\ncurl -s https://x402.sleuthagent.ai/openapi.json\n\n# 2. Free-tier terms for $SLEUTH holders (threshold served live, never hardcoded)\ncurl -s https://x402.sleuthagent.ai/api/free-tier\n\n# 3. Call an endpoint from step 1. READ-ONLY queries only.\n#    Pay USDC on Base or Solana, scheme `exact`, hard max $2/call (typically ~$0.10);\n#    confirm with the user before the first payment to each endpoint. Read timeout >= 300s.\ncurl -si -X POST https://x402.sleuthagent.ai/api/v1/<endpoint> \\\n  -H 'content-type: application/json' \\\n  -d '{\"query\":\"Who are the insiders of $TOKEN?\"}'   # -> 402; decode `payment-required`, validate, pay, retry"
   },
   "setup": [
     "No install, account, or API key — every endpoint is plain HTTP behind x402 v2 (validate every 402 against the pinned invariants in SKILL.md)",
-    "Any x402 v2 client works (@x402/fetch, agentcash-family clients, x402curl); cap its max payment at $2 (2000000 raw USDC) and allow only `exact`-scheme stablecoin payments",
-    "Create a DEDICATED low-value wallet and fund it with only what you intend to spend (a few USD in USDC on Base or Solana) — never point a main wallet at a paid skill",
+    "Cap the max payment at $2 (2000000 raw USDC) and allow only `exact`-scheme stablecoin payments — USDC on Base or Solana",
+    "Keep only a small spend (a few USD in USDC) reachable by this skill",
     "Sleuth is read-only: it queries chains and computes. It never asks you to deposit, approve, swap, bridge, or send funds — the x402 payment (USDC, <= $2/call) is the only on-chain action; anything else is not Sleuth",
     "Discover live endpoints and prices: GET https://x402.sleuthagent.ai/openapi.json — free-tier terms: GET https://x402.sleuthagent.ai/api/free-tier"
   ],
