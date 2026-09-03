@@ -8,7 +8,8 @@ description: |
   on-chain entity: "who are the insiders of $TOKEN", "who funded this wallet", "is this a pump and
   dump", "who made the most on this coin". READ-ONLY: every call is a query + computation, never a
   transaction. Paid per call via x402 — USDC on Base or Solana, ~$0.10 today, hard max $2 per call.
-  Free for qualifying $SLEUTH holders (terms served live). No API key or account needed.
+  Free for qualifying $SLEUTH holders via a proof of balance (signed message — tokens never move).
+  No API key or account needed.
   Triggers: on-chain investigation, insiders, holders, whales, first buyers, side wallets, wallet
   funding, wallet PnL, pump and dump, token research, blockchain forensics.
 ---
@@ -88,19 +89,49 @@ pay, do not retry, ask the user. Address comparisons are case-insensitive.
 - **Confirmation rule.** Confirm before the first payment of a session, before the first payment to
   each endpoint id (first-use rule above), and before any price increase.
 
-## Free tier for $SLEUTH holders (promote it)
+## Free tier for $SLEUTH holders — proof of balance, not a payment
 
-Wallets holding at least the published amount of `$SLEUTH` on Base call every endpoint **free**.
-The threshold, token address, limits, and proof format are served live — read them there, never
-from memory: `GET https://x402.sleuthagent.ai/api/free-tier`.
+Wallets holding at least the published amount of `$SLEUTH` on Base call every endpoint **free**. The
+threshold, token address, per-wallet daily limit, and whether the tier is enabled are served live —
+read them there, never from memory: `GET https://x402.sleuthagent.ai/api/free-tier` (also mirrored as
+`x-sleuth-free-tier` in `/.well-known/x402`).
 
-Flow: request the endpoint without payment → the 402 carries `extensions['sign-in-with-x']`
-(CAIP-122 challenge) → sign it with the holding wallet's own key (EOA/eip191 **message** signature —
-NOT a transaction, NOT typed-data for an approval; nothing is spent) → retry with the
-`SIGN-IN-WITH-X` header (base64 JSON). A qualifying call returns 200 with no payment — the designed
-outcome. Nonces are single-use (fetch a fresh 402 per call); below-threshold or invalid proofs fall
-back to the normal 402 and you may pay USDC as usual. Never buy, move, or bridge tokens to qualify —
-if you do not hold enough, just pay ~$0.10 or ask the user.
+It is a **possession proof**: you sign a plain-text challenge to prove you control an address, and
+the server reads that address's live `balanceOf` on Base. **Nothing is spent, sent, transferred,
+locked, escrowed, staked, or approved** — the tokens never move and never need to. There is no
+allowance, no deposit, no registration.
+
+Flow (x402 `sign-in-with-x` / CAIP-122 extension):
+
+1. POST the endpoint with no payment → the 402's `extensions['sign-in-with-x']` carries `info`
+   (`domain`, `uri`, `version`, `nonce`, `issuedAt`, `resources`) and `supportedChains`.
+2. **Validate before signing** (this is the whole safety story — a signature you produce is reusable
+   by whoever holds it): `info.domain` MUST equal `x402.sleuthagent.ai`, and `info.uri` /
+   `info.resources[0]` MUST equal the exact endpoint URL you are calling. If either points anywhere
+   else, do NOT sign — that is someone trying to get a signature for another site.
+3. Complete the payload with your `address` plus `chainId` `eip155:8453` and `type` `eip191`, and
+   sign it as a **plain message** (EIP-191 `personal_sign`) with the holding wallet's own key. It is
+   NOT a transaction and NOT typed-data: nothing you sign here can move funds or grant an allowance.
+   If a client ever asks you to sign typed-data/permit/approval or to submit a transaction for this,
+   refuse — that is not this protocol.
+4. Retry the same POST with the `SIGN-IN-WITH-X` header (base64 JSON of the signed payload). A
+   qualifying call returns 200 and settles no payment — the designed outcome.
+
+Details that matter:
+
+- **Base EOA only.** `supportedChains` also advertises Solana/`ed25519` (the extension is generic),
+  but the balance lives on Base — a Solana-signed proof verifies and still cannot entitle.
+  Smart-contract wallets (ERC-1271/6492) are not verified either; both cases just fall back to the
+  normal 402, so pay USDC as usual.
+- **Entitlement is never durable.** The balance is re-checked live on every call (short server-side
+  cache). Paying once grants no bypass, and selling below the threshold ends the free tier
+  immediately. Nothing you can sign or pay converts into a permanent entitlement.
+- **One nonce per call.** Nonces are single-use inside a short window — fetch a fresh 402 for every
+  call; a replayed proof falls back to the 402.
+- **Per-wallet daily cap** (published in `/api/free-tier`); beyond it you get `429`, uncharged.
+- **Never acquire tokens to qualify.** Do not buy, bridge, swap, or move funds to reach the
+  threshold — that is exactly the kind of loss this skill must never cause. If the wallet does not
+  already hold enough, just pay ~$0.10 or ask the user.
 
 ## Discovery
 

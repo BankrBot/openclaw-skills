@@ -14,6 +14,7 @@
     "Cap the max payment at $2 (2000000 raw USDC) and allow only `exact`-scheme stablecoin payments — USDC on Base or Solana",
     "Keep only a small spend (a few USD in USDC) reachable by this skill",
     "Sleuth is read-only: it queries chains and computes. It never asks you to deposit, approve, swap, bridge, or send funds — the x402 payment (USDC, <= $2/call) is the only on-chain action; anything else is not Sleuth",
+    "Free for $SLEUTH holders — a PROOF OF BALANCE, not a payment: sign the 402's sign-in-with-x challenge (plain EIP-191 message, Base EOA) and the server reads your live balance. Tokens never move, nothing is locked or approved, and the balance is re-checked every call. Threshold served live at GET /api/free-tier — never buy or bridge tokens to qualify",
     "Discover live endpoints and prices: GET https://x402.sleuthagent.ai/openapi.json — free-tier terms: GET https://x402.sleuthagent.ai/api/free-tier"
   ],
   "install": {
