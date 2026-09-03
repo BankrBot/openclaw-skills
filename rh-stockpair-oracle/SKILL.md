@@ -14,21 +14,23 @@ carries the facts behind it.
 **Base URL:** `https://oracle.sb4s.xyz`
 **Source:** `https://github.com/MeMikko/rh-stockpair-oracle`
 
-**Pricing.** This is not a free service. It is currently in **launch mode**:
-every route is served without charge and no key is required, while each
-response publishes what the call will cost once billing is enabled.
+**Pricing.** This is not a free service, and as of 2026-09-03 it is **billing**:
+a priced route called without payment answers `402` with everything needed to
+pay it. Every response still says what it cost:
 
 ```
-x-oracle-price-usd: 0.01     what this route will cost
-x-oracle-charged-usd: 0      what it cost you today
-x-oracle-pricing: launch     the current mode
+x-oracle-price-usd: 0.02     what this route costs
+x-oracle-charged-usd: 0.02   what it cost you on this call
+x-oracle-pricing: paid       the current mode
 ```
 
-Read those headers rather than assuming. Intended prices are $0.005 for index
-reads (`/corporate-actions`, `/ask`) and $0.01 for anything that costs an
-upstream RPC round trip (`/quote`, `/prepare-swap`, `/gas`). `/health` and
-`/coverage` stay free. Prices are set to cover upstream cost, not to earn
-margin — adoption is the goal.
+Read those headers rather than assuming — the mode has changed once already and
+`x-oracle-pricing` is the only thing that knows the current one. The price is
+**$0.02 for every priced route** — one figure, because Bankr's gateway prices
+an endpoint rather than a route, and a published split it does not honour would
+be a price callers are not charged. `/health` and `/coverage` are free and stay
+free. Prices cover upstream cost rather than earn margin — adoption is the
+goal.
 
 ## Why this exists
 
@@ -41,20 +43,24 @@ market is shut.
 
 ## What is covered
 
-Both Uniswap deployments, from each contract's creation block to the tip:
+Both Uniswap deployments, from each contract's creation block to the tip.
+Pool counts measured 2026-09-03; volume is the rolling 24h window, refreshed
+every six hours (`GET /volume` carries its own `measuredSecondsAgo`):
 
 | | v4 | v3 |
 |---|---|---|
-| Pools indexed | 579,398 | 425,994 |
-| Stock-paired | 46,503 | 1,797 |
+| Pools indexed | 600,040 | 426,449 |
+| Stock-paired | 51,876 | 1,888 |
 | 24h volume | $286.8M | $160.5M |
 | Share | 64% | **36%** |
 
 The v3 half matters more than its pool count suggests. **Four of the five
-largest stock-paired pools by 24h volume are v3**, and the most-traded of all
-by swap count is a v3 NVDA/USDG pool (132,307 swaps). An index that covers
-only v4 misses more than a third of the subject — which is what every other RH
-data source does today.
+largest stock-paired pools by 24h volume are v3**, and NVDA's busiest pool is
+a v3 NVDA/USDG pool with 256,303 swaps in the measured window — ahead of all
+9,942 v4 NVDA pools. An index that covers only v4 misses more than a third of
+the subject, which is what every other RH data source does today.
+
+Every count here drifts: `GET /health` reports the live ones.
 
 Live figures, not a snapshot: `GET /volume` returns the current measurement
 with the window it was taken over, including `measuredSecondsAgo` — volume is
@@ -63,17 +69,18 @@ age from a block number.
 
 ## Endpoints
 
-All reads. Nothing here signs, broadcasts, or holds funds.
+All reads. Nothing here signs, broadcasts, or holds your funds.
 
 ```
 GET  /.well-known/agent.json     START HERE: endpoints, auth, payment, limits
 GET  /health                     index freshness: cursors with lag in seconds
 GET  /coverage                   which stock tokens have a Chainlink feed
 GET  /price?symbol=TSLA          a stock's own USD price from its Chainlink feed
-GET  /pools?symbol=NVDA          pool counts for a stock, split by protocol
+GET  /pools?symbol=NVDA          counts per protocol + the top pool ids to quote
 GET  /volume                     24h stock-paired volume, and its measurement window
-GET  /quote?pool=<id>&size=<usd> implied USD, depth, price impact, deviation, market hours
-POST /prepare-swap               unsigned UniversalRouter calldata with a bounded min-out
+GET  /quote?pool=<id>&size=<n>   implied USD, depth, price impact, deviation, market hours
+                                 <id> = v4 poolId OR v3 pool address
+POST /prepare-swap               unsigned calldata, bounded min-out (v4 and v3)
 GET  /gas                        chain 4663 gas, split into L2 and L1-data components
 GET  /corporate-actions          upcoming splits/dividends joined to the affected pools
 POST /ask                        free-text question, structured answer
@@ -85,10 +92,17 @@ POST /ask                        free-text question, structured answer
 curl 'https://oracle.sb4s.xyz/quote?pool=0x30e5…dced&size=1000'
 ```
 
-Returns spot from `StateView.getSlot0`, implied USD of the paired token, price
-impact simulated on the on-chain v4 `Quoter`, the live LP fee (correct for
-dynamic-fee pools), deviation vs Chainlink, whether the underlying market is
-open, and the next corporate action on the pricing asset.
+**Takes either protocol**: a v4 poolId (32 bytes) or a v3 pool address.
+`protocol` in the response says which, and `impact.source` names the quoter
+that produced the figure (`quoter` for v4, `quoter-v3` for v3, which also
+reports `ticksCrossed`). This matters because v3 carries ~37% of stock-paired
+volume and four of the five largest stock-paired pools are v3. Get an
+identifier from `GET /pools?symbol=`.
+
+Returns spot from the pool's own sqrt price, implied USD of the paired token,
+price impact simulated on the on-chain quoter, the live LP fee (correct for
+dynamic-fee v4 pools), deviation vs Chainlink, whether the underlying market
+is open, and the next corporate action on the pricing asset.
 
 **Read the labels.** The response says what is measured and what is estimated:
 
@@ -133,6 +147,18 @@ If the quoter cannot price the swap it returns **422 and no calldata**.
 Handing back a transaction whose output cannot be bounded is the one failure
 worth refusing outright.
 
+**Both protocols, two different shapes.** A v4 pool gets UniversalRouter
+calldata plus the Permit2 pair of approvals. A v3 pool gets a direct call to
+the v3 router plus **one** plain ERC-20 approval, scoped to the swap rather
+than unlimited — and it requires an explicit `recipient`, because v3 names the
+recipient in the calldata instead of defaulting to the sender.
+
+The response's `router` block says which v3 router the calldata was built for
+and whether that was read off the chain or configured. It matters: `SwapRouter`
+and `SwapRouter02` differ by one struct field, so the selectors differ, and
+calldata for the wrong one is a function the contract does not have.
+`swap.encoding` names exactly what was built.
+
 **Single-hop only.** RH's UniversalRouter `execute` is standard
 (`0x3593564c`) and single-hop `SWAP_EXACT_IN_SINGLE` reproduces a real on-chain
 swap byte for byte. Multi-hop `ExactInputParams` carries one extra dynamic
@@ -153,6 +179,13 @@ instantaneous L1 reading flaps: a non-zero observation during development
 reverted to zero minutes later. `subsidy.evidence` exposes the sample count,
 window length and last non-zero observation so a caller can judge for itself.
 
+It also exposes `currentNonZeroRun` — the unbroken run of charged samples
+ending at the newest one — with `currentNonZeroRunSeconds` and `zeroSince`.
+Read those rather than the counts if you need to know whether the subsidy has
+actually lapsed: `26` non-zero out of `107` means an ended subsidy if those 26
+are the most recent 26 and a flapping reading if they are scattered, and only
+the run distinguishes the two.
+
 ### `GET /corporate-actions`
 
 ```bash
@@ -162,7 +195,8 @@ curl 'https://oracle.sb4s.xyz/corporate-actions?withinDays=30&onlyAffecting=true
 The published calendar joined to the indexed pool set. Both halves are public;
 nothing else joins them. On this chain a dividend or split applies through the
 ERC-8056 `uiMultiplier`, so **every pool quoted in that stock reprices at
-once** — NVDA's next dividend touches 9,669 indexed pools.
+once** — NVDA's next dividend touches 10,394 indexed pools (9,942 v4 and 452
+v3, measured 2026-09-03; `GET /pools?symbol=NVDA` for the live count).
 
 Discovery comes from the published feed, not from chain events:
 `UIMultiplierUpdated` only fires when the multiplier actually changes, which is
@@ -194,21 +228,26 @@ know. There is no fallback that guesses.
 ## Access and payment
 
 **Start here: `GET /.well-known/agent.json`.** A machine-readable description
-of every endpoint, the three access methods, the payment details and the
+of every endpoint, the access methods, the payment details and the
 limits. Also served from `GET /` when you send `Accept: application/json`, and
 advertised in a `Link: rel="service-desc"` header on every response.
 
-Three methods, all live:
+Five methods. Four are live; the fifth (`exact`) is offered only when this
+deployment has a facilitator that will actually settle it, and `GET
+/x402/supported` says whether it does right now rather than in principle.
 
 | Method | For | How |
 |---|---|---|
-| **x402** | agents, per call, no account | Call a priced route with no credential → `402` carrying chain, asset, amount and address. Pay, retry with `x-payment: <tx hash>`. The transfer becomes prepaid credit that calls draw down — a transfer costs more in gas than one $0.005 call is worth. Balance: `GET /x402/balance?payer=0x…` |
+| **Bankr x402 gateway** | agents that already pay through Bankr | Call `https://x402.bankr.bot/0x4b19ee2a3de2521a3adc901989944c209c0a60ea/vates/<route>` instead of this origin. Bankr issues the 402 (x402 v2, `eip155:8453`), takes the USDC on Base, settles it and forwards the paid request here. Same routes under the same paths, same responses. **It charges $0.02 for `/health` and `/coverage` too** — those are free at this origin, so call `https://oracle.sb4s.xyz/health` and `/coverage` directly rather than through the gateway |
+| **x402, scheme `exact`** | agents paying this origin directly | The published protocol, settled through a standard open facilitator — **offered only when one is configured that settles `exact` on this network**, which the origin asks rather than assumes. Check `GET /x402/supported` first: if `exactSettlement.advertised` is false it names why, and the gateway or prepaid credit is your route. When it is offered, call a priced route with no credential → `402` whose `accepts[0]` is `exact` on `base`. Sign the EIP-3009 authorization, retry with it base64-encoded in `x-payment`. `x402-fetch` does this for you; the facilitator pays the gas. What this deployment accepts: `GET /x402/supported` |
+| **x402, prepaid credit** | callers that would rather transfer once than sign per call | Send USDC on Base to the treasury, then `POST /x402/topup {"txHash"}`. Any amount, no minimum; each call debits its own price. Balance: `GET /x402/balance?payer=0x…` |
 | **wallet signature** | session-based | `GET /auth/nonce?address=0x…` returns the exact message to sign → `personal_sign` → `POST /auth/verify {address, signature, nonce}` → bearer token |
 | **pro** | direct answers on Farcaster, unmetered | $5.99 USDC on Base for 30 days, `POST /pro/claim {txHash}`. Does not auto-renew. `POST /pro/link-fid {fid}` links a Farcaster account |
 
-In **launch mode** none is required — every route is served without charge —
-but each already works, and `x-oracle-pricing` tells you which mode you are in.
-Read that header rather than assuming.
+Billing is on, so a priced route needs one of these. `/health` and `/coverage`
+need none and never will. `x-oracle-pricing` tells you the mode you are in on
+every response — read it rather than assuming, including assuming this
+paragraph is still current.
 
 ## Agent guidance
 
@@ -225,7 +264,8 @@ Read that header rather than assuming.
   Bankr with `chainId: 4663` after your own validation. A 422 means the swap
   could not be bounded — do not construct calldata yourself to work around it.
 - **Do not hardcode a price.** Read `x-oracle-price-usd` and
-  `x-oracle-charged-usd` per response; launch mode will end.
+  `x-oracle-charged-usd` per response. Launch mode already ended once; the
+  headers are the only current answer.
 - **Do not compare these volume figures to another dashboard's.** Denominators
   differ; see the repository README for the measured breakdown and the
   unreconciled residual against Bankr's published number.
