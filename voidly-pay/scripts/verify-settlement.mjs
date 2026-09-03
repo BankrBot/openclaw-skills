@@ -113,7 +113,7 @@ export const MIN_OPERATORS = 2;
 // blocks of each other. Further apart than this and one of them is not
 // following the chain the other is.
 export const MAX_HEAD_DIVERGENCE = 30;
-export const DEFAULT_RPCS = ["https://mainnet.base.org", "https://base.drpc.org"];
+export const DEFAULT_RPCS = ["https://mainnet.base.org", "https://base.gateway.tenderly.co"];
 
 const HEX64 = /^[0-9a-f]{64}$/;
 const ADDR = /^0x[0-9a-f]{40}$/;

@@ -605,7 +605,7 @@ a file that is not a task grant refuses `grant_not_a_grant_envelope`
 a well-formed grant for another chain or asset refuses `grant_chain_not_base`
 or `grant_asset_not_canonical_usdc`.
 
-With no `--rpc` flags it reads `mainnet.base.org` and `base.drpc.org`. Fewer
+With no `--rpc` flags it reads `mainnet.base.org` and `base.gateway.tenderly.co`. Fewer
 than two *distinct* HTTPS operators from the allowlist in
 `scripts/lib/pins.mjs` is refused before a single packet leaves
 (`insufficient_rpc_quorum`), and naming one operator twice is still one
@@ -625,7 +625,7 @@ PROVEN
   transfer:      50000 atomic USDC  0x5cad296e06a976886a5d5bef831520c3d5965af0 -> 0xb0b3fca940e04f99367f08e665e1c2cb4ebd4912
   block:         50498854  confirmations: 252575 (lowest head of 2 operators)
   chain:         0x2105 (Base mainnet, 8453) — confirmed by every operator, receipt bound to its block hash
-  quorum:        2/2 agreed — mainnet.base.org + base.drpc.org, receipts byte-identical
+  quorum:        2/2 agreed — mainnet.base.org + base.gateway.tenderly.co, receipts byte-identical
   terms:         as typed on the command line — NOT read off a grant; pass --grant ./keep.grant.json to bind them
   scope:         this tx spent the nonce derived from grant_hash and moved exactly that transfer.
                  Whether payer, payee and amount are that grant's TERMS was not checked — no --grant was given.

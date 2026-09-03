@@ -50,18 +50,31 @@ export const EXPECTED_CHAIN_ID_HEX = "0x2105";
  *
  * Being allowlisted is permission, not a promise. Observed at review time,
  * all four answering eth_chainId 0x2105 (re-check before relying on any):
- *   - mainnet.base.org       Base (Coinbase). Served the archive receipt.
- *   - base.drpc.org          dRPC. Served the archive receipt.
- *   - base.meowrpc.com       MeowRPC. Archive-capable, rate-limits quickly.
- *   - base-rpc.publicnode.com  Allnodes. NOT archive: HTTP 403 on an older
- *                            receipt, so it can only join a quorum on a
- *                            recent settlement.
+ *   - mainnet.base.org       Base (Coinbase). Serves the archive receipt.
+ *   - base.gateway.tenderly.co  Tenderly. Serves the archive receipt; 4/4 on
+ *                            consecutive reads of this skill's own example.
+ *   - base.drpc.org          NO LONGER serves archive reads on the free tier:
+ *                            HTTP 408 "Request timeout on the free plan" for the
+ *                            example receipt (measured 2026-09-03). It answers
+ *                            eth_chainId 200, so a shallow check misses this.
+ *                            It can still join a quorum on a RECENT settlement.
+ *   - base.meowrpc.com       MeowRPC. Rate-limits (429 on a second read within
+ *                            seconds). ALSO, measured 2026-09-02: it FABRICATES
+ *                            transaction hashes on eth_sendRawTransaction,
+ *                            returning keccak256(payload). Read-only quorum use
+ *                            is contained — a fabricated value diverges from the
+ *                            other operator and the run refuses — but never trust
+ *                            a hash this operator hands back.
+ *   - base-rpc.publicnode.com  Allnodes. NOT archive: HTTP 403 "Archive requests
+ *                            require a personal token", so it can only join a
+ *                            quorum on a recent settlement.
  * A non-archive operator fails the run CLOSED (rpc_unanswered, or
  * rpc_divergence if it answers `null` where another returns a receipt) — it
  * can cost you a proof, never fake one.
  */
 export const ALLOWED_BASE_RPC_HOSTS = [
   "mainnet.base.org",
+  "base.gateway.tenderly.co",
   "base.drpc.org",
   "base.meowrpc.com",
   "base-rpc.publicnode.com",

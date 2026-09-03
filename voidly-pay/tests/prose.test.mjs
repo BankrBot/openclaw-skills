@@ -327,7 +327,7 @@ test("the captured PROVEN block matches what the script prints today", async () 
     blockNumber: 50498854,
     confirmations: 0,
     chain: "0x2105",
-    rpcHosts: ["mainnet.base.org", "base.drpc.org"],
+    rpcHosts: ["mainnet.base.org", "base.gateway.tenderly.co"],
     headOperators: 2,
   });
   const norm = (l) => l.replace(/confirmations: \d+/, "confirmations: N");

@@ -29,7 +29,7 @@ is `0x` + that (`settlementNonce`). The consequences:
 1. **The quorum, before any network call.** At least **two** independent,
    HTTPS, allowlisted Base operators — not a default, a requirement. The
    allowlist is `ALLOWED_BASE_RPC_HOSTS` in `scripts/lib/pins.mjs`
-   (`mainnet.base.org`, `base.drpc.org`, `base.meowrpc.com`,
+   (`mainnet.base.org`, `base.gateway.tenderly.co`, `base.drpc.org`, `base.meowrpc.com`,
    `base-rpc.publicnode.com`); anything else needs an explicit
    `--allow-unpinned-rpc`. Independence is counted by **host**, so naming one
    operator twice is one operator. A plaintext `http://` endpoint, an
