@@ -29,8 +29,9 @@ is `0x` + that (`settlementNonce`). The consequences:
 1. **The quorum, before any network call.** At least **two** independent,
    HTTPS, allowlisted Base operators — not a default, a requirement. The
    allowlist is `ALLOWED_BASE_RPC_HOSTS` in `scripts/lib/pins.mjs`
-   (`mainnet.base.org`, `base.gateway.tenderly.co`, `base.drpc.org`, `base.meowrpc.com`,
-   `base-rpc.publicnode.com`); anything else needs an explicit
+   (`base.gateway.tenderly.co`, `base-mainnet.public.blastapi.io`, `base-pokt.nodies.app`,
+   `mainnet.base.org`, `base.drpc.org`, `base.meowrpc.com`, `base-rpc.publicnode.com`);
+   anything else needs an explicit
    `--allow-unpinned-rpc`. Independence is counted by **host**, so naming one
    operator twice is one operator. A plaintext `http://` endpoint, an
    unallowlisted host, or fewer than two distinct operators is refused before
@@ -138,7 +139,7 @@ $ … --rpc http://127.0.0.1:8599 --rpc https://base.drpc.org
 REFUSED  rpc_not_https — http://127.0.0.1:8599 — a plaintext RPC can be rewritten in flight by anyone on the path
 
 $ … --rpc https://evil.example.com --rpc https://base.drpc.org
-REFUSED  rpc_host_not_allowlisted — evil.example.com is not one of the reviewed Base operators in scripts/lib/pins.mjs (mainnet.base.org, base.drpc.org, base.meowrpc.com, base-rpc.publicnode.com) — pass --allow-unpinned-rpc only if you know exactly whose node that is
+REFUSED  rpc_host_not_allowlisted — evil.example.com is not one of the reviewed Base operators in scripts/lib/pins.mjs (base.gateway.tenderly.co, base-mainnet.public.blastapi.io, base-pokt.nodies.app, mainnet.base.org, base.drpc.org, base.meowrpc.com, base-rpc.publicnode.com) — pass --allow-unpinned-rpc only if you know exactly whose node that is
 
 $ … --amount 49999
 REFUSED  exact_value — the paired Transfer moved 50000, expected exactly 49999
@@ -156,17 +157,19 @@ REFUSED  authorizer_mismatch — authorizer 0x5cad296e06a976886a5d5bef831520c3d5
 The PROVEN run on that same transaction names the pair it used:
 `paired logs: AuthorizationUsed #131 -> Transfer #132`.
 
-Two more live runs, both against that same transaction, show what
-`--allow-unpinned-rpc` does and does not buy. Tenderly's public gateway is a
-real Base operator that is not on the allowlist; it agreed byte-for-byte, and
-the verdict still says so on its first line and in its exit code:
+Two more live runs (2026-09-03), both against that same transaction, show what
+`--allow-unpinned-rpc` does and does not buy. Coinbase's developer-access host
+is a real Base operator that is not on the allowlist (it is the same company as
+`mainnet.base.org`, so it would not have made an independent second operator
+either); it agreed byte-for-byte, and the verdict still says so on its first
+line and in its exit code:
 
 ```
-$ … --rpc https://mainnet.base.org --rpc https://base.gateway.tenderly.co --allow-unpinned-rpc
+$ … --rpc https://base.gateway.tenderly.co --rpc https://developer-access-mainnet.base.org --allow-unpinned-rpc
 PROVEN-UNPINNED  (exit 2 — operators you chose, not the reviewed allowlist)
   …
-  quorum:        2/2 agreed — mainnet.base.org + base.gateway.tenderly.co, receipts byte-identical
-  caution:       base.gateway.tenderly.co — NOT on the reviewed allowlist (--allow-unpinned-rpc); this proof is only as strong as those operators
+  quorum:        2/2 agreed — base.gateway.tenderly.co + developer-access-mainnet.base.org, receipts byte-identical
+  caution:       developer-access-mainnet.base.org — NOT on the reviewed allowlist (--allow-unpinned-rpc); this proof is only as strong as those operators
 ```
 
 And 1rpc.io, another real operator, answered `null` for this older receipt —
@@ -176,8 +179,8 @@ on. When that operator rate-limits first, the refusal is `rpc_unanswered`
 instead; either way no verdict is built on it:
 
 ```
-$ … --rpc https://mainnet.base.org --rpc https://1rpc.io/base --allow-unpinned-rpc
-REFUSED  rpc_divergence — mainnet.base.org=78a60665 1rpc.io=74234e98
+$ … --rpc https://base.gateway.tenderly.co --rpc https://1rpc.io/base --allow-unpinned-rpc
+REFUSED  rpc_divergence — base.gateway.tenderly.co=78a60665 1rpc.io=74234e98
 ```
 
 `receipt_not_for_this_tx`, `authorization_ambiguous`, `transfer_ambiguous`,

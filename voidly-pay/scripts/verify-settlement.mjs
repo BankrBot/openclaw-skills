@@ -113,7 +113,12 @@ export const MIN_OPERATORS = 2;
 // blocks of each other. Further apart than this and one of them is not
 // following the chain the other is.
 export const MAX_HEAD_DIVERGENCE = 30;
-export const DEFAULT_RPCS = ["https://mainnet.base.org", "https://base.gateway.tenderly.co"];
+// The two operators read when no --rpc is given. Both serve archive receipts
+// and both answered 10/10 and 12/12 under a rapid burst on 2026-09-03.
+// mainnet.base.org is allowlisted but deliberately NOT here: it rate-limits
+// under this script's own four-call sequence (3/12 HTTP 503 measured the same
+// day), and a default pair with one flaky member cannot prove anything.
+export const DEFAULT_RPCS = ["https://base.gateway.tenderly.co", "https://base-mainnet.public.blastapi.io"];
 
 const HEX64 = /^[0-9a-f]{64}$/;
 const ADDR = /^0x[0-9a-f]{40}$/;
@@ -430,10 +435,34 @@ export const READ_METHODS = new Set([
   // operator, who could broadcast it first.
   "eth_gasPrice",
 ]);
+// A public operator answers HTTP 429/503 to a burst it would have answered a
+// second later; that is a rate limit, not a verdict. Retried a bounded number
+// of times with a short pause, and ONLY for those shapes: a timeout, a body
+// over the cap, a non-JSON body and a JSON-RPC error are all final on the
+// first read. After the last attempt the operator is unanswered and the run
+// refuses — retrying cannot manufacture a proof, only recover a dropped read.
+const RPC_RETRY_DELAYS_MS = [400, 1200];
+const retryableTransport = (e) => {
+  const m = String((e && e.message) || "");
+  if (/^http (429|5\d\d)$/.test(m)) return true;
+  // undici's network-level failure (refused, reset, DNS) is a TypeError
+  // "fetch failed"; a timeout is our own abort and is NOT retried.
+  return e instanceof TypeError && /fetch failed/.test(m);
+};
 export async function httpRpc(url, method, params) {
   if (!READ_METHODS.has(method)) {
     throw new Error(`refusing non-read method ${method}`);
   }
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await httpRpcOnce(url, method, params);
+    } catch (e) {
+      if (attempt >= RPC_RETRY_DELAYS_MS.length || !retryableTransport(e)) throw e;
+      await new Promise((r) => setTimeout(r, RPC_RETRY_DELAYS_MS[attempt]));
+    }
+  }
+}
+async function httpRpcOnce(url, method, params) {
   // `redirect: "error"`: a redirect is a second URL nobody reviewed — the
   // allowlist and the https check were applied to the one you named.
   // The cap is enforced ON THE WIRE: `accept-encoding: identity` so nothing

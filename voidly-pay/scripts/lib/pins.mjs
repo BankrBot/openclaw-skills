@@ -49,10 +49,22 @@ export const EXPECTED_CHAIN_ID_HEX = "0x2105";
  * operator, and the script counts by host for that reason.
  *
  * Being allowlisted is permission, not a promise. Observed at review time,
- * all four answering eth_chainId 0x2105 (re-check before relying on any):
- *   - mainnet.base.org       Base (Coinbase). Serves the archive receipt.
+ * all answering eth_chainId 0x2105 (re-check before relying on any):
  *   - base.gateway.tenderly.co  Tenderly. Serves the archive receipt; 4/4 on
- *                            consecutive reads of this skill's own example.
+ *                            consecutive reads of this skill's own example
+ *                            (2026-09-03), 12/12 under a rapid burst. DEFAULT.
+ *   - base-mainnet.public.blastapi.io  Bware Labs (Blast API). Serves the
+ *                            archive receipt; 10/10 consecutive reads of this
+ *                            skill's own example, measured 2026-09-03. DEFAULT.
+ *   - base-pokt.nodies.app   Nodies (POKT gateway). Serves the archive receipt;
+ *                            10/10 consecutive reads, measured 2026-09-03.
+ *   - mainnet.base.org       Base (Coinbase). Serves the archive receipt BUT
+ *                            rate-limits under this script's own call burst:
+ *                            3/12 HTTP 503 on eth_getBlockByNumber, and three
+ *                            consecutive default-pair runs refused
+ *                            rpc_unanswered (measured 2026-09-03). Base's own
+ *                            docs call the free endpoint unsuitable for
+ *                            production. Allowlisted, NOT a default.
  *   - base.drpc.org          NO LONGER serves archive reads on the free tier:
  *                            HTTP 408 "Request timeout on the free plan" for the
  *                            example receipt (measured 2026-09-03). It answers
@@ -73,8 +85,10 @@ export const EXPECTED_CHAIN_ID_HEX = "0x2105";
  * can cost you a proof, never fake one.
  */
 export const ALLOWED_BASE_RPC_HOSTS = [
-  "mainnet.base.org",
   "base.gateway.tenderly.co",
+  "base-mainnet.public.blastapi.io",
+  "base-pokt.nodies.app",
+  "mainnet.base.org",
   "base.drpc.org",
   "base.meowrpc.com",
   "base-rpc.publicnode.com",
