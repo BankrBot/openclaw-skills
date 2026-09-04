@@ -1,0 +1,11 @@
+{
+  "request": "Cash out 100 USDC to my Revolut revtag in EUR using Fast",
+  "agentSteps": [
+    "Run capabilities and verify Revolut supports EUR",
+    "Run estimate 100 EUR and label it approximate",
+    "Run cashout --mode fast without --confirm and show the exact preview",
+    "Wait for a later-turn user confirmation",
+    "Rerun the unchanged cashout command with --confirm",
+    "Return the depositId, transaction hashes, Fast mode, and next action"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "slug": "usdctofiat",
+  "provider": "USDCtoFiat",
+  "providerUrl": "https://usdctofiat.xyz",
+  "logo": null,
+  "demo": {
+    "title": "Cash out Base USDC with Fast or Best",
+    "language": "text",
+    "code": "Ask your agent: \"Estimate how many EUR I would receive for 100 USDC through Revolut, then prepare a Fast cash-out to my revtag.\"\n\nThe agent discovers the live catalog, labels the estimate approximate, and shows the exact Fast or Best preview. It submits only after a later-turn confirmation."
+  },
+  "setup": [
+    "Install: `install the usdctofiat skill from https://github.com/BankrBot/skills/tree/main/usdctofiat`",
+    "Run `npm install` inside the installed skill directory",
+    "Set a Bankr API key with Wallet API write access as `BANKR_API_KEY`; never share a private key",
+    "Keep a small Base ETH balance for gas and Base USDC for the cash-out",
+    "Every write requires a deterministic preview followed by explicit confirmation in a later turn",
+    "Choose mode explicitly: Fast (0% spread) or Best (Delegate, 10 bps)"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "usdctofiat",
+    "command": "install the usdctofiat skill from https://github.com/BankrBot/skills/tree/main/usdctofiat"
+  }
+}

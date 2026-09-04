@@ -1,0 +1,11 @@
+{
+  "request": "Cancel my unmatched USDCtoFiat order",
+  "agentSteps": [
+    "Run status with the saved depositId",
+    "Verify the order can be withdrawn or closed",
+    "Run withdraw without --confirm and show the exact preview",
+    "Wait for a later-turn user confirmation",
+    "Rerun with --confirm",
+    "Return every transaction hash and refresh status until returned"
+  ]
+}

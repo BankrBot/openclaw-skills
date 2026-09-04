@@ -1,0 +1,16 @@
+{
+  "name": "bankr-usdctofiat-skill",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "smoke": "node scripts/usdctofiat.mjs capabilities"
+  },
+  "dependencies": {
+    "@usdctofiat/offramp": "7.0.1",
+    "viem": "^2.38.5"
+  }
+}
