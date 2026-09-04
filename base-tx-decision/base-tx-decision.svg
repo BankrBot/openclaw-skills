@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="base-tx-decision">
+  <rect width="64" height="64" rx="12" fill="#0A0D12"/>
+  <!-- gas gauge arc -->
+  <path d="M 12 44 A 22 22 0 0 1 52 44" fill="none" stroke="#1C232E" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 12 44 A 22 22 0 0 1 34 22.2" fill="none" stroke="#2FD180" stroke-width="6" stroke-linecap="round"/>
+  <!-- needle pointing into the green: submit now -->
+  <line x1="32" y1="44" x2="21" y2="28" stroke="#FFB000" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="32" cy="44" r="4" fill="#FFB000"/>
+  <!-- 402 wordmark -->
+  <text x="32" y="59" font-family="ui-monospace, Menlo, monospace" font-size="10" font-weight="600" fill="#C7D0DC" text-anchor="middle">402</text>
+</svg>

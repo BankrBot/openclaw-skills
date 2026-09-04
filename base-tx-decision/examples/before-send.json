@@ -1,0 +1,23 @@
+{
+  "title": "Should this Base transaction go out now, or wait?",
+  "request": {
+    "method": "GET",
+    "url": "https://x402-mcp.onrender.com/base/tx-decision?gas=usdc&urgency=flexible"
+  },
+  "response": {
+    "submit": true,
+    "verdict": "SETTLE_NOW",
+    "why": "Blockspace is 8.4% full at 0.0050 gwei - settlement is at or near the floor.",
+    "fee": {
+      "max_fee_per_gas_gwei": 0.011,
+      "max_priority_fee_per_gas_gwei": 0.001,
+      "current_base_fee_gwei": 0.005,
+      "next_base_fee_gwei": 0.0052
+    },
+    "estimated_cost": { "gas": 55000, "eth": 6.6e-7, "usd": 0.0011 },
+    "recheck_in_s": null,
+    "as_of_block": 48941850,
+    "as_of": "2026-07-22T12:48:00+00:00"
+  },
+  "usage": "if decision.submit: send(tx, maxFeePerGas=decision.fee.max_fee_per_gas_gwei, maxPriorityFeePerGas=decision.fee.max_priority_fee_per_gas_gwei) else: sleep(decision.recheck_in_s); retry"
+}

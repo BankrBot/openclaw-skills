@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "slug": "base-tx-decision",
+  "provider": "x402-mcp",
+  "providerUrl": "https://x402-mcp.onrender.com/llms.txt",
+  "logo": "base-tx-decision.svg",
+  "demo": {
+    "title": "before-every-send.sh",
+    "language": "bash",
+    "code": "# Free dry run: the 402 IS the price quote ($0.01 USDC on Base)\ncurl -i \"https://x402-mcp.onrender.com/base/tx-decision?gas=usdc&urgency=flexible\"\n\n# Paid response (any x402 client):\n# {\n#   \"submit\": true, \"verdict\": \"SETTLE_NOW\",\n#   \"fee\": {\"max_fee_per_gas_gwei\": 0.011, \"max_priority_fee_per_gas_gwei\": 0.001},\n#   \"estimated_cost\": {\"gas\": 55000, \"usd\": 0.0011},\n#   \"recheck_in_s\": null, \"as_of_block\": 48941850\n# }\n#\n# The loop is one line:\n#   if decision.submit: send(tx, decision.fee)"
+  },
+  "setup": [
+    "No account or API key — any x402 client with a USDC-funded wallet on Base.",
+    "JS: `npm i @x402/fetch` then wrap fetch with your wallet client.",
+    "Python: `pip install \"x402[httpx,evm]\"` with EVM_PRIVATE_KEY set.",
+    "Dry run free: `curl -i https://x402-mcp.onrender.com/base/tx-decision`",
+    "Agent docs: `curl -s https://x402-mcp.onrender.com/llms.txt`"
+  ],
+  "install": {
+    "type": "skill",
+    "provider": "x402-mcp",
+    "reference": "https://x402-mcp.onrender.com/llms.txt"
+  }
+}
