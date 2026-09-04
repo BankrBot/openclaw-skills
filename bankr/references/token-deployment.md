@@ -25,7 +25,7 @@ Launch SPL tokens on Solana with a bonding curve mechanism that auto-migrates to
 | Parameter | Required | Description | Example |
 |-----------|----------|-------------|---------|
 | **Name** | Yes | Token name (1-32 chars) | "MoonRocket" |
-| **Symbol** | No | Ticker (1-10 chars), defaults to name | "MOON" |
+| **Symbol** | No | Ticker (1-20 chars), defaults to name | "MOON" |
 | **Image** | No | Logo URL | "https://example.com/logo.png" |
 | **Decimals** | No | Token decimals (0-9), default 6 | 6 |
 | **Fee Recipient** | No | Wallet to receive 99.9% of creator fees | "7xKXtg..." |
@@ -197,7 +197,7 @@ Launch ERC20 tokens on Base or Robinhood Chain. New launches create a Uniswap V4
 
 | Property | Value |
 |----------|-------|
-| **Supply** | Fixed 100 billion (not mintable after deployment) |
+| **Supply** | 100 billion on standard launches; fixed and not mintable after deployment. The web launch flow accepts a custom whole-number supply (1 to 100 billion); the deploy API and CLI always launch at the standard 100 billion |
 | **Pool** | Uniswap V4 |
 | **Pool swap fee** | 0.7% per trade — **95% to the creator** |
 | **All-in swap fee** | 1.75% of volume (pool fee + hook-added legs) |
@@ -234,6 +234,21 @@ Two knock-on effects for anyone integrating against a quote-only token:
 
 Like the fee schedule, this option cannot be changed after launch.
 
+### Base Quote Tokens (optional, fixed at launch)
+
+Base launches can quote the new token's pool in **BNKR** or **ba3Pump** instead of WETH. ba3Pump is Bankr-bridged PUMP from Solana. Pass `chain: "base"` together with one of the fixed allowlisted addresses:
+
+| Quote token | `pairedTokenAddress` |
+|-------------|----------------------|
+| BNKR | `0x22af33fe49fd1fa80c7149773dde5890d3c76f3b` |
+| ba3Pump | `0x5577a294ae5a21446a11b0e4100ca83803995720` |
+
+- **User-key launches only** — not available on org Partner Key deploys.
+- **Mutually exclusive with `pairedStockAddress`.** Sending both is rejected; omit both to get WETH.
+- The allowlist is fixed — an arbitrary ERC-20 is not accepted as a quote token.
+- Volume in a BNKR- or ba3Pump-quoted pool remains eligible for the weekly developer rebate under the same rules as a WETH-quoted launch.
+- Everything else — supply, the fee schedule, creator vesting, quote-only fees, degen mode — behaves exactly as on a WETH launch. "Quote token" here just names the pool's other side.
+
 ### Degen Mode (optional, fixed at launch)
 
 Degen mode starts the token at a **$2,500 market cap** instead of the standard starting cap, so the curve's early range is far more volatile. Everything else about the launch — supply, fee schedule, curve shape, vesting — is unchanged.
@@ -254,7 +269,7 @@ Degen mode starts the token at a **$2,500 market cap** instead of the standard s
 | Parameter | Required | Description | Example |
 |-----------|----------|-------------|---------|
 | **Name** | Yes | Full token name | "My Token" |
-| **Symbol** | No | Ticker; defaults to name if omitted | "MTK" |
+| **Symbol** | No | Ticker, 1-20 characters; defaults to the first 4 characters of the name if omitted | "MTK" |
 | **Description** | No | Token description | "A community token" |
 | **Image** | No | Logo URL or upload | URL or file |
 | **Website** | No | Project website | "myproject.com" |
@@ -263,6 +278,8 @@ Degen mode starts the token at a **$2,500 market cap** instead of the standard s
 | **Fee Recipient** | No | Route creator fees to a wallet, ENS, or social handle | "@partner" |
 | **Quote-only fees** | No | Collect all creator fees in the quote token; fixed at launch | `quoteOnlyFees: true` |
 | **Degen mode** | No | Start at a $2,500 market cap; explicit opt-in, not on partner deploys | `degenMode: true` |
+| **Paired stock** | No | Quote the pool in a registry tokenized stock instead of WETH | `pairedStockAddress: "0x…"` |
+| **Paired quote token** | No | Base only — quote the pool in BNKR or ba3Pump instead of WETH; not combinable with a paired stock | `pairedTokenAddress: "0x…"` |
 
 ### Prompt Examples
 
@@ -294,6 +311,8 @@ Degen mode starts the token at a **$2,500 market cap** instead of the standard s
 | Bankr Club Members | 100 | 10 |
 
 The two limits are separate: the daily cap is how many tokens you may deploy, the sponsorship cap is how many of those Bankr pays gas for. Past the sponsorship cap you can keep deploying up to the daily cap by paying gas yourself. A deploy that fails before broadcast because of gas doesn't consume sponsorship quota, though it still counts against the daily cap.
+
+**Past the sponsorship cap, a near-empty wallet is refused up front.** An unsponsored deploy checks the wallet's native balance against a conservative per-chain floor *before* building or broadcasting anything, and returns copy explaining that sponsorship is exhausted and what to do about it — rather than spending a signer round-trip to fail on-chain with a bare "not enough native token to cover gas". The floor is deliberately low, so borderline balances still proceed to real estimation downstream; sponsored deploys skip the check entirely. If you deploy programmatically past the sponsored quota, fund the deploying wallet with gas rather than relying on the retry.
 
 A separate cross-account limit applies to fee recipients: an address may be named fee recipient on at most **20 deploys per 24 hours** across all accounts.
 

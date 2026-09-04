@@ -77,7 +77,8 @@ bankr config get llmKey
 | `grok-4.5` | xAI | Latest, balanced multimodal (500K context, image input) |
 | `grok-4.3` | xAI | Balanced performance (1M context) |
 | `grok-4.1-fast` | xAI | Fast, economical, largest context (2M) |
-| `deepseek-v4-pro` | DeepSeek | Long context reasoning (1M, 384K output) |
+| `deepseek-v4-pro-0813` | DeepSeek | Latest frontier, high-capacity reasoning (1M) |
+| `deepseek-v4-pro` | DeepSeek | Previous V4 Pro build, 0423 (1M, 384K output) |
 | `deepseek-v4-flash` | DeepSeek | High throughput, cost-effective (1M) |
 | `deepseek-v3.2` | DeepSeek | Cost-effective (164K context) |
 | `qwen3.7-max` | Alibaba | Latest flagship (1M) |
@@ -88,14 +89,16 @@ bankr config get llmKey
 | `qwen3.5-flash` | Alibaba | Fast, economical (1M) |
 | `qwen3-coder` | Alibaba | Code generation, debugging (262K) |
 | `kimi-k3` | Moonshot AI | Latest flagship, long-context multimodal (1M context, image input) |
-| `kimi-k2.7-code` | Moonshot AI | Code-focused long-context (262K) |
+| `kimi-k2.7-code` | Moonshot AI | Code-focused / agentic long-context (262K) |
 | `kimi-k2.6` | Moonshot AI | Long-context (262K) |
 | `kimi-k2.5` | Moonshot AI | Long-context reasoning (262K) |
 | `minimax-m3` | MiniMax | Flagship multimodal reasoning (512K context) |
 | `minimax-m2.7` | MiniMax | Balanced performance (204.8K) |
 | `minimax-m2.7-highspeed` | MiniMax | Faster variant, double throughput (204.8K) |
 | `minimax-m2.5` | MiniMax | Cost-effective (204.8K) |
-| `glm-5.2` | Z.ai | Latest, long-context reasoning (1M) |
+| `glm-5.3` | Z.ai | Latest flagship, long-context reasoning (1M) |
+| `glm-5.3-flash` | Z.ai | Efficient coding and agents (1M, image input) |
+| `glm-5.2` | Z.ai | Previous flagship, long-context reasoning (1M) |
 | `glm-5.1` | Z.ai | Advanced reasoning (202K) |
 | `glm-5` | Z.ai | General purpose reasoning (202K) |
 | `glm-5-turbo` | Z.ai | Fast, cost-effective (202K) |
@@ -247,7 +250,7 @@ Expired grants drop off automatically — there is no manual cleanup. The Credit
 
 ### Sending Credits to Another Bankr User
 
-Purchased credit is transferable peer-to-peer. Ask the agent, or call the API directly:
+Credit is transferable peer-to-peer — purchased credit by default, and granted credit behind an opt-in flag. Ask the agent, or call the API directly:
 
 ```bash
 bankr agent prompt "Send $20 of LLM credits to @alice"
@@ -268,7 +271,8 @@ The sender is debited and the recipient credited atomically — there is no pend
 | Rule | Detail |
 |------|--------|
 | **Recipient** | Must already be a Bankr user. The agent accepts an X (Twitter) username or a `0x` address; the API takes the resolved EVM address. ENS names are not supported on this path. |
-| **Only purchased credit moves** | Grant credit (promotional, developer, partner) is **not** transferable — your sendable figure is the purchased slice of your pool, minus usage that's metered but not yet deducted. |
+| **Purchased credit moves by default** | Without the opt-in below, only the purchased slice of your pool moves — minus usage that's metered but not yet deducted. |
+| **Granted credit moves on opt-in** | Set `useGrantedCredits` to also spend granted credit (promotional, developer, partner, operator grants — including ones carrying an expiry). See the burn fee below. |
 | **Minimum** | $1 per transfer. |
 | **Rolling cap** | $500 gross sent per wallet per **trailing 24 hours** (shared with the same window the daily spend budget uses). Over it, the call returns `429`. |
 | **Write scope** | Read-only API keys are refused (`403`). If the key has an `--allowed-recipients` allowlist, the recipient must be on it. |
@@ -277,7 +281,30 @@ The sender is debited and the recipient credited atomically — there is no pend
 
 Failure codes are explicit rather than generic: `self-transfer` / `amount-too-small` (`400`), `insufficient-credit` (`402`), `wallet-paused` / `recipient-not-permitted` (`403`), `recipient-invalid` (`404`), `transfer-conflict` (`409`), `daily-cap-exceeded` / `daily-budget-exceeded` (`429`).
 
-`GET /llm/usage` returns `transferableUsd` — the sendable figure, already clamped by the remaining 24h cap and by any daily spend budget — so a client can offer a "Max" the transfer endpoint won't then reject.
+#### Granted-credit transfers (opt-in, 10% burn fee)
+
+By default a transfer refuses to touch granted credit. Passing `useGrantedCredits` unlocks it — as a flag on the agent's `transfer_llm_credits` tool, or as the "use granted credits" toggle in the web Send Credits panel:
+
+- **Purchased credit still spends first, and free.** Granted credit is only reached once the purchased slice is exhausted, and only that overflow is fee'd.
+- **The fee is 10%, charged on top.** The recipient receives exactly the amount you entered; you are debited amount + fee. The fee is burned — it is credited to no one, and appears as its own transfer-fee row in your ledger.
+- **A granted dollar is fee'd once.** The granted slice is derived and stamped inside the transaction, so concurrent sends can't double-claim it, and a replayed `transferId` reports the original fee rather than charging a second one.
+- **The two funding modes never replay each other** — an opted-in transfer carries a distinct transfer id, so an opted-in retry can't collide with a default-mode send of the same nominal id.
+- **Leaving the flag off is byte-identical to the previous behaviour**, so existing integrations need no change.
+
+Success responses and the agent's balance tool carry `feeUsd`, `grantedTransferableUsd` and `transferFeeBps`, so a client can preview Fee / Recipient receives / Total deducted before sending, and solve "Max" for amount + fee rather than amount alone.
+
+#### Reading the two ceilings
+
+`GET /llm/usage` returns two different figures, and the smaller one is what actually binds:
+
+| Field | Meaning |
+|-------|---------|
+| `transferableUsd` | Today's allowance — already clamped by the remaining 24h cap and by any daily spend budget. A client can offer this as "Max" and the transfer endpoint won't reject it. |
+| `balanceTransferableUsd` | The sendable slice of the **balance itself** — the pool net of reserve, debt and live grants, *before* the cap/budget clamp. |
+| `grantedTransferableUsd` | The granted portion available when `useGrantedCredits` is set. |
+| `transferFeeBps` | The burn fee applied to the granted portion, in basis points. |
+
+Quote both figures rather than only the clamped one. A wallet holding $265 that a rolling window has temporarily gated to $10 reads as *missing money* if you show only `transferableUsd`; showing the balance alongside it, and naming the daily gate as the binding constraint, reads as a timer. The agent's credit-balance tool follows the same rule — it quotes the balance next to the allowance when a daily gate binds, and stays quiet when the structural balance is what's limiting.
 
 ### Daily Spend Budget
 
