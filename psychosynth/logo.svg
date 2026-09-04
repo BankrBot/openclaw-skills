@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="psg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="#0b0b14"/>
+  <!-- psi glyph -->
+  <path d="M78 66 v54 a50 50 0 0 0 50 50 a50 50 0 0 0 50 -50 v-54"
+        fill="none" stroke="url(#psg)" stroke-width="18" stroke-linecap="round"/>
+  <line x1="128" y1="58" x2="128" y2="198" stroke="url(#psg)" stroke-width="18" stroke-linecap="round"/>
+  <!-- synthesis nodes -->
+  <circle cx="78" cy="58" r="10" fill="#a78bfa"/>
+  <circle cx="178" cy="58" r="10" fill="#6ee7f7"/>
+  <circle cx="128" cy="206" r="10" fill="#22d3ee"/>
+</svg>

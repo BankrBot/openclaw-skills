@@ -1,0 +1,9 @@
+Add psychosynth — synthetic behavioral data over x402
+
+What: Synthetic psychometric data for agent simulations — Big Five / Dark Triad / prospect-theory profiles, profile-conditioned scenario responses, cognitive-bias models. Free deterministic previews; paid queries settle per-call in USDC on Base via standard x402 (EIP-3009). From $0.01/query. No API key, no signup.
+
+Why it's different: existing intelligence skills analyze tokens; psychosynth sells behavioral priors — how market participants act — for trading sims, counterparty modeling, and stress-testing agents against realistic populations.
+
+Proof: discovery: https://psychosynth.vercel.app/api/v1/discovery · settlement tx: https://basescan.org/tx/0xf8218fde25143efe55e0b735a3ccaa92201442c552f8392f67465e828a9d0f4c
+
+Tested end-to-end against https://facilitator.payai.network on Base mainnet.
