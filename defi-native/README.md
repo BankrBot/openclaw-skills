@@ -106,7 +106,7 @@ Full worked outputs: [examples/assessment-example.md](examples/assessment-exampl
 
 **Easiest: ask your agent to do it.** If you use Claude Code (or another coding agent), paste this into it and it will install the skill for you:
 
-> Install the skill from github.com/emlai/defi-native-skill by running: npx skills add emlai/defi-native-skill
+> install the defi-native skill from https://github.com/BankrBot/skills/tree/main/defi-native
 
 **Or run one command yourself.** This goes in your computer's terminal, not in a chat window:
 
@@ -116,6 +116,11 @@ Full worked outputs: [examples/assessment-example.md](examples/assessment-exampl
 ```
 npx skills add emlai/defi-native-skill
 ```
+
+For copies installed from the Bankr catalog, the catalog is the install
+and update channel; this reviewed copy is what runs. If you use the
+`npx` path instead, pin the CLI version and install from a specific
+commit you have reviewed rather than a moving branch.
 
 3. Answer the prompts (it detects your agent and asks where to install; the defaults are fine).
 4. Start a new session in your agent. The skill triggers automatically on DeFi questions.
