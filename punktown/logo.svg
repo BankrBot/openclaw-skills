@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Punk Town</title>
+  <desc id="desc">A geometric P-shaped town route with four stock districts.</desc>
+  <rect width="256" height="256" rx="48" fill="#131314"/>
+  <path d="M24 64h208M24 128h208M24 192h208M64 24v208M128 24v208M192 24v208" stroke="#ffffff" stroke-opacity=".06" stroke-width="2"/>
+  <path d="M62 207V49h76c42 0 68 23 68 59s-26 60-68 60H99v39H62Zm37-72h37c21 0 33-9 33-27 0-17-12-26-33-26H99v53Z" fill="#f5f5f5"/>
+  <path d="M99 168h40c42 0 67-24 67-60" fill="none" stroke="#3437eb" stroke-width="12" stroke-linecap="square"/>
+  <circle cx="78" cy="219" r="7" fill="#9cc7ea"/>
+  <circle cx="111" cy="219" r="7" fill="#83d4ab"/>
+  <circle cx="144" cy="219" r="7" fill="#e2b476"/>
+  <circle cx="177" cy="219" r="7" fill="#ea8bb8"/>
+</svg>

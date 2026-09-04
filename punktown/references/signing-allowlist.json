@@ -1,0 +1,471 @@
+{
+  "schemaVersion": 1,
+  "chainId": 8453,
+  "defaultValue": "0x0",
+  "policy": {
+    "defaultDeny": true,
+    "requirePinnedTargetCodeHash": true,
+    "requireFreshLiveReads": true,
+    "requireExplicitHumanConfirmation": true,
+    "submitOneTransactionAtATime": true,
+    "waitForSuccessfulReceiptBeforeNext": true,
+    "neverReplayUnknownOutcome": true,
+    "approvals": {
+      "erc20": "Exact amount only. If the existing allowance is nonzero and differs, first approve zero, wait for success, then freshly plan the exact approval.",
+      "erc721": "Token-specific approve only. Never use setApprovalForAll.",
+      "approvedSpenders": {
+        "baes": [
+          "0x555c246d004D2F24b5BaDDd186Fc773eB6fb8445",
+          "0x69a60eae4Af0cAF965472f1268C723B1d60bcbE9"
+        ],
+        "weth": [
+          "0x4570F784d35ab06a0FA22F42bb6329fAA998a6BA"
+        ],
+        "punks": [
+          "0x555c246d004D2F24b5BaDDd186Fc773eB6fb8445",
+          "0x69a60eae4Af0cAF965472f1268C723B1d60bcbE9"
+        ]
+      }
+    }
+  },
+  "targets": {
+    "baes": {
+      "address": "0xa9F6d9EcA1F803854A13CECad0f21d43e007DB07",
+      "codeHash": "0x18f2d2584439e9bab947cba5f7cca0c78aec9c1b185b8c3df27518f73a059bf5",
+      "kind": "ERC20",
+      "reads": [
+        {
+          "signature": "balanceOf(address)",
+          "selector": "0x70a08231",
+          "outputs": ["uint256"]
+        },
+        {
+          "signature": "allowance(address,address)",
+          "selector": "0xdd62ed3e",
+          "outputs": ["uint256"]
+        },
+        {
+          "signature": "decimals()",
+          "selector": "0x313ce567",
+          "outputs": ["uint8"]
+        },
+        {
+          "signature": "symbol()",
+          "selector": "0x95d89b41",
+          "outputs": ["string"]
+        }
+      ],
+      "writes": [
+        {
+          "signature": "approve(address,uint256)",
+          "selector": "0x095ea7b3",
+          "constraints": "spender must be PunkAMM or LockVault; amount must be zero or the exact freshly computed operation amount"
+        }
+      ]
+    },
+    "weth": {
+      "address": "0x4200000000000000000000000000000000000006",
+      "codeHash": "0x8a3a1f6a9f9dce633117adee5b458245835a8645a8c8726a26382a4622508b1c",
+      "kind": "ERC20",
+      "reads": [
+        {
+          "signature": "balanceOf(address)",
+          "selector": "0x70a08231",
+          "outputs": ["uint256"]
+        },
+        {
+          "signature": "allowance(address,address)",
+          "selector": "0xdd62ed3e",
+          "outputs": ["uint256"]
+        },
+        {
+          "signature": "decimals()",
+          "selector": "0x313ce567",
+          "outputs": ["uint8"]
+        },
+        {
+          "signature": "symbol()",
+          "selector": "0x95d89b41",
+          "outputs": ["string"]
+        }
+      ],
+      "writes": [
+        {
+          "signature": "approve(address,uint256)",
+          "selector": "0x095ea7b3",
+          "constraints": "spender must be StockLock; amount must be zero or the exact top-up amount"
+        }
+      ]
+    },
+    "punks": {
+      "address": "0xDC1C20Df3F8EDeDF1466399C5d5D17d864bD3F0f",
+      "codeHash": "0xe3e252831cdd0c11e1327d04a57ddd9bfa11ef49d50edb524040d98bfb228bc4",
+      "kind": "ERC721-C",
+      "reads": [
+        {
+          "signature": "balanceOf(address)",
+          "selector": "0x70a08231",
+          "outputs": ["uint256"]
+        },
+        {
+          "signature": "ownerOf(uint256)",
+          "selector": "0x6352211e",
+          "outputs": ["address"]
+        },
+        {
+          "signature": "getApproved(uint256)",
+          "selector": "0x081812fc",
+          "outputs": ["address"]
+        },
+        {
+          "signature": "isApprovedForAll(address,address)",
+          "selector": "0xe985e9c5",
+          "outputs": ["bool"]
+        },
+        {
+          "signature": "supportsInterface(bytes4)",
+          "selector": "0x01ffc9a7",
+          "outputs": ["bool"]
+        }
+      ],
+      "writes": [
+        {
+          "signature": "approve(address,uint256)",
+          "selector": "0x095ea7b3",
+          "constraints": "spender must be PunkAMM for sellNFT or LockVault for stake; tokenId must exactly match the freshly verified wallet-owned punk"
+        }
+      ]
+    },
+    "routeRegistry": {
+      "address": "0xbfd3c7A16c06a0b936Af84735860A1c700dC2076",
+      "codeHash": "0x15a290615818e21df3434094b265468ba83eb154d95cea8ad9e54a26c0cb3cd8",
+      "kind": "RouteRegistry",
+      "reads": [
+        {
+          "signature": "owner()",
+          "selector": "0x8da5cb5b",
+          "outputs": ["address"]
+        },
+        {
+          "signature": "feeRouteActive()",
+          "selector": "0xe8dda4da",
+          "outputs": ["bool"]
+        },
+        {
+          "signature": "feeRoutePaused()",
+          "selector": "0xb53c6baf",
+          "outputs": ["bool"]
+        },
+        {
+          "signature": "stockRoutePaused()",
+          "selector": "0xc86a983c",
+          "outputs": ["bool"]
+        },
+        {
+          "signature": "isReady()",
+          "selector": "0xa094a031",
+          "outputs": ["bool"]
+        },
+        {
+          "signature": "feeRoute()",
+          "selector": "0x5a595765",
+          "outputs": ["(address,address,address,bytes32,address,bytes4,bytes32,uint24,bool)"]
+        }
+      ],
+      "writes": []
+    },
+    "punkAMM": {
+      "address": "0x555c246d004D2F24b5BaDDd186Fc773eB6fb8445",
+      "codeHash": "0xb42a8fcb7e2c507e90da484fc20a55ff7f922a15af9c1816a10b6857aa3ba455",
+      "kind": "PunkAMM",
+      "reads": [
+        {"signature": "owner()", "selector": "0x8da5cb5b", "outputs": ["address"]},
+        {"signature": "systemOpen()", "selector": "0xe8496274", "outputs": ["bool"]},
+        {"signature": "peersLocked()", "selector": "0x2c80dd42", "outputs": ["bool"]},
+        {"signature": "baes()", "selector": "0x83eaa34b", "outputs": ["address"]},
+        {"signature": "punks()", "selector": "0xdfe0a889", "outputs": ["address"]},
+        {"signature": "registry()", "selector": "0x7b103999", "outputs": ["address"]},
+        {"signature": "revenueRouter()", "selector": "0xe8855812", "outputs": ["address"]},
+        {"signature": "lockVault()", "selector": "0x48bdd198", "outputs": ["address"]},
+        {"signature": "PRINCIPAL()", "selector": "0xd274958d", "outputs": ["uint256"]},
+        {"signature": "FEE()", "selector": "0xc57981b5", "outputs": ["uint256"]},
+        {"signature": "SELL_PAYOUT()", "selector": "0xcb48290e", "outputs": ["uint256"]},
+        {"signature": "BUY_TOTAL()", "selector": "0xb0387862", "outputs": ["uint256"]},
+        {"signature": "trackedBAES()", "selector": "0x7c902f3a", "outputs": ["uint256"]},
+        {"signature": "inventoryCount()", "selector": "0x5b98c83d", "outputs": ["uint256"]},
+        {"signature": "sellCapacity()", "selector": "0xb6874480", "outputs": ["uint256"]},
+        {"signature": "buyCapacity()", "selector": "0xfe926882", "outputs": ["uint256"]},
+        {"signature": "fifoHead()", "selector": "0xd7e02b9a", "outputs": ["uint256"]},
+        {"signature": "fifoPage(uint256,uint256)", "selector": "0xe6a16e72", "outputs": ["uint256[]", "uint256"]},
+        {"signature": "trackedToken(uint256)", "selector": "0x64c752ad", "outputs": ["bool"]}
+      ],
+      "writes": [
+        {
+          "signature": "sellNFT(uint256,uint256,uint256,uint256)",
+          "selector": "0xf598b707",
+          "intent": "Sell one wallet-owned Bario Punk to the FIFO desk",
+          "constraints": "minBAESOut must equal the live SELL_PAYOUT; minWethOut must be nonzero and derived from a fresh fee-adapter quote; deadline from the latest Base block"
+        },
+        {
+          "signature": "buyNextNFT(uint256,uint256,uint256,uint256)",
+          "selector": "0x8828735d",
+          "intent": "Buy the current FIFO head Bario Punk",
+          "constraints": "expectedHeadTokenId must equal a fresh fifoHead; maxBAESIn must equal the live BUY_TOTAL; minWethOut must be nonzero and derived from a fresh quote; deadline from the latest Base block"
+        },
+        {
+          "signature": "evictUnownedHead()",
+          "selector": "0x2c9aeb19",
+          "intent": "Permissionlessly remove a FIFO head the PunkAMM verifiably no longer owns",
+          "constraints": "only plan after ownerOf(fifoHead) proves the head is not held by PunkAMM or ownerOf reverts"
+        },
+        {
+          "signature": "topUpReserve(uint256)",
+          "selector": "0x4d0f0f04",
+          "intent": "Irreversibly donate exact BAES to the tracked reserve",
+          "constraints": "special irreversible-donation confirmation; exact BAES approval"
+        },
+        {
+          "signature": "syncBAESDonation()",
+          "selector": "0x30eed789",
+          "intent": "Permissionlessly synchronize an already transferred BAES donation into tracked reserve",
+          "constraints": "do not precede this with a raw transfer; only plan when raw BAES balance exceeds trackedBAES"
+        }
+      ]
+    },
+    "lockVault": {
+      "address": "0x69a60eae4Af0cAF965472f1268C723B1d60bcbE9",
+      "codeHash": "0x8485a62bb7ef9346e8f45562d705aca5047360931890dcc78e2117ff1e4f20dc",
+      "kind": "LockVault",
+      "reads": [
+        {"signature": "owner()", "selector": "0x8da5cb5b", "outputs": ["address"]},
+        {"signature": "systemOpen()", "selector": "0xe8496274", "outputs": ["bool"]},
+        {"signature": "peersLocked()", "selector": "0x2c80dd42", "outputs": ["bool"]},
+        {"signature": "baes()", "selector": "0x83eaa34b", "outputs": ["address"]},
+        {"signature": "punks()", "selector": "0xdfe0a889", "outputs": ["address"]},
+        {"signature": "registry()", "selector": "0x7b103999", "outputs": ["address"]},
+        {"signature": "punkAMM()", "selector": "0x59c263ed", "outputs": ["address"]},
+        {"signature": "stockLock()", "selector": "0xdb7314f4", "outputs": ["address"]},
+        {"signature": "MAX_ACTIVE()", "selector": "0xaf6173ed", "outputs": ["uint256"]},
+        {"signature": "activeCount()", "selector": "0x4331ed1f", "outputs": ["uint256"]},
+        {"signature": "nextPositionId()", "selector": "0x899346c7", "outputs": ["uint256"]},
+        {"signature": "totalWeight()", "selector": "0x96c82e57", "outputs": ["uint256"]},
+        {"signature": "positions(uint256)", "selector": "0x99fbab88", "outputs": ["uint256", "address", "address", "uint16", "uint8", "bool"]},
+        {"signature": "positionsPage(uint256,uint256)", "selector": "0xad390ad5", "outputs": ["(uint256,address,address,uint16,uint8,bool)[]", "uint256"]},
+        {"signature": "rewardShare(uint256)", "selector": "0x472f7e87", "outputs": ["address", "uint256"]},
+        {"signature": "tierCost(uint8)", "selector": "0xffdbd60d", "outputs": ["uint256"]},
+        {"signature": "tierWeight(uint8)", "selector": "0xba3ea8ec", "outputs": ["uint16"]},
+        {"signature": "trackedNFT(uint256)", "selector": "0xdc694352", "outputs": ["bool"]}
+      ],
+      "writes": [
+        {
+          "signature": "stake(uint256,uint8,address)",
+          "selector": "0x7cc2a960",
+          "intent": "Add one wallet-owned Bario Punk to a crew position",
+          "constraints": "tier 0 through 4; beneficiary defaults to the active Bankr wallet; exact tier-cost BAES approval and token-specific NFT approval; paid BAES is permanent and never refunded"
+        },
+        {
+          "signature": "upgrade(uint256,uint8)",
+          "selector": "0x7dfe5b92",
+          "intent": "Irreversibly raise a depositor-owned active position tier",
+          "constraints": "new tier must be higher; exact live tier-cost delta BAES approval; paid BAES is permanent"
+        },
+        {
+          "signature": "unstake(uint256)",
+          "selector": "0x2e17de78",
+          "intent": "Exit a depositor-owned position and return its punk to the calling wallet",
+          "constraints": "routes may be paused; rewards settle automatically; no BAES refund; verify the calling contract wallet can receive this ERC721-C transfer"
+        },
+        {
+          "signature": "unstakeTo(uint256,address)",
+          "selector": "0x6ced8ea4",
+          "intent": "Exit a depositor-owned position to an explicitly chosen recipient",
+          "constraints": "recipient must be explicit, nonzero, re-confirmed if not the active wallet; rewards settle automatically; no BAES refund"
+        }
+      ]
+    },
+    "stockLock": {
+      "address": "0x4570F784d35ab06a0FA22F42bb6329fAA998a6BA",
+      "codeHash": "0x81782b61179aac15dcda6f1eb9370ea57844383c5fb8ddafc4ccd81863b3d425",
+      "kind": "StockLock",
+      "reads": [
+        {"signature": "owner()", "selector": "0x8da5cb5b", "outputs": ["address"]},
+        {"signature": "systemOpen()", "selector": "0xe8496274", "outputs": ["bool"]},
+        {"signature": "peersLocked()", "selector": "0x2c80dd42", "outputs": ["bool"]},
+        {"signature": "registry()", "selector": "0x7b103999", "outputs": ["address"]},
+        {"signature": "revenueRouter()", "selector": "0xe8855812", "outputs": ["address"]},
+        {"signature": "lockVault()", "selector": "0x48bdd198", "outputs": ["address"]},
+        {"signature": "stockAdapter()", "selector": "0xd77211f6", "outputs": ["address"]},
+        {"signature": "weth()", "selector": "0x3fc8cef3", "outputs": ["address"]},
+        {"signature": "MIN_CONVERT()", "selector": "0x43826076", "outputs": ["uint256"]},
+        {"signature": "MAX_CONVERT()", "selector": "0xd4b0e6d6", "outputs": ["uint256"]},
+        {"signature": "MAX_BATCH()", "selector": "0x950bff9f", "outputs": ["uint256"]},
+        {"signature": "MAX_TOKENS()", "selector": "0xf47c84c5", "outputs": ["uint256"]},
+        {"signature": "wethPot()", "selector": "0x838cbe1e", "outputs": ["uint256"]},
+        {"signature": "bootstrapLocked()", "selector": "0x0f7afcb0", "outputs": ["uint256"]},
+        {"signature": "bootstrapRemainingSeconds()", "selector": "0x8c27bc70", "outputs": ["uint256"]},
+        {"signature": "lastBootstrapAccrual()", "selector": "0xd3c0a965", "outputs": ["uint256"]},
+        {"signature": "wethLiability()", "selector": "0x0d851393", "outputs": ["uint256"]},
+        {"signature": "stockLiability(address)", "selector": "0xad3b7a5a", "outputs": ["uint256"]},
+        {"signature": "stockDust(address)", "selector": "0x5aa9ba66", "outputs": ["uint256"]},
+        {"signature": "accStock(address)", "selector": "0x60ef2699", "outputs": ["uint256"]},
+        {"signature": "distributedTokenCount()", "selector": "0x98811973", "outputs": ["uint256"]},
+        {"signature": "distributedTokens(uint256)", "selector": "0x37a15503", "outputs": ["address"]},
+        {"signature": "isDistributedToken(address)", "selector": "0x034d7fcb", "outputs": ["bool"]},
+        {"signature": "positionCheckpoint(uint256,address)", "selector": "0x80756f8d", "outputs": ["uint256"]},
+        {"signature": "positionInitialized(uint256)", "selector": "0xfc13f8d6", "outputs": ["bool"]},
+        {"signature": "stockCredit(address,address)", "selector": "0x0c2c6722", "outputs": ["uint256"]},
+        {"signature": "rotationCursor()", "selector": "0x75039a31", "outputs": ["uint256"]},
+        {"signature": "lastConvertBlock()", "selector": "0x2588f2c6", "outputs": ["uint256"]},
+        {"signature": "cumulativeBountyPaid()", "selector": "0x6993ba91", "outputs": ["uint256"]},
+        {"signature": "cumulativeWethConverted()", "selector": "0x10c1ad69", "outputs": ["uint256"]},
+        {"signature": "pendingStock(uint256,address)", "selector": "0x391cd3a5", "outputs": ["uint256"]}
+      ],
+      "writes": [
+        {
+          "signature": "depositTopUp(uint256,bytes32)",
+          "selector": "0x92e40e11",
+          "intent": "Irreversibly donate exact WETH to the stock-conversion pot or bootstrap hold-back",
+          "constraints": "special irreversible-donation confirmation; exact WETH approval; nonzero bytes32 sourceId is an explicitly confirmed unauthenticated label"
+        },
+        {
+          "signature": "pokeBootstrap()",
+          "selector": "0x18b7b126",
+          "intent": "Permissionlessly advance bootstrap accounting"
+        },
+        {
+          "signature": "convert(uint256,uint256)",
+          "selector": "0x96e4ee3d",
+          "intent": "Permissionlessly convert pot WETH into the automatic next enabled stock and earn the 1 percent WETH bounty",
+          "constraints": "amount must be within fresh MIN_CONVERT, MAX_CONVERT, and wethPot bounds; at most one conversion per block; deadline from latest Base block; there is intentionally no stock-output price floor"
+        },
+        {
+          "signature": "settlePosition(uint256)",
+          "selector": "0xaba5b4b3",
+          "intent": "Permissionlessly crystallize one position's pending rewards into beneficiary credits"
+        },
+        {
+          "signature": "settlePositions(uint256[])",
+          "selector": "0x8e28fc9e",
+          "intent": "Permissionlessly crystallize up to 20 positions",
+          "constraints": "nonempty fresh active-position list; maximum 20"
+        },
+        {
+          "signature": "claim(address)",
+          "selector": "0x1e83409a",
+          "intent": "Claim the caller's exact credit for one distributed token to the caller"
+        },
+        {
+          "signature": "claimTo(address,address)",
+          "selector": "0x34a1ca89",
+          "intent": "Claim the caller's exact credit for one distributed token to an explicit recipient",
+          "constraints": "recipient defaults to active wallet and must be explicitly confirmed if different"
+        },
+        {
+          "signature": "claimBatch(address[],address)",
+          "selector": "0x02dc3020",
+          "intent": "Claim up to 20 distributed-token credits to an explicit recipient",
+          "constraints": "tokens must come from the lifetime distributedTokens list; recipient defaults to active wallet; a problematic token can revert the whole batch"
+        },
+        {
+          "signature": "claimLossy(address,address,uint256)",
+          "selector": "0x1f15c919",
+          "intent": "Opt into debiting the entire credit even if a fee-on-transfer token delivers less",
+          "constraints": "destructive special confirmation; never use automatically as a fallback; minReceived must be explicit"
+        },
+        {
+          "signature": "forfeitCredit(address,uint256)",
+          "selector": "0x859a2671",
+          "intent": "Irrevocably destroy part of the caller's stuck token credit",
+          "constraints": "destructive special confirmation; never suggest or execute automatically; amount must not exceed fresh stockCredit"
+        }
+      ]
+    },
+    "baseV4FeeRouter": {
+      "address": "0x753bed09b3B39E750B48814BA7730034Df705fCf",
+      "codeHash": "0x1dcd961bff3088c7c4f8e57311c03cdfe196d9e51a19f73bfb6f3379a3df7f6d",
+      "kind": "FeeQuoteAdapter",
+      "reads": [
+        {"signature": "quoteExactBAESForWETH(uint256)", "selector": "0x94fd7d0a", "outputs": ["uint256"], "callMode": "eth_call"},
+        {"signature": "baes()", "selector": "0x83eaa34b", "outputs": ["address"]},
+        {"signature": "weth()", "selector": "0x3fc8cef3", "outputs": ["address"]},
+        {"signature": "revenueRouter()", "selector": "0xe8855812", "outputs": ["address"]},
+        {"signature": "poolId()", "selector": "0x3e0dc34e", "outputs": ["bytes32"]}
+      ],
+      "writes": []
+    },
+    "aerodromeStockAdapter": {
+      "address": "0x3d3abC1569C260953a6f5D42102D2f330A41430c",
+      "codeHash": "0x2f6d070ddae41348d80620435e2b2db5a14073a59dc0f8a1884743ee8f68c279",
+      "kind": "DiscoveredStockRosterAndQuoteAdapter",
+      "discovery": "StockLock.stockAdapter()",
+      "reads": [
+        {"signature": "owner()", "selector": "0x8da5cb5b", "outputs": ["address"]},
+        {"signature": "stockLock()", "selector": "0xdb7314f4", "outputs": ["address"]},
+        {"signature": "weth()", "selector": "0x3fc8cef3", "outputs": ["address"]},
+        {"signature": "ROSTER_DELAY()", "selector": "0x4b30871b", "outputs": ["uint256"]},
+        {"signature": "stockCount()", "selector": "0x8508da5c", "outputs": ["uint256"]},
+        {"signature": "stockAt(uint256)", "selector": "0xbcb40097", "outputs": ["(address,bytes,uint8,bool)"]},
+        {"signature": "nextEnabledFrom(uint256)", "selector": "0xfaf115a1", "outputs": ["uint256", "address"]},
+        {"signature": "supportsStock(address)", "selector": "0x228fbaa5", "outputs": ["bool"]},
+        {"signature": "pathFor(address)", "selector": "0xb4f33972", "outputs": ["bytes"]},
+        {"signature": "quoteWethToStock(address,uint256)", "selector": "0x35bdc95c", "outputs": ["uint256"], "callMode": "eth_call"}
+      ],
+      "writes": []
+    }
+  },
+  "events": [
+    {"contract": "BAES/WETH/BarioPunks", "signature": "Approval(address,address,uint256)", "topic0": "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"},
+    {"contract": "BAES/WETH/BarioPunks/stock tokens", "signature": "Transfer(address,address,uint256)", "topic0": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"},
+    {"contract": "PunkAMM", "signature": "NFTSold(address,uint256,uint256,uint256)", "topic0": "0x306b3d0468e32a4a4b287be94a0ff526c42c78f7fcc5387b40c45df6b5887235"},
+    {"contract": "PunkAMM", "signature": "NFTBought(address,uint256,uint256,uint256)", "topic0": "0x8c68226ed6c7256cb4dc9d9d1d0d84141ffb9ff4cac6ca9fa08dc46ad0a08936"},
+    {"contract": "PunkAMM", "signature": "ReserveToppedUp(address,uint256)", "topic0": "0x0ec78ee544f157a57a449b0bf126ed381927b9952ca813fd64270f4705441253"},
+    {"contract": "PunkAMM", "signature": "DonationSynced(uint256)", "topic0": "0x037a1627325387da194806201e696ef5573a3aaa5ce3765a2bd8c9f55fc91624"},
+    {"contract": "PunkAMM", "signature": "HeadEvicted(uint256)", "topic0": "0x2aa2a8263b4f867622b8987e220ead3fbb50476d5a44bccdf75673cd4fca96f8"},
+    {"contract": "LockVault", "signature": "PositionOpened(uint256,uint256,address,uint8,uint16)", "topic0": "0x5da47449ba1009c960a1f35fc5ee1a93833b55d15ed6cc234b5fc10d45234936"},
+    {"contract": "LockVault", "signature": "PositionUpgraded(uint256,uint8,uint16)", "topic0": "0xc5769ebf3637475c326aded19a7eaf2b5af1ad658b9b518aa15690d7a2739362"},
+    {"contract": "LockVault", "signature": "PositionClosed(uint256)", "topic0": "0xbf542298705ed6fd22ddf94ee2db731ced9191396e6e7f7b6862803555f9ff21"},
+    {"contract": "RevenueRouter", "signature": "ConversionFeeSwapped(bytes32,address,uint256,uint256,bytes32)", "topic0": "0xc06a540db48ad9a5ac2e33a0d7ff28b60160c1618d8d92bf7522bd865337ed87"},
+    {"contract": "StockLock", "signature": "RevenueDeposited(bytes32,uint256,bool)", "topic0": "0x9bb7b1c20e851333c7326818aa53aeeebecbb7dab53797d4218c0eb4efc75ba9"},
+    {"contract": "StockLock", "signature": "BootstrapReleased(uint256,uint256)", "topic0": "0x4875724f6fb1ded0de54ed6b7c4d295dc44faf7e8cda18da3b7a939d06f76774"},
+    {"contract": "StockLock", "signature": "Converted(address,address,uint256,uint256,uint256)", "topic0": "0xecba9465f76fb3d7a25126f1750f58dbfbe90aceef0338d496a5f6dcef0fbd0c"},
+    {"contract": "StockLock", "signature": "CreditWritten(uint256,address,address,uint256)", "topic0": "0xe935302fdf98fc6f93c2de4bd0653e2a480a89770a6fe087f5f74016c960ab6b"},
+    {"contract": "StockLock", "signature": "Claimed(address,address,address,uint256)", "topic0": "0x913c992353dc81b7a8ba31496c484e9b6306bd2f6c509a649a38fdf5e1c953b2"},
+    {"contract": "StockLock", "signature": "ClaimedLossy(address,address,address,uint256,uint256)", "topic0": "0xd17537574ed84d720a86f70f3cfba4132d3f9cd7e202400cbca935cbb2a48989"},
+    {"contract": "StockLock", "signature": "CreditForfeited(address,address,uint256)", "topic0": "0xa165b78d95792869fbdcf479370ccd51c64b577bae93f72ea036145b8b3bfab7"}
+  ],
+  "excludedWrites": [
+    {"target": "BAES/WETH", "signature": "transfer(address,uint256)", "selector": "0xa9059cbb", "reason": "No raw token transfers are part of a Punktown operation plan."},
+    {"target": "BAES/WETH", "signature": "transferFrom(address,address,uint256)", "selector": "0x23b872dd", "reason": "Protocol contracts pull exact approved amounts."},
+    {"target": "BarioPunks", "signature": "setApprovalForAll(address,bool)", "selector": "0xa22cb465", "reason": "Only token-specific exact approvals are permitted."},
+    {"target": "BarioPunks", "signature": "transferFrom(address,address,uint256)", "selector": "0x23b872dd", "reason": "Never direct-transfer a punk into PunkAMM or LockVault."},
+    {"target": "BarioPunks", "signature": "safeTransferFrom(address,address,uint256)", "selector": "0x42842e0e", "reason": "Never direct-transfer a punk into PunkAMM or LockVault."},
+    {"target": "BarioPunks", "signature": "safeTransferFrom(address,address,uint256,bytes)", "selector": "0xb88d4fde", "reason": "Never direct-transfer a punk into PunkAMM or LockVault."},
+    {"target": "PunkAMM", "signature": "addGenesisNFT(uint256)", "selector": "0x192f3bd4", "reason": "Owner-only pre-open deployment function."},
+    {"target": "PunkAMM", "signature": "openSystem()", "selector": "0x465e80d1", "reason": "Owner-only one-way deployment function; system is already open."},
+    {"target": "PunkAMM", "signature": "wirePeersAndLock(address,address)", "selector": "0x21a5e04b", "reason": "Owner-only one-shot deployment function; peers are already locked."},
+    {"target": "PunkAMM/LockVault/StockLock/RevenueRouter/BaseV4FeeRouter/AerodromeStockAdapter", "signature": "recoverExcess(uint8,address,uint256,address)", "selector": "0x4f35d89b", "reason": "Owner-only recovery is outside Bankr user operations."},
+    {"target": "LockVault", "signature": "openSystem()", "selector": "0x465e80d1", "reason": "Protocol-internal one-way deployment function."},
+    {"target": "LockVault", "signature": "wirePeersAndLock(address,address)", "selector": "0x21a5e04b", "reason": "Owner-only one-shot deployment function."},
+    {"target": "StockLock", "signature": "openSystem()", "selector": "0x465e80d1", "reason": "Protocol-internal one-way deployment function."},
+    {"target": "StockLock", "signature": "wirePeersAndLock(address,address,address)", "selector": "0xcf4427c1", "reason": "Owner-only one-shot deployment function."},
+    {"target": "StockLock", "signature": "setRevenueSource(address,bool)", "selector": "0x1f454923", "reason": "Owner-only pre-launch configuration."},
+    {"target": "StockLock", "signature": "depositRevenue(uint256,bytes32)", "selector": "0x3cdf944f", "reason": "Only an approved protocol revenue source may call it; users use depositTopUp."},
+    {"target": "StockLock", "signature": "sweepStockDust(address,address)", "selector": "0xaebad574", "reason": "Owner-only recovery of accounting dust."},
+    {"target": "RouteRegistry", "signature": "setFeeRouteActive(bool)", "selector": "0x81ca15a3", "reason": "Owner-only route configuration."},
+    {"target": "RouteRegistry", "signature": "setFeeRoute((address,address,address,bytes32,address,bytes4,bytes32,uint24,bool))", "selector": "0x8356e91c", "reason": "Owner-only route configuration."},
+    {"target": "RouteRegistry", "signature": "unpause(uint8)", "selector": "0x301c7e5d", "reason": "Owner-only route control."},
+    {"target": "RouteRegistry", "signature": "pauseFeeRoute()", "selector": "0x01b35d17", "reason": "Owner-only route control."},
+    {"target": "RouteRegistry", "signature": "pauseStockRoute()", "selector": "0x46b13abe", "reason": "Owner-only route control."},
+    {"target": "RevenueRouter", "signature": "wirePeersAndLock(address,address,address)", "selector": "0xcf4427c1", "reason": "Owner-only one-shot deployment function."},
+    {"target": "RevenueRouter", "signature": "openSystem()", "selector": "0x465e80d1", "reason": "Protocol-internal one-way deployment function."},
+    {"target": "RevenueRouter", "signature": "setRevenueAdapter(address,bool)", "selector": "0x316c1865", "reason": "Owner-only pre-launch adapter configuration."},
+    {"target": "RevenueRouter", "signature": "swapConversionFee(bytes32,uint256,uint256)", "selector": "0x8077a4fc", "reason": "Only the immutable PunkAMM may invoke this protocol-internal route."},
+    {"target": "RevenueRouter", "signature": "swapBAESRevenue(bytes32,uint256,uint256,uint256)", "selector": "0x99d83ddc", "reason": "Direct revenue adapters are not Bankr wallet operations."},
+    {"target": "BaseV4FeeRouter", "signature": "swapExactBAESForWETH(address,address,bytes32,uint24,bool,uint256,uint256,address,uint256)", "selector": "0xd07017fd", "reason": "Only the immutable RevenueRouter may invoke the fee swap; users call PunkAMM."},
+    {"target": "AerodromeStockAdapter", "signature": "queueStock(uint256,address,bytes,uint8)", "selector": "0xa4ac1ce7", "reason": "Owner-only roster configuration."},
+    {"target": "AerodromeStockAdapter", "signature": "commitStock(uint256)", "selector": "0x1b5468ba", "reason": "Owner-only roster configuration."},
+    {"target": "AerodromeStockAdapter", "signature": "cancelStock(uint256)", "selector": "0x78bfdb03", "reason": "Owner-only roster configuration."},
+    {"target": "AerodromeStockAdapter", "signature": "setStockEnabled(uint256,bool)", "selector": "0x58c39e51", "reason": "Owner-only roster control."},
+    {"target": "AerodromeStockAdapter", "signature": "swapExactWETHForStock(address,address,uint256,uint256,address,uint256)", "selector": "0x7b0cce64", "reason": "Only the immutable StockLock may invoke conversions; users call StockLock.convert."}
+  ]
+}

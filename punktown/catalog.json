@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "slug": "punktown",
+  "provider": "Bario Entertainment System",
+  "providerUrl": "https://punk.town",
+  "logo": "logo.svg",
+  "demo": {
+    "title": "punktown-bankr-session.txt",
+    "language": "text",
+    "code": "You:   Buy me a Bario Punk and get me into Punk Town\nBankr: You are short 6,600,000 BAES. I can use at most 0.011 WETH on Base to get exactly that amount, then approve 6,600,000 BAES and buy current FIFO Punk #123. Crew tier is not included yet. Continue? (yes/no)\nYou:   yes\nBankr: BAES'in yoktu; yeteri kadarını aldım ve Bario Punk #123 artık cüzdanında. Crew'a hangi tier'dan girelim?\n       Signal 600K · Surge 1.5M · Riot 3.3M · Overdrive 6M · Maximum 15M BAES\nYou:   Surge\nBankr: Surge costs 1,500,000 BAES, is non-refundable, and gives weight 158. I'll check your fresh BAES balance now. If it is short, I'll show the exact funding asset and maximum spend before asking you to approve the Crew entry."
+  },
+  "setup": [
+    "Install the punktown skill from the Bankr public catalog",
+    "Use the active Bankr EVM wallet on Base; never paste or expose a private key",
+    "Keep Bankr native swaps, Wallet API read-write access, and arbitrary contract calls enabled for writes",
+    "Run the bundled live self-test once after install or update",
+    "Missing BAES is acquired only after a concrete source and maximum spend are confirmed and bound to the target plan",
+    "Every Punk Town write verifies the pinned deployment, emits at most one unsigned transaction, and waits for a mined successful receipt before continuing"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "punktown",
+    "command": "install the punktown skill from https://github.com/BankrBot/skills/tree/main/punktown"
+  }
+}
