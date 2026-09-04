@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "teslr",
+  "provider": "Teslr",
+  "providerUrl": "https://teslr.club",
+  "logo": "logo.png",
+  "demo": {
+    "title": "teslr.sh",
+    "language": "bash",
+    "code": "# List your connected Teslas\nbankr prompt \"Use Teslr to list my vehicles\"\n\n# Check live vehicle data\nbankr prompt \"Use Teslr to check all four tire pressures\"\n\n# Run a vehicle command\nbankr prompt \"Use Teslr to warm my Tesla to 72 degrees\"\n\n# Find and send a nearby destination\nbankr prompt \"Use Teslr to navigate to the nearest Safeway\""
+  },
+  "setup": [
+    "Connect directly at https://teslr.club, then save the one-time token as TESLR_FLEET_TOKEN in Bankr Terminal -> Settings -> Env Vars",
+    "For direct vehicle commands, approve the Teslr virtual key for each vehicle in the Tesla app",
+    "Existing Tessie users may instead add TESSIE_API_TOKEN in Bankr Env Vars; the skill prefers Tessie when both tokens exist",
+    "Keep tokens private: never paste them into a prompt, chat, or public X post"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "teslr",
+    "command": "install the teslr skill from https://github.com/BankrBot/skills/tree/main/teslr"
+  }
+}
