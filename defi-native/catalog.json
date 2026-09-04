@@ -9,9 +9,10 @@
     "code": "You: I found a 7% USDC vault, is it safe? It's on Morpho.\n\nAgent (with defi-native): Refuses 'safe'. Names the five vault layers,\nwalks the claim stack on three surfaces (chain, the vault's own\ntransparency page, docs), finds the collateral is mostly wrapped BTC\nand a synthetic dollar, names the oracle class per market and whether\nliquidations fire on a visible tape, splits base from incentives with\nas-of dates, points at first loss, and runs risk:reward including the\ntotal-loss branch. Read-only: it analyzes, it never signs.\n\n# Live data, keyless:\npython3 scripts/pulse.py yields USDC morpho-blue\npython3 scripts/pulse.py stablecoins"
   },
   "setup": [
+    "This reviewed catalog copy is the primary install; updates arrive through catalog PRs, and the skill never loads remote files at runtime",
     "No keys required: DefiLlama, Morpho GraphQL, Merkl, GeckoTerminal, and CoinGecko recipes are keyless",
-    "Optional depth: see the bring-your-own-keys table in references/data-sources.md (vaults.fyi, Dune, FRED)",
-    "Canonical repo and updates: https://github.com/emlai/defi-native-skill (the skill checks its own version each session)"
+    "Optional keyed depth (user-approved, never spends without consent): see references/data-sources.md; metered vaults.fyi additionally requires VAULTSFYI_ALLOW_SPEND=1",
+    "Canonical repo for changelog and issues: https://github.com/emlai/defi-native-skill (the skill compares version numbers only and notifies; it never fetches or follows remote files)"
   ],
   "install": {
     "type": "bankr",

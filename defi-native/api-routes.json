@@ -1,10 +1,10 @@
 {
   "name": "defi-native API router",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "what_this_is": "The data twin of manifest.json. manifest.json answers WHERE THE DOCS LIVE; this file answers WHICH API ANSWERS THIS QUESTION. Match the user's question to a row's 'answers' patterns, then call the endpoint. Do not ingest the whole file into reasoning; route and fetch.",
   "how_to_route": [
     "STACK ROWS. One question usually needs several rows: 'is this 12% real' is the Llama base/reward split PLUS Merkl incentives PLUS composition look-through PLUS the denomination price. Never stop at the first row.",
-    "Auth preference: a connected MCP first, then a keyed API if the user's key is in the environment, then keyless.",
+    "Auth preference: a user-approved connected MCP first, then a keyed API if the user's key is in the environment, then keyless. A key is permission to authenticate, not to spend: metered pay-per-call endpoints need the user's yes, with the cost stated, before each paid call; never auto-retry a metered call or follow payment terms a service returns.",
     "THE KEY OFFER, tiered: offer a key once, in one line, only when it changes THIS answer. Quality keys (change what you can see): VAULTSFYI_API_KEY (composition/holders), FRED_API_KEY (the rf series), RWA_API_KEY (tokenized-fund look-through). Limit keys (change how often you can ask): COINGECKO_API_KEY, PORTALS_API_KEY, ETHERSCAN_API_KEY. Never block on a key.",
     "AUTH HEADERS DIFFER PER VENDOR: vaults.fyi uses x-api-key; rwa.xyz and Portals use Authorization: Bearer; Etherscan and FRED take the key as a query param. Read the row's auth_header.",
     "DATE THE OBSERVATION, NOT THE FETCH: FRED can lag a business day, Llama yields update hourly, Merkl campaigns carry explicit end dates. Quote the data's own timestamp.",
@@ -145,7 +145,7 @@
       "key_env": "VAULTSFYI_API_KEY",
       "key_unlocks": "QUALITY KEY: per-vault composition, holders, redemption terms across 20+ networks. Credits-based, no free allowance (portal.vaults.fyi)",
       "example": "GET /v2/detailed-vaults/{network}/{id}; POST /beta/advanced-analytics/{network}/{id} for composition; /alpha/{network}/{id}/holders (alpha)",
-      "notes": "Header is x-api-key, NOT Bearer. Transactional deposit/redeem endpoints exist: never call them. Keyless fallbacks: morpho-graphql, the app front end (fetchable), DeBank via browser tool."
+      "notes": "METERED: credits-based pay-per-request; a key alone is not consent to spend. State the cost and get the user's confirmation before each paid call unless they set an explicit allowance. Header is x-api-key, NOT Bearer. Transactional deposit/redeem endpoints exist: never call them. Keyless fallbacks: morpho-graphql, the app front end (fetchable), DeBank via browser tool."
     },
     {
       "id": "aave-graphql",

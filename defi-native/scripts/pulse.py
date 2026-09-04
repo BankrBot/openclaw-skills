@@ -130,6 +130,13 @@ def yields_for(symbol, project=None):
 
 def vaults():
     key = os.environ.get("VAULTSFYI_API_KEY")
+    if key and os.environ.get("VAULTSFYI_ALLOW_SPEND") != "1":
+        print(json.dumps({"error": "spend consent required",
+                          "hint": "vaults.fyi is metered (credits per call). A key is not "
+                                  "consent to spend: confirm with the user, then set "
+                                  "VAULTSFYI_ALLOW_SPEND=1 to enable this command.",
+                          "retrieved_at": now()}, indent=2))
+        sys.exit(1)
     if not key:
         print(json.dumps({"error": "VAULTSFYI_API_KEY not set",
                           "hint": "Keys at portal.vaults.fyi. Credits-based pay-as-you-go; "

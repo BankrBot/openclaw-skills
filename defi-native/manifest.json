@@ -1,6 +1,6 @@
 {
   "name": "defi-native-docs",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "what_this_is": "An address book of primary documentation the skill may fetch. It is not the skill itself. SKILL.md holds mental models. This file tells the agent which official docs exist, which URL to open, and which concept those docs serve. Do not ingest the whole list into context. Look up the product under analysis and fetch only the matching rows. verified=implicit: every add-row URL and llms_txt in this file was liveness-checked 2026-09-02; rows noted 403 need a browser tool. Re-verify any row on first use in a session.",
   "how_to_use": [
     "Identify the product class (vault, market, stable, RWA, PT, perp, wrapper).",

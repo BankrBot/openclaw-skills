@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0Y8X1TGJDD"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-0Y8X1TGJDD');
+</script>
+
+<meta name="theme-color" content="#16C784">
+<meta name="description" content="defi-native is a free agent skill that makes any AI an expert on onchain finance and capital markets. It decomposes yield, looks through to real collateral, and dates every number. Works with Claude, Codex, Cursor, Grok and any Agent Skills host.">
+<link rel="canonical" href="https://defi-native.ai/">
+<link rel="icon" href="assets/favicon-computer.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/logo-mask-512.png">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://defi-native.ai/">
+<meta property="og:title" content="defi-native: make your AI a true expert on onchain finance">
+<meta property="og:description" content="defi-native is a free agent skill that makes any AI an expert on onchain finance and capital markets. It decomposes yield, looks through to real collateral, and dates every number. Works with Claude, Codex, Cursor, Grok and any Agent Skills host.">
+<meta property="og:image" content="https://defi-native.ai/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@defi_native_ai">
+<meta name="twitter:creator" content="@emilylai">
+<meta name="twitter:title" content="defi-native: make your AI a true expert on onchain finance">
+<meta name="twitter:description" content="defi-native is a free agent skill that makes any AI an expert on onchain finance and capital markets. It decomposes yield, looks through to real collateral, and dates every number. Works with Claude, Codex, Cursor, Grok and any Agent Skills host.">
+<meta name="twitter:image" content="https://defi-native.ai/assets/og.png">
+
+<title>defi-native</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Doto:wght@600;800;900&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap">
+</head>
+<body>
+<link rel="stylesheet" href="assets/site.css?v=6e137b41">
+
+<header class="bar" id="top">
+  <div class="frame bar-in">
+    <a href="#top" class="brand">
+      <span class="brandmark" aria-hidden="true"></span>
+      <span class="wordmark">defi-native</span>
+    </a>
+    <span class="vtag num">v1.8.0</span>
+    <nav>
+      <div class="menu-wrap">
+        <button type="button" class="menubtn" aria-expanded="false" aria-controls="sitemenu">Menu</button>
+        <div class="menu-panel" id="sitemenu" hidden>
+          <a class="mlink" href="#how">About</a>
+          <a class="mlink" href="update/">Update</a>
+          <a class="mlink" href="#faq">FAQ</a>
+          <a class="mlink" href="#faq-token">Token</a>
+          <div class="menu-theme"><div class="theme" role="group" aria-label="Colour theme">
+        <button type="button" data-theme-set="light" aria-pressed="true" aria-label="Light theme" title="Light theme">
+          <svg class="sw" width="7" height="7" viewBox="0 0 7 7" aria-hidden="true" shape-rendering="crispEdges"><rect x="2" y="2" width="3" height="3"></rect><rect x="0" y="3" width="1" height="1"></rect><rect x="6" y="3" width="1" height="1"></rect><rect x="3" y="0" width="1" height="1"></rect><rect x="3" y="6" width="1" height="1"></rect></svg>
+          <span class="lbl">Light</span>
+        </button>
+        <button type="button" data-theme-set="dark" aria-pressed="false" aria-label="Dark theme" title="Dark theme">
+          <svg class="sw" width="7" height="7" viewBox="0 0 7 7" aria-hidden="true" shape-rendering="crispEdges"><rect x="0" y="0" width="4" height="4"></rect><rect x="4" y="4" width="3" height="3"></rect></svg>
+          <span class="lbl">Dark</span>
+        </button>
+      </div></div>
+          <div class="menu-icons">
+          <a href="https://x.com/defi_native_ai" class="iconlink" aria-label="defi-native on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></a>
+          <a href="https://github.com/emlai/defi-native-skill" class="iconlink" aria-label="GitHub repository" title="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+          <a href="https://app.uniswap.org/swap?chain=base&amp;outputCurrency=0xAd46308a6f6999BaCc099F3029B77c352E772ba3" class="iconlink" aria-label="Buy $defi-native on Uniswap" title="Buy on Uniswap"><img src="assets/logos/uniswap.png" alt=""></a>
+        </div>
+        </div>
+      </div>
+      <div class="theme" role="group" aria-label="Colour theme">
+        <button type="button" data-theme-set="light" aria-pressed="true" aria-label="Light theme" title="Light theme">
+          <svg class="sw" width="7" height="7" viewBox="0 0 7 7" aria-hidden="true" shape-rendering="crispEdges"><rect x="2" y="2" width="3" height="3"></rect><rect x="0" y="3" width="1" height="1"></rect><rect x="6" y="3" width="1" height="1"></rect><rect x="3" y="0" width="1" height="1"></rect><rect x="3" y="6" width="1" height="1"></rect></svg>
+          <span class="lbl">Light</span>
+        </button>
+        <button type="button" data-theme-set="dark" aria-pressed="false" aria-label="Dark theme" title="Dark theme">
+          <svg class="sw" width="7" height="7" viewBox="0 0 7 7" aria-hidden="true" shape-rendering="crispEdges"><rect x="0" y="0" width="4" height="4"></rect><rect x="4" y="4" width="3" height="3"></rect></svg>
+          <span class="lbl">Dark</span>
+        </button>
+      </div>
+      <a href="#install" class="cta">Install</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= HERO ================= -->
+  <section class="hero flush">
+    <div class="frame hero-grid">
+      <div class="hero-copy">
+        <h1>Make your AI defi native: <em>a true expert on onchain finance.</em></h1>
+
+        <p class="lede">Get deep breakdowns on defi dynamics, onchain trading, and capital markets that you can trust.</p>
+
+        <div class="cta-row">
+          <a href="#install" class="btn">Install for free</a>
+          <a href="#compare" class="btn ghost">How it works</a>
+        </div>
+
+        <div class="compat compat-row" aria-label="Works with Claude, OpenAI, Grok, Cursor, and more"><span class="compat-lbl">Works with</span><svg viewBox="0 0 24 24" role="img" aria-label="Claude"><title>Claude</title><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg><svg viewBox="0 0 24 24" role="img" aria-label="OpenAI"><title>OpenAI</title><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg><svg viewBox="0 0 24 24" role="img" aria-label="Grok" fill-rule="evenodd"><title>Grok</title><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"/></svg><svg viewBox="0 0 24 24" role="img" aria-label="Cursor"><title>Cursor</title><path d="M11.503.131 1.891 5.678a.84.84 0 0 0-.42.726v11.188c0 .3.162.575.42.724l9.609 5.55a1 1 0 0 0 .998 0l9.61-5.55a.84.84 0 0 0 .42-.724V6.404a.84.84 0 0 0-.42-.726L12.497.131a1.01 1.01 0 0 0-.996 0M2.657 6.338h18.55c.263 0 .43.287.297.515L12.23 22.918c-.062.107-.229.064-.229-.06V12.335a.59.59 0 0 0-.295-.51l-9.11-5.257c-.109-.063-.064-.23.061-.23"/></svg><span class="compat-more">+ more</span>
+          <a class="stars" href="https://github.com/emlai/defi-native-skill" aria-label="Star history on GitHub">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 19.771l-7.336 3.394 1.402-8.168L.132 9.21l8.2-1.192z"/></svg>
+            <span><b class="num" id="gh-stars">35</b> stars on GitHub</span>
+          </a>
+        </div>
+      </div>
+
+      <aside class="hero-visual">
+        <div class="scene">
+          <div class="browser" aria-hidden="true">
+            <div class="b-bar"><span class="term-lights"><i></i><i></i><i></i></span><span class="b-url">defi-native.ai</span></div>
+            <div class="b-body">
+              <div class="candle-box"><canvas id="candles" aria-label="A pixel candlestick chart"></canvas></div>
+              <div class="skel"><i style="width: 58%;"></i><i style="width: 34%;"></i><i style="width: 46%;"></i></div>
+            </div>
+          </div>
+          <div class="phone" aria-hidden="true">
+            <div class="p-notch"></div>
+            <p class="p-title">defi-native</p>
+            <p class="p-row"><span class="k">&check;</span>installed</p>
+            <p class="p-row"><span class="k">&check;</span>verified</p>
+            <p class="p-row"><span class="k">&check;</span>live data</p>
+            <div class="p-spark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+            <div class="term">
+              <div class="term-bar">
+                <span class="term-lights"><i></i><i></i><i></i></span>
+                <span class="term-title">install</span>
+                <button type="button" class="copy" data-copy="cmd-hero">Copy</button>
+              </div>
+              <div class="term-body">
+                <p class="tl"><span class="p">$</span><span id="cmd-hero">npx skills add emlai/defi-native-skill</span></p>
+                <div class="term-rule"></div>
+                <p class="tl"><span class="k">?</span><span>Which agent?  detected automatically</span></p>
+                <p class="tl"><span class="k">?</span><span>Install where?  defaults are fine</span></p>
+                <p class="tl"><span class="k">&check;</span><span>defi-native v1.8.0 installed</span></p>
+                <div class="term-rule"></div>
+                <p class="tl wrap typing">
+                  <span class="p">&gt;</span>
+                  <span class="typed-wrap"><span id="typed" aria-hidden="true"></span><span class="caret" aria-hidden="true"></span></span>
+                  <span class="sr-only">Example questions it answers: this vault pays 7% on USDC, is that real; what is actually backing this yield; are onchain options the same as traditional options; and what is actually backing sUSDe.</span>
+                </p>
+              </div>
+            </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="frame">
+      <div class="stats">
+        <div class="stat"><div class="v num">123+</div><div class="k">sources</div></div>
+        <div class="stat"><div class="v num">31</div><div class="k">live data routes</div></div>
+        <div class="stat"><div class="v num">124</div><div class="k">glossary terms</div></div>
+        <div class="stat"><div class="v num">12</div><div class="k">graded evals</div></div>
+      </div>
+
+      <details class="seeall">
+        <summary><span class="sa-label">See all sources</span><span class="live-chip"><i class="live-dot"></i>Routinely updated</span><span class="src-marquee" aria-hidden="true"><span class="src-track"><span class="set"><img src="assets/logos/aave.png" alt=""><img src="assets/logos/morpho.png" alt=""><img src="assets/logos/base.png" alt=""><img src="assets/logos/robinhood.png" alt=""><img src="assets/logos/solana.png" alt=""><img src="assets/logos/spark.png" alt=""><img src="assets/logos/steakhouse.png" alt=""><img src="assets/logos/ondo.png" alt=""><img src="assets/logos/hyperliquid.png" alt=""><img src="assets/logos/ethena.png" alt=""><img src="assets/logos/circle.png" alt=""><img src="assets/logos/securitize.png" alt=""><img src="assets/logos/chainlink.png" alt=""><img src="assets/logos/defillama.png" alt=""></span><span class="set"><img src="assets/logos/aave.png" alt=""><img src="assets/logos/morpho.png" alt=""><img src="assets/logos/base.png" alt=""><img src="assets/logos/robinhood.png" alt=""><img src="assets/logos/solana.png" alt=""><img src="assets/logos/spark.png" alt=""><img src="assets/logos/steakhouse.png" alt=""><img src="assets/logos/ondo.png" alt=""><img src="assets/logos/hyperliquid.png" alt=""><img src="assets/logos/ethena.png" alt=""><img src="assets/logos/circle.png" alt=""><img src="assets/logos/securitize.png" alt=""><img src="assets/logos/chainlink.png" alt=""><img src="assets/logos/defillama.png" alt=""></span></span></span></summary>
+        <div class="sw-body">
+        <div class="sw-row"><div class="sw-cat">Lending</div><div class="sw-names">Morpho <i>/</i> Aave <i>/</i> Euler <i>/</i> Spark <i>/</i> Compound <i>/</i> Fluid <i>/</i> Silo <i>/</i> Gearbox <i>/</i> Kamino <i>/</i> Liquity V2 <i>/</i> Flex <i>/</i> Term Finance <i>/</i> Loopscale <i>/</i> JustLend</div></div>
+        <div class="sw-row"><div class="sw-cat">Curators</div><div class="sw-names">Steakhouse <i>/</i> Gauntlet <i>/</i> Clearstar <i>/</i> MEV Capital <i>/</i> KPK <i>/</i> Sentora <i>/</i> Armitage <i>/</i> Birch Hill <i>/</i> TAU Labs</div></div>
+        <div class="sw-row"><div class="sw-cat">Vault infra</div><div class="sw-names">Upshift <i>/</i> Veda <i>/</i> Lagoon <i>/</i> Aera <i>/</i> Enzyme <i>/</i> Yearn <i>/</i> Mellow <i>/</i> Concrete <i>/</i> IPOR</div></div>
+        <div class="sw-row"><div class="sw-cat">Real world assets</div><div class="sw-names">Midas <i>/</i> Ondo <i>/</i> Securitize <i>/</i> Franklin Templeton <i>/</i> Superstate <i>/</i> Centrifuge <i>/</i> Grove <i>/</i> Plume <i>/</i> Nest <i>/</i> Spiko <i>/</i> OpenEden <i>/</i> Circle USYC <i>/</i> OnRe <i>/</i> Reserve</div></div>
+        <div class="sw-row"><div class="sw-cat">Stablecoins</div><div class="sw-names">Sky <i>/</i> Circle <i>/</i> Ethena <i>/</i> Tether <i>/</i> Resolv <i>/</i> Elixir <i>/</i> Usual <i>/</i> Neutrl <i>/</i> Lido</div></div>
+        <div class="sw-row"><div class="sw-cat">Markets</div><div class="sw-names">Pendle <i>/</i> Hyperliquid <i>/</i> Uniswap <i>/</i> Curve <i>/</i> Aerodrome <i>/</i> Derive <i>/</i> Lighter <i>/</i> Maple <i>/</i> GMX <i>/</i> Bebop <i>/</i> Panoptic <i>/</i> Contango <i>/</i> Exponent <i>/</i> 3Jane</div></div>
+        <div class="sw-row"><div class="sw-cat">Chains</div><div class="sw-names">Base <i>/</i> Solana <i>/</i> Monad <i>/</i> MegaETH <i>/</i> Robinhood Chain <i>/</i> Flashbots <i>/</i> Titan Builder</div></div>
+        <div class="sw-row"><div class="sw-cat">Restaking</div><div class="sw-names">EigenLayer <i>/</i> ether.fi <i>/</i> Symbiotic <i>/</i> Babylon <i>/</i> Kelp</div></div>
+        <div class="sw-row"><div class="sw-cat">Bitcoin wrappers</div><div class="sw-names">cbBTC <i>/</i> WBTC <i>/</i> Lombard</div></div>
+        <div class="sw-row"><div class="sw-cat">Tokenized equities</div><div class="sw-names">xStocks (Backed) <i>/</i> Alpaca <i>/</i> Robinhood Chain</div></div>
+        <div class="sw-row"><div class="sw-cat">Oracles</div><div class="sw-names">Chainlink <i>/</i> Pyth <i>/</i> RedStone <i>/</i> Chronicle <i>/</i> SEDA</div></div>
+        <div class="sw-row"><div class="sw-cat">Data</div><div class="sw-names">DefiLlama <i>/</i> vaults.fyi <i>/</i> rwa.xyz <i>/</i> Merkl <i>/</i> Chaos Labs <i>/</i> LlamaRisk <i>/</i> Pharos <i>/</i> Turtle Club</div></div>
+          <div class="sw-row"><div class="sw-cat">Academic</div><div class="sw-names">Loss-Versus-Rebalancing (Milionis et al.) <i>/</i> Pump-and-dump research (Kamps &amp; Kleinberg; Dhawan &amp; Putnins) <i>/</i> SEC microcap fraud alerts</div></div>
+        <div class="sw-foot"><b>+ many more.</b> New data sources are continually added. Also covered: the ERC-4626 and ERC-7540 vault standards (ethereum.org), staking, agent infrastructure, prime brokers and regulatory primaries.</div>
+        
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ================= COMPARE ================= -->
+  <section id="compare">
+    <div class="frame">
+      <div class="eyebrow">
+        <svg class="glyph" width="9" height="9" viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><rect x="0" y="0" width="4" height="9"></rect><rect x="5" y="0" width="1" height="1"></rect><rect x="7" y="0" width="1" height="1"></rect><rect x="5" y="4" width="1" height="1"></rect><rect x="7" y="4" width="1" height="1"></rect><rect x="5" y="8" width="1" height="1"></rect><rect x="7" y="8" width="1" height="1"></rect></svg>
+        <span class="ix">01</span> The difference <span class="fill"></span>
+      </div>
+
+      <div class="head">
+        <h2>Same question. <br>One more useful.</h2>
+      </div>
+
+      <div class="compare">
+        <div>
+          <div class="cmp-tag off">
+            <svg class="glyph mute" width="7" height="7" viewBox="0 0 7 7" aria-hidden="true" shape-rendering="crispEdges"><rect x="0" y="0" width="7" height="1"></rect><rect x="0" y="6" width="7" height="1"></rect><rect x="0" y="1" width="1" height="5"></rect><rect x="6" y="1" width="1" height="5"></rect></svg>
+            Without the skill
+          </div>
+          <div class="term">
+            <div class="term-bar">
+              <span class="term-lights"><i></i><i></i><i></i></span>
+              <span class="term-title">any agent</span>
+            </div>
+            <div class="term-body">
+              <p class="tl wrap"><span class="p">&gt;</span><span>this vault pays 7% on USDC. worth putting $10k in?</span></p>
+              <div class="term-rule"></div>
+              <p class="tl wrap soft"><span class="x">&nbsp;</span><span>7% is attractive compared to traditional savings rates. The vault uses established DeFi protocols. Yields can fluctuate, and smart contract risk always exists. Consider your risk tolerance and do your own research.</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="cmp-tag on">
+            <svg class="glyph" width="7" height="7" viewBox="0 0 7 7" aria-hidden="true" shape-rendering="crispEdges"><rect x="0" y="3" width="1" height="1"></rect><rect x="1" y="4" width="1" height="1"></rect><rect x="2" y="5" width="1" height="1"></rect><rect x="3" y="4" width="1" height="1"></rect><rect x="4" y="3" width="1" height="1"></rect><rect x="5" y="2" width="1" height="1"></rect><rect x="6" y="1" width="1" height="1"></rect></svg>
+            With defi-native
+          </div>
+          <div class="term">
+            <div class="term-bar">
+              <span class="term-lights"><i></i><i></i><i></i></span>
+              <span class="term-title">defi-native active</span>
+            </div>
+            <div class="term-body">
+              <p class="tl wrap"><span class="p">&gt;</span><span>this vault pays 7% on USDC. worth putting $10k in?</span></p>
+              <div class="term-rule"></div>
+              <p class="tl"><span class="k">&check;</span><span>Names all the layers between you and the yield</span></p>
+              <p class="tl wrap"><span class="k">&check;</span><span>Looks at what is actually backing it, wrapped bitcoin or a synthetic dollar</span></p>
+              <p class="tl wrap"><span class="k">&check;</span><span>Names the oracle and how liquidations fire</span></p>
+              <p class="tl wrap"><span class="k">&check;</span><span>Understands risk tranches and who eats the first loss</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="swipe"><span class="arrow">&#8594;</span> Swipe to compare</p>
+    </div>
+  </section>
+
+  <!-- ================= CARDS ================= -->
+  <section id="does">
+    <div class="frame">
+      <div class="eyebrow">
+        <svg class="glyph" width="9" height="9" viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><rect x="0" y="0" width="4" height="4"></rect><rect x="5" y="0" width="4" height="4"></rect><rect x="0" y="5" width="4" height="4"></rect><rect x="5" y="5" width="4" height="4"></rect></svg>
+        <span class="ix">02</span> What you can do with it <span class="fill"></span>
+      </div>
+
+      <div class="head">
+        <h2>Be confident your ChatGPT or Claude actually understands defi.</h2>
+        <p class="lede">Ask any question on defi, crypto, onchain markets, and finance. The skill loads itself after it's installed.</p>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <h3>Understand defi risks and opportunities</h3>
+          <p>Ask “is this 7% real” and get the layers, the backing, and who eats first loss.</p>
+        </div>
+        <div class="card">
+          <h3>For researchers, investors, and defi users</h3>
+          <p>If you already have money onchain, this is the look-through generic AI will not do.</p>
+        </div>
+        <div class="card">
+          <h3>TradFi mapped to onchain</h3>
+          <p>Covered calls, repo, first loss. In language that does not assume you already know.</p>
+        </div>
+        <div class="card">
+          <h3>Build visuals, tables, and diagrams with one prompt</h3>
+          <p>One prompt, a table or diagram, so you can see the structure instead of a wall of text.</p>
+        </div>
+      </div>
+
+      <div class="built-marquee" aria-label="Built with 6,000+ pages of industry conferences, books, and documents">
+        <span class="bm-track"><span class="set"><span>Built with 6,000+ pages of industry conferences, books, and documents</span><i></i><span>Built with 6,000+ pages of industry conferences, books, and documents</span><i></i></span><span class="set"><span>Built with 6,000+ pages of industry conferences, books, and documents</span><i></i><span>Built with 6,000+ pages of industry conferences, books, and documents</span><i></i></span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HOW ================= -->
+  <section id="how">
+    <div class="frame">
+      <div class="eyebrow">
+        <svg class="glyph" width="9" height="9" viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><rect x="0" y="7" width="2" height="2"></rect><rect x="3" y="4" width="2" height="5"></rect><rect x="6" y="0" width="2" height="9"></rect></svg>
+        <span class="ix">03</span> How it works <span class="fill"></span>
+      </div>
+
+      <div class="head">
+        <h2>Install once. Use ChatGPT and Claude as you do.</h2>
+      </div>
+
+      <div class="trio">
+        <div>
+          <div class="n">1</div>
+          <h4>It stays out of the way</h4>
+          <p>The skill wakes up when your question is actually about onchain yield, tokens, rates or market structure.</p>
+        </div>
+        <div>
+          <div class="n">2</div>
+          <h4>It routes to what it needs</h4>
+          <p>Assessing a vault pulls a different file than explaining a covered call. Its deep reference material loads per task, never all at once.</p>
+        </div>
+        <div>
+          <div class="n">3</div>
+          <h4>It never guesses</h4>
+          <p>Before any number goes in an answer it pulls a fresh one and dates it. It pulls from 30+ APIs.</p>
+        </div>
+      </div>
+
+      <p class="swipe"><span class="arrow">&#8594;</span> Swipe for the next step</p>
+    </div>
+
+    <div class="wide">
+      <div class="sch">
+        <svg viewBox="0 0 960 566" role="img" aria-label="Routing diagram: a question enters the skill, routes to one of nine reference files, pulls live data, and returns a decomposed dated answer">
+          <g id="sch-g"></g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="frame" style="margin-top: 26px;">
+      <details class="seeall">
+        <summary>View all data sources</summary>
+        <div class="sw-body">
+        <div class="sw-row"><div class="sw-cat">Lending</div><div class="sw-names">Morpho <i>/</i> Aave <i>/</i> Euler <i>/</i> Spark <i>/</i> Compound <i>/</i> Fluid <i>/</i> Silo <i>/</i> Gearbox <i>/</i> Kamino <i>/</i> Liquity V2 <i>/</i> Flex <i>/</i> Term Finance <i>/</i> Loopscale <i>/</i> JustLend</div></div>
+        <div class="sw-row"><div class="sw-cat">Curators</div><div class="sw-names">Steakhouse <i>/</i> Gauntlet <i>/</i> Clearstar <i>/</i> MEV Capital <i>/</i> KPK <i>/</i> Sentora <i>/</i> Armitage <i>/</i> Birch Hill <i>/</i> TAU Labs</div></div>
+        <div class="sw-row"><div class="sw-cat">Vault infra</div><div class="sw-names">Upshift <i>/</i> Veda <i>/</i> Lagoon <i>/</i> Aera <i>/</i> Enzyme <i>/</i> Yearn <i>/</i> Mellow <i>/</i> Concrete <i>/</i> IPOR</div></div>
+        <div class="sw-row"><div class="sw-cat">Real world assets</div><div class="sw-names">Midas <i>/</i> Ondo <i>/</i> Securitize <i>/</i> Franklin Templeton <i>/</i> Superstate <i>/</i> Centrifuge <i>/</i> Grove <i>/</i> Plume <i>/</i> Nest <i>/</i> Spiko <i>/</i> OpenEden <i>/</i> Circle USYC <i>/</i> OnRe <i>/</i> Reserve</div></div>
+        <div class="sw-row"><div class="sw-cat">Stablecoins</div><div class="sw-names">Sky <i>/</i> Circle <i>/</i> Ethena <i>/</i> Tether <i>/</i> Resolv <i>/</i> Elixir <i>/</i> Usual <i>/</i> Neutrl <i>/</i> Lido</div></div>
+        <div class="sw-row"><div class="sw-cat">Markets</div><div class="sw-names">Pendle <i>/</i> Hyperliquid <i>/</i> Uniswap <i>/</i> Curve <i>/</i> Aerodrome <i>/</i> Derive <i>/</i> Lighter <i>/</i> Maple <i>/</i> GMX <i>/</i> Bebop <i>/</i> Panoptic <i>/</i> Contango <i>/</i> Exponent <i>/</i> 3Jane</div></div>
+        <div class="sw-row"><div class="sw-cat">Chains</div><div class="sw-names">Base <i>/</i> Solana <i>/</i> Monad <i>/</i> MegaETH <i>/</i> Robinhood Chain <i>/</i> Flashbots <i>/</i> Titan Builder</div></div>
+        <div class="sw-row"><div class="sw-cat">Restaking</div><div class="sw-names">EigenLayer <i>/</i> ether.fi <i>/</i> Symbiotic <i>/</i> Babylon <i>/</i> Kelp</div></div>
+        <div class="sw-row"><div class="sw-cat">Bitcoin wrappers</div><div class="sw-names">cbBTC <i>/</i> WBTC <i>/</i> Lombard</div></div>
+        <div class="sw-row"><div class="sw-cat">Tokenized equities</div><div class="sw-names">xStocks (Backed) <i>/</i> Alpaca <i>/</i> Robinhood Chain</div></div>
+        <div class="sw-row"><div class="sw-cat">Oracles</div><div class="sw-names">Chainlink <i>/</i> Pyth <i>/</i> RedStone <i>/</i> Chronicle <i>/</i> SEDA</div></div>
+        <div class="sw-row"><div class="sw-cat">Data</div><div class="sw-names">DefiLlama <i>/</i> vaults.fyi <i>/</i> rwa.xyz <i>/</i> Merkl <i>/</i> Chaos Labs <i>/</i> LlamaRisk <i>/</i> Pharos <i>/</i> Turtle Club</div></div>
+          <div class="sw-row"><div class="sw-cat">Academic</div><div class="sw-names">Loss-Versus-Rebalancing (Milionis et al.) <i>/</i> Pump-and-dump research (Kamps &amp; Kleinberg; Dhawan &amp; Putnins) <i>/</i> SEC microcap fraud alerts</div></div>
+        <div class="sw-foot"><b>+ many more.</b> New data sources are continually added. Also covered: the ERC-4626 and ERC-7540 vault standards (ethereum.org), staking, agent infrastructure, prime brokers and regulatory primaries.</div>
+        
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ================= VOICES ================= -->
+  <section id="voices">
+    <div class="frame">
+      <div class="eyebrow">
+        <svg class="glyph" width="9" height="9" viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><rect x="0" y="3" width="9" height="3"></rect><rect x="3" y="0" width="3" height="9"></rect></svg>
+        <span class="ix">04</span> What people say <span class="fill"></span>
+      </div>
+
+      <div class="head">
+        <h2>From people using it.</h2>
+      </div>
+
+      <div class="voices">
+        <div class="voice">
+          <span class="v-head"><img src="assets/avatars/babayega.jpg" alt="" loading="lazy"><span class="v-who"><b>shubhnkar</b><i>@babayega</i></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></span>
+          <p>“used this with codex this weekend and restructured my entire portfolio… this is genuinely useful for DeFi. kudos @emilylai”</p>
+        </div>
+        <div class="voice">
+          <span class="v-head"><img src="assets/avatars/0xMasterCrypto1.png" alt="" loading="lazy"><span class="v-who"><b>0xMaster</b><i>@0xMasterCrypto1</i></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></span>
+          <p>“Very bullish on what @emilylai is building.”</p>
+        </div>
+        <div class="voice">
+          <span class="v-head"><img src="assets/avatars/ernestkou.jpg" alt="" loading="lazy"><span class="v-who"><b>ernest</b><i>@ernestkou</i></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></span>
+          <p>“such an easy install, love it!”</p>
+        </div>
+        <div class="voice">
+          <span class="v-head"><img src="assets/avatars/dara_khan.jpg" alt="" loading="lazy"><span class="v-who"><b>Dara</b><i>@dara_khan</i></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></span>
+          <p>“really enjoying @defi_native_ai that’s my big dog”</p>
+        </div>
+        <div class="voice">
+          <span class="v-head"><img src="assets/avatars/caseycraig.jpg" alt="" loading="lazy"><span class="v-who"><b>Casey Craig</b><i>@caseycraig</i></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></span>
+          <p>“V useful public good! Em’s for the people”</p>
+        </div>
+        <div class="voice">
+          <span class="v-head"><img src="assets/avatars/igoryuzo.jpg" alt="" loading="lazy"><span class="v-who"><b>Igor Yuzovitskiy</b><i>@igoryuzo</i></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></span>
+          <p>“Give @emilylai $100 of LLM credits because she’s cooking”</p>
+        </div>
+      </div>
+      <p class="swipe"><span class="arrow">&#8594;</span> Swipe for more</p>
+    </div>
+  </section>
+
+  <!-- ================= INSTALL ================= -->
+  <section id="install" class="field">
+    <div class="frame">
+      <div class="eyebrow">
+        <svg class="glyph" width="9" height="9" viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><rect x="4" y="0" width="1" height="6"></rect><rect x="2" y="4" width="1" height="1"></rect><rect x="3" y="5" width="1" height="1"></rect><rect x="5" y="5" width="1" height="1"></rect><rect x="6" y="4" width="1" height="1"></rect><rect x="0" y="8" width="9" height="1"></rect></svg>
+        <span class="ix">05</span> Install <span class="fill"></span>
+      </div>
+
+      <div class="head">
+        <h2>Install in 30 seconds.</h2>
+      </div>
+
+      <div class="field-grid">
+        <div>
+          <div class="tabs" role="tablist" aria-label="Install method">
+            <button type="button" role="tab" aria-selected="true" data-tab="t-ask">Ask your agent</button>
+            <button type="button" role="tab" aria-selected="false" data-tab="t-cli">One command</button>
+            <button type="button" role="tab" aria-selected="false" data-tab="t-gpt">ChatGPT</button>
+            <button type="button" role="tab" aria-selected="false" data-tab="t-man">Manual</button>
+          </div>
+
+          <div class="panes">
+            <div class="pane" id="t-cli" role="tabpanel">
+              <div class="term">
+                <div class="term-bar">
+                  <span class="term-lights"><i></i><i></i><i></i></span>
+                  <span class="term-title">terminal</span>
+                  <button type="button" class="copy" data-copy="cmd-cli">Copy</button>
+                </div>
+                <div class="term-body">
+                  <p class="tl"><span class="p">$</span><span id="cmd-cli">npx skills add emlai/defi-native-skill</span></p>
+                  <div class="term-rule"></div>
+                  <p class="tl"><span class="k">?</span><span>Which agent?  detected automatically</span></p>
+                  <p class="tl"><span class="k">?</span><span>Install where?  defaults are fine</span></p>
+                  <p class="tl"><span class="k">&check;</span><span>defi-native v1.8.0 installed</span></p>
+                  <p class="tl muted"><span class="p">$</span><span>start a new session</span><span class="caret" aria-hidden="true"></span></p>
+                </div>
+              </div>
+
+              <div class="steps">
+                <div class="step">
+                  <div class="n">1</div>
+                  <h4>Open a terminal, not a chat window</h4>
+                  <p>Mac: Cmd+Space, type Terminal, hit Enter. Windows: open PowerShell from the Start menu.</p>
+                </div>
+                <div class="step">
+                  <div class="n">2</div>
+                  <h4>Paste the command</h4>
+                  <p>It finds your agent and asks where to put things. Take the defaults. If you see <code>command not found: npx</code>, install the LTS build of <a href="https://nodejs.org">Node.js</a> and run it again.</p>
+                </div>
+                <div class="step">
+                  <div class="n">3</div>
+                  <h4>Start a new session and ask something</h4>
+                  <p>Try &ldquo;what is actually backing sUSDe?&rdquo; The skill loads on its own.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="pane" id="t-ask" role="tabpanel" data-open="1">
+              <p>Open Claude, Codex, or Grok and paste this in:</p>
+              <div class="term">
+                <div class="term-bar">
+                  <span class="term-lights"><i></i><i></i><i></i></span>
+                  <span class="term-title">paste into your agent</span>
+                  <button type="button" class="copy" data-copy="cmd-ask">Copy</button>
+                </div>
+                <div class="term-body">
+                  <p class="tl wrap"><span class="p">&gt;</span><span id="cmd-ask">Install the skill from github.com/emlai/defi-native-skill by running: npx skills add emlai/defi-native-skill</span></p>
+                </div>
+              </div>
+              <div class="compat compat-row pane-works" aria-label="Works with Claude, OpenAI, Grok, Cursor, and more"><span class="compat-lbl">Works with</span><svg viewBox="0 0 24 24" role="img" aria-label="Claude"><title>Claude</title><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg><svg viewBox="0 0 24 24" role="img" aria-label="OpenAI"><title>OpenAI</title><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg><svg viewBox="0 0 24 24" role="img" aria-label="Grok" fill-rule="evenodd"><title>Grok</title><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"/></svg><svg viewBox="0 0 24 24" role="img" aria-label="Cursor"><title>Cursor</title><path d="M11.503.131 1.891 5.678a.84.84 0 0 0-.42.726v11.188c0 .3.162.575.42.724l9.609 5.55a1 1 0 0 0 .998 0l9.61-5.55a.84.84 0 0 0 .42-.724V6.404a.84.84 0 0 0-.42-.726L12.497.131a1.01 1.01 0 0 0-.996 0M2.657 6.338h18.55c.263 0 .43.287.297.515L12.23 22.918c-.062.107-.229.064-.229-.06V12.335a.59.59 0 0 0-.295-.51l-9.11-5.257c-.109-.063-.064-.23.061-.23"/></svg><span class="compat-more">+ more</span></div>
+            </div>
+
+            <div class="pane" id="t-gpt" role="tabpanel">
+              <p><b>ChatGPT and Codex are different products, and only one of them can install a skill.</b> Codex reads a skills folder on your machine, so the one-command install works there. The ChatGPT chat window has no filesystem, so nothing can be installed into it. You port the skill instead, as a Custom GPT.</p>
+
+              <div class="steps">
+                <div class="step">
+                  <div class="n">1</div>
+                  <h4>Download the skill</h4>
+                  <p>Grab the repo as a zip from <a href="https://github.com/emlai/defi-native-skill">GitHub</a> and unzip it, or clone it if you are comfortable with that.</p>
+                </div>
+                <div class="step">
+                  <div class="n">2</div>
+                  <h4>Create a Custom GPT</h4>
+                  <p>In ChatGPT, open the sidebar, then GPTs, then Create. Give it the name defi-native.</p>
+                </div>
+                <div class="step">
+                  <div class="n">3</div>
+                  <h4>Paste the instructions</h4>
+                  <p>Copy <code>chatgpt/INSTRUCTIONS.md</code> from the repo into the Instructions box. It is a condensed version of the skill's brain, trimmed to fit the character limit ChatGPT puts on that field.</p>
+                </div>
+                <div class="step">
+                  <div class="n">4</div>
+                  <h4>Upload the reference files as Knowledge</h4>
+                  <p>Under Knowledge, upload <code>SKILL.md</code>, everything in <code>references/</code>, plus <code>manifest.json</code> and <code>api-routes.json</code>. That is 19 files against ChatGPT's limit of 20. Running <code>python3 scripts/pack_chatgpt.py</code> collects them into one folder for you.</p>
+                </div>
+                <div class="step">
+                  <div class="n">5</div>
+                  <h4>Turn on Web Search</h4>
+                  <p>Under Capabilities. Without it the skill cannot pull live numbers, and dating every number is half of what it does.</p>
+                </div>
+              </div>
+
+              <p>A Project works too if you would rather not build a GPT: create one, put the same text in the project instructions and upload the same files. Either way you get the mental models and the discipline. What you do not get is the automatic loading, so say <em>use defi-native</em> when you want it.</p>
+            </div>
+
+            <div class="pane" id="t-man" role="tabpanel">
+              <p>Clone it and link it in. This is also the install that can keep itself updated.</p>
+              <div class="term">
+                <div class="term-bar">
+                  <span class="term-lights"><i></i><i></i><i></i></span>
+                  <span class="term-title">manual install</span>
+                  <button type="button" class="copy" data-copy="cmd-man">Copy</button>
+                </div>
+                <div class="term-body">
+                  <p class="tl"><span class="p">$</span><span id="cmd-man">git clone https://github.com/emlai/defi-native-skill.git ~/code/defi-native-skill</span></p>
+                  <p class="tl"><span class="p">$</span><span>ln -s ~/code/defi-native-skill ~/.agents/skills/defi-native</span></p>
+                </div>
+              </div>
+              <p><code>~/.agents/skills/</code> is the shared folder most hosts read. Claude Code also reads <code>~/.claude/skills/</code>, so link it into both if you use several agents.</p>
+            </div>
+          </div>
+
+          <p style="margin-top: 24px; font-size: 14px;">Optional API keys unlock deeper data but are never required. Plug in your own keys if you would like even more robust answers.</p>
+        </div>
+
+        <div>
+          <div class="machine">
+            <canvas id="machine-canvas" aria-label="A halftone illustration of an early desktop computer"></canvas>
+            <div class="cap">
+              <span>Detects your agent</span>
+              <span>Keyless by default</span>
+              <span>Read only, always</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section id="faq">
+    <div class="frame">
+      <div class="eyebrow">
+        <svg class="glyph" width="9" height="9" viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><rect x="1" y="0" width="5" height="1"></rect><rect x="6" y="1" width="1" height="3"></rect><rect x="4" y="4" width="2" height="1"></rect><rect x="4" y="5" width="1" height="1"></rect><rect x="4" y="7" width="1" height="2"></rect><rect x="0" y="1" width="1" height="1"></rect></svg>
+        <span class="ix">06</span> Questions <span class="fill"></span>
+      </div>
+
+      <div class="head">
+        <h2>Questions</h2>
+      </div>
+
+      <div class="faq">
+        <details>
+          <summary>What is defi-native?</summary>
+          <div class="a"><p>defi-native is a folder of plain text files you drop into an AI agent to make it expert at one thing: everything onchain finance. It includes specific instructions, reference material, and worked examples. It's free to install and works with any AI.</p></div>
+        </details>
+        <details>
+          <summary>Who is defi-native for?</summary>
+          <div class="a">
+            <p>defi-native is for:</p>
+            <p>1. Anyone who trades onchain and uses defi protocols<br>2. Anyone who wants to learn traditional and onchain finance concepts</p>
+          </div>
+        </details>
+        <details>
+          <summary>Does it only work with Claude or ChatGPT?</summary>
+          <div class="a"><p>No. Any agent that reads the Agent Skills format: Claude Code, Cursor, Codex, Grok Bot and others.</p><p><a class="btn ghost" href="#install">How to install</a></p></div>
+        </details>
+        <details>
+          <summary>Do I need API keys?</summary>
+          <div class="a"><p>No. Everything core runs keyless. Keys buy you deeper data, and the skill will name the one key that would improve the answer in front of you. You can <a href="#install">install in 30 seconds</a>.</p></div>
+        </details>
+        <details>
+          <summary>Can it move my money?</summary>
+          <div class="a"><p>No. defi-native was built to help the team understand financial concepts and the latest in defi. It cannot trade for you, does not have access to your wallet, and can never sign, submit or approve a transaction.</p><p>It can be used to help with investment decisions, understanding where the yield comes from, and sizing opportunities.</p></div>
+        </details>
+        <details>
+          <summary>How much does it cost?</summary>
+          <div class="a"><p>defi-native is completely free and always will be.</p></div>
+        </details>
+        <details id="faq-token">
+          <summary>Is there a token?</summary>
+          <div class="a">
+            <p>The <a href="https://bankr.bot/terminal/trade?out=0xad46308a6f6999bacc099f3029b77c352e772ba3&amp;chain=base">Bankr</a> community launched a token based off this AI skill announcement on X. Fees are used to fund the project. Some fees have also been <a href="https://x.com/emilylai/status/2094132631478698379?s=20">airdropped to holders</a>. The defi-native team owns zero tokens.</p>
+            <p class="tokenbox">
+              <span class="tk">Ticker</span> <b>$defi-native</b>
+              <span class="tk">Chain</span> <b>Base</b>
+              <span class="tk">Contract</span> <code>0xad46308a6f6999bacc099f3029b77c352e772ba3</code>
+            </p>
+            <p class="buy-row">
+              <a class="buy-btn" href="https://bankr.bot/terminal/trade?out=0xad46308a6f6999bacc099f3029b77c352e772ba3&amp;chain=base"><svg viewBox="0 0 150 150" aria-hidden="true"><path d="M78.3292 71.6875H74.9961V75H78.3292V71.6875Z"/><path d="M111.662 71.6875H108.329V84.9375H104.992V88.25H108.329V98.1875H111.662V88.25H114.983V84.9375H111.662V71.6875Z"/><path d="M124.991 71.6875H121.658V78.3125H118.328V81.625H121.658V98.1875H124.991V81.625H128.321V78.3125H124.991V71.6875Z"/><path d="M124.991 31.9375H108.32V35.25H124.991V31.9375Z"/><path d="M124.993 45.1875H108.324V48.5H124.993V45.1875Z"/><path d="M128.322 38.5625H104.988V41.875H128.322V38.5625Z"/><path d="M74.9972 75H71.6641V78.3125H74.9972V75Z"/><path d="M44.9972 75H41.6641V78.3125H44.9888V81.625H71.662V78.3125H44.9972V75Z"/><path d="M41.6651 71.6875H38.332V75H41.6651V71.6875Z"/><path d="M51.6623 51.8125H44.9961V65.0625H51.6623V51.8125Z"/><path d="M71.6623 51.8125H64.9961V65.0625H71.6623V51.8125Z"/><path d="M78.3296 31.9375H38.3324C30.9696 31.9375 25 37.8702 25 45.1875V84.9375C25 92.2548 30.9696 98.1875 38.3324 98.1875H78.3296C85.6924 98.1875 91.662 92.2548 91.662 84.9375V45.1875C91.662 37.8702 85.6924 31.9375 78.3296 31.9375ZM88.3289 84.9375C88.3289 90.4164 83.8426 94.875 78.3296 94.875H38.3324C32.8195 94.875 28.3331 90.4164 28.3331 84.9375V45.1875C28.3331 39.7086 32.8195 35.25 38.3324 35.25H78.3296C83.8426 35.25 88.3289 39.7086 88.3289 45.1875V84.9375Z"/><path d="M38.3324 111.438H25V114.75H38.3324V111.438Z"/><path d="M134.992 108.125V28.625C134.992 24.9663 132.007 22 128.325 22H21.6662C17.9848 22 15 24.9663 15 28.625V121.375C15 125.034 17.9848 128 21.6662 128H128.325C132.007 128 134.992 125.034 134.992 121.375V108.125ZM18.3331 28.625C18.3331 26.7982 19.828 25.3125 21.6662 25.3125H98.3159V104.813H18.3331V28.625ZM131.659 114.75C131.659 116.577 130.164 118.063 128.325 118.063H21.6662C19.828 118.063 18.3331 116.577 18.3331 114.75V108.125H131.659V114.75ZM131.659 104.813H101.656V25.3125H128.325C130.164 25.3125 131.659 26.7982 131.659 28.625V104.813Z"/></svg>Buy on Bankr</a>
+              <a class="buy-btn" href="https://app.uniswap.org/swap?chain=base&amp;outputCurrency=0xAd46308a6f6999BaCc099F3029B77c352E772ba3"><img src="assets/logos/uniswap.png" alt="">Buy on Uniswap</a>
+            </p>
+            <p>Fees fund the project. Check the contract address before you buy anything. Tickers can be copied; an address cannot.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Is this financial advice?</summary>
+          <div class="a"><p>No. It produces research, and says so every time. Ask for a pick and you will get one, but only with the full view attached: what has to be true, what breaks it, the total loss case, and the runner up. DeFi has total loss tails and the skill never pretends otherwise.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CLOSE ================= -->
+  <section id="close" class="field">
+    <div class="frame close-grid">
+      <div class="close-copy">
+        <h2>Make your AI agent defi native today.</h2>
+        <p class="lede">Free, MIT licensed, and it works in the agent you already use.</p>
+
+        <div class="term" style="width: 100%;">
+          <div class="term-bar">
+            <span class="term-lights"><i></i><i></i><i></i></span>
+            <span class="term-title">install</span>
+            <button type="button" class="copy" data-copy="cmd-close">Copy</button>
+          </div>
+          <div class="term-body">
+            <p class="tl"><span class="p">$</span><span id="cmd-close">npx skills add emlai/defi-native-skill</span><span class="caret" aria-hidden="true"></span></p>
+          </div>
+        </div>
+
+        <div class="cta-row" style="margin-bottom: 0;">
+          <a href="#install" class="btn">Install for free</a>
+          <a href="https://github.com/emlai/defi-native-skill" class="btn ghost">GitHub</a>
+        </div>
+      </div>
+
+      <div class="close-mark" role="img" aria-label="defi-native mark: a fluted column inside a broken ring"></div>
+    </div>
+  </section>
+
+  <!-- ================= CHANGELOG ================= -->
+  <section id="log">
+    <div class="frame">
+      <div class="eyebrow">
+        <svg class="glyph" width="9" height="9" viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><rect x="0" y="0" width="9" height="1"></rect><rect x="0" y="4" width="6" height="1"></rect><rect x="0" y="8" width="7" height="1"></rect></svg>
+        <span class="ix">07</span> Changelog <span class="fill"></span>
+      </div>
+
+      <div class="head">
+        <h2>Latest updates</h2>
+        <p class="lede">The skill is updated based on output quality, feedback, and advances in defi. Check to see if you're running the <a href="update/">latest version of defi-native</a>.</p>
+      </div>
+
+      <div class="log-wrap">
+      <div class="log">
+        <div class="entry current">
+          <div class="v num">1.8.0</div><div class="d num">2026-09-02</div>
+          <p class="s"><b>It can now tell you whether a tokenized fund's yield is real.</b> Putting money into a tokenized treasury or credit fund is not like buying a token on an exchange. Someone decides the price you come in at, and when they decide it can work for you or against you. This covers the four ways that settlement actually happens, how to tell whether an advertised yield was measured or simply announced, and what the issuer takes before any of it reaches you. Contributed by @mishablank.</p>
+        </div>
+        <div class="entry">
+          <div class="v num">1.7.0</div><div class="d num">2026-08-31</div>
+          <p class="s"><b>It can now read market structure.</b> How to tell a real short squeeze from a crowded trade. How to spot wash trading and other manipulation from traces left onchain. Why a tokenized stock has three different prices at the same time, and which one actually matters. What people mean when they call a token liquid, and how to check. Also added: how attention turns into an asset, a new kind of lending market where your interest rate is really a bid for your place in the exit queue, and how to read raw blockchain logs when the dashboards do not go back far enough.</p>
+        </div>
+        <div class="entry">
+          <div class="v num">1.6.4</div><div class="d num">2026-08-30</div>
+          <p class="s"><b>Went through every data source by hand.</b> Twelve new ones, thirty-one in total. Fixed the logins, the endpoints that had quietly moved, and one source that was promising more than it could actually answer.</p>
+        </div>
+        <div class="entry">
+          <div class="v num">1.6.3</div><div class="d num">2026-08-30</div>
+          <p class="s"><b>Taught it where to look things up.</b> Each kind of question now maps to the right data source, with the common mistakes attached, plus a note on what your own API key would unlock if you have one.</p>
+        </div>
+        <div class="entry">
+          <div class="v num">1.6.2</div><div class="d num">2026-08-30</div>
+          <p class="s"><b>No hand-waving in comparisons.</b> Every option it puts in front of you has to show its own numbers, not just the one it recommends. A test enforces it.</p>
+        </div>
+        <div class="entry">
+          <div class="v num">1.6.0</div><div class="d num">2026-08-30</div>
+          <p class="s"><b>Options, trades, and how to judge a manager.</b> Three new references: why providing liquidity is really selling an option and what that costs you, how discounted locked-token deals work with three real 2026 examples, and eleven professional curators' published frameworks boiled down to one checklist you can score any manager against.</p>
+        </div>
+        <div class="entry">
+          <div class="v num">1.5.3</div><div class="d num">2026-08-28</div>
+          <p class="s"><b>Four different AI models tried to break it.</b> Everything they found got fixed, including a clearinghouse process described in the wrong order and a price that was off by a factor of ten.</p>
+        </div>
+        <div class="entry">
+          <div class="v num">1.5.2</div><div class="d num">2026-08-28</div>
+          <p class="s"><b>Caught in real use.</b> One lookup was only returning half of Morpho's vaults, so the skill was silently missing entire sets of positions without saying so.</p>
+        </div>
+        <div class="entry">
+          <div class="v num">1.5.1</div><div class="d num">2026-08-28</div>
+          <p class="s"><b>First public release.</b> Tested by running the same questions with and without the skill and comparing, reviewed by independent AI models, and every source checked by hand.</p>
+        </div>
+      </div>
+      </div>
+
+      <p class="log-hint"><span class="arrow">&#8595;</span> Scroll inside the box for older releases. Full history in <a href="https://github.com/emlai/defi-native-skill/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
+
+      <div class="signup">
+        <p class="signup-k">Get updates by email</p>
+        <iframe width="540" height="440" src="https://3c760949.sibforms.com/v2/serve/MUIFANWsOvyBUFealY-BViOr0TF8muR_YOCnr6cW_VcWJ9WS99q6EPN_5dwdPFdIe8mUKnhXTGMUOi9i_kqojMNnP3hYimWBXjlC4LQeW4edCEJJSBy8fvkIxR6jbadtwzKNodEBYaEeLl1aMUd4P8n5o2Pmom6BTaXjfhNsF9VnRGaBgFL0u24vEh4Tw--ldR-xs2_UPwfZZS3Fig==" frameborder="0" scrolling="auto" allowfullscreen style="display: block; margin-left: auto; margin-right: auto; width: 100%; max-width: 540px;" title="Email signup"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="frame">
+      <div class="foot-row">
+        <a href="https://github.com/emlai/defi-native-skill" class="iconlink" aria-label="GitHub repository" title="GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        </a>
+        <a href="https://x.com/defi_native_ai" class="iconlink" aria-label="defi-native on X" title="X">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+        </a>
+        <a href="https://x.com/defi_native_ai">@defi_native_ai</a>
+        <span>built by <a href="https://x.com/emilylai">@emilylai</a></span>
+        <span class="sp"></span>
+        <span>MIT</span>
+        <span class="num">v1.8.0</span>
+      </div>
+      <p class="foot-note">defi-native was built for research and education, not financial advice. Nothing on this website or in the repo is financial advice.</p>
+    </div>
+  </footer>
+
+</main>
+
+<script src="assets/site.js?v=81ebc871"></script>
+
+</body>
+</html>
