@@ -18,6 +18,8 @@ Two cautions before the table. First, the columns are not two dialects: DeFi use
 | MMF share (yield to the holder) | Tokenized MMF / yield-bearing dollar | Transfer and eligibility gates; securities-adjacent; same no-backstop caveat |
 | Hedge-fund basis book | Synthetic dollar | Funding has no circuit breaker and can invert in hours |
 | ETF create/redeem | Mint/redeem at NAV | The arb only exists for whitelisted or vested actors |
+| Mutual-fund forward pricing (Rule 22c-1) | Request-then-claim settlement (ERC-7540 pattern) | Nothing forces it onchain: atomic mint at a previously posted rate is common, and the stale-rate option it creates is the 2003 market-timing trade reborn (references/rwa-fund-mechanics.md) |
+| Two-and-twenty (hedge fund fees) | Issuer/curator management + performance fees | No standard fee table: the take can hide in offering documents the app never shows, or as the spread between book yield and a declared rate |
 | Zero-coupon bond | PT (principal token) | Marked by an oracle someone chose, not a deep tape |
 | Bond strip (IO) | YT (yield token) | Also a weapon against the PT's oracle |
 | Credit spread | Yield above the T-bill proxy | Unnamed slices are marketing, not compensation |
@@ -29,6 +31,11 @@ Two cautions before the table. First, the columns are not two dialects: DeFi use
 | Shadow-bank run | Utilization trap, depeg, gates | Runs move at block speed; first movers are rewarded |
 | Margin loan, releveraged | Looping | Self-service leverage on your own collateral, liquidated by bots; the borrower runs the machine |
 | Rehypothecation | Collateral-as-liquidity; receipt-token reuse | The PROTOCOL reuses your collateral (as AMM inventory, or a wrapper re-staking your asset); a different party bears the reuse risk |
+| PIPE discount / Rule 144 restricted stock | Discounted locked-token OTC deal | The discount prices cliff, carry, and adverse selection; the seller knows more than you |
+| Side pocket and gate (hedge funds) | NAV exclusion of illiquids, redemption gates | Honest sequence: exclude, gate, disclose. Watch exit clauses amended before gates |
+| Options market maker (short gamma book) | Concentrated liquidity LP | Fees are premium paid by realized flow, not implied volatility; no dynamic hedge |
+| Exchange priority, colocation, payment for order flow | Priority fees, builders, private order flow | The queue is for sale either way; ask who receives the toll |
+| Program trading basket | Atomic multi-market order | Same all-or-nothing legging control |
 
 ## 1. The hierarchy of money
 

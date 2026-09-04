@@ -1,6 +1,6 @@
 # Live data sources and recipes
 
-The rule: pull, then speak. Numbers must come from this session's fetches, dated. When a fetch fails or a figure cannot be verified, say so explicitly rather than substituting memory.
+Routing is machine-readable: `api-routes.json` at the repo root maps question patterns to endpoints with auth tiers and what each key unlocks; this file carries the recipes, pitfalls, and judgment behind those rows. The rule: pull, then speak. Numbers must come from this session's fetches, dated. When a fetch fails or a figure cannot be verified, say so explicitly rather than substituting memory.
 
 ## Aggregators (start here)
 
@@ -55,6 +55,18 @@ The paid feed is a convenience, not a dependency. The same questions answer keyl
 - Block explorers remain ground truth when any of the above disagree.
 
 More keyless recipes, verified Aug 28 2026: Hyperliquid `POST api.hyperliquid.xyz/info` with `{"type":"metaAndAssetCtxs"}` returns funding, open interest, and marks per market (read-only info endpoint; never the exchange endpoint). Pendle and Boros publish OpenAPI specs under docs.pendle.finance for implied APY, PT/YT prices, and funding-swap data. Franklin's BENJI has a public API (digitalassets.franklintempleton.com/api-docs). rwa.xyz asset pages follow `app.rwa.xyz/assets/<SLUG>` (BUIDL, PYUSD, etc.), but the app is Cloudflare-gated against plain fetches: browser tool only. The docs subdomain and its llms.txt fetch fine. DefiLlama also runs an MCP server at mcp.defillama.com/mcp: prefer it over raw endpoints when the agent host supports MCP.
+
+### Raw-log forensics (when aggregators cannot see inside a fast window)
+
+Aggregator trade APIs cap out (GeckoTerminal returns the last 300 trades; DexScreener buckets by hour), so any minute-level question about a pump, an exploit, or an unwind needs the chain itself. The keyless recipe, verified Aug 2026:
+
+1. Block-bound the window. Get the latest block and timestamp from any public RPC (base-rpc.publicnode.com, 1rpc.io, drpc.org all serve keyless; send a browser User-Agent or some will 403), then iterate: block estimate = latest minus (latest_ts minus target_ts) divided by chain block time, refine twice against actual timestamps.
+2. eth_getLogs on the venue contract with the event topic and the pool/market id as an indexed topic, chunked ~800 blocks per call. Uniswap V4 swaps live on the singleton PoolManager with the pool id as topic1; V2/V3 use the pair address directly.
+3. Decode signed amounts to classify sides (V4: positive delta = the caller received that token), and size trades in the quote asset times its USD price.
+4. Resolve humans: batch eth_getTransactionByHash (100 to 150 per JSON-RPC batch) to get each swap's tx.from (the wallet) and tx.to (the router). Cluster wallets by router, vanity prefix, and timing before counting participants.
+5. Output per-wallet net USD flow over the episode. It assigns roles (sniper, fleet, exit liquidity) in one sorted table, and cumulative net flow per minute against the price series yields the amplification ratio (section 18).
+
+Pitfalls: one transaction can hold several swap events (probes, multi-hop routing), so dedupe by transaction only for wallet counts, never for volume; sells outnumbering buys is usually a probe artifact, not distribution; and public RPCs rate-limit, so rotate across two or three endpoints.
 
 ## Bring your own keys
 

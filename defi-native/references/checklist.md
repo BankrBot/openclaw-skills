@@ -48,6 +48,10 @@ Run every product through this. Unanswered items are findings.
 - [ ] Skin in the game (first-loss, own deposits)
 - [ ] Time-to-exit in a past incident
 - [ ] Fees: management, performance, effective take
+- [ ] Published process? (mandate filter, graded DD, disqualification gate, tier-linked caps, engagement loop: curation-frameworks.md)
+- [ ] Role in THIS product: curator, allocator, or both; self-dealing (allocator into own vaults), fee stacking, proprietary-book conflicts
+- [ ] Downgrade mechanics: what a risk-tier drop DOES to position size, and on what clock
+- [ ] Monitoring wired to exit on critical alerts, or alert-only?
 - [ ] Legal classification questions: Howey / adviser / ICA / Reves : facts only, no legal opinion
 
 ## Yield
@@ -71,6 +75,7 @@ Run every product through this. Unanswered items are findings.
 - [ ] Isolation real on the graph, or shared collateral + shared oracle + shared allocator
 - [ ] LLTV, borrow LTV vs liq LTV, penalty, caps, utilization
 - [ ] Public allocator or other cross-market liquidity pipe
+- [ ] Position sized within the venue's free-liquidity buffer ((100% minus kink) x pool liquidity), or beyond it
 - [ ] If AMM/LP: fees vs emissions vs IL split; JIT and LVR dilution; exit route protected or public mempool
 
 ## Oracle
@@ -96,6 +101,20 @@ Run every product through this. Unanswered items are findings.
 - [ ] Perp venue + funding + house vault if synthetic
 - [ ] Redemption waterfall: instant / facility / OTC / slow path / gate
 - [ ] Issuer-operator vs agent-model if RWA
+- [ ] Settlement class: atomic at posted rate / request queue priced at fulfillment / epoch batch at one price / transfer-agent book (rwa-fund-mechanics.md)
+- [ ] Forward pricing test, both directions: price struck after the order commits; price-setter cannot see pending orders before striking
+- [ ] Posted-price bounds: independent-oracle tolerance, rate-of-change caps, staleness checks, or none
+- [ ] APY print: formula class (two-point compound / simple / declared / administrator-fed), window, measured vs declared, what feeds the NAV
+- [ ] Issuer fee stack: management / performance (high-water mark, hurdle) / redemption / offering-document fees not in the app / spread take if the rate is declared
+
+## Strategy products (if the product runs trades: neutral, basis, OTC, options, LP)
+- [ ] What is the book SHORT (funding, tail, counterparties), and is that leg pre-funded (reserve sized how, contributing at what current rate)
+- [ ] Each live position's shape vs the documented strategy taxonomy (locked is not spot; OTC inventory is not basis) : strategy drift check
+- [ ] Illiquid positions: marked how, in or out of NAV, gated how (side-pocket sequence: exclude, gate, disclose)
+- [ ] Terms of Use: who can amend, what notice, when did redemption/freeze language last change
+- [ ] Any OTC discount decomposed: cliff / hedge carry / adverse selection / mark risk
+- [ ] Crowding: funded or borrowed bid (five-test scorecard, tokens file); recovery quality after the last shock
+- [ ] If options or LP yield: who is short what; premium priced by implied volatility or by flow; writer liquidation/exercise mechanics; net of LVR and JIT
 
 ## Failure shapes
 - [ ] Looping / PT-looping

@@ -5,7 +5,7 @@ DeFi's league tables rotate in months, incentives end without notice, and struct
 ## The weekly pulse (30 minutes of pulls)
 
 1. The rate anchor: current 3-month T-bill and the large tokenized T-bill fund yields. Every onchain spread re-prices off this; a moving anchor changes every judgment downstream.
-2. Stablecoin float: total supply and week-over-week change, split by top issuers, plus any yield-bearing dollar growth. Float is the system's money supply; expansion funds risk-taking, contraction precedes stress.
+2. Stablecoin float: total supply and week-over-week change, split by top issuers, plus any yield-bearing dollar growth (stablecoins.llama.fi for float; pharos.watch for depeg warnings, freeze events, and mint/burn flows). Float is the system's money supply; expansion funds risk-taking, contraction precedes stress.
 3. Curated vault state: total curated TVL, top-curator shares, new vault launches this week, and any vault with warnings. Launch pace and concentration shifts are the industry's hiring-and-firing tape.
 4. Rates and utilization hotspots: major money-market borrow rates, markets above ~90% utilization (exit traps forming), caps at 100% (demand exceeding risk limits: raise coming or spread available).
 5. Funding regime: perp funding levels on majors (positive/negative, trend). Funding is the risk-appetite thermometer and the revenue driver for every basis strategy and synthetic dollar.
@@ -22,6 +22,9 @@ DeFi's league tables rotate in months, incentives end without notice, and struct
 - Holder concentration rising in a growing vault = growth from a few integrators, not adoption; exit risk masquerading as traction.
 - Same-asset rate gaps widening across venues = fragmentation returning or a venue-specific fear; both are information.
 - Stablecoin float flat while "RWA TVL" grows = usually rotation, not new money; check whether the product accepts direct fiat subscriptions before concluding, since institutional inflows can arrive by wire and never touch float. Onchain growth claims should reconcile to one of the two.
+- Recovery quality after a shock beats drawdown depth as a signal: names that reclaim their pre-shock level are funded, names that stay down were borrowed (the June 2026 cascade is the calibration); pairwise correlation that stays positive in calm AND crash says the market trades a set of names as one book regardless of fundamentals.
+- Legal-terms diffs are the new timelock watch: archive the Terms of Use of anything held and alert on changes to redemption obligations, freeze rights, or liability language. An exit clause amended days before a gate is the documented pattern (Aug 2026); lawyers move before gates do.
+- OTC discount chatter widening (bigger discounts, shorter cliffs, "guaranteed" tranches circulating in private groups) = the extraction cycle maturing in whatever names it touches; treat the menu itself as the signal.
 
 ## Structural signals (the map is changing)
 

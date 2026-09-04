@@ -1,10 +1,10 @@
 {
   "name": "defi-native-docs",
-  "version": "1.5.6",
-  "what_this_is": "An address book of primary documentation the skill may fetch. It is not the skill itself. SKILL.md holds mental models. This file tells the agent which official docs exist, which URL to open, and which concept those docs serve. Do not ingest the whole list into context. Look up the product under analysis and fetch only the matching rows. verified=implicit: every add-row URL and llms_txt in this file was liveness-checked 2026-08-28; rows noted 403 need a browser tool. Re-verify any row on first use in a session.",
+  "version": "1.8.0",
+  "what_this_is": "An address book of primary documentation the skill may fetch. It is not the skill itself. SKILL.md holds mental models. This file tells the agent which official docs exist, which URL to open, and which concept those docs serve. Do not ingest the whole list into context. Look up the product under analysis and fetch only the matching rows. verified=implicit: every add-row URL and llms_txt in this file was liveness-checked 2026-09-02; rows noted 403 need a browser tool. Re-verify any row on first use in a session.",
   "how_to_use": [
     "Identify the product class (vault, market, stable, RWA, PT, perp, wrapper).",
-    "Select rows whose category and skill_use match that class. Cap at 4\u20136 fetches.",
+    "Select rows whose category and skill_use match that class. Cap at 4 to 6 fetches.",
     "Prefer llms_txt or llms_full when present. Then the docs homepage. Then a specific page in pages[].",
     "Treat protocol docs as marketing unless they admit a loss, publish parameters, or show the oracle/redemption path.",
     "Always pair a protocol row with the matching standard, oracle, and wrapper rows when look-through requires it."
@@ -103,7 +103,10 @@
       "priority": "core",
       "status": "existing",
       "docs": "https://docs.spark.fi",
-      "skill_use": "Sky allocator. sUSDS deployment into Aave/Morpho."
+      "skill_use": "Sky allocator. sUSDS deployment into Aave/Morpho.",
+      "pages": [
+        "https://docs.spark.finance/products/spark-liquidity-layer"
+      ]
     },
     {
       "id": "euler",
@@ -332,7 +335,11 @@
       "priority": "core",
       "status": "existing",
       "docs": "https://docs.derive.xyz",
-      "skill_use": "Options / vol. Only when the product is options-linked."
+      "skill_use": "Options / vol. Only when the product is options-linked.",
+      "pages": [
+        "https://docs.derive.xyz/docs/about-derive",
+        "https://docs.derive.xyz/docs/what-are-options"
+      ]
     },
     {
       "id": "ethena",
@@ -341,7 +348,10 @@
       "priority": "core",
       "status": "existing",
       "docs": "https://docs.ethena.fi",
-      "skill_use": "Synthetic dollar. Funding + staking book. Hidden sleeve under many USDC vaults."
+      "skill_use": "Synthetic dollar. Funding + staking book. Hidden sleeve under many USDC vaults.",
+      "pages": [
+        "https://docs.ethena.fi/protocol-overview/reserve-fund.md"
+      ]
     },
     {
       "id": "circle",
@@ -492,7 +502,10 @@
       "status": "existing",
       "docs": "https://steakhouse.financial/docs",
       "skill_use": "Largest curator by several censuses. Partnership vaults (Coinbase, Safe).",
-      "note": "Large curator (48% of Morpho curated TVL per vaults.fyi census, as of Aug 2026; rankings rotate, re-verify live)."
+      "note": "Large curator (48% of Morpho curated TVL per vaults.fyi census, as of Aug 2026; rankings rotate, re-verify live).",
+      "pages": [
+        "https://steakhouse.financial/docs/risk-management/readme.md"
+      ]
     },
     {
       "id": "sentora",
@@ -661,7 +674,11 @@
       "priority": "should",
       "status": "add",
       "docs": "https://docs.yearn.fi",
-      "skill_use": "Original vault stack. Strategy debt limits. Useful contrast to Morpho curators."
+      "skill_use": "Original vault stack. Strategy debt limits. Useful contrast to Morpho curators.",
+      "pages": [
+        "https://docs.yearn.fi/getting-started/products/curating/introduction",
+        "https://curation.yearn.fi/"
+      ]
     },
     {
       "id": "uniswap",
@@ -689,6 +706,16 @@
       "status": "add",
       "docs": "https://www.llamarisk.com",
       "skill_use": "Collateral onboarding writeups. Oracle and wrapper risk."
+    },
+    {
+      "id": "clearstar",
+      "name": "Clearstar",
+      "category": "risk-research",
+      "priority": "should",
+      "status": "verify-on-first-use",
+      "docs": "https://sticky-burst-444.notion.site/Capital-Allocation-Framework-3208ae5ce0f88034a5cfe519bce01098",
+      "pages": [],
+      "skill_use": "Curator-published capital allocation framework (10 stages, sourcing to execution): the worked example behind references/curation-frameworks.md. Also publishes vault risk reports at clearstar.xyz. Notion site needs a JS-capable fetch or a Notion connector."
     },
     {
       "id": "peirce-vaults",
@@ -829,6 +856,15 @@
       "skill_use": "TBILL, a major tokenized T-bill issuer: another point on the risk-free-proxy map next to Superstate and BUIDL."
     },
     {
+      "id": "spiko",
+      "name": "Spiko",
+      "category": "rwa",
+      "priority": "should",
+      "status": "add",
+      "docs": "https://docs.spiko.io",
+      "skill_use": "European tokenized money market funds (EUTBL, USTBL) under an EU regulatory wrapper. One of the treasuries-class issuers stating zero performance fee explicitly, so a management-fee-only reference point for the issuer fee map (rwa-fund-mechanics.md)."
+    },
+    {
       "id": "contango",
       "name": "Contango",
       "category": "rates",
@@ -877,6 +913,16 @@
       "skill_use": "Tokenized T-bill+repo fund (Cayman/Bermuda structure), allowlist transfers, used as exchange collateral. Same rf cohort as BUIDL."
     },
     {
+      "id": "onre",
+      "name": "OnRe",
+      "category": "rwa",
+      "priority": "thin",
+      "status": "add",
+      "docs": "https://docs.onre.finance",
+      "llms_txt": "https://docs.onre.finance/llms.txt",
+      "skill_use": "Tokenized reinsurance (ONyc) on Solana. The declared-rate reference case: the admin posts the rate and NAV ramps from it, so the APY is an input, not a measurement (rwa-fund-mechanics.md)."
+    },
+    {
       "id": "benji",
       "name": "Franklin Templeton BENJI (FOBXX)",
       "category": "rwa",
@@ -904,7 +950,10 @@
       "priority": "core",
       "status": "add",
       "docs": "https://docs.xstocks.fi/docs/how-xstocks-work",
-      "skill_use": "Tracker certificates: 1:1 custody, no voting, rebasing multiplier for dividends/splits. A different claim than Coinbase B20; never treat suffixed tickers as one class."
+      "skill_use": "The reference mint/redeem rail for tokenized-stock analysis (market-microstructure.md section 6): KYC-gated primary at $100K minimum, 24/5 US-market-hours only, retail secondary cannot redeem, rebasing multiplier for corporate actions, Clearstream/InCore custody. Check the rail's three gates (who, when, size) before any peg or squeeze question. Tracker certificates: no voting.",
+      "pages": [
+        "https://docs.xstocks.fi/docs/frequently-asked-questions"
+      ]
     },
     {
       "id": "symbiotic",
@@ -1019,8 +1068,265 @@
       "docs": "https://docs.seda.xyz",
       "llms_txt": "https://docs.seda.xyz/llms.txt",
       "skill_use": "Programmable oracle network: custom Oracle Programs fetch and compute data on demand (solver plus proof-of-stake validation), rather than vendor push feeds. Fetch when a market's feed is SEDA-powered: the oracle-class questions (concepts 13) apply to the PROGRAM, so read what the specific program computes, who wrote it, and what can move its output."
+    },
+    {
+      "id": "pharos-watch",
+      "name": "Pharos",
+      "category": "risk-research",
+      "priority": "core",
+      "status": "add",
+      "docs": "https://pharos.watch",
+      "llms_txt": "https://pharos.watch/llms.txt",
+      "pages": [
+        "https://pharos.watch/depeg/",
+        "https://pharos.watch/freezewatch/",
+        "https://pharos.watch/dependency-map/",
+        "https://pharos.watch/methodology/",
+        "https://pharos.watch/datasets/stablecoin-cemetery.json"
+      ],
+      "skill_use": "Stablecoin risk observatory: depeg early warning (DEWS), issuer freeze events (FreezeWatch), inter-stablecoin dependency map (shared-graph contagion, visualized), mint/burn flows, and the Cemetery dataset of dead stablecoins with causes of death (failure-catalog calibration). Methodology and its changelogs are published: rare and creditable. Its Safety Scores are a vendor model: use as input, never in place of the claim-type and decomposition analysis."
+    },
+    {
+      "id": "panoptic",
+      "name": "Panoptic",
+      "category": "exchanges",
+      "priority": "should",
+      "status": "verify-on-first-use",
+      "docs": "https://panoptic.xyz/docs/panoptic-protocol/overview",
+      "pages": [
+        "https://panoptic.xyz/docs/contracts/smart-contracts-overview"
+      ],
+      "skill_use": "Perpetual options built on Uniswap LP chunks: streaming premium (streamia), forced exercise, undercollateralized selling. The literal proof that a CL position is an option. TVL was under $1M Aug 2026: design reference, not a deep market."
+    },
+    {
+      "id": "lighter",
+      "name": "Lighter",
+      "category": "exchanges",
+      "priority": "core",
+      "status": "verify-on-first-use",
+      "docs": "https://docs.lighter.xyz",
+      "llms_txt": "https://docs.lighter.xyz/llms.txt",
+      "pages": [
+        "https://docs.lighter.xyz/trading/order-types-and-matching.md",
+        "https://docs.lighter.xyz/trading/liquidations-and-llp-insurance-fund.md",
+        "https://docs.lighter.xyz/trading/real-world-assets-rwas.md"
+      ],
+      "skill_use": "Zero-fee CLOB perps with SNARK-verified matching (price-time priority provable, not trusted). Order-type reference. RWA and pre-IPO perps; LLP house pool; also deployed on Robinhood Chain ($46M TVL there Aug 30 2026, DefiLlama)."
+    },
+    {
+      "id": "neutrl",
+      "name": "Neutrl",
+      "category": "stables",
+      "priority": "should",
+      "status": "verify-on-first-use",
+      "docs": "https://docs.neutrl.finance",
+      "llms_txt": "https://docs.neutrl.finance/llms.txt",
+      "pages": [
+        "https://docs.neutrl.finance/protocol-design/portfolio-allocation"
+      ],
+      "skill_use": "NUSD synthetic dollar running hedged locked-token OTC deals. Halted minting/redemptions Aug 13/14 2026 after a ToS edit on Aug 11; sNUSD traded near $0.56; the locked-OTC failure print in trade-anatomy. Not listed on DefiLlama as of Aug 30 2026."
+    },
+    {
+      "id": "piggybank",
+      "name": "PiggyBank",
+      "category": "vault-infra",
+      "priority": "thin",
+      "status": "verify-on-first-use",
+      "docs": "https://piggybank.gitbook.io/docs",
+      "llms_txt": "https://piggybank.gitbook.io/docs/llms.txt",
+      "skill_use": "Solana yield vaults on tokenized stocks; the small-buyer locked-OTC print (Jun 2026 LAB disclosure, NAV cut 9-15%, honest side-pocket treatment). Strategy-drift calibration case. TVL $1.6M Aug 30 2026."
+    },
+    {
+      "id": "kpk",
+      "name": "KPK",
+      "category": "curators",
+      "priority": "core",
+      "status": "verify-on-first-use",
+      "docs": "https://docs.kpk.io",
+      "llms_txt": "https://docs.kpk.io/llms.txt",
+      "pages": [
+        "https://docs.kpk.io/vaults/infrastructure/risk-framework.md"
+      ],
+      "skill_use": "Curator + DAO treasury manager. The scoring epistemology reference: worst dimension wins, severity over probability, thin evidence counts against, observability is a scored gate, soft vs hard shutdown."
+    },
+    {
+      "id": "mev-capital",
+      "name": "MEV Capital",
+      "category": "curators",
+      "priority": "core",
+      "status": "verify-on-first-use",
+      "docs": "https://mevcapital.gitbook.io/vaults-protocol",
+      "llms_txt": "https://mevcapital.gitbook.io/vaults-protocol/llms.txt",
+      "pages": [
+        "https://mevcapital.gitbook.io/vaults-protocol/methodology-and-curation.md"
+      ],
+      "skill_use": "Curation firm (unrelated to MEV the ordering phenomenon; always disambiguate). Simulation-calibrated LTV/LLTV, exposure limits, proprietary scoring."
+    },
+    {
+      "id": "armitage",
+      "name": "Armitage (Wintermute)",
+      "category": "curators",
+      "priority": "core",
+      "status": "verify-on-first-use",
+      "docs": "https://armitage.wintermute.com/docs",
+      "llms_txt": "https://armitage.wintermute.com/docs/llms.txt",
+      "pages": [
+        "https://armitage.wintermute.com/docs/risks-and-monitoring"
+      ],
+      "skill_use": "Market maker's curation arm. Five named depositor risk categories; oracle-vs-liquidatable-value onboarding; Hypernative + internal engine dual monitoring. Ask the proprietary-desk conflict question."
+    },
+    {
+      "id": "birch-hill",
+      "name": "Birch Hill",
+      "category": "curators",
+      "priority": "core",
+      "status": "verify-on-first-use",
+      "docs": "https://docs.birchhill.io",
+      "llms_txt": "https://docs.birchhill.io/llms.txt",
+      "pages": [
+        "https://docs.birchhill.io/risk-framework/dynamic-allocation-engine"
+      ],
+      "skill_use": "Microstructure-native allocator: CVaR supply caps, HHI concentration, liquidation-clustering maps, MM SLAs, CEX/DEX spread as MM-failure alarm, dual-layer rebalancing."
+    },
+    {
+      "id": "k3-capital",
+      "name": "K3 Capital",
+      "category": "curators",
+      "priority": "thin",
+      "status": "verify-on-first-use",
+      "docs": "https://forum.morpho.org/t/about-the-k3-capital-category/1800",
+      "skill_use": "Curator + $570M+ proprietary delta-neutral manager (their May 2025 figure). No published methodology: the control case where absence of process is the finding; underwrite via track record and Dune dashboards only."
+    },
+    {
+      "id": "base-chain",
+      "name": "Base",
+      "category": "chains",
+      "priority": "core",
+      "status": "verify-on-first-use",
+      "docs": "https://docs.base.org",
+      "llms_txt": "https://docs.base.org/llms.txt",
+      "pages": [
+        "https://docs.base.org/base-chain/network-information/network-fees"
+      ],
+      "skill_use": "L2 fee mechanics: L2 execution + L1 data fee, GasPriceOracle predeploy, minimum base fee, custom EIP-1559 params. The sequencer-margin reference for concepts 8."
+    },
+    {
+      "id": "monad",
+      "name": "Monad",
+      "category": "chains",
+      "priority": "should",
+      "status": "verify-on-first-use",
+      "docs": "https://docs.monad.xyz",
+      "llms_txt": "https://docs.monad.xyz/llms.txt",
+      "pages": [
+        "https://docs.monad.xyz/developer-essentials/gas-pricing.md",
+        "https://docs.monad.xyz/node-ops/validator-delegation-program/mev.md"
+      ],
+      "skill_use": "L1 charging gas LIMIT not gas used (async execution); adaptive base-fee controller; priority gas auction ordering; delegation policy against centralized order flow and third-party builders."
+    },
+    {
+      "id": "megaeth",
+      "name": "MegaETH",
+      "category": "chains",
+      "priority": "should",
+      "status": "verify-on-first-use",
+      "docs": "https://docs.megaeth.com",
+      "llms_txt": "https://docs.megaeth.com/llms.txt",
+      "pages": [
+        "https://docs.megaeth.com/architecture.md"
+      ],
+      "skill_use": "Real-time L2 (10ms mini-blocks), single HA sequencer, EigenDA data availability (the DA-cost look-through), ZK fraud proofs (Kailua)."
+    },
+    {
+      "id": "solana",
+      "name": "Solana",
+      "category": "chains",
+      "priority": "core",
+      "status": "verify-on-first-use",
+      "docs": "https://solana.com/docs",
+      "llms_txt": "https://solana.com/llms.txt",
+      "pages": [
+        "https://solana.com/docs/core/fees"
+      ],
+      "skill_use": "Fee routing reference: base fee per signature 50% burned / 50% leader, prioritization fees 100% to leader; out-of-protocol tip market (Jito) on top: re-verify current shares."
+    },
+    {
+      "id": "stonkbrokers",
+      "name": "StonkBrokers / Robinhood Chain",
+      "category": "tokenized-equities",
+      "priority": "thin",
+      "status": "verify-on-first-use",
+      "docs": "https://stonkbrokers.io/docs",
+      "skill_use": "The memecoin-stock pairing ecosystem on Robinhood Chain: launchpads quoted in stock tokens, ERC-8056 multiplier oracle, ve(3,3) DEX, STORMM options hook (pre-launch). Bias print: founder-signed audit. US-restricted stock-token features."
+    },
+    {
+      "id": "liquity-v2",
+      "name": "Liquity V2 (BOLD)",
+      "category": "lending",
+      "priority": "should",
+      "status": "add",
+      "docs": "https://docs.liquity.org/",
+      "llms_txt": "https://docs.liquity.org/llms.txt",
+      "pages": [
+        "https://docs.liquity.org/v2-faq/redemptions-and-delegation.md",
+        "https://docs.liquity.org/v2-faq/bold-and-earn.md"
+      ],
+      "skill_use": "The reference implementation of borrower-set fixed rates with redemption-ordered unwinds (concepts.md section 5, seventh design). Redemption routing proportional to outside debt, branch shielding as a live condition, last-in-first-redeemed tie-breaking, rate delegation managers. Serves llms.txt and .md page suffixes."
+    },
+    {
+      "id": "flex",
+      "name": "Flex (flexmeow)",
+      "category": "lending",
+      "priority": "thin",
+      "status": "add",
+      "docs": "https://flexmeow.com/docs",
+      "pages": [
+        "https://github.com/flexmeow/flex-contracts"
+      ],
+      "skill_use": "Liquity V2 rate mechanism generalized to a two-sided money market: lender exits force borrower unwinds via Dutch auction, upfront fees as first-loss, curated ERC-4626 lender vaults, in-kind redemption for non-atomic collateral. Young protocol; verify deployment maturity before assessing."
+    },
+    {
+      "id": "lvr-paper",
+      "name": "Loss-Versus-Rebalancing (Milionis, Moallemi, Roughgarden, Zhang)",
+      "category": "risk-research",
+      "priority": "should",
+      "status": "add",
+      "docs": "https://arxiv.org/abs/2208.06046",
+      "skill_use": "The rigorous form of the AMM-as-uncancellable-quote-ladder analogy (market-microstructure.md section 2). Quantifies what LPs lose to arbitrageurs as depth is consumed."
+    },
+    {
+      "id": "pump-dump-detection",
+      "name": "Crypto pump-and-dump research (Kamps & Kleinberg; Dhawan & Putnins)",
+      "category": "risk-research",
+      "priority": "thin",
+      "status": "add",
+      "docs": "https://crimesciencejournal.biomedcentral.com/articles/10.1186/s40163-018-0093-5",
+      "pages": [
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3670714"
+      ],
+      "note": "SSRN 403s non-browser agents; use a browser tool for the Dhawan-Putnins paper.",
+      "skill_use": "Empirical fingerprints for detecting pumps (market-microstructure.md section 4): volume-from-dead-tape, distribution timing, wallet clustering."
+    },
+    {
+      "id": "sec-microcap-alerts",
+      "name": "SEC microcap fraud and pump-and-dump investor alerts",
+      "category": "risk-research",
+      "priority": "thin",
+      "status": "add",
+      "docs": "https://www.sec.gov/investor/alerts",
+      "note": "sec.gov 403s non-browser agents; browser tool.",
+      "skill_use": "The pre-crypto pump-and-dump playbook; the TradFi analog for memestock questions and content tasks."
+    },
+    {
+      "id": "robinhood-chain",
+      "name": "Robinhood Chain and Stock Tokens",
+      "category": "tokenized-equities",
+      "priority": "should",
+      "status": "add",
+      "docs": "https://robinhood.com/us/en/newsroom/robinhood-accelerates-global-expansion-robinhood-chain-mainnet-stock-tokens-agentic-trading/",
+      "skill_use": "Permissionless L2 (Arbitrum Orbit, mainnet July 1 2026, single Robinhood sequencer) hosting Stock Tokens in 120+ countries. Tokens are DEBT claims from a Jersey issuer, not equity (SEC Jan 2026 guidance watches this structure). Onchain RWA depth ~$12.66M against 240K holders (July 2026): tiny per-name depth, high amplification. Re-verify; changes quarterly."
     }
   ],
-  "updated": "2026-08-28",
-  "checked": "2026-08-28"
+  "updated": "2026-09-02",
+  "checked": "2026-09-02"
 }

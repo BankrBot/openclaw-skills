@@ -5,16 +5,19 @@ A skill that makes any LLM agent crypto-native for onchain capital markets. Ever
 ## Core
 - [SKILL.md](SKILL.md): prime directives, working loop, orientation, competence test
 - [README.md](README.md): what this is and how it is organized
-- [manifest.json](manifest.json): 95 protocol/docs sources with machine-readable endpoints
+- [api-routes.json](api-routes.json): question-to-API router with auth tiers and key_unlocks
+- [manifest.json](manifest.json): 123 protocol/docs sources with machine-readable endpoints
 
 ## References (load per task)
 - [references/analogs.md](references/analogs.md): the TradFi Rosetta stone and baseline capital-markets chapters
-- [references/concepts.md](references/concepts.md): 17 evergreen sections incl. yield decomposition, oracle taxonomy, claim-stack look-through
+- [references/market-microstructure.md](references/market-microstructure.md): depth, squeezes, manipulation fingerprints, tokenized-stock dislocations
+- [references/concepts.md](references/concepts.md): 18 evergreen sections incl. yield decomposition, oracle taxonomy, claim-stack look-through
 - [references/defi-opportunities-playbook.md](references/defi-opportunities-playbook.md): 12-step assessment, opportunity lens, recommendation protocol
 - [references/checklist.md](references/checklist.md): run against any product; unanswered items are findings
 - [references/data-sources.md](references/data-sources.md): live data recipes, API tiers, keys, MCP
 - [references/market-pulse.md](references/market-pulse.md): monitoring cadence, leading indicators, structural signals
 - [references/task-playbooks.md](references/task-playbooks.md): learning and content playbooks
+- [references/rwa-fund-mechanics.md](references/rwa-fund-mechanics.md): RWA primary market: settlement classes, forward pricing, APY print taxonomy, issuer fee map
 - [references/tokens-and-value-accrual.md](references/tokens-and-value-accrual.md): token rights, accrual, launch mechanics
 - [references/perps-and-funding.md](references/perps-and-funding.md): perp mechanics, funding, venue DD, RWA perps
 - [references/credit-cycles-and-history.md](references/credit-cycles-and-history.md): Minsky sort, cycle template, historical rhymes
