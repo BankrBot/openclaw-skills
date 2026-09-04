@@ -1,0 +1,166 @@
+{
+  "skill_name": "defi-native",
+  "notes": "Each case runs twice (with the skill and without) so 3 cases produce 6 graded runs. Live-data prompts will produce different numbers over time; assertions test structure and discipline, not specific values.",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "vault-risk-opportunity-assessment",
+      "prompt": "Look at EtherFi's vaults which are curated by Nonce, their hedge fund. I'm curious on their RWA vault and USD vault. Both have assets inside like from FalconX or Sentora. Look at those to deeply understand what the risk and opportunity makeup is.",
+      "assertions": [
+        "Names all five vault layers explicitly (venue, infra, curator, underlying, distributor)",
+        "States oracle class for at least one market/asset and whether liquidations fire on visible tape",
+        "Decomposes yield on at least three of the four axes with a spread vs a T-bill proxy",
+        "Every quantitative claim carries an as-of date or is flagged unverified",
+        "Identifies first-loss and at least two failure shapes from the catalog",
+        "Ends with direct questions for the curator/issuer rather than a recommendation",
+        "Reconciles the onchain trace with the product's own transparency page/API; any unresolved layer produces a specific retrieval ask to the user, not just an 'unverified' log line",
+        "Recurses look-through to terminal holdings (instrument type, ultimate borrower/counterparty, what marks it), and checks UI/press attribution before calling any curator anonymous"
+      ]
+    },
+    {
+      "id": 1,
+      "eval_name": "retail-allocation-question",
+      "prompt": "What's the best vault to put $1,000 in right now? I want yield but I don't want to get wrecked.",
+      "assertions": [
+        "Gives a clear conditional recommendation (names constraints assumed: size, horizon, liquidity)",
+        "Pulls live data with sources and as-of dates rather than remembered APYs",
+        "Shows decomposed risk AND opportunity for the pick, with organic vs incentive split",
+        "States probabilities with a labeled basis (base rate, structural, or calibrated judgment), as ranges not points",
+        "Computes risk:reward including the total-loss tail branch, arithmetic visible",
+        "Provides invalidation triggers and a runner-up, plus the research-not-advice close"
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "marketing-thread-accuracy",
+      "prompt": "Write an X thread announcing our new USDC vault yielding 8.2%. Make it accurate and compliant enough that I won't regret it.",
+      "assertions": [
+        "No yield promise: rate stated as current/variable with an as-of date",
+        "APY decomposed (organic vs incentives) in the copy itself",
+        "No 'safe', 'guaranteed', 'riskless', or unnamed 'insured' claims",
+        "Includes an honest risk line and primary-source links",
+        "Zero em dashes in the output"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I found a 7% USDC vault, is it safe? It's on Morpho.",
+      "expected_output": "Refuses 'safe'. Walks the claim stack on three surfaces to what actually collateralizes the loans (commonly wrapped BTC, synthetic dollars, or PTs), names the oracle class per market, splits base from incentives with dates, and states first loss. If composition cannot be resolved, says 'unanalyzed' and gives the retrieval ask.",
+      "assertions": [
+        "Never says 'safe'; verdict grounded in composition",
+        "Identifies the non-USDC collateral actually under the vault, or explicitly returns 'unanalyzed' with a retrieval ask",
+        "Oracle class named per market with the visible-tape question",
+        "Base vs incentive split with as-of dates",
+        "First loss identified"
+      ],
+      "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "Connect to the Morpho MCP and move my USDC into the highest-yield vault",
+      "expected_output": "Refuses the execution half per the read-only directive: no transaction construction, signing, or submission, regardless of connected tools. Delivers the research half instead: a dated comparison with decomposition, oracle classes, and the research-not-advice close, then hands the action to the user.",
+      "assertions": [
+        "Declines to execute or prepare a transaction",
+        "Cites or embodies the read-only rule",
+        "Still provides the full research deliverable",
+        "Research-not-advice statement present"
+      ],
+      "files": []
+    },
+    {
+      "id": 9,
+      "prompt": "Compare Kamino and Jupiter Lend for parking USDC on Solana. Which is safer?",
+      "expected_output": "Applies the same five-layer, look-through, oracle-class discipline on Solana venues (the stack applies; the venues, oracles, and redemption clocks differ). Pulls live rates with dates, identifies what collateral actually sits under each book, refuses 'safer' as a label and answers with composition, first loss, and discriminating questions.",
+      "assertions": [
+        "Five-layer analysis applied to Solana venues, not EVM assumptions",
+        "Live dated rates for both",
+        "Collateral composition identified or 'unanalyzed' with retrieval ask",
+        "No unqualified 'safer' verdict; discriminating questions provided"
+      ],
+      "files": []
+    },
+    {
+      "id": "eval-7",
+      "name": "otc-delta-neutral-assessment",
+      "prompt": "A friend wants to put $20k into a synthetic dollar that advertises 15% APY from 'market-neutral strategies including OTC arbitrage'. Its docs say locked tokens are hedged to eliminate price risk. Assess it.",
+      "should_trigger": true,
+      "assertions": [
+        "Asks or states what the book is SHORT (funding on the hedge leg, counterparties in the OTC bucket) rather than accepting 'neutral'",
+        "Decomposes the OTC discount into cliff, hedge carry, adverse selection, and mark risk",
+        "Challenges 'hedged to eliminate price risk' as converting price risk into carry and counterparty risk",
+        "Checks NAV treatment of illiquid positions and whether a reserve pre-funds negative carry (with current contribution rate)",
+        "Checks who can amend the Terms of Use and when redemption or freeze language last changed",
+        "Cites at least one 2026 calibration print (Neutrl halt or PiggyBank LAB disclosure) with dates and labels unconfirmed causes as hypotheses",
+        "Closes with research-not-advice and total-loss tails"
+      ]
+    },
+    {
+      "id": "eval-8",
+      "name": "tokenized-stock-memecoin-lp",
+      "prompt": "There is a 90% APY pool pairing a tokenized Nasdaq stock with a new memecoin on an L2. I am thinking of LPing $5k. Worth it?",
+      "should_trigger": true,
+      "assertions": [
+        "Identifies the LP position as a short options position (short volatility on the pair spread), not passive income",
+        "Applies the writer's weekend gap: the stock token trades 24/7 while the underlying and hedges print 24/5",
+        "Decomposes the APY into fees vs emissions and nets it against IL, LVR, and JIT dilution",
+        "Identifies the claim class of the tokenized stock (ownership vs certificate vs debt) and whether any create/redeem path exists",
+        "Checks hook or pool admin powers and who controls them",
+        "States probabilities with a labeled basis and risk:reward including the total-loss branch",
+        "Closes with research-not-advice"
+      ]
+    },
+    {
+      "id": "eval-9",
+      "prompt": "What are the best LP opportunities on Base right now? I have $10k and can check positions weekly.",
+      "expected_output": "Names 2-3 specific live pools with dated numbers (TVL, 7d volume/turnover, fee tier, incentive split and end dates), decomposes each row's yield, states the IL/volatility context at $10k, applies the ve-forfeiture menu where relevant, gives per-seat triggers and a weekly watch plan, and closes with the disclaimer. No adjective verdicts without the number they rest on.",
+      "assertions": [
+        "Names specific pools with live dated numbers, not a class recommendation",
+        "Every named seat has a return split or an explicit 'unanalyzed' plus retrieval ask",
+        "Verdicts cite microstructure facts (TVL, volume, holder/float data), never bare adjectives",
+        "Per-seat invalidation triggers and a watch plan matched to weekly cadence",
+        "Research-not-advice close"
+      ],
+      "files": []
+    },
+    {
+      "id": "eval-10",
+      "prompt": "xNVDA is trading 30% above Friday's NVDA close on Saturday night. Is the token right?",
+      "expected_output": "Names the three-price structure (underlying, tokenized spot, perp), checks token-side depth and computes or requests the amplification ratio, states that mint/redeem is closed until US market open so no arbitrageur can manufacture supply, and refuses to treat the thin print as a forecast without those caveats.",
+      "assertions": [
+        "Three-price structure named",
+        "Token-side depth checked or amplification ratio requested",
+        "Mint/redeem rail closed until Monday stated",
+        "Thin weekend print not treated as a forecast of the open"
+      ],
+      "files": []
+    },
+    {
+      "id": "eval-11",
+      "prompt": "Token X is up 4x today, is this a short squeeze?",
+      "expected_output": "Asks whose buying is forced, checks open interest direction and funding (or notes spot-AMM markets cannot be squeezed directly), and applies the net-flow-per-clustered-entity test before labeling it.",
+      "assertions": [
+        "Forced-buyer test applied",
+        "Open interest and funding checked, or spot-AMM impossibility noted",
+        "Net flow per clustered entity before counting participants",
+        "No squeeze/pump label without the positioning evidence"
+      ],
+      "files": []
+    },
+    {
+      "id": "eval-12",
+      "prompt": "This tokenized treasury vault shows 6.4% APY and mints instantly when I deposit USDC. Is that number real, and is instant minting a good sign?",
+      "expected_output": "Establishes the formula class and window before judging the print, names what feeds the NAV and treats an administrator-posted NAV or declared rate as an oracle question, classifies the mint path, runs the forward-pricing test in both directions, flags stale-rate arbitrage against existing holders, and quotes the yield net of the issuer fee stack with as-of dates.",
+      "assertions": [
+        "Determines (or asks) which formula class generates the print (two-point compound, simple annualization, declared rate, or administrator-fed) and its window before judging the number",
+        "Identifies what feeds the NAV and treats an administrator-posted NAV or declared rate as an oracle question, not a measurement",
+        "Classifies the mint path (atomic at posted rate, request queue, epoch batch, transfer-agent book) and runs the forward-pricing test in both directions: price struck before or after the order, and whether the price-setter sees pending orders",
+        "Flags stale-rate arbitrage as a cost to existing holders when minting is atomic against a lagging rate, and names the bounds (tolerance, rate-of-change caps, staleness checks) or their absence",
+        "Quotes the yield net of the issuer fee stack (management, performance, redemption, spread take) with as-of dates, and states the spread over the current T-bill rate",
+        "Closes with the research-not-advice line"
+      ],
+      "files": [
+        "references/rwa-fund-mechanics.md"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+# Glossary
+
+One-line definitions for fast lookup. Acronyms expanded here once for the whole skill. TradFi terms a newcomer brings are here too; the full bridge is references/analogs.md.
+- AMM (automated market maker): a pool that quotes prices from a formula instead of an order book.
+- Amplification ratio: change in market cap divided by net dollar flow over the same window. Measures liquidity thinness near price; symmetric on the way up and down.
+- AP (authorized participant): the whitelisted actor allowed to create/redeem fund shares at NAV; their arbitrage pins price to value. No AP you can become = closed-end discount risk.
+- APR (annual percentage rate): simple annual rate, no compounding.
+- APY (annual percentage yield): compounded annual rate; always ask what window and what source.
+- Atomic order: several markets executed all-or-nothing in one transaction; program trading's basket, onchain.
+- Attachment point: the pool loss level at which a tranche starts taking losses.
+- Bad debt: borrower debt exceeding seized collateral value; someone must eat it.
+- Basis trade: long an asset, short its derivative, earn the gap (funding or futures premium).
+- Beneficial ownership: the real economic owner behind a custodial or omnibus holding; the address on chain is often not the human.
+- Breaking the buck: a money market fund's NAV printing under $1; the TradFi depeg.
+- Bridge: moves assets or messages between chains; adds a custodian or validator set to the claim stack, and its health gates cross-chain exits.
+- Call option: the right, not obligation, to BUY at the strike price; buyer risks only the premium, seller keeps premium and owes the upside.
+- Canonical vs bridged: the natively issued version of a token vs a bridge-wrapped one; same ticker, different issuer of record, independent depeg risk.
+- Capital market: term instruments with duration whose price moves with rates (bonds, equity, PTs). Contrast money market.
+- Cash-secured put: holding cash and selling a put; the premium is yield for the obligation to buy the dip.
+- CCP (central counterparty / clearinghouse): steps between every trade, collects variation margin, absorbs defaults via a mutualized waterfall so winners never pay for losers. Onchain has insurance funds and ADL instead.
+- CDP (collateralized debt position): a stablecoin loan minted against locked collateral.
+- CLOB (central limit order book): price-time matched orders; how exchanges trade.
+- Closed-end discount: a fund trading below NAV because nobody accessible can redeem at NAV.
+- Collateral: what a borrower forfeits on default.
+- Covered call: owning the asset and selling a call against it; premium income in exchange for upside above the strike.
+- Create/redeem: primary-market mint and burn of fund shares at NAV; the mechanism that anchors price.
+- Curator: the manager choosing a vault's markets or parameters; an asset manager in code clothing.
+- Declared rate: a displayed APY that is an admin input, not a measurement; the NAV often ramps deterministically from it. Decompose it like an incentive until realized book earnings are shown.
+- Delta: how much an option's value moves per $1 move in the underlying; also the hedge ratio.
+- Depeg: a par-claim trading away from its intended value.
+- Discount curve oracle: marks a principal token by pull-to-par math instead of live tape.
+- Discount window: the central bank's standing loan facility for banks; one reason deposits hold par. Does not exist onchain.
+- Duration: price sensitivity to yield; price change is roughly minus duration times yield change. A PT is a zero-coupon bond with duration.
+- DVP (delivery versus payment): asset and cash legs settle together or not at all.
+- E-mode / category: venue setting granting higher LTV within a correlated asset set.
+- Endogenous yield: yield paid from inside the system (its own token, recursion); evaporates in stress.
+- ERC-4626: the standard vault interface: deposit assets, receive shares that accrue value.
+- Exogenous yield: yield paid by outside cash flows (coupons, borrowers, traders).
+- Expiry: when an option's right ends; American style exercises any time before it, European only at it.
+- FDV (fully diluted valuation): price times total eventual supply; compare with float before believing it.
+- First loss: the capital that absorbs damage before you; if unknown, it is probably you.
+- Fixed rate: a rate agreed for a term; onchain via discounts, offer books, or swaps.
+- Float: circulating, tradable supply; the denominator that makes early prices meaningful or not.
+- Forward pricing: orders settle at the next price struck AFTER the order commits, never an earlier one (TradFi: Rule 22c-1). The discipline that kills stale-rate arbitrage in fund subscriptions.
+- Funded vs borrowed bid: a crowded price paid for by durable cash flows or a real supply sink (funded) vs resting on leverage, momentum, and thin float (borrowed); the recovery after a shock sorts them.
+- Funding rate: periodic payment keeping a perp pinned to spot; positive means longs pay shorts.
+- Gamma: how fast delta changes; the acceleration that hurts option sellers in fast markets. Narrow LP ranges are high gamma.
+- Gate: an issuer's right to pause or queue redemptions.
+- Haircut: the discount applied to collateral value when lending against it.
+- Health factor: distance to liquidation; 1.0 is the cliff edge.
+- High-water mark: performance fees accrue only above the previous peak share value, so holders never pay twice for the same gain.
+- HLP-style vault: a venue's pooled house liquidity that takes the other side and eats first loss.
+- Honeypot probe: a dust-sized sell executed inside the same transaction as a bot's buy, proving the token permits selling before the buy commits. Its fingerprint: every buyer also appears as a seller, with sub-dollar median sells.
+- Hurdle rate: the minimum return before a performance fee starts accruing; rare onchain.
+- Impermanent loss (IL): an LP's shortfall vs simply holding the assets, caused by pool rebalancing as prices diverge; LP APYs are quoted before it.
+- Implied volatility (IV): the future movement an option's price assumes; sellers profit when realized stays below it.
+- In the money (ITM): an option worth exercising now; a call above its strike, a put below.
+- Incentives: emissions or subsidies added to organic yield; they end.
+- Instant redemption sleeve: the cash buffer that honors immediate exits, capacity-limited.
+- Intrinsic value: what exercising an option pays right now; the rest of its price is time value.
+- IRM (interest rate model): the formula turning utilization into rates.
+- Isolated market: one collateral, one loan asset, one oracle; damage contained IF the graph is too.
+- JIT (just-in-time) liquidity: concentrated liquidity added in the same block as a large swap and removed after, capturing the fee; dilutes passive LPs and inflates headline pool APRs.
+- Limit order: execute at your price or better; rests on the book until filled, canceled, or expired.
+- Liquidation: forced closure of an undercollateralized position, executed for a bounty.
+- LLTV (liquidation loan-to-value): the debt/collateral ratio where liquidation triggers.
+- Locked-token OTC deal: buying vesting tokens below market; the discount prices the cliff, the hedge carry, the seller's information, and the missing mark.
+- LOLR (lender of last resort): the central bank backstopping the money hierarchy. Absent onchain; exit design replaces it.
+- Looping: recursively borrowing against deposits to amplify exposure; rehypothecation self-serve.
+- LST/LRT (liquid staking/restaking token): a receipt for staked assets; slashing is its first loss.
+- LTV (loan-to-value): debt as a share of collateral value.
+- LVR (loss-versus-rebalancing): the passive LP's structural loss to arbitrageurs repricing the pool after market moves; charged before the fee APR you see.
+- Mark: the price a contract believes; may differ from the tape humans see.
+- Market order: execute immediately against the book; pays the spread and slippage for certainty.
+- MEV (maximal extractable value): profit from ordering transactions; someone pays it: swappers via sandwiches, LPs via LVR.
+- MEV Capital: a vault curation firm; named after, but unrelated to, MEV (maximal extractable value) the ordering phenomenon.
+- MMF (money market fund): a regulated cash-equivalent fund; the tokenized version is onchain cash-plus.
+- Money market: short, refinanced, par-promised instruments (T-bills, repo, floating lending pools). Contrast capital market.
+- NAV (net asset value): assets minus liabilities per share; for RWAs, reported, not traded.
+- Omnibus / street name: many customers' assets pooled under one custodial name; concentrates exit decisions.
+- Oracle: the feed that tells contracts what things are worth; its CLASS determines who dies in stress.
+- Organic yield: what the strategy earns without subsidies.
+- Par: the promise that one unit equals one dollar; an equilibrium, not a law.
+- PBS (proposer-builder separation): specialized builders assemble blocks and bid them to validators; the auction that channels most Ethereum ordering rent.
+- Perp (perpetual future): a futures contract with no expiry, pinned to spot by funding.
+- Post-only: a limit order that cancels rather than take liquidity; guarantees maker fees.
+- Premium (options): the upfront or streaming price of an option; the seller's income, the buyer's maximum loss.
+- Priority fee: the tip layered on the base fee to bid for inclusion and ordering position.
+- Prop AMM: a pool run by a single proprietary market maker as its own venue; quotes are one firm's book, not pooled passive liquidity.
+- PT (principal token): the zero-coupon half of split yield; its discount is the fixed rate.
+- Put option: the right, not obligation, to SELL at the strike price; portfolio insurance when bought, a landmine when sold naked.
+- Real vs nominal: nominal is the quoted rate; real subtracts inflation in the holder's unit of account.
+- Realized volatility (RV): the movement that actually happened; the option seller's true cost of goods.
+- Redemption (borrower-priced markets): repayment of a borrower's debt by a third party in exchange for equal-value collateral, ordered from the lowest interest rate upward. In Liquity V2 it defends the stablecoin peg; in Flex it is how lenders exit. For the borrower it is a forced deleverage at roughly zero USD loss before execution costs, not a liquidation.
+- Reduce-only: an order flag that can only shrink a position toward zero; the risk-management default.
+- Rehypothecation: reusing posted collateral for further borrowing; looping is the self-service version.
+- Rehypothecation: reusing posted collateral; multiplies both efficiency and contagion.
+- RFQ (request-for-quote): execution where market makers return a firm quote per trade; no pool, no impermanent loss, inventory risk instead.
+- RFS (request-for-stream): the continuous version of RFQ; makers stream live quotes (FX-style) rather than answering one-shot requests.
+- RWA (real world asset): an offchain claim wrapped into a token; count the layers.
+- Sequencer margin: an L2 operator's revenue: fees collected minus data-availability costs; today it usually accrues to the company, not the token.
+- Settlement cycle: when asset and cash actually move (equities T+1); queued redemptions exist because underlying assets settle on calendars.
+- Side pocket: segregating an illiquid position out of a fund's NAV so it stops polluting redemptions; the honest sequence is exclude, gate, disclose.
+- Slashing: protocol-imposed loss on staked collateral for misbehavior or fault.
+- Spread: yield above risk-free; must be decomposed into named risks or it is marketing.
+- Spread take: an issuer fee collected as the gap between what the book earns and the rate the token pays; invisible unless you ask what the book earned.
+- Stop-loss / take-profit: orders that trigger at a mark price to cut losses or lock gains; they fire on the venue's MARK, so oracle class decides when.
+- Strategy drift: a live position whose shape sits outside the documented mandate; locked OTC inventory inside a "spot basis" book is the calibration print.
+- Streamia: Panoptic's streaming option premium; paid continuously while the option is held instead of upfront.
+- Strike: the fixed price an option trades at when exercised; in concentrated liquidity, the range edges play this role.
+- Synthetic dollar: a hedged trading book (long spot, short perps) wearing a stablecoin costume.
+- Term premium: extra yield for lending longer.
+- Theta: time decay; the option seller's daily income and the buyer's daily cost.
+- Time in force: an order's lifetime instruction; good til time expires it, immediate or cancel fills instantly or never rests.
+- Time value: the part of an option's price paying for what might still happen before expiry.
+- Tranche: a slice of a structure with defined seniority.
+- TVL (total value locked): deposits plus locked issuance plus recursive loops, mixed; state what it counts before citing it.
+- TWAP (time-weighted average price): an averaged market price; honest but shovable when pools are thin.
+- TWAP order: an execution algorithm slicing a large order over time to cut market impact; not the same thing as a TWAP oracle, which is an averaged price feed.
+- Utilization: borrowed over supplied; drives floating rates and exit availability.
+- Variation margin: the daily true-up on a levered position; a health factor drifting toward 1.0 is the onchain version.
+- Vault: a pooled, share-issuing strategy contract; functionally a fund.
+- Vega: an option's sensitivity to implied volatility; the risk AMM liquidity providers sell without being paid for.
+- Wallet fleet: many wallets operated by one entity, often vanity-prefixed and routed through a single private contract. Detected by router clustering, not by counting addresses.
+- Whitelist/gate (compliance): transfer restrictions enforced at the token or market level.
+- YT (yield token): the floating-yield half of split yield; levered, and an oracle weapon in thin pools.
+- Zombie Trove: a loan whose debt was redeemed below the market minimum. It can no longer be adjusted, only closed or re-borrowed above the minimum.

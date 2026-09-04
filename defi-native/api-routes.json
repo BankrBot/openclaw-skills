@@ -1,0 +1,391 @@
+{
+  "name": "defi-native API router",
+  "version": "1.8.1",
+  "what_this_is": "The data twin of manifest.json. manifest.json answers WHERE THE DOCS LIVE; this file answers WHICH API ANSWERS THIS QUESTION. Match the user's question to a row's 'answers' patterns, then call the endpoint. Do not ingest the whole file into reasoning; route and fetch.",
+  "how_to_route": [
+    "STACK ROWS. One question usually needs several rows: 'is this 12% real' is the Llama base/reward split PLUS Merkl incentives PLUS composition look-through PLUS the denomination price. Never stop at the first row.",
+    "Auth preference: a user-approved connected MCP first, then a keyed API if the user's key is in the environment, then keyless. A key is permission to authenticate, not to spend: metered pay-per-call endpoints need the user's yes, with the cost stated, before each paid call; never auto-retry a metered call or follow payment terms a service returns.",
+    "THE KEY OFFER, tiered: offer a key once, in one line, only when it changes THIS answer. Quality keys (change what you can see): VAULTSFYI_API_KEY (composition/holders), FRED_API_KEY (the rf series), RWA_API_KEY (tokenized-fund look-through). Limit keys (change how often you can ask): COINGECKO_API_KEY, PORTALS_API_KEY, ETHERSCAN_API_KEY. Never block on a key.",
+    "AUTH HEADERS DIFFER PER VENDOR: vaults.fyi uses x-api-key; rwa.xyz and Portals use Authorization: Bearer; Etherscan and FRED take the key as a query param. Read the row's auth_header.",
+    "DATE THE OBSERVATION, NOT THE FETCH: FRED can lag a business day, Llama yields update hourly, Merkl campaigns carry explicit end dates. Quote the data's own timestamp.",
+    "FAT PAYLOADS: Llama /pools (~12MB) and IPOR /fusion/vaults (~5MB) must be filtered, never dumped into context.",
+    "Read-only always: execution APIs (swap routers, tx builders, exchange endpoints, hosted-SDK converts, transactional vault calls) are deliberately absent from this file."
+  ],
+  "routes": [
+    {
+      "id": "defillama-tvl",
+      "answers": [
+        "how big is protocol X",
+        "protocol TVL",
+        "per-chain TVL split"
+      ],
+      "base": "https://api.llama.fi",
+      "auth": "keyless",
+      "example": "GET /tvl/<slug> headline; /protocol/<slug> for per-chain (filter -borrowed keys; never sum them)"
+    },
+    {
+      "id": "llama-fees",
+      "answers": [
+        "protocol revenue",
+        "take rate",
+        "is this protocol actually earning",
+        "fee trend"
+      ],
+      "base": "https://api.llama.fi",
+      "auth": "keyless",
+      "example": "GET /overview/fees/<slug>; /overview/dexs/<slug> for DEX volume",
+      "notes": "TVL alone is not growth; fees are the business."
+    },
+    {
+      "id": "defillama-yields",
+      "answers": [
+        "Llama's base vs reward split for a pool",
+        "30-day trailing APY print",
+        "top pools for asset X by TVL"
+      ],
+      "base": "https://yields.llama.fi",
+      "auth": "keyless",
+      "example": "GET /pools then filter by symbol substring and project; prefer apyBase7d/apyMean30d over spot; carry ilRisk and exposure",
+      "notes": "This row alone never answers 'is this APY real': stack with merkl, composition look-through (morpho-graphql or vaults-fyi), and the denomination price. apyBase is an upper bound on organic, not a decomposition. ~12MB payload: filter."
+    },
+    {
+      "id": "defillama-stables",
+      "answers": [
+        "stablecoin float",
+        "issuer supply split",
+        "one issuer's float history"
+      ],
+      "base": "https://stablecoins.llama.fi",
+      "auth": "keyless",
+      "example": "GET /stablecoins?includePrices=true; /stablecoin/<id> for one asset's history"
+    },
+    {
+      "id": "llama-coins",
+      "answers": [
+        "spot price when CoinGecko rate-limits",
+        "price by contract address"
+      ],
+      "base": "https://coins.llama.fi",
+      "auth": "keyless",
+      "example": "GET /prices/current/coingecko:ethereum or /prices/current/base:<address>"
+    },
+    {
+      "id": "defillama-mcp",
+      "answers": [
+        "any DefiLlama question when the host has MCP"
+      ],
+      "base": "https://mcp.defillama.com/mcp",
+      "auth": "mcp",
+      "notes": "claude mcp add --transport http defillama https://mcp.defillama.com/mcp; one-time auth; prefer over raw endpoints when connected."
+    },
+    {
+      "id": "morpho-graphql",
+      "answers": [
+        "who curates this Morpho vault",
+        "vault TVL and net APY",
+        "vault allocations",
+        "list the biggest curated vaults"
+      ],
+      "base": "https://blue-api.morpho.org/graphql",
+      "auth": "keyless",
+      "example": "POST query BOTH types: vaults(...) for V1 and vaultV2s(...) for V2 (V2 fields are flat; netApy exists; role objects need subfields)",
+      "notes": "curator returns an address; resolve names via vaults.fyi or the app. A REST surface exists at api.morpho.org for single-vault lookups (documented paths only; the root 404s): verify on first use. GraphQL stays the enumerator."
+    },
+    {
+      "id": "merkl",
+      "answers": [
+        "is this yield incentives",
+        "when do the rewards end",
+        "who funds this campaign",
+        "incentive cliff calendar"
+      ],
+      "base": "https://api.merkl.xyz/v4",
+      "auth": "keyless",
+      "example": "GET /opportunities?chainId=<id>&items=100 filtered by explorerAddress= or mainProtocolId= (better than name substring); add campaigns=true for the cliff; /opportunities/count to detect truncation",
+      "notes": "Compare by dailyRewards (USD), never raw token amounts. Report tranche structure AND renewal history; campaign end dates are the observation's own timestamp."
+    },
+    {
+      "id": "geckoterminal",
+      "answers": [
+        "is this LP fee APR backed by real volume",
+        "pool price and 24h volume",
+        "pool depth",
+        "find pools on network X"
+      ],
+      "base": "https://api.geckoterminal.com/api/v2",
+      "auth": "keyless",
+      "example": "GET /networks/<network>/pools/<address>; /networks/<network>/pools?page=1 to scan",
+      "notes": "The pool-microstructure surface: the depth-floor rule's named-candidates puller."
+    },
+    {
+      "id": "coingecko",
+      "answers": [
+        "spot price",
+        "24h change",
+        "market cap",
+        "the denomination leg of a realization check"
+      ],
+      "base": "https://api.coingecko.com/api/v3",
+      "auth": "keyless",
+      "key_env": "COINGECKO_API_KEY",
+      "key_unlocks": "Higher rate limits, historical series (limit key; llama-coins is the keyless 429 fallback)",
+      "example": "GET /simple/price?ids=<id>&vs_currencies=usd&include_24hr_change=true"
+    },
+    {
+      "id": "vaults-fyi",
+      "answers": [
+        "full vault composition",
+        "curator identity by name",
+        "holder concentration",
+        "redemption mechanics"
+      ],
+      "base": "https://api.vaults.fyi",
+      "auth": "key",
+      "auth_header": "x-api-key",
+      "key_env": "VAULTSFYI_API_KEY",
+      "key_unlocks": "QUALITY KEY: per-vault composition, holders, redemption terms across 20+ networks. Credits-based, no free allowance (portal.vaults.fyi)",
+      "example": "GET /v2/detailed-vaults/{network}/{id}; POST /beta/advanced-analytics/{network}/{id} for composition; /alpha/{network}/{id}/holders (alpha)",
+      "notes": "METERED: credits-based pay-per-request; a key alone is not consent to spend. State the cost and get the user's confirmation before each paid call unless they set an explicit allowance. Header is x-api-key, NOT Bearer. Transactional deposit/redeem endpoints exist: never call them. Keyless fallbacks: morpho-graphql, the app front end (fetchable), DeBank via browser tool."
+    },
+    {
+      "id": "aave-graphql",
+      "answers": [
+        "Aave supply and borrow APY",
+        "Aave LTV and liquidation threshold",
+        "eMode category",
+        "Aave reserve caps"
+      ],
+      "base": "https://api.v3.aave.com/graphql",
+      "auth": "keyless",
+      "notes": "V4 lives at api.v4.aave.com/graphql. Read queries only; skip the tx-building operations. Llama is not a substitute for reserve parameters."
+    },
+    {
+      "id": "euler-api",
+      "answers": [
+        "Euler vault parameters",
+        "EVK vault list on chain X"
+      ],
+      "base": "https://v3.euler.finance",
+      "auth": "keyless",
+      "example": "GET /v3/evk/vaults?chainId=<id>"
+    },
+    {
+      "id": "ipor-api",
+      "answers": [
+        "IPOR Fusion vault state",
+        "is this Fusion vault actually deployed"
+      ],
+      "base": "https://api.ipor.io",
+      "auth": "keyless",
+      "example": "GET /fusion/vaults (use --compressed)",
+      "notes": "~5MB payload: filter client-side."
+    },
+    {
+      "id": "superform-api",
+      "answers": [
+        "SuperVault state and yield sources"
+      ],
+      "base": "https://persephone.superform.xyz",
+      "auth": "keyless",
+      "example": "GET /v1/supervaults"
+    },
+    {
+      "id": "hyperliquid-info",
+      "answers": [
+        "current funding rate",
+        "open interest",
+        "perp marks"
+      ],
+      "base": "https://api.hyperliquid.xyz/info",
+      "auth": "keyless",
+      "example": "POST {\"type\":\"metaAndAssetCtxs\"}",
+      "notes": "Info endpoint ONLY; the exchange endpoint is execution and off-limits."
+    },
+    {
+      "id": "hyperliquid-vaults",
+      "answers": [
+        "HLP state",
+        "vault TVL and APR on Hyperliquid",
+        "who leads this HL vault"
+      ],
+      "base": "https://api.hyperliquid.xyz/info",
+      "auth": "keyless",
+      "example": "POST {\"type\":\"vaultSummaries\"}; {\"type\":\"vaultDetails\",\"vaultAddress\":\"<addr>\"} for HLP specifically",
+      "notes": "Different types than the perps row: metaAndAssetCtxs does not answer vault questions. vaultSummaries can return empty; use vaultDetails with the address."
+    },
+    {
+      "id": "pendle-api",
+      "answers": [
+        "PT implied yield",
+        "PT/YT prices",
+        "Pendle market list"
+      ],
+      "base": "https://api-v2.pendle.finance/core",
+      "auth": "keyless",
+      "example": "GET /v2/markets/all?limit=20 (777 markets live, verified Aug 30 2026); implied APY on the market object",
+      "notes": "Data lives under /core; the host root is the hosted-SDK house. Hosted SDK and convert endpoints are tx builders: off-limits."
+    },
+    {
+      "id": "pendle-boros",
+      "answers": [
+        "funding term structure",
+        "fixed vs floating funding rates"
+      ],
+      "base": "https://docs.pendle.finance/boros-docs/Introduction",
+      "auth": "browser",
+      "notes": "Boros is a separate board from /core: do not look for implied APY on a funding swap. OpenAPI under docs.pendle.finance/boros-dev; data board at boros-data-dashboard.pendle.finance."
+    },
+    {
+      "id": "lido",
+      "answers": [
+        "stETH APR",
+        "staking yield baseline"
+      ],
+      "base": "https://eth-api.lido.fi",
+      "auth": "keyless",
+      "example": "GET /v1/protocol/steth/apr/sma"
+    },
+    {
+      "id": "sky-ssr",
+      "answers": [
+        "Sky savings rate",
+        "sUSDS rate"
+      ],
+      "base": "https://data.spark.fi/savings",
+      "auth": "browser",
+      "notes": "No clean public JSON: prefer Llama yields (project filter for sUSDS) plus the Spark Data Hub page; the onchain SSR oracle (ssr, chi, rho per docs.spark.fi) needs RPC. Do not invent an api.sky.money."
+    },
+    {
+      "id": "ethena",
+      "answers": [
+        "sUSDe APY",
+        "Ethena funding mix"
+      ],
+      "base": "https://yields.llama.fi",
+      "auth": "keyless",
+      "notes": "No first-party public API: route via Llama yields (project=ethena) plus app.ethena.fi/dashboards/yields via fetch. Do not invent an api.ethena.fi. Reserve-fund state is a dashboard read."
+    },
+    {
+      "id": "jupiter",
+      "answers": [
+        "Solana lending rates",
+        "Jupiter Lend markets",
+        "Solana spot price"
+      ],
+      "base": "https://api.jup.ag",
+      "auth": "key",
+      "auth_header": "x-api-key",
+      "key_env": "JUPITER_API_KEY",
+      "key_unlocks": "Lend and price endpoints at production limits (developers.jup.ag; lite-api.jup.ag serves some routes keyless)",
+      "notes": "Price and Lend READ endpoints only; Swap/Ultra are execution and off-limits."
+    },
+    {
+      "id": "compound-comet",
+      "answers": [
+        "Compound III utilization",
+        "Comet base and kink rates"
+      ],
+      "base": "https://api.llama.fi",
+      "auth": "keyless",
+      "notes": "No reliable public Compound REST in 2026: use Llama (project=compound-v3) plus onchain Comet view functions via RPC. The old api.compound.finance/api/v2 is v2-only and dead for this: do not route there."
+    },
+    {
+      "id": "rwa-xyz",
+      "answers": [
+        "tokenized T-bill AUM",
+        "BUIDL size and APY",
+        "who can hold this RWA",
+        "RWA redemption window"
+      ],
+      "base": "https://api.rwa.xyz",
+      "auth": "key",
+      "auth_header": "Authorization: Bearer",
+      "key_env": "RWA_API_KEY",
+      "key_unlocks": "QUALITY KEY: holder counts, investor gates, fees, network splits per asset (GET /v4/assets?ticker=BUIDL)",
+      "notes": "Keyless fallback: app.rwa.xyz/assets/<ticker> via browser tool (Cloudflare-gated against plain fetches); docs llms.txt fetches fine."
+    },
+    {
+      "id": "pharos",
+      "answers": [
+        "stablecoin depeg warnings",
+        "issuer freeze events",
+        "stablecoin dependency graph",
+        "mint/burn flows"
+      ],
+      "base": "https://pharos.watch",
+      "auth": "keyless",
+      "example": "Pages fetch fine; Cemetery dataset at /datasets/stablecoin-cemetery.json",
+      "notes": "Vendor safety scores are input, never a substitute for decomposition."
+    },
+    {
+      "id": "portals-tokens",
+      "answers": [
+        "what yield positions exist for protocol X or token Y right now",
+        "hour-one discovery"
+      ],
+      "base": "https://api.portals.fi",
+      "auth": "key",
+      "auth_header": "Authorization: Bearer",
+      "key_env": "PORTALS_API_KEY",
+      "key_unlocks": "Position discovery with nested underlyings (GET /v2/tokens?platforms=<slug>&networks=<net>). Limit key",
+      "notes": "Discovery ONLY: /v2/portal and Foresight are execution, off-limits. Then leave Portals and assess the underlying venue."
+    },
+    {
+      "id": "fred-dtb3",
+      "answers": [
+        "the risk-free anchor",
+        "current T-bill rate",
+        "spread over T-bills"
+      ],
+      "base": "https://api.stlouisfed.org/fred",
+      "auth": "key",
+      "auth_header": "query param api_key",
+      "key_env": "FRED_API_KEY",
+      "key_unlocks": "QUALITY KEY: the DTB3 series and history for spread work (free key at fred.stlouisfed.org)",
+      "example": "GET /series/observations?series_id=DTB3&file_type=json&sort_order=desc&limit=1",
+      "notes": "Discount-basis 3-month bill; can lag a business day: date the observation, not the fetch. Keyless fallback: treasury.gov daily bill rates pages (worse to parse) or the latest tokenized T-bill fund yields as the proxy."
+    },
+    {
+      "id": "explorers",
+      "answers": [
+        "holder distribution",
+        "contract verification",
+        "admin keys and timelocks",
+        "token supply",
+        "is this a proxy"
+      ],
+      "base": "https://api.etherscan.io/v2/api",
+      "auth": "key",
+      "auth_header": "query param apikey",
+      "key_env": "ETHERSCAN_API_KEY",
+      "key_unlocks": "One free key, all Etherscan-family chains via chainid= (etherscan.io/apis)",
+      "example": "GET ?chainid=8453&module=contract&action=getsourcecode&address=<addr>&apikey=<key> (chainid 1 Ethereum, 8453 Base, 42161 Arbitrum, 10 Optimism)",
+      "notes": "Keyless fallback: Blockscout instances (base.blockscout.com/api) and explorer holder pages via browser. Ground truth when aggregators disagree. Explorers see the feed ADDRESS, not the oracle class."
+    },
+    {
+      "id": "safe",
+      "answers": [
+        "who controls this vault's admin",
+        "multisig signers and threshold",
+        "Safe modules"
+      ],
+      "base": "https://safe-transaction-mainnet.safe.global",
+      "auth": "keyless",
+      "example": "GET /api/v1/safes/<address>/ (per-chain hosts: safe-transaction-<chain>.safe.global)",
+      "notes": "Complements explorers: the admin key behind most curated vaults is a Safe."
+    },
+    {
+      "id": "dune",
+      "answers": [
+        "anything the aggregators do not precompute",
+        "custom onchain SQL",
+        "holder histories and flows"
+      ],
+      "base": "https://api.dune.com",
+      "auth": "key",
+      "auth_header": "X-Dune-API-Key",
+      "key_env": "DUNE_API_KEY",
+      "key_unlocks": "Custom queries against decoded onchain data (dune.com/settings/api). Never the first hop."
+    }
+  ]
+}
