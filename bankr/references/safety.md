@@ -87,9 +87,10 @@ If an agent needs these operations, give it a key **without** a recipient allowl
 If you suspect a key is compromised:
 
 1. **Pause** the wallet at [bankr.bot](https://bankr.bot) → Security. Halts every outbound transaction immediately, including in-flight broadcasts. Revoking the key alone does not stop transactions already past auth.
-2. **Revoke** the key at [bankr.bot/api-keys](https://bankr.bot/api-keys).
-3. **Rotate** — generate a new key with the same access profile and update deployments.
-4. **Audit** — review recent transactions and agent job history before unpausing.
+2. **Sever sessions** — if you suspect the account itself rather than one key, use **Sign out of all** in the Active sessions panel under Security. It revokes every live session at once, including the device you're on, so nothing already signed in stays authenticated. (Individual sessions can still be logged out one at a time from the same panel.)
+3. **Revoke** the key at [bankr.bot/api-keys](https://bankr.bot/api-keys).
+4. **Rotate** — generate a new key with the same access profile and update deployments.
+5. **Audit** — review recent transactions and agent job history before unpausing.
 
 ## API Key Types & Separation
 
@@ -413,4 +414,4 @@ Before deploying an agent or integration:
 - [ ] Implement **error handling** for rate limits (429) and access control errors (403)
 - [ ] Monitor the agent's **daily message usage** against your tier limit
 - [ ] Review and **rotate all keys** (API and LLM) periodically; revoke immediately if compromised
-- [ ] Know the **incident response** procedure: pause wallet → revoke key → rotate → audit
+- [ ] Know the **incident response** procedure: pause wallet → sign out of all sessions → revoke key → rotate → audit

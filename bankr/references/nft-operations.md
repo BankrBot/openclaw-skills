@@ -36,6 +36,8 @@ Browse, purchase, and manage NFTs across chains via OpenSea integration.
 
 Listings priced in an **ERC-20** rather than the chain's native token — for example USDG listings on Robinhood Chain — are buyable the same way. Bankr submits the token approval the marketplace conduit needs, checks your balance of the payment currency before signing, and prices the listing using that token's decimals, so the quoted amount is the amount you pay. If a listing turns out to be stale, it moves on to the next one instead of failing the whole request.
 
+**Floor buys survive being sniped.** When you ask for "the cheapest X" without naming a token ID, Bankr walks the candidate listings rather than committing to the first one it resolved. If that listing is bought out from under you mid-purchase — the order goes invalid or not-found, the marketplace rejects it, or the signer's simulation reverts — it falls back to the next-cheapest candidate, up to **three purchase attempts**. Anything that isn't snipe-shaped (a price above your cap, insufficient balance, a wallet-safety block) fails immediately without burning a candidate. The reply and the activity record name the floor picks that were taken, so a substitution is never silent, and nothing is retried after a broadcast. Naming an explicit token ID is a single attempt by design and keeps its own anti-frontrun age guard.
+
 **Accept offers:**
 - "Accept the best offer on my Pudgy Penguin #1234"
 - "What's the highest offer on my Bored Ape?"
