@@ -1,0 +1,56 @@
+[
+  {
+    "type": "function",
+    "name": "buy",
+    "inputs": [
+      {
+        "name": "tokenAmount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "sell",
+    "inputs": [
+      {
+        "name": "tokenAmount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "claimWinnings",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "createRelayerMarket",
+    "inputs": [
+      { "internalType": "string", "name": "title", "type": "string" },
+      { "internalType": "string[]", "name": "optionTokens", "type": "string[]" },
+      { "internalType": "uint256", "name": "expirationTime", "type": "uint256" },
+      { "internalType": "uint8", "name": "mType", "type": "uint8" }
+    ],
+    "outputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "address[]", "name": "", "type": "address[]" }
+    ],
+    "stateMutability": "nonpayable"
+  }
+]
