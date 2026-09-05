@@ -1,0 +1,18 @@
+{
+  "name": "voidly-pay-skill-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Runtime for the voidly-pay skill's scripts. Run `npm ci --ignore-scripts` here (exact versions, integrity-checked, no install-time code), then run scripts/*.mjs with node.",
+  "dependencies": {
+    "@voidly/session": "1.0.0",
+    "ethers": "6.17.0",
+    "tweetnacl": "1.0.3",
+    "tweetnacl-util": "0.15.1"
+  },
+  "scripts": {
+    "test": "node --test tests/prose.test.mjs tests/seal-hire.test.mjs tests/verify-artifacts.test.mjs tests/verify-settlement.test.mjs tests/preview-payment.test.mjs tests/sdk-payment-parity.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

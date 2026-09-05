@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Voidly Pay — sealed hires, provable settlement">
+  <rect width="64" height="64" rx="14" fill="#0b0f1a"/>
+  <!-- the sealed brief: a locked capsule -->
+  <rect x="12" y="27" width="22" height="18" rx="5" fill="none" stroke="#7dd3fc" stroke-width="2.5"/>
+  <path d="M17 27 v-5 a6 6 0 0 1 12 0 v5" fill="none" stroke="#7dd3fc" stroke-width="2.5"/>
+  <circle cx="23" cy="34" r="2.2" fill="#7dd3fc"/>
+  <line x1="23" y1="36" x2="23" y2="40" stroke="#7dd3fc" stroke-width="2"/>
+  <!-- the settlement: a coin, provable on-chain -->
+  <circle cx="45" cy="38" r="11" fill="none" stroke="#22d3ee" stroke-width="2.5"/>
+  <circle cx="45" cy="38" r="6.5" fill="none" stroke="#22d3ee" stroke-width="1.5" opacity="0.7"/>
+  <!-- proof ping, echoing the oracle mark -->
+  <circle cx="49" cy="15" r="4" fill="#22d3ee"/>
+  <circle cx="49" cy="15" r="7.5" fill="none" stroke="#22d3ee" stroke-width="1.5" opacity="0.5"/>
+</svg>
