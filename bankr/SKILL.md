@@ -1,6 +1,6 @@
 ---
 name: bankr
-description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, trade tokenized stocks and ETFs (spot or leveraged), check portfolio balances (with PnL and NFTs), view token prices, search tokens, research token holders, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, set up automated trading, sign and submit raw transactions, call or deploy x402 paid API endpoints, browse the web, store and query files on their wallet's filesystem, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet — including zero-data-retention and TEE-private inference tiers, plus topping up and sending LLM credits to another Bankr user. Supports Base, Ethereum, Polygon, Solana, Unichain, World Chain, Arbitrum, BNB Chain, and Robinhood Chain.
+description: AI-powered crypto trading agent, wallet API, and LLM gateway via natural language. Use when the user wants to trade crypto, trade tokenized stocks and ETFs (spot or leveraged), check portfolio balances (with PnL and NFTs), view token prices, search tokens, research token holders, transfer crypto, manage NFTs, use leverage (Hyperliquid or Avantis), bet on Polymarket, deploy tokens, check and claim onchain incentive rewards (Merkl), set up automated trading, sign and submit raw transactions, call or deploy x402 paid API endpoints, browse the web, store and query files on their wallet's filesystem, or access LLM models through the Bankr LLM gateway funded by your Bankr wallet — including zero-data-retention and TEE-private inference tiers, plus topping up and sending LLM credits to another Bankr user. Supports Base, Ethereum, Polygon, Solana, Unichain, World Chain, Arbitrum, BNB Chain, and Robinhood Chain.
 metadata:
   {
     "clawdbot":
@@ -355,12 +355,13 @@ Pricing is $20/mo or $198/yr USD-equivalent. Actual on-chain amount depends on t
 | Terminal messages | 5/day | Unlimited |
 | Agent API requests | 100/day | 1,000/day |
 | Concurrent recurring agent-command automations | — | Up to 20 |
-| Gas-sponsored token deploys | 3/day | 10/day |
-| Token deploys | 50/day | 100/day |
+| Token launches | 3 per rolling 24h | 3 per rolling 24h — **Club does not raise this** |
 | File storage | 1 GB (10 MB/file) | 10 GB (50 MB/file) |
 | Monthly file downloads | 10 GB | 100 GB |
 | Model routing | Standard | Top-tier models |
 | Browser sessions, advanced research (Bankr score, PnL & volume analytics, web search, social sentiment) | — | Included |
+
+The launch cap is the one perk row that is deliberately flat: every Bankr wallet — Standard, Club, partner organization, provisioned partner — gets the same 3 counted launch attempts per rolling 24 hours. See [Token Deployment](#token-deployment).
 
 **Max Mode is the alternative to a subscription** — pay per request from LLM credits for unlimited terminal messages, and it works with external/connected wallets, which Club checkout does not (Club requires an embedded Bankr wallet). On the Agent API, non-Club Max Mode is still capped at 100 requests/day. Holding a legacy Bankr Club NFT does **not** grant membership; it was a commemorative token for the first 1,000 subscribers.
 
@@ -581,7 +582,7 @@ bankr llm models --zdr                                   # which models have a Z
 
 ### Max Mode — Pick the Agent's Model
 
-Max Mode overrides the Bankr agent's default model with any model from the gateway, billed per token from your **LLM credit balance** (not your trading wallet):
+Max Mode overrides the Bankr agent's default model (currently **Gemini 3.8 Flash**) with any model from the gateway, billed per token from your **LLM credit balance** (not your trading wallet):
 
 ```bash
 bankr agent "analyze my portfolio" --model claude-opus-5     # or -m
@@ -632,7 +633,9 @@ The agent can also report your current LLM credit balance in conversation — in
 - Each granted dollar is fee'd once. Concurrent sends can't double-claim the same slice, and a replayed `transferId` reports the original fee rather than charging again.
 - Leaving the flag off keeps the old behaviour byte-for-byte, so existing integrations need no change.
 
-**Two different ceilings, and the smaller one binds.** Your balance has a transferable slice (the pool net of reserve, debt and live grants), and your daily budget clamps what can move *today*. Both are exposed on `/llm/usage` — `balanceTransferableUsd` for the balance-side figure, alongside `grantedTransferableUsd` and `transferFeeBps` — so a wallet holding $265 that's temporarily gated to $10 by a rolling window can be shown as exactly that, rather than as if the money were missing. The agent quotes both figures and names which one is binding when you ask about your balance.
+**Two different ceilings, and the smaller one binds.** Your balance limits what you *own*; your daily spend budget clamps what can move *today*. `GET /llm/credits/state` is the canonical read for both — `creditBalanceUsd` (purchased pool), `creditGrantsUsd` and `creditGrants[]` (live grants with their expiries), `totalCreditsUsd`, and a `dailyBudget` object (`limitUsd`, `spentUsd`, `remainingUsd`; `limitUsd: null` means uncapped). So a wallet holding $265 that's temporarily gated to $10 by a rolling window reads as exactly that, rather than as if the money were missing. The agent quotes both figures and names which one is binding when you ask about your balance.
+
+> **Endpoint split:** `GET /llm/usage` is **usage-only** — token counts and spend over a historical window. It no longer carries credit-balance or transferable fields; read credit state from `GET /llm/credits/state`. Over the daily transfer cap, `POST /llm/credits/transfer` returns `429`.
 
 **Daily spend budget.** You can cap what the gateway spends on your behalf, independently of your balance. The window is a **trailing 24 hours**, not a calendar day — nothing resets at midnight, capacity returns as charges age out. Over budget, spending requests return `402` with `type: daily_budget_exceeded` (distinct from `insufficient_credits`), while read-only `GET` endpoints keep working so you can poll for when you're unblocked. The same budget also ends Max Mode agent runs early.
 
@@ -700,12 +703,29 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - Browse and search collections
 - View floor prices and listings
 - Purchase NFTs via OpenSea — including listings priced in an **ERC-20** rather than the native token (e.g. USDG on Robinhood Chain). The token approval, the payment-currency balance check, and decimals-aware pricing are all handled for you
+- **Floor buys survive a snipe.** Asking for "the cheapest X" without naming a token ID now walks the candidate listings: if the one Bankr picked is filled by someone else mid-purchase (or the order goes invalid, or the signer's simulation reverts), it moves to the next-cheapest listing instead of failing the whole request — up to three purchase attempts, and the reply names the substitution so it's never silent. Naming an explicit token ID stays a single attempt, by design
 - Accept offers on NFTs you own
 - View your NFT portfolio
 - Transfer NFTs
 - Mint from supported platforms
 
 **Reference**: [references/nft-operations.md](references/nft-operations.md)
+
+### Onchain Reward Campaigns (Merkl)
+
+The agent can read and claim **Merkl** incentive rewards — the campaign rewards protocols distribute to liquidity providers and holders — on **Base** and **Robinhood Chain**:
+
+- **Check** what a wallet has earned and what's currently claimable, per chain, with USD totals. Only your own wallet address is accepted
+- **Claim** the claimable rewards on one chain in a single transaction. Claiming signs from your embedded Bankr wallet, so it isn't available in wallet mode (external/connected wallets)
+- **Discover earn opportunities** — live Merkl campaigns ranked by APR, with TVL, daily rewards, protocol and deposit link; optionally filtered to a token symbol
+
+```bash
+bankr agent prompt "Do I have any Merkl rewards to claim?"
+bankr agent prompt "Claim my Merkl rewards on base"
+bankr agent prompt "What are the best Merkl earn opportunities for USDC on base?"
+```
+
+Campaign availability and eligibility change over time — ask the agent for the live picture rather than assuming a campaign is still running.
 
 ### Polymarket Betting
 
@@ -723,6 +743,7 @@ For full details — setup paths, model list, provider config, SDK examples, key
 - **Avantis** (secondary) — Perpetuals on Base for crypto, equities (NVDA, TSLA, AAPL, HOOD, and more), forex, and commodities. Equity, forex, and commodity pairs trade during their underlying market hours only.
 - Stop loss, take profit, and position management on both platforms
 - Funding Hyperliquid is a **venue** deposit/withdraw, not a bridge: a deposit only reaches Hyperliquid, a withdrawal only lands on Arbitrum. Name the venue ("deposit $500 to hyperliquid") rather than saying "bridge"; to move withdrawn funds onward, chain a cross-chain swap after the withdrawal
+- **Closing a Hyperliquid position always reports its PnL**, derived from the price the close was quoted at — the fill price when it filled, the limit price while it rests, the mid as a fallback — and a partial fill is flagged as such rather than reported as a full close. Transient venue rate limits (429s) are retried with backoff instead of surfacing as a failed order
 - Hyperliquid charges a **1 USDC withdrawal fee, taken out of the requested amount** — so your full withdrawable balance is requestable (you receive amount − 1), and withdrawals under $1 are refused rather than netting to zero
 
 **Reference**: [references/leverage-trading.md](references/leverage-trading.md) | [references/hyperliquid.md](references/hyperliquid.md)
@@ -745,9 +766,11 @@ Spot stocks work with swaps, transfers, limit orders, and DCA. Only issuer-token
 
 ### Token Deployment
 
-- **EVM (Base or Robinhood Chain)**: Launch ERC20 tokens via Doppler on a Uniswap V4 pool with customizable metadata and social links. Supply is fixed and non-mintable once deployed; standard launches use **100 billion** (the web launch flow can set a custom figure — the deploy API and CLI always use the standard supply). Ticker symbols are **1–20 characters**. Every trade pays a **0.7% swap fee on the pool and 95% of it goes to you** (0.665% of volume, claimable anytime); the hook adds the Bankr protocol fee + BNKR buyback and LP fee on top, for **1.75% all-in**. The **0.285% LP fee is creator-side too** — it compounds as locked liquidity in your own pool, strengthening your token's liquidity on every swap, so the creator side totals **0.95% of volume**. **The default chain depends on the surface**: the CLI (`bankr launch`) and the web launch form preselect **Base**, while the AI agent and the deploy API fall back to **Robinhood Chain** when no chain is named. Name the chain explicitly (`bankr launch --chain robinhood`, `"chain": "base"`, or "launch it on Base") whenever it matters. Legacy Clanker tokens remain claimable (claims auto-detect Doppler vs Clanker).
-- **Stock-paired launches** (EVM, optional): pair the new token's pool with a registry tokenized stock instead of WETH, so the token trades against equity exposure. Available on Base (B20 equities) and Robinhood Chain — pass `pairedStockAddress` to the deploy API, or ask the agent to pair the launch with a ticker. Only stocks Bankr can price are offered, since launch-curve math needs a USD price.
-- **Base quote-token launches** (optional): on Base, quote the pool in **BNKR** or **ba3Pump** (Bankr-bridged PUMP from Solana) instead of WETH — pass `chain: "base"` with the matching fixed `pairedTokenAddress`. User-key launches only; it can't be combined with `pairedStockAddress`, and omitting both gives you WETH. Volume in these pools stays eligible for the weekly developer rebate on the same terms as WETH-quoted launches.
+- **EVM (Base, Robinhood Chain, or Arbitrum One)**: Launch ERC20 tokens via Doppler on a Uniswap V4 pool with customizable metadata and social links. Supply is fixed and non-mintable once deployed; standard launches use **100 billion** (the web launch flow can set a custom figure — the deploy API and CLI always use the standard supply). Ticker symbols are **1–20 characters**. Every trade pays a **0.7% swap fee on the pool and 95% of it goes to you** (0.665% of volume, claimable anytime); the hook adds the Bankr protocol fee + BNKR buyback and LP fee on top, for **1.75% all-in**. The **0.285% LP fee is creator-side too** — it compounds as locked liquidity in your own pool, strengthening your token's liquidity on every swap, so the creator side totals **0.95% of volume**. **The default chain depends on the surface**: the CLI (`bankr launch`) and the web launch form preselect **Base**, while the AI agent and the deploy API fall back to **Robinhood Chain** when no chain is named. Name the chain explicitly (`bankr launch --chain robinhood`, `"chain": "base"`, or "launch it on Base") whenever it matters. Legacy Clanker tokens remain claimable (claims auto-detect Doppler vs Clanker).
+- **Arbitrum One launches** (`chain: "arbitrum"`, `bankr launch --chain arbitrum`, or "launch it on Arbitrum") are **WETH-paired only** — neither `pairedStockAddress` nor `pairedTokenAddress` is accepted there — and the launch wallet pays its own network gas (Bankr sponsors retail launch gas on Base only). Everything else — supply, fee schedule, creator vesting, quote-only fees, degen mode — behaves as on Base.
+- **Stock-paired launches** (Base and Robinhood Chain, optional): pair the new token's pool with a registry tokenized stock instead of WETH, so the token trades against equity exposure. Available on Base (B20 equities) and Robinhood Chain — pass `pairedStockAddress` to the deploy API, or ask the agent to pair the launch with a ticker. Only stocks Bankr can price are offered, since launch-curve math needs a USD price. Not available on Arbitrum.
+- **Base quote-token launches** (optional): on Base, quote the pool in one of **five fixed tokens** instead of WETH — **BNKR**, **ba3Pump** (Bankr-bridged PUMP from Solana), **cbHYPE** (Coinbase-wrapped HYPE), **cbZEC** (Coinbase-wrapped ZEC), or **TAO** (Bittensor on Base). Pass `chain: "base"` with the matching fixed `pairedTokenAddress`. User-key launches only; it can't be combined with `pairedStockAddress`, and omitting both gives you WETH. Volume in these pools stays eligible for the weekly developer rebate on the same terms as WETH-quoted launches. cbHYPE and cbZEC additionally wait on reviewed on-chain quote-token liquidity — if Bankr reports the pair isn't ready, that's a real refusal, not a fallback to WETH. The list is allowlisted by address; an arbitrary ERC-20 is never accepted as a quote token.
+- **Creator vesting is on by default on EVM**: every non-partner launch premints **15% of supply to the fee recipient** and vests it over **1 year with a 30-day cliff** (the cliff sits inside the year, not on top of it); the other 85% seeds the pool. Turn it off at launch — "deploy with no vesting", `disableVesting: true`, or `bankr launch --no-vesting` — and 100% of supply goes into the pool instead. There is no custom percentage or schedule; the recipient is fixed at launch and transferring fee rights later does **not** move the allocation. Vested tokens are claimable once the cliff passes: `GET /token-launches/{tokenAddress}/vesting` reads the public schedule and position (phase, claimable, locked, unlocked %), and the claim runs from the token page or the API.
 - **Quote-only fees** (EVM, optional): opt in at launch to collect all creator fees in the quote token (e.g. WETH) instead of a mix of the launched token and quote token — your total take is identical either way. Ask for "quote-only fees", pass `quoteOnlyFees: true` to the deploy API, or use `bankr launch --quote-only-fees`. Fixed at launch, like the fee schedule itself.
 - **Degen mode** (EVM, optional): start the token at a **$2,500 market cap** instead of the standard starting cap, for maximum early volatility. Explicit opt-in only — ask for "degen mode" by name, or pass `degenMode: true` to the deploy API. The figure is fixed; there is no custom starting market cap, a token *named* DEGEN does not opt you in, and the mode is unavailable on partner deploys.
 - **Solana**: Launch SPL tokens via Raydium LaunchLab with bonding curve and auto-migration to CPMM
@@ -756,8 +779,26 @@ Spot stocks work with swaps, transfers, limit orders, and DCA. Only issuer-token
 - Optional fee recipient designation with 99.9%/0.1% split (Solana)
 - Both creator AND fee recipient can claim bonding curve fees (gas sponsored)
 - Optional vesting parameters (Solana)
-- Base launch limits: 50/day standard, 100/day Bankr Club (gas sponsored within limits)
 - Tokens deployed through Bankr are always visible in your portfolio, even without market price data
+
+**EVM launch limits and eligibility** — code these into any programmatic deploy flow:
+
+| Rule | Value |
+|------|-------|
+| Counted launch attempts | **3 per Bankr wallet per rolling 24 hours** — identical for Standard, Bankr Club, partner organization and provisioned partner wallets |
+| Launch rate | At most **one token per minute** |
+| Launch-wallet age | Wallet must be **≥ 24 hours old** (measured from when Bankr created it, not from your X/social account's age) |
+| Launch-wallet balance | Must hold **≥ 0.002 native ETH on the launch chain** — required even on Base, where deploy gas is sponsored |
+| Same name, per account | 3 launches of the same token name per hour → `429` |
+| Same name, all accounts | 10 launches of the same name per hour → `429` |
+| Per fee-recipient address | 20 launches per 24 hours across *all* accounts → `429` |
+
+- **Only launches that actually went out consume budget.** Quota is reserved just before metadata pinning, and an attempt Bankr can prove never reached the chain hands its slot — and its name/fee-recipient allowance — back. Anything that was broadcast, or that Bankr can't prove wasn't, keeps counting: the classification fails safe, so never assume a failed deploy was free.
+- Validation, resolution and pricing failures before that reservation point never consume a slot, and **simulations don't either** (`--simulate` / `simulateOnly`). Retail simulations still require the 24h-old wallet; the balance minimum is skipped.
+- Validated partner-organization and provisioned-wallet launch paths are exempt from the wallet age and balance requirements, but not from the 3-per-24h cap.
+- **Gas sponsorship for retail launches is Base-only.** On Robinhood Chain and Arbitrum the launch wallet pays its own gas. Across every sponsored path a wallet gets at most **10 sponsored transactions and $3 of gas per day** — whichever runs out first ends sponsorship until the window resets.
+- **Five-minute balance cap**: for the first five minutes after a non-partner launch, no wallet may hold more than **2% of total supply** — a buy or transfer that would push a recipient over 2% fails until the cap expires. This is separate from the ~10-second anti-snipe fee decay, which changes the fee rather than the balance. Partner launches are exempt, and the expiry is encoded on-chain at launch.
+- Sustained high-volume deploying can trip automated spam protection; repeatedly breaching the one-per-minute limit on the X path restricts the account for 24 hours (a limited state — login, balances and withdrawals still work).
 
 **Reference**: [references/token-deployment.md](references/token-deployment.md)
 
@@ -847,11 +888,13 @@ Skills work in **two directions**, and they're easy to confuse. This document is
 | Solana      | SOL          | High-speed trading            | Minimal  |
 | Unichain    | ETH          | Newer L2 option               | Very Low |
 | World Chain | ETH          | Uniswap V3/V4 swaps          | Very Low |
-| Arbitrum    | ETH          | DeFi, low-cost transactions   | Very Low |
+| Arbitrum    | ETH          | DeFi, low-cost transactions, token launches (WETH-paired) | Very Low |
 | BNB Chain   | BNB          | BSC ecosystem trading         | Low      |
 | Robinhood Chain | ETH      | Tokenized stocks & ETFs (USDG), memecoins, token launches | Very Low |
 
 **Robinhood Chain** is an EVM L2 (chainId `4663`) whose native stablecoin is **USDG** (Global Dollar). It hosts 200 Robinhood-issued tokenized stocks and ETFs alongside memecoins, and supports Bankr token launches (Doppler). Tokenized-stock trades require location verification (see [Tokenized Stock Trading](#tokenized-stock-trading)); memecoin swaps, token launches, bridging, and transfers do not.
+
+**Arbitrum One** is a Doppler launch chain as well as a trading chain. Launches there are WETH-paired only and are **not** gas-sponsored — fund the launch wallet with ETH on Arbitrum before deploying.
 
 **Base** additionally hosts the **B20 tokenized equities** — Coinbase-issued, 8-decimal equity tokens whose redemption ratio to the underlying share is an on-chain multiplier that moves on corporate actions. Trading them is gated by the same location verification as Robinhood stocks; everything else on Base is not.
 
@@ -925,9 +968,10 @@ Per-key settings configured at [bankr.bot/api-keys](https://bankr.bot/api-keys):
 If you suspect a key is compromised:
 
 1. **Pause** the wallet at [bankr.bot](https://bankr.bot) → Security — halts every outbound transaction immediately
-2. **Revoke** the key at [bankr.bot/api-keys](https://bankr.bot/api-keys)
-3. **Rotate** — generate a new key and update deployments
-4. **Audit** — review recent transactions and agent job history before unpausing
+2. **Sign out of all sessions** — the Active sessions panel under Security has a **Sign out of all** action that revokes every live session at once, the device you're on included. Use it when you suspect the account itself (not just a key) is compromised
+3. **Revoke** the key at [bankr.bot/api-keys](https://bankr.bot/api-keys)
+4. **Rotate** — generate a new key and update deployments
+5. **Audit** — review recent transactions and agent job history before unpausing
 
 ### General
 
@@ -1203,12 +1247,24 @@ See [references/safety.md](references/safety.md) for comprehensive safety guidan
 - "Claim my fee NFT for ROCKET" (post-migration)
 - "Transfer fees for MOON to 7xKXtg..."
 
-**EVM (Base & Robinhood Chain, via Doppler):**
+**EVM (Base, Robinhood Chain & Arbitrum, via Doppler):**
 
 - "Deploy a token called BankrFan with symbol BFAN on Base"
+- "Launch MOON on Arbitrum" (WETH-paired only; the wallet pays its own gas)
 - "Launch a token with quote-only fees" (all creator fees collected in the quote token)
 - "Launch MOON in degen mode" (starts at a $2,500 market cap)
+- "Launch FROG on Base paired with TAO" (also BNKR, ba3Pump, cbHYPE, cbZEC)
+- "Launch a token with no vesting" (skips the default 15% creator allocation)
+- "How much of my MTK allocation has vested?"
+- "Claim my vested MTK"
 - "Claim fees for my token MTK"
+
+### Onchain Rewards
+
+- "Do I have any Merkl rewards to claim?"
+- "Claim my Merkl rewards on base"
+- "Show Merkl earn opportunities on base"
+- "What's the best APR on Merkl for USDC?"
 
 ### LLM Credits
 

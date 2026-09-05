@@ -63,6 +63,8 @@ Perps trading requires USDC in the perps account. Bankr auto-transfers from spot
 - "Close 50% of my ETH position"
 - "Close all my hyperliquid positions"
 
+A close always reports the position's realised PnL and ROE, derived from the price the close was quoted at — the fill price when the order filled, the limit price while it's still resting, the mid as a fallback — and sized on the amount actually filled. A **partial** fill is flagged as such rather than reported as a full close, so don't treat a close reply as proof the position is flat. Transient venue rate limits (`429`) are retried with backoff rather than surfacing as a failed order.
+
 **Manage leverage and margin:**
 - "Set my BTC leverage to 20x"
 - "Change ETH leverage to 5x isolated"

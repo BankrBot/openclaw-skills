@@ -178,7 +178,7 @@ Optional vesting for team tokens or investor allocations.
 Gas is sponsored for token launches within daily limits (1/day standard, 10/day Bankr Club).
 Shared fee claims are always sponsored to ensure atomic claim+transfer.
 
-### Rate Limits
+### Rate Limits (Solana)
 
 | User Type | Daily Limit | Gas Sponsored |
 |-----------|-------------|---------------|
@@ -187,11 +187,24 @@ Shared fee claims are always sponsored to ensure atomic claim+transfer.
 
 Users can launch additional tokens beyond sponsored limits by paying ~0.01 SOL gas.
 
+> These figures cover **Solana LaunchLab launches only**. EVM (Doppler) launches run on a separate and much tighter quota — 3 counted attempts per rolling 24 hours for every wallet type. See [Launch Quota and Rate Limits](#launch-quota-and-rate-limits).
+
 ---
 
-## EVM Token Launches (Base & Robinhood Chain, via Doppler)
+## EVM Token Launches (Base, Robinhood Chain & Arbitrum, via Doppler)
 
-Launch ERC20 tokens on Base or Robinhood Chain. New launches create a Uniswap V4 pool via Doppler with a fixed supply and a single swap-fee tier shared between you and the protocol. The default chain differs by surface (see [Supported Chains](#supported-chains)), so name it explicitly — `bankr launch --chain robinhood`, `"chain": "base"`, or "launch a token on robinhood". Robinhood Chain memecoin launches need no location verification — that gate only applies to Robinhood-issued tokenized stocks.
+Launch ERC20 tokens on Base, Robinhood Chain or Arbitrum One. New launches create a Uniswap V4 pool via Doppler with a fixed supply and a single swap-fee tier shared between you and the protocol. The default chain differs by surface (see [Supported Chains](#supported-chains)), so name it explicitly — `bankr launch --chain robinhood`, `"chain": "arbitrum"`, or "launch a token on base". Robinhood Chain memecoin launches need no location verification — that gate only applies to Robinhood-issued tokenized stocks.
+
+**Chain capability matrix:**
+
+| | Base | Robinhood Chain | Arbitrum One |
+|---|---|---|---|
+| Default quote asset | WETH | WETH | WETH |
+| `pairedStockAddress` (tokenized stock) | Yes — B20 equities | Yes — Robinhood stocks | **No** |
+| `pairedTokenAddress` (quote token) | Yes — 5 fixed tokens | **No** | **No** |
+| Retail launch gas | Sponsored | Wallet pays | Wallet pays |
+
+Arbitrum launches are therefore **WETH-paired only**. Everything else — supply, fee schedule, creator vesting, quote-only fees, degen mode, fee claiming — behaves as on Base. Fund the launch wallet with ETH on Arbitrum before deploying.
 
 ### Token Economics
 
@@ -236,18 +249,54 @@ Like the fee schedule, this option cannot be changed after launch.
 
 ### Base Quote Tokens (optional, fixed at launch)
 
-Base launches can quote the new token's pool in **BNKR** or **ba3Pump** instead of WETH. ba3Pump is Bankr-bridged PUMP from Solana. Pass `chain: "base"` together with one of the fixed allowlisted addresses:
+Base launches can quote the new token's pool in one of **five fixed tokens** instead of WETH. Pass `chain: "base"` together with one of the allowlisted addresses:
 
-| Quote token | `pairedTokenAddress` |
-|-------------|----------------------|
-| BNKR | `0x22af33fe49fd1fa80c7149773dde5890d3c76f3b` |
-| ba3Pump | `0x5577a294ae5a21446a11b0e4100ca83803995720` |
+| Quote token | What it is | `pairedTokenAddress` | Decimals |
+|-------------|------------|----------------------|----------|
+| BNKR | BankrCoin, Bankr's native token | `0x22af33fe49fd1fa80c7149773dde5890d3c76f3b` | 18 |
+| ba3Pump | Bankr-bridged $PUMP from Solana | `0x5577a294ae5a21446a11b0e4100ca83803995720` | 18 |
+| cbHYPE | Coinbase Wrapped Hyperliquid (HYPE) on Base | `0xB200000000000000000000451d033a5000cb479e` | 18 |
+| cbZEC | Coinbase Wrapped ZEC on Base | `0xB2000000000000000000008501b13360000cb2EC` | 8 |
+| TAO | Bittensor's TAO on Base | `0xf3081494b87e8d5fb7960f066e931d1d0e6e3d67` | 18 |
 
+- **Base only.** These are not launch quote-token options on Robinhood Chain or Arbitrum.
 - **User-key launches only** — not available on org Partner Key deploys.
 - **Mutually exclusive with `pairedStockAddress`.** Sending both is rejected; omit both to get WETH.
 - The allowlist is fixed — an arbitrary ERC-20 is not accepted as a quote token.
+- **cbHYPE and cbZEC wait on reviewed on-chain quote-token liquidity.** If Bankr reports either pair isn't ready, that's a real refusal — the launch does not silently fall back to WETH or to a paired stock. Retry once the pair is live.
+- cbHYPE and cbZEC are Coinbase-wrapped **crypto** assets, not tokenized stocks: they go in `pairedTokenAddress`, never `pairedStockAddress`, and no location/geo verification applies to them.
 - Volume in a BNKR- or ba3Pump-quoted pool remains eligible for the weekly developer rebate under the same rules as a WETH-quoted launch.
 - Everything else — supply, the fee schedule, creator vesting, quote-only fees, degen mode — behaves exactly as on a WETH launch. "Quote token" here just names the pool's other side.
+
+### Creator Vesting (on by default, fixed at launch)
+
+Every non-partner EVM launch premints **15% of supply to the fee recipient** and vests it over **1 year with a 30-day cliff** — nothing unlocks for the first 30 days, then it vests continuously until fully unlocked at the one-year mark (the cliff sits *inside* the year, not on top of it). The remaining **85%** seeds the Uniswap V4 pool, so trading starts clean.
+
+| Property | Value |
+|----------|-------|
+| Allocation | 15% of supply (15B on a standard 100B launch) |
+| Cliff | 30 days |
+| Total duration | 1 year, including the cliff |
+| Recipient | The fee recipient set at launch — fixed, and **not** moved by a later fee-rights transfer |
+
+- **Turning it off**: ask the agent to deploy "with no vesting", pick **No vesting** in the web launch flow, pass `disableVesting: true` to the deploy API, or use `bankr launch --no-vesting`. With vesting off, 100% of supply is sold into the pool and nothing is preminted.
+- There is no custom percentage or schedule — vesting is either the default 15% or off.
+
+**Reading and claiming the allocation.** The schedule is public on-chain data, so the read needs no authentication:
+
+```bash
+# Schedule + position for a launch (optionally for a specific beneficiary)
+curl "https://api.bankr.bot/token-launches/0xTOKEN/vesting?beneficiary=0xWALLET"
+```
+
+The response carries the chain, token symbol, the recorded `recipient`, whether the queried `beneficiary` is `eligible`, and a `vesting` object: `phase` (`cliff` | `vesting` | `complete`), `vestingStart` / `cliffEndsAt` / `vestingEndsAt` (unix seconds), `totalAmount`, `releasedAmount`, `claimableAmount`, `lockedAmount`, and `unlockedPercent`. A non-Bankr token returns `404`.
+
+Claiming releases whatever has vested to the beneficiary. Custodial Bankr wallets claim through the authenticated claim route or the token page at [bankr.bot](https://bankr.bot); an external/connected wallet fetches an unsigned `release()` transaction from `POST /token-launches/{tokenAddress}/vesting/build-claim` (body `{ "beneficiaryAddress": "0x…" }`) and signs it locally — `release()` only ever pays `msg.sender`, so holding the key is the authorization.
+
+```bash
+bankr agent prompt "How much of my MTK allocation has vested?"
+bankr agent prompt "Claim my vested MTK"
+```
 
 ### Degen Mode (optional, fixed at launch)
 
@@ -279,7 +328,9 @@ Degen mode starts the token at a **$2,500 market cap** instead of the standard s
 | **Quote-only fees** | No | Collect all creator fees in the quote token; fixed at launch | `quoteOnlyFees: true` |
 | **Degen mode** | No | Start at a $2,500 market cap; explicit opt-in, not on partner deploys | `degenMode: true` |
 | **Paired stock** | No | Quote the pool in a registry tokenized stock instead of WETH | `pairedStockAddress: "0x…"` |
-| **Paired quote token** | No | Base only — quote the pool in BNKR or ba3Pump instead of WETH; not combinable with a paired stock | `pairedTokenAddress: "0x…"` |
+| **Paired quote token** | No | Base only — quote the pool in BNKR, ba3Pump, cbHYPE, cbZEC or TAO instead of WETH; not combinable with a paired stock | `pairedTokenAddress: "0x…"` |
+| **Chain** | No | `robinhood` (agent/API default), `base` (CLI and web default), or `arbitrum` | `chain: "arbitrum"` |
+| **Disable vesting** | No | Skip the default 15% creator vesting and sell 100% of supply into the pool | `disableVesting: true` (`--no-vesting`) |
 
 ### Prompt Examples
 
@@ -292,6 +343,14 @@ Degen mode starts the token at a **$2,500 market cap** instead of the standard s
 - "Launch a token called CoolBot on robinhood"
 - "Launch a token called CoolBot and route fees to @partner"
 - "Launch a token with quote-only fees"
+- "Launch MOON on Arbitrum"
+- "Launch FROG on Base paired with TAO"
+- "Launch a token with no vesting"
+
+**Creator vesting:**
+- "How much of my MTK allocation has vested?"
+- "When does my MTK vesting cliff end?"
+- "Claim my vested MTK"
 
 **Claim fees:**
 - "Claim fees for my token MTK"
@@ -303,20 +362,60 @@ Degen mode starts the token at a **$2,500 market cap** instead of the standard s
 - "Add Twitter link to my token"
 - "Update logo for MyToken"
 
-### Rate Limits
+### Launch Quota and Rate Limits
 
-| User Type | Deploys per day | Gas-sponsored deploys per day |
-|-----------|-----------------|-------------------------------|
-| Standard Users | 50 | 3 |
-| Bankr Club Members | 100 | 10 |
+**The launch quota is universal — Bankr Club does not raise it.**
 
-The two limits are separate: the daily cap is how many tokens you may deploy, the sponsorship cap is how many of those Bankr pays gas for. Past the sponsorship cap you can keep deploying up to the daily cap by paying gas yourself. A deploy that fails before broadcast because of gas doesn't consume sponsorship quota, though it still counts against the daily cap.
+| Wallet type | Counted launch attempts per rolling 24 hours |
+|-------------|----------------------------------------------|
+| Standard | 3 |
+| Bankr Club | 3 |
+| Partner organization wallet | 3 |
+| Provisioned partner wallet | 3 |
 
-**Past the sponsorship cap, a near-empty wallet is refused up front.** An unsponsored deploy checks the wallet's native balance against a conservative per-chain floor *before* building or broadcasting anything, and returns copy explaining that sponsorship is exhausted and what to do about it — rather than spending a signer round-trip to fail on-chain with a bare "not enough native token to cover gas". The floor is deliberately low, so borderline balances still proceed to real estimation downstream; sponsored deploys skip the check entirely. If you deploy programmatically past the sponsored quota, fund the deploying wallet with gas rather than relying on the retry.
+On top of the quota you may deploy at most **one token per minute**.
 
-A separate cross-account limit applies to fee recipients: an address may be named fee recipient on at most **20 deploys per 24 hours** across all accounts.
+**When a slot is actually consumed.** Quota is reserved immediately before metadata pinning: validation, recipient resolution and pricing failures ahead of that point never cost you a slot, and **simulations** (`--simulate` / `simulateOnly: true`) never reserve one. Once an attempt has been — or may have been — broadcast, it counts. A failed attempt that Bankr can prove never reached the chain gives its slot back, along with its name and fee-recipient allowance; the classification deliberately fails safe, so a deploy that errors after submission stays counted rather than being handed back on a guess.
 
-High-volume or bot-like deploy patterns can trigger automated spam protections and temporary or permanent restrictions. For legitimate programmatic deploy use cases, open a support ticket before scaling up.
+After the third counted attempt, wait for the oldest one to age out of the 24-hour window.
+
+**Anti-spam caps (all return `429`), counting only launches that went out:**
+
+| Cap | Scope | Limit |
+|-----|-------|-------|
+| Same token name | Per account, per hour | 3 |
+| Same token name | Across all accounts, per hour | 10 |
+| Fee-recipient address | Across all accounts, per 24 hours | 20 |
+
+### Launch-Wallet Requirements (anti-sybil)
+
+Standard and Bankr Club launches require the Bankr wallet to be:
+
+- **At least 24 hours old**, measured from when Bankr created the wallet — not from the age of the linked X or other social account
+- Holding **at least 0.002 native ETH on the launch chain**
+
+Both checks run *before* quota is reserved, metadata is pinned, or a transaction is submitted, so a rejection here costs neither a launch attempt nor gas. The balance minimum applies even on Base, where Bankr sponsors deploy gas; on Robinhood Chain and Arbitrum it also has to cover the launch's own gas. Validated active partner-organization and provisioned-wallet launch paths are exempt from both requirements — only while the organization is active with token launching enabled, and (for a provisioned wallet) while the wallet stays active and linked to that organization. Retail **simulations** still require the 24-hour wallet age, but skip the balance check.
+
+### Gas Sponsorship
+
+**Retail launch gas is sponsored on Base only.** On Robinhood Chain and Arbitrum the launch wallet pays its own network gas. Partner launches follow their organization's sponsorship policy instead.
+
+Across every sponsored path (launches, fee claims, transfers), a non-partner wallet gets at most:
+
+- **10 sponsored transactions per rolling 24 hours**, and
+- **$3 of sponsored gas per rolling 24 hours**
+
+Whichever runs out first ends sponsorship until the window resets. This matters for agents claiming many tokens' fees daily, or launching on a chain during a fee spike — budget for paying your own gas past those ceilings.
+
+**On an unsponsored deploy, a near-empty wallet is refused up front.** The wallet's native balance is checked against a conservative per-chain floor *before* anything is built or broadcast, returning copy that explains the situation rather than spending a signer round-trip to fail on-chain with a bare "not enough native token to cover gas". The floor is deliberately low, so borderline balances still proceed to real estimation downstream. If you deploy programmatically, fund the deploying wallet with gas rather than relying on the retry.
+
+### Five-Minute Balance Cap
+
+For the first **five minutes** after a non-partner launch, each wallet may hold no more than **2% of the token's total supply**. A buy or transfer that would leave the receiving wallet above 2% fails until the cap expires.
+
+This is separate from the roughly 10-second anti-snipe fee decay: the anti-snipe mechanism changes the swap fee, while this rule limits the recipient's balance. Partner launches are exempt, and the expiry is encoded on-chain at launch, so existing tokens keep whatever expiry they launched with.
+
+High-volume or bot-like deploy patterns can trigger automated spam protections and temporary or permanent restrictions — enforced hardest on the X path, where repeatedly breaching the one-per-minute limit restricts the account for 24 hours (a limited state: login, balances and withdrawals still work). For legitimate programmatic deploy use cases, open a support ticket before scaling up.
 
 ### Stock-Paired Launches
 
@@ -360,7 +459,8 @@ Selling a token you earn creator fees on through Bankr's swap/limit/stop/DCA/TWA
 
 | Issue | Chain | Resolution |
 |-------|-------|------------|
-| Rate limit reached | Both | Wait 24 hours or upgrade to Bankr Club |
+| Launch quota reached (EVM) | EVM | Wait for the oldest of your 3 attempts to age out of the rolling 24h window — Bankr Club does not raise the cap |
+| Launch wallet rejected (EVM) | EVM | Wallet must be ≥ 24h old and hold ≥ 0.002 native ETH on the launch chain |
 | Name/symbol taken | EVM | Choose different name |
 | Insufficient SOL | Solana | Add SOL for gas fees |
 | NFT not found | Solana | Token may still be on bonding curve |

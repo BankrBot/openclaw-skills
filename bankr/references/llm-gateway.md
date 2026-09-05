@@ -40,7 +40,8 @@ bankr config get llmKey
 
 | Model | Provider | Best For |
 |-------|----------|----------|
-| `claude-fable-5` | Anthropic | Latest generation, agentic + multimodal (1M context, image input) |
+| `claude-fable-5.1` | Anthropic | Most powerful Claude — long-running autonomous work (1M context, image input) |
+| `claude-fable-5` | Anthropic | Previous-generation Fable, agentic + multimodal (1M context, image input) |
 | `claude-opus-5` | Anthropic | Latest Opus, most capable reasoning (1M context, image input) |
 | `claude-opus-4.8` | Anthropic | Previous flagship Opus (1M context) |
 | `claude-opus-4.7` | Anthropic | Advanced reasoning (1M context) |
@@ -50,13 +51,14 @@ bankr config get llmKey
 | `claude-sonnet-4.6` | Anthropic | Previous generation Sonnet (1M context) |
 | `claude-sonnet-4.5` | Anthropic | Earlier Sonnet (1M context) |
 | `claude-haiku-4.5` | Anthropic | Fast, cost-effective (200K context) |
-| `gemini-3.7-flash` | Google | Latest Flash — the Bankr agent's default model (1M, image input) |
-| `gemini-3.6-flash` | Google | Previous Flash, coding and agents (1M, image input) |
+| `gemini-3.8-flash` | Google | Latest Flash — **the Bankr agent's default model** (1M, image input) |
+| `gemini-3.7-flash` | Google | Previous Flash, coding and agents (1M, image input) |
+| `gemini-3.6-flash` | Google | Fast, cost-effective multimodal (1M, image input) |
 | `gemini-3.5-flash` | Google | Fast general-purpose (1M) |
 | `gemini-3.5-flash-lite` | Google | Ultra-fast, lowest cost (1M) |
 | `gemini-3.1-pro` | Google | Long context, reasoning (1M) |
 | `gemini-3.1-flash-lite` | Google | Ultra-fast, lowest cost (1M) |
-| `gemini-3-pro` | Google | Previous-gen Pro, long context (1M) |
+| ~~`gemini-3-pro`~~ | Google | **Deprecated** — use `gemini-3.1-pro` |
 | `gemini-3-flash` | Google | High throughput (1M) |
 | `gemini-2.5-pro` | Google | Long context, multimodal |
 | `gemini-2.5-flash` | Google | Speed, high throughput |
@@ -81,9 +83,11 @@ bankr config get llmKey
 | `deepseek-v4-pro` | DeepSeek | Previous V4 Pro build, 0423 (1M, 384K output) |
 | `deepseek-v4-flash` | DeepSeek | High throughput, cost-effective (1M) |
 | `deepseek-v3.2` | DeepSeek | Cost-effective (164K context) |
-| `qwen3.7-max` | Alibaba | Latest flagship (1M) |
-| `qwen3.7-plus` | Alibaba | Latest, long-context reasoning (1M) |
-| `qwen3.7-flash` | Alibaba | Latest fast tier, economical (1M, image input) |
+| `qwen3.8-max` | Alibaba | Flagship Qwen, multimodal (1M, image input) |
+| `qwen3.8-flash` | Alibaba | Latest fast tier, multimodal (1M, image input) |
+| `qwen3.7-max` | Alibaba | Previous flagship, reasoning (1M) |
+| `qwen3.7-plus` | Alibaba | Agentic reasoning, lower cost (1M) |
+| `qwen3.7-flash` | Alibaba | Previous fast tier, vision (1M, image input) |
 | `qwen3.6-flash` | Alibaba | Fast, economical (1M) |
 | `qwen3.5-plus` | Alibaba | Long-context reasoning (1M) |
 | `qwen3.5-flash` | Alibaba | Fast, economical (1M) |
@@ -181,7 +185,7 @@ Only a **trailing** tier token counts as the opt-in, so unrelated model IDs cont
 
 ### Max Mode — Choose the Agent's Model
 
-Max Mode replaces the Bankr agent's default model (`gemini-3.7-flash`) with any gateway model, billed per token from your **LLM credit balance**. It's the pay-per-use alternative to a Bankr Club subscription for unlimited terminal messages, and unlike Club checkout it works with external/connected wallets.
+Max Mode replaces the Bankr agent's default model (`gemini-3.8-flash`) with any gateway model, billed per token from your **LLM credit balance**. It's the pay-per-use alternative to a Bankr Club subscription for unlimited terminal messages, and unlike Club checkout it works with external/connected wallets.
 
 ```bash
 bankr agent "analyze my portfolio" --model claude-opus-5
@@ -246,7 +250,7 @@ spendable = permanent pool + Σ (remaining of each grant where expiry > now)
 spend order = expiring grants first (soonest-expiring), then the permanent pool
 ```
 
-Expired grants drop off automatically — there is no manual cleanup. The Credits page and `/llm/usage` show a breakdown of your permanent pool vs. each grant and its expiry, and your credit history labels grant rows.
+Expired grants drop off automatically — there is no manual cleanup. The Credits page and `GET /llm/credits/state` show a breakdown of your permanent pool vs. each grant and its expiry, and your credit history labels grant rows.
 
 ### Sending Credits to Another Bankr User
 
@@ -291,20 +295,27 @@ By default a transfer refuses to touch granted credit. Passing `useGrantedCredit
 - **The two funding modes never replay each other** — an opted-in transfer carries a distinct transfer id, so an opted-in retry can't collide with a default-mode send of the same nominal id.
 - **Leaving the flag off is byte-identical to the previous behaviour**, so existing integrations need no change.
 
-Success responses and the agent's balance tool carry `feeUsd`, `grantedTransferableUsd` and `transferFeeBps`, so a client can preview Fee / Recipient receives / Total deducted before sending, and solve "Max" for amount + fee rather than amount alone.
+A successful transfer response carries `feeUsd`, so a client can show Fee / Recipient receives / Total deducted after the fact. The fee rate itself is fixed at 10% (1000 bps), so a "Max" solve for amount + fee can be computed client-side rather than read from the response.
 
-#### Reading the two ceilings
+#### Reading credit state
 
-`GET /llm/usage` returns two different figures, and the smaller one is what actually binds:
+**`GET /llm/credits/state` is the canonical read for what a wallet owns and what it may spend today.** (`GET /llm/usage` is *usage-only* — token counts and spend over a historical window; it no longer carries balance or transferable fields.)
 
 | Field | Meaning |
 |-------|---------|
-| `transferableUsd` | Today's allowance — already clamped by the remaining 24h cap and by any daily spend budget. A client can offer this as "Max" and the transfer endpoint won't reject it. |
-| `balanceTransferableUsd` | The sendable slice of the **balance itself** — the pool net of reserve, debt and live grants, *before* the cap/budget clamp. |
-| `grantedTransferableUsd` | The granted portion available when `useGrantedCredits` is set. |
-| `transferFeeBps` | The burn fee applied to the granted portion, in basis points. |
+| `creditBalanceUsd` | The permanent, purchased pool. |
+| `creditGrantsUsd` | Total remaining across all live grants. |
+| `totalCreditsUsd` | `creditBalanceUsd + creditGrantsUsd` — the headline spendable figure. |
+| `creditGrants[]` | Per-grant rows: `grantId`, `source`, `note`, `amountUsd`, `remainingUsd`, `expiresAt`. |
+| `dailyBudget` | `{ limitUsd, spentUsd, remainingUsd }`. `limitUsd: null` means uncapped. |
 
-Quote both figures rather than only the clamped one. A wallet holding $265 that a rolling window has temporarily gated to $10 reads as *missing money* if you show only `transferableUsd`; showing the balance alongside it, and naming the daily gate as the binding constraint, reads as a timer. The agent's credit-balance tool follows the same rule — it quotes the balance next to the allowance when a daily gate binds, and stays quiet when the structural balance is what's limiting.
+```bash
+curl -s "https://api.bankr.bot/llm/credits/state" -H "X-API-Key: $BANKR_API_KEY"
+```
+
+**Balance and budget are two different ceilings, and the smaller one binds.** Quote both rather than only the tighter one: a wallet holding $265 that a rolling window has temporarily gated to $10 reads as *missing money* if you show only the remaining budget; showing the balance alongside it, and naming the daily gate as the binding constraint, reads as a timer. The agent's credit-balance tool follows the same rule.
+
+The transfer endpoint enforces its own $500 / 24h principal cap on top of both — neither figure above accounts for it, so a send above the remaining daily allowance returns `429 daily-cap-exceeded` rather than being clamped for you.
 
 ### Daily Spend Budget
 
