@@ -3,15 +3,16 @@
 // path is exercised through an injected failure, never a live operator).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, readFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, writeFileSync as writeFileRaw, readFileSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { TypedDataEncoder, Wallet } from "ethers";
 import {
   decodeEip3009Calldata,
-  checkRequestAgainstGrant,
-  checkSignResponse,
+  checkRequestAgainstGrant as checkRequestRaw,
+  checkSignResponse as checkSignRaw,
   checkSubmitResponse,
   typedMessageFor,
   operatorsFor,
@@ -29,8 +30,11 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const SKILL = join(HERE, "..");
 const CLI = join(SKILL, "scripts/preview-payment.mjs");
 const run = (args) => spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8" });
+const writeFileSync = (path, data) => writeFileRaw(path, data, { mode: 0o600 });
 
-const PAYER = "0x" + "11".repeat(20);
+// Disposable, offline-only keys; never connected to a provider or funded.
+const TEST_WALLET = Wallet.createRandom();
+const PAYER = TEST_WALLET.address.toLowerCase();
 const PAYEE = "0xb0b3fca940e04f99367f08e665e1c2cb4ebd4912"; // the pinned payee
 const GRANT = (over = {}) => ({
   schema: "voidly-task-grant/v1",
@@ -53,8 +57,28 @@ const GRANT = (over = {}) => ({
   ...over,
 });
 const word = (hex) => hex.replace(/^0x/, "").padStart(64, "0");
-const calldataFor = (m, { v = 27, selector = TRANSFER_WITH_AUTHORIZATION_SELECTOR } = {}) =>
-  selector + word(m.from) + word(m.to) + word(BigInt(m.value).toString(16)) + word(BigInt(m.validAfter).toString(16)) + word(BigInt(m.validBefore).toString(16)) + word(m.nonce) + word(v.toString(16)) + "ab".repeat(32) + "cd".repeat(32);
+const fields = [
+  { name: "from", type: "address" }, { name: "to", type: "address" },
+  { name: "value", type: "uint256" }, { name: "validAfter", type: "uint256" },
+  { name: "validBefore", type: "uint256" }, { name: "nonce", type: "bytes32" },
+];
+const signMessage = (message, { lane = "b", domain = USDC_BASE_DOMAIN, wallet = TEST_WALLET } = {}) =>
+  wallet.signingKey.sign(TypedDataEncoder.hash(domain, { [lane === "a" ? "ReceiveWithAuthorization" : "TransferWithAuthorization"]: fields }, message)).serialized;
+const responseFor = (terms, lane = "b", amount = null) => {
+  const m = typedMessageFor(terms, terms.expiresAt).message;
+  return { success: true, signatureType: "eth_signTypedData_v4", signer: PAYER,
+    signature: signMessage({ ...m, value: amount ?? m.value }, { lane }) };
+};
+const calldataFor = (m, { v, selector = TRANSFER_WITH_AUTHORIZATION_SELECTOR, signature = signMessage(m) } = {}) =>
+  selector + word(m.from) + word(m.to) + word(BigInt(m.value).toString(16)) + word(BigInt(m.validAfter).toString(16)) + word(BigInt(m.validBefore).toString(16)) + word(m.nonce) + word((v ?? parseInt(signature.slice(130, 132), 16)).toString(16)) + signature.slice(2, 130);
+// Existing term/shape cases now receive genuine approved fixture signatures.
+const checkRequestAgainstGrant = (input) => checkRequestRaw({
+  signResponse: responseFor(input.terms, "b", input.typedAmount ?? null), ...input,
+});
+const checkSignResponse = (input) => checkSignRaw({ lane: "b", ...input,
+  response: input.response && typeof input.response === "object" && !Array.isArray(input.response)
+    ? { success: true, signatureType: "eth_signTypedData_v4", ...input.response } : input.response,
+});
 
 test("the typed message is the SDK's: floor value, validAfter 0, validBefore = expires_at seconds, nonce = 0x + binding", () => {
   const g = GRANT();
@@ -79,7 +103,7 @@ test("calldata decodes to the nine arguments, and only the exact length passes",
   assert.equal(d.to, PAYEE);
   assert.equal(d.value, "50000");
   assert.equal(d.nonce, m.nonce);
-  assert.equal(d.v, 27);
+  assert.ok(d.v === 27 || d.v === 28);
   assert.equal(decodeEip3009Calldata(calldataFor(m) + "00").reason, "calldata_wrong_length");
   assert.equal(decodeEip3009Calldata("0xzz").reason, "calldata_not_hex");
   assert.equal(decodeEip3009Calldata(TRANSFER_WITH_AUTHORIZATION_SELECTOR + "ff".repeat(288)).reason, "calldata_address_malformed");
@@ -116,7 +140,7 @@ test("check-request refuses every deviation from the grant by name", () => {
 
 test("check-sign-response binds the signer and the signature shape", () => {
   const terms = grantTermsOf(GRANT());
-  const sig = "0x" + "ab".repeat(64) + "1b";
+  const sig = responseFor(terms).signature;
   assert.equal(checkSignResponse({ response: { signature: sig, signer: PAYER.toUpperCase().replace("0X", "0x") }, terms }).ok, true);
   assert.equal(checkSignResponse({ response: { signature: sig, signer: PAYEE }, terms }).reason, "signer_not_the_payer");
   assert.equal(checkSignResponse({ response: { signature: sig }, terms }).reason, "signer_missing");
@@ -187,13 +211,15 @@ test("CLI: preview prints every committed field from the grant, and refuses an e
 
 test("CLI: check-sign-response and check-submit-response on synthetic documents", () => {
   const dir = mkdtempSync(join(tmpdir(), "pp2-"));
-  writeFileSync(join(dir, "keep.grant.json"), JSON.stringify(GRANT()));
-  writeFileSync(join(dir, "sign.json"), JSON.stringify({ signature: "0x" + "ab".repeat(64) + "1c", signer: PAYER }));
-  const s = run(["check-sign-response", "--grant", join(dir, "keep.grant.json"), "--response", join(dir, "sign.json")]);
+  const grant = GRANT();
+  writeFileSync(join(dir, "keep.grant.json"), JSON.stringify(grant));
+  const response = responseFor(grantTermsOf(grant));
+  writeFileSync(join(dir, "sign.json"), JSON.stringify(response));
+  const s = run(["check-sign-response", "--grant", join(dir, "keep.grant.json"), "--lane", "b", "--response", join(dir, "sign.json")]);
   assert.equal(s.status, 0, s.stderr);
   assert.match(s.stdout, /^ACCEPTED\s+signature/);
-  writeFileSync(join(dir, "bad-sign.json"), JSON.stringify({ signature: "0x" + "ab".repeat(64) + "1c", signer: PAYEE }));
-  assert.match(run(["check-sign-response", "--grant", join(dir, "keep.grant.json"), "--response", join(dir, "bad-sign.json")]).stderr, /signer_not_the_payer/);
+  writeFileSync(join(dir, "bad-sign.json"), JSON.stringify({ ...response, signer: PAYEE }));
+  assert.match(run(["check-sign-response", "--grant", join(dir, "keep.grant.json"), "--lane", "b", "--response", join(dir, "bad-sign.json")]).stderr, /signer_not_the_payer/);
   writeFileSync(join(dir, "submit.json"), JSON.stringify({ success: true, transactionHash: "0x" + "ab".repeat(32), status: "success", chainId: 8453, signer: PAYER }));
   const t = run(["check-submit-response", "--grant", join(dir, "keep.grant.json"), "--response", join(dir, "submit.json")]);
   assert.equal(t.status, 0, t.stderr);
@@ -207,13 +233,14 @@ test("CLI: check-request decodes the request against the grant and refuses befor
   const g = GRANT();
   const m = typedMessageFor(grantTermsOf(g), g.expires_at).message;
   writeFileSync(join(dir, "keep.grant.json"), JSON.stringify(g));
+  writeFileSync(join(dir, "sign.json"), JSON.stringify(responseFor(grantTermsOf(g))));
   writeFileSync(join(dir, "bad.json"), JSON.stringify({ to: CANONICAL_USDC_BASE, chainId: 8453, value: "0x0", data: calldataFor({ ...m, to: PAYER }) }));
-  const bad = run(["check-request", "--grant", join(dir, "keep.grant.json"), "--request", join(dir, "bad.json")]);
+  const bad = run(["check-request", "--grant", join(dir, "keep.grant.json"), "--sign-response", join(dir, "sign.json"), "--request", join(dir, "bad.json")]);
   assert.equal(bad.status, 1);
   assert.match(bad.stderr, /REFUSED\s+request_payee_mismatch/);
   // a good request with a single operator refuses the gas quorum before dialling
   writeFileSync(join(dir, "good.json"), JSON.stringify({ to: CANONICAL_USDC_BASE, chainId: 8453, value: "0x0", data: calldataFor(m) }));
-  const one = run(["check-request", "--grant", join(dir, "keep.grant.json"), "--request", join(dir, "good.json"), "--rpc", "https://mainnet.base.org"]);
+  const one = run(["check-request", "--grant", join(dir, "keep.grant.json"), "--sign-response", join(dir, "sign.json"), "--request", join(dir, "good.json"), "--rpc", "https://mainnet.base.org"]);
   assert.match(one.stderr, /insufficient_rpc_quorum/);
 });
 
@@ -326,9 +353,10 @@ test("R5-E1: isoUtcMs round-trips the calendar like the SDK — Feb 30 is refuse
 
 test("R5-E4: a signature with an uppercase 0X prefix is refused — the SDK would not take it verbatim", () => {
   const terms = grantTermsOf(GRANT());
-  const r = checkSignResponse({ response: { signature: "0X" + "AB".repeat(64) + "1B", signer: PAYER }, terms });
+  const signature = responseFor(terms).signature.toUpperCase();
+  const r = checkSignResponse({ response: { signature, signer: PAYER }, terms });
   assert.equal(r.reason, "signature_malformed");
-  assert.equal(checkSignResponse({ response: { signature: "0x" + "AB".repeat(64) + "1B", signer: PAYER }, terms }).ok, true, "any-case hex after a lowercase 0x is what the SDK accepts");
+  assert.equal(checkSignResponse({ response: { signature: "0x" + signature.slice(2), signer: PAYER }, terms }).ok, true, "any-case hex after a lowercase 0x is what the SDK accepts");
 });
 
 test("R5-E2: a --grant filename carrying a forged verdict never reaches the success lines", () => {
@@ -343,4 +371,172 @@ test("R5-E2: a --grant filename carrying a forged verdict never reaches the succ
   const p = run(["preview", "--grant", evil]);
   assert.equal(p.status, 0, p.stderr);
   assert.ok(!p.stdout.includes("PROVEN"), p.stdout);
+});
+
+test("cryptographic gate recovers both explicit lanes and rejects a different domain, lane, wallet or message", () => {
+  const terms = grantTermsOf(GRANT());
+  const m = typedMessageFor(terms, terms.expiresAt).message;
+  for (const lane of ["a", "b"]) {
+    const response = responseFor(terms, lane);
+    assert.equal(checkSignRaw({ response, terms, lane }).ok, true, `valid lane ${lane}`);
+    assert.equal(checkSignRaw({ response: { ...response, optionalFutureMetadata: "not trusted" }, terms, lane }).ok, true);
+    assert.equal(checkSignRaw({ response, terms }).reason, "signature_lane_required");
+    assert.equal(checkSignRaw({ response, terms, lane: lane === "a" ? "b" : "a" }).ok, false, "a receive signature is not a transfer signature");
+    for (const domain of [
+      { ...USDC_BASE_DOMAIN, chainId: 1 }, { ...USDC_BASE_DOMAIN, name: "Other" },
+      { ...USDC_BASE_DOMAIN, version: "1" }, { ...USDC_BASE_DOMAIN, verifyingContract: PAYER },
+    ]) {
+      assert.equal(checkSignRaw({ response: { ...response, signature: signMessage(m, { lane, domain }) }, terms, lane }).reason, "signature_not_from_payer");
+    }
+    for (const changed of [
+      { from: PAYEE }, { to: PAYER }, { value: "50001" }, { validAfter: "1" },
+      { validBefore: String(BigInt(m.validBefore) + 1n) }, { nonce: "0x" + "ee".repeat(32) },
+    ]) {
+      assert.equal(checkSignRaw({ response: { ...response, signature: signMessage({ ...m, ...changed }, { lane }) }, terms, lane }).reason, "signature_not_from_payer", Object.keys(changed)[0]);
+    }
+    const other = Wallet.createRandom();
+    assert.equal(checkSignRaw({ response: { ...response, signature: signMessage(m, { lane, wallet: other }) }, terms, lane }).reason, "signature_not_from_payer", "claimed payer cannot replace recovery");
+  }
+});
+
+test("signing success, type, amount and exact expiry remain fail-closed", () => {
+  const terms = grantTermsOf(GRANT());
+  const response = responseFor(terms);
+  for (const success of [false, undefined, "true"]) {
+    assert.equal(checkSignRaw({ response: { ...response, success }, terms, lane: "b" }).reason, "sign_not_success");
+  }
+  for (const signatureType of [undefined, "personal_sign", "eth_signTransaction"]) {
+    assert.equal(checkSignRaw({ response: { ...response, signatureType }, terms, lane: "b" }).reason, "sign_type_mismatch");
+  }
+  const otherAmount = responseFor(terms, "b", "60000");
+  assert.equal(checkSignRaw({ response: otherAmount, terms, lane: "b" }).reason, "signature_not_from_payer");
+  assert.equal(checkSignRaw({ response: otherAmount, terms, lane: "b", typedAmount: "60000" }).ok, true);
+  assert.equal(checkSignRaw({ response, terms, lane: "b", typedAmount: "5000001" }).reason, "request_amount_outside_grant_band");
+  const originalNow = Date.now;
+  try {
+    Date.now = () => Date.parse(terms.expiresAt);
+    assert.equal(checkSignRaw({ response, terms, lane: "b" }).reason, "grant_expired");
+    Date.now = () => Math.floor(Date.parse(terms.expiresAt) / 1000) * 1000 - 1;
+    assert.equal(checkSignRaw({ response, terms, lane: "b" }).ok, true);
+  } finally { Date.now = originalNow; }
+});
+
+test("fractional grant expiry refuses at the exact signed second in preview, signing and request gates", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "pp-expiry-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const grant = GRANT({ expires_at: "2027-01-01T00:00:00.999Z" });
+  const terms = grantTermsOf(grant);
+  const response = responseFor(terms);
+  const m = typedMessageFor(terms, terms.expiresAt).message;
+  const request = { to: CANONICAL_USDC_BASE, chainId: 8453, value: "0", data: calldataFor(m) };
+  const signedDeadline = Number(m.validBefore) * 1000;
+  const originalNow = Date.now;
+  try {
+    Date.now = () => signedDeadline - 1;
+    assert.equal(checkSignRaw({ response, terms, lane: "b" }).ok, true);
+    assert.equal(checkRequestRaw({ request, terms, expiresAt: terms.expiresAt, signResponse: response }).ok, true);
+    for (const now of [signedDeadline, signedDeadline + 500, signedDeadline + 999]) {
+      Date.now = () => now;
+      for (const lane of ["a", "b"]) {
+        assert.equal(checkSignRaw({ response: responseFor(terms, lane), terms, lane }).reason, "grant_expired", `${lane}: ${now}`);
+      }
+      assert.equal(checkRequestRaw({ request, terms, expiresAt: terms.expiresAt, signResponse: response }).reason, "grant_expired", String(now));
+    }
+  } finally { Date.now = originalNow; }
+  const grantPath = join(dir, "grant.json");
+  const clockPath = join(dir, "clock.cjs");
+  writeFileSync(grantPath, JSON.stringify(grant));
+  writeFileSync(clockPath, `Date.now = () => ${signedDeadline};\n`);
+  const preview = spawnSync(process.execPath, ["--require", clockPath, CLI, "preview", "--grant", grantPath], { encoding: "utf8", timeout: 3000 });
+  assert.equal(preview.status, 1, preview.stderr);
+  assert.match(preview.stderr, /^REFUSED\s+grant_expired/);
+  assert.equal(preview.stdout, "");
+});
+
+test("a regular-file replacement by a FIFO between lstat and open refuses without blocking", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "pp-fifo-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const grant = GRANT();
+  const grantPath = join(dir, "grant.json");
+  const responsePath = join(dir, "response.json");
+  const hookPath = join(dir, "replace.cjs");
+  writeFileSync(grantPath, JSON.stringify(grant));
+  writeFileSync(responsePath, JSON.stringify(responseFor(grantTermsOf(grant))));
+  // Test-only interception swaps this one owned fixture just before the real
+  // open. The FIFO has no writer: a blocking open cannot reach the fstat gate.
+  writeFileSync(hookPath, `
+const fs = require("node:fs");
+const { spawnSync } = require("node:child_process");
+const original = fs.openSync;
+fs.openSync = function(path, flags, ...rest) {
+  if (path === ${JSON.stringify(responsePath)}) {
+    fs.unlinkSync(path);
+    const fifo = spawnSync("mkfifo", ["-m", "600", path], { timeout: 1000 });
+    if (fifo.status !== 0) throw new Error("owned FIFO fixture unavailable");
+  }
+  return original.call(this, path, flags, ...rest);
+};
+require("node:module").syncBuiltinESMExports();
+`);
+  const out = spawnSync(process.execPath, ["--require", hookPath, CLI, "check-sign-response", "--grant", grantPath, "--lane", "b", "--response", responsePath], { encoding: "utf8", timeout: 3000 });
+  assert.equal(out.error, undefined, "the no-writer FIFO must not hold open until the subprocess timeout");
+  assert.equal(out.status, 1, out.stderr);
+  assert.match(out.stderr, /^REFUSED\s+response_changed_while_opening/);
+  assert.equal(out.stdout, "");
+});
+
+test("submission is bound to the actual approved signature, not just nonzero limbs", () => {
+  const terms = grantTermsOf(GRANT());
+  const m = typedMessageFor(terms, terms.expiresAt).message;
+  const signResponse = responseFor(terms);
+  const request = { to: CANONICAL_USDC_BASE, chainId: 8453, value: "0", data: calldataFor(m) };
+  const input = { terms, expiresAt: terms.expiresAt, request, signResponse };
+  assert.equal(checkRequestRaw(input).ok, true);
+  assert.equal(checkRequestRaw({ ...input, signResponse: undefined }).reason, "sign_response_required");
+  assert.equal(checkRequestRaw({ ...input, signResponse: responseFor(terms, "a") }).ok, false);
+  // Another real, offline fixture signature is not the approved one even when
+  // inserted next to the correct call arguments. No live account is involved.
+  const otherSignature = signMessage({ ...m, nonce: "0x" + "ff".repeat(32) });
+  const changed = { ...request, data: calldataFor(m, { signature: otherSignature }) };
+  assert.equal(checkRequestRaw({ ...input, request: changed }).reason, "request_signature_mismatch");
+  const otherV = parseInt(signResponse.signature.slice(-2), 16) === 27 ? 28 : 27;
+  assert.equal(checkRequestRaw({ ...input, request: { ...request, data: calldataFor(m, { v: otherV }) } }).reason, "request_signature_mismatch");
+});
+
+test("CLI requires explicit lane and private no-follow signature inputs, without printing bearer material", () => {
+  const dir = mkdtempSync(join(tmpdir(), "pp-private-"));
+  const grant = GRANT();
+  const terms = grantTermsOf(grant);
+  const response = responseFor(terms);
+  const m = typedMessageFor(terms, terms.expiresAt).message;
+  const grantPath = join(dir, "grant.json");
+  const responsePath = join(dir, "response.json");
+  const requestPath = join(dir, "request.json");
+  writeFileSync(grantPath, JSON.stringify(grant));
+  writeFileSync(responsePath, JSON.stringify(response));
+  writeFileSync(requestPath, JSON.stringify({ to: CANONICAL_USDC_BASE, chainId: 8453, value: "0", data: calldataFor(m) }));
+  const sign = ["check-sign-response", "--grant", grantPath, "--response", responsePath];
+  assert.match(run(sign).stderr, /signature_lane_required/);
+  const signed = run([...sign, "--lane", "b"]);
+  assert.equal(signed.status, 0, signed.stderr);
+  assert.ok(!signed.stdout.includes(response.signature));
+  chmodSync(responsePath, 0o644);
+  assert.match(run([...sign, "--lane", "b"]).stderr, /response_permissions_too_open/);
+  chmodSync(responsePath, 0o600);
+  const link = join(dir, "link.json");
+  symlinkSync(responsePath, link);
+  assert.match(run(["check-sign-response", "--grant", grantPath, "--lane", "b", "--response", link]).stderr, /response_symlink_refused/);
+  const check = ["check-request", "--grant", grantPath, "--request", requestPath];
+  assert.match(run(check).stderr, /sign_response_required/);
+  chmodSync(requestPath, 0o644);
+  assert.match(run([...check, "--sign-response", responsePath]).stderr, /request_permissions_too_open/);
+  chmodSync(requestPath, 0o600);
+  symlinkSync(requestPath, join(dir, "request-link.json"));
+  assert.match(run(["check-request", "--grant", grantPath, "--request", join(dir, "request-link.json"), "--sign-response", responsePath]).stderr, /request_symlink_refused/);
+  const bad = { ...response, signature: "0x" + "11".repeat(10000) };
+  writeFileSync(responsePath, JSON.stringify(bad));
+  const refused = run([...sign, "--lane", "b"]);
+  assert.equal(refused.status, 1);
+  assert.equal(refused.stderr.trim().split("\n").length, 1);
+  assert.ok(refused.stderr.length < 1200 && !refused.stderr.includes(bad.signature));
 });

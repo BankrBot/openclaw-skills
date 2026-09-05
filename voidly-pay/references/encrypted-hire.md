@@ -9,11 +9,18 @@ below mints an Ed25519 signing identity with `--mint-identity`, writes it
 
 ```bash
 # Installing runs third-party code on the machine: ask the human first, name
-# the three packages (@voidly/session, tweetnacl, tweetnacl-util) and the
+# the four direct dependencies (@voidly/session, ethers, tweetnacl, tweetnacl-util) and the
 # registry (registry.npmjs.org), and only then run this.
 cd voidly-pay && npm ci --ignore-scripts   # exact locked versions, no install scripts
 node scripts/discover.mjs
 ```
+
+This approved install includes `ethers@6.17.0` for the payment-preview
+helper's local signature recovery. It is not needed by the Node-only
+settlement checker. Sealing remains preparation, not payment or a completed
+hire. Before any later signature, read the effective Bankr policy checks in
+[SKILL.md](../SKILL.md): a configured recipient restriction stops both lanes;
+do not relax a protection or switch paths to bypass it.
 
 Literal output, captured live (the amounts are that run's data; re-run for
 current values):

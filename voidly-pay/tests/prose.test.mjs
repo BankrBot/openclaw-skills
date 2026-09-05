@@ -20,10 +20,13 @@ const read = (p) => readFileSync(join(SKILL, p), "utf8");
 const SKILL_MD = read("SKILL.md");
 const HIRE_MD = read("references/encrypted-hire.md");
 const PROOF_MD = read("references/settlement-proof.md");
+const CATALOG_TEXT = read("catalog.json");
+const CATALOG = JSON.parse(CATALOG_TEXT);
 const ALL_PROSE = [
   ["SKILL.md", SKILL_MD],
   ["references/encrypted-hire.md", HIRE_MD],
   ["references/settlement-proof.md", PROOF_MD],
+  ["catalog.json", CATALOG_TEXT],
 ];
 
 // The scripts PRINT prose. seal-hire.mjs carried the same false "can never be
@@ -35,6 +38,7 @@ const SPOKEN = [
   ["scripts/verify-settlement.mjs", read("scripts/verify-settlement.mjs")],
   ["scripts/verify-artifacts.mjs", read("scripts/verify-artifacts.mjs")],
   ["scripts/discover.mjs", read("scripts/discover.mjs")],
+  ["scripts/preview-payment.mjs", read("scripts/preview-payment.mjs")],
 ];
 const EVERYTHING_A_USER_READS = [...ALL_PROSE, ...SPOKEN];
 
@@ -75,6 +79,53 @@ test("E: no document claims the provider cannot see the brief", () => {
       assert.doesNotMatch(claimsOnly(text), re, `${name} makes a provider-blindness claim: ${re}`);
     }
   }
+});
+
+// These are documentation boundaries, not a claim about a live Bankr wallet.
+const plain = text => text.replace(/[`*]/g, "").replace(/\\n|\s+/g, " ");
+test("payment docs stop both signing lanes and raw submission for a configured recipient restriction", () => {
+  for (const [name,text] of [["SKILL.md",SKILL_MD],["catalog.json",CATALOG_TEXT]]) {
+    assert.match(plain(text),/non-empty allowedRecipients[^.]{0,160}both lanes/i,name);
+    assert.match(plain(text),/all raw submissions/i,name);
+    assert.match(plain(text),/do not remove[^.]{0,200}switch[^.]{0,80}lane/i,name);
+  }
+  assert.match(SKILL_MD,/https:\/\/docs\.bankr\.bot\/wallet-api\/sign\//);
+  assert.match(SKILL_MD,/https:\/\/docs\.bankr\.bot\/wallet-api\/submit\//);
+});
+test("arbitrary-call prose uses the effective policy, default on and optional timers without mandatory opt-in", () => {
+  for (const [name,text] of [["SKILL.md",SKILL_MD],["catalog.json",CATALOG_TEXT]]) {
+    assert.match(plain(text),/arbitrary contract calls[^.]{0,80}on by default/i,name);
+    assert.match(plain(text),/timer[^.]{0,40}optional|optional[^.]{0,40}timer/i,name);
+    assert.match(plain(text),/effective[^.]{0,60}policy/i,name);
+    assert.match(plain(text),/unknown[^.]{0,80}stop|stop[^.]{0,80}unknown/i,name);
+    assert.doesNotMatch(plain(text),/off by default|enabling it is[^.]{0,80}timed opt-in|human enables[^.]{0,80}chooses Lane A/i,name);
+  }
+  assert.match(SKILL_MD,/on by default\*\*[^.]{0,80}\[Terminal controls and timers\]\(https:\/\/docs\.bankr\.bot\/security\/bankr-terminal\/\)/);
+});
+test("installation names four direct dependencies and preserves the no-install settlement-first path", () => {
+  for (const [name,text] of [["SKILL.md",SKILL_MD],["catalog.json",CATALOG_TEXT],["encrypted-hire.md",HIRE_MD]]) {
+    for (const dependency of ["@voidly/session", "ethers", "tweetnacl", "tweetnacl-util"]) assert(text.includes(dependency),`${name}: ${dependency}`);
+    assert.match(plain(text),/four direct/i,name);
+    assert.doesNotMatch(plain(text),/three (?:npm )?packages|exactly (?:three|four) packages/i,name);
+  }
+  assert.match(SKILL_MD,/ethers@6\.17\.0/);
+  assert.match(plain(SKILL_MD),/preview-payment\.mjs[^.]{0,100}approved install/i);
+  assert(CATALOG.demo.code.indexOf("node scripts/verify-settlement.mjs")<CATALOG.demo.code.indexOf("npm ci --ignore-scripts"));
+  assert.match(plain(PROOF_MD),/verify-settlement\.mjs[^.]{0,70}needs no npm package/i);
+});
+test("signature gate commands name lane, private response and exact local recovery", () => {
+  assert.match(SKILL_MD,/check-sign-response --grant \.\/keep\.grant\.json --lane a[\s\S]{0,80}--response \.\/lane-a-sign-response\.json/);
+  assert.match(SKILL_MD,/check-sign-response --grant \.\/keep\.grant\.json --lane b[\s\S]{0,80}--response \.\/lane-b-sign-response\.json/);
+  assert.match(SKILL_MD,/check-request --grant \.\/keep\.grant\.json[\s\S]{0,100}--sign-response \.\/lane-b-sign-response\.json[\s\S]{0,80}--request \.\/request\.json/);
+  assert.match(plain(SKILL_MD),/recovers[^.]{0,120}exact[^.]{0,120}lane/i);
+  assert.match(plain(SKILL_MD),/0600 or stricter[^.]{0,80}symlink/i);
+  assert.match(plain(SKILL_MD),/same[^.]{0,70}amount[^.]{0,100}preview[^.]{0,100}check-sign-response[^.]{0,100}check-request/i);
+});
+test("prose distinguishes preparation from a Bankr end-to-end hire and settlement from local checks", () => {
+  assert.match(SKILL_MD,/PREPARE and VERIFY — not an end-to-end hire/);
+  assert.match(plain(CATALOG_TEXT),/PREPARE and VERIFY[^.]{0,100}not an end-to-end hire/i);
+  assert.doesNotMatch(plain(SKILL_MD),/signature is the single gap|human preview[^.]{0,100}only controls on Lane A/i);
+  assert.match(plain(PROOF_MD),/local signature[^.]{0,100}not[^.]{0,60}settlement/i);
 });
 
 test("E: SKILL.md states plainly that the provider CAN read the brief", () => {
@@ -389,4 +440,3 @@ test("S: the captured PROVEN block matches the shape the script prints", () => {
     assert.doesNotMatch(line, /\s#\s/, `the fence is captured output, so this annotation belongs outside it: ${line}`);
   }
 });
-

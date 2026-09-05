@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-// preview-payment.mjs — the Leg 2 gates as a PROGRAM, not a paragraph. Pure
-// Node (Node 20+): no npm dependency, no keys, no writes, no money. Reads
+// preview-payment.mjs — the Leg 2 gates as a PROGRAM, not a paragraph.
+// Standard Node (Node 20+) helper using pinned ethers for local signature recovery; no wallet
+// keys, no writes, no money. The separate settlement verifier stays dependency-free. Reads
 // your grant file and, in the three check modes, a JSON document you hand it.
 //
-//   node scripts/preview-payment.mjs preview --grant ./keep.grant.json [--lane a|b]
+//   node scripts/preview-payment.mjs preview --grant ./keep.grant.json [--lane a|b] [--amount <atomic>]
 //       Renders EVERY field the EIP-712 signature commits to, from the grant:
 //       chain + USDC contract, amount in atomic units AND decimal USDC (the
 //       SDK signs the band's floor), payer, payee, the EIP-712 domain, the
@@ -12,13 +13,14 @@
 //       shape. Show this to the human; get the yes on THIS.
 //
 //   node scripts/preview-payment.mjs check-sign-response --grant ./keep.grant.json \
-//       --response ./sign-response.json
+//       --lane a|b --response ./sign-response.json [--amount <atomic>]
 //       The /wallet/sign response: `signer` must be the grant's payer, the
-//       signature must be 0x + 130 hex with v in {27, 28} and non-zero r/s.
+//       signature must recover the payer over the exact lane/domain/message
+//       and unexpired grant. The response must report successful EIP-712 signing.
 //       Exit 0 = hand the signature string back to the SDK verbatim.
 //
 //   node scripts/preview-payment.mjs check-request --grant ./keep.grant.json \
-//       --request ./request.json [--signer 0x<40-hex>] [--amount <atomic>] \
+//       --request ./request.json --sign-response ./sign-response.json [--signer 0x<40-hex>] [--amount <atomic>] \
 //       [--rpc https://mainnet.base.org --rpc https://base.drpc.org]
 //       Inside the `broadcast` callback, BEFORE /wallet/submit: decodes the
 //       SDK's TransactionRequest (`to`, `chainId`, `value`, `data`) — the
@@ -47,9 +49,10 @@
 // name. Nothing here signs, submits, or authorizes value. No document,
 // argv or operator text is ever printed verbatim into a refusal.
 
-import { readFileSync, realpathSync, statSync } from "node:fs";
+import { closeSync, constants as fsConstants, fstatSync, lstatSync, openSync, readSync, realpathSync } from "node:fs";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { verifyTypedData } from "ethers";
 import {
   ALLOWED_BASE_RPC_HOSTS,
   CANONICAL_USDC_BASE,
@@ -192,6 +195,29 @@ export function typedMessageFor(terms, expiresAtIso) {
   };
 }
 
+/** Derive only the exact authorization this human-reviewed grant permits. */
+export function typedAuthorizationFor(terms, expiresAt, lane, typedAmount = null) {
+  if (lane !== "a" && lane !== "b") return { ok: false, reason: "signature_lane_required", detail: "name the approved lane explicitly: a or b" };
+  const typed = typedMessageFor(terms, expiresAt);
+  if (!typed.ok) return typed;
+  const amount = typedAmount === null ? terms.band.min : typedAmount;
+  if (!isStr(amount) || !DECIMAL.test(amount)) return { ok: false, reason: "bad_amount", detail: "amount must be a decimal atomic integer" };
+  if (BigInt(amount) < BigInt(terms.band.min) || BigInt(amount) > BigInt(terms.band.max)) {
+    return { ok: false, reason: "request_amount_outside_grant_band", detail: "the approved amount is outside this grant's band" };
+  }
+  const primaryType = lane === "a" ? "ReceiveWithAuthorization" : "TransferWithAuthorization";
+  return {
+    ok: true, expiresMs: typed.expiresMs, primaryType,
+    domain: USDC_BASE_DOMAIN,
+    types: { [primaryType]: [
+      { name: "from", type: "address" }, { name: "to", type: "address" },
+      { name: "value", type: "uint256" }, { name: "validAfter", type: "uint256" },
+      { name: "validBefore", type: "uint256" }, { name: "nonce", type: "bytes32" },
+    ] },
+    message: { ...typed.message, value: BigInt(amount).toString() },
+  };
+}
+
 /**
  * Decode an EIP-3009 call. Pure. Returns the nine arguments or a refusal.
  */
@@ -233,7 +259,7 @@ export function decodeEip3009Calldata(data) {
  * that amount explicitly. Every field is type-checked before it is compared:
  * an array or a number where a string belongs is a refusal, never a coercion.
  */
-export function checkRequestAgainstGrant({ request, terms, expiresAt, typedAmount = null, signer = null }) {
+export function checkRequestAgainstGrant({ request, terms, expiresAt, typedAmount = null, signer = null, signResponse }) {
   const refuse = (reason, detail = "") => ({ ok: false, reason, detail });
   if (request === null || typeof request !== "object" || Array.isArray(request)) return refuse("request_not_object");
   const chainOk =
@@ -273,14 +299,26 @@ export function checkRequestAgainstGrant({ request, terms, expiresAt, typedAmoun
   if (signer !== null && (!isStr(signer) || signer.toLowerCase() !== m.from)) {
     return refuse("signer_not_the_payer", `signer ${shown(lower(signer), ADDR)} is not the grant's payer ${m.from}`);
   }
-  if (Date.now() >= typed.expiresMs) return refuse("grant_expired", "the grant's validity window has passed; re-seal and preview again");
-  return { ok: true, decoded, message: m };
+  if (Math.floor(Date.now() / 1000) >= Number(m.validBefore)) return refuse("grant_expired", "the signed validity window has passed; re-seal and preview again");
+  if (signResponse === undefined) return refuse("sign_response_required", "the approved Lane B signing response is required before checking a submission");
+  const signed = checkSignResponse({ response: signResponse, terms: { ...terms, expiresAt }, lane: "b", typedAmount });
+  if (!signed.ok) return signed;
+  const signature = signed.signature.toLowerCase();
+  if (decoded.r !== signature.slice(0, 66) || decoded.s !== `0x${signature.slice(66, 130)}` || decoded.v !== parseInt(signature.slice(130, 132), 16)) {
+    return refuse("request_signature_mismatch", "the submission signature differs from the approved signing response; do not submit");
+  }
+  return { ok: true, decoded, message: { ...m, value: BigInt(previewed).toString() } };
 }
 
 /** /wallet/sign response → the signature string, or a refusal. Pure. */
-export function checkSignResponse({ response, terms }) {
+export function checkSignResponse({ response, terms, lane, typedAmount = null }) {
   const refuse = (reason, detail = "") => ({ ok: false, reason, detail });
+  const typed = typedAuthorizationFor(terms, terms.expiresAt, lane, typedAmount);
+  if (!typed.ok) return typed;
+  if (Math.floor(Date.now() / 1000) >= Number(typed.message.validBefore)) return refuse("grant_expired", "the signed validity window has passed; re-seal and preview again");
   if (response === null || typeof response !== "object" || Array.isArray(response)) return refuse("response_not_object");
+  if (response.success !== true) return refuse("sign_not_success", "the response does not report successful signing");
+  if (response.signatureType !== "eth_signTypedData_v4") return refuse("sign_type_mismatch", "the response is not an EIP-712 signing response");
   if (!isStr(response.signature)) return refuse("signature_malformed", "signature is not a string");
   // The SDK's SIGNATURE_RE is /^0x[0-9a-fA-F]{130}$/ — a lowercase `0x`
   // prefix, any-case hex. "Hand it back verbatim" must mean the SDK will
@@ -293,6 +331,15 @@ export function checkSignResponse({ response, terms }) {
   if (!isStr(response.signer) || !ADDR.test(response.signer.toLowerCase())) return refuse("signer_missing", "the response names no usable signer address");
   if (response.signer.toLowerCase() !== terms.payer) {
     return refuse("signer_not_the_payer", `signer ${response.signer.toLowerCase()} is not the grant's payer ${terms.payer} — a different wallet signed; do not hand this to the SDK`);
+  }
+  let recovered;
+  try {
+    recovered = verifyTypedData(typed.domain, typed.types, typed.message, response.signature).toLowerCase();
+  } catch {
+    return refuse("signature_not_recoverable", "the signature does not recover over the exact approved EIP-712 request");
+  }
+  if (recovered !== terms.payer || recovered !== response.signer.toLowerCase()) {
+    return refuse("signature_not_from_payer", "the recovered wallet is not the grant payer for these exact approved terms");
   }
   return { ok: true, signature: response.signature };
 }
@@ -320,9 +367,9 @@ export function checkSubmitResponse({ response, terms }) {
 // ── CLI ─────────────────────────────────────────────────────────────────────
 
 const MODES = {
-  preview: ["--grant", "--lane"],
-  "check-request": ["--grant", "--request", "--signer", "--amount", "--rpc"],
-  "check-sign-response": ["--grant", "--response"],
+  preview: ["--grant", "--lane", "--amount"],
+  "check-request": ["--grant", "--request", "--sign-response", "--signer", "--amount", "--rpc"],
+  "check-sign-response": ["--grant", "--response", "--lane", "--amount"],
   "check-submit-response": ["--grant", "--response"],
 };
 
@@ -337,20 +384,41 @@ const die = (name, detail) => {
   process.exit(1);
 };
 
-const loadSmallJson = (path, what) => {
-  let st;
+const loadSmallJson = (path, what, { requirePrivate = false } = {}) => {
+  let fd = null;
+  let value;
+  let failure;
+  const refuse = (reason, detail) => { throw { reason, detail }; };
   try {
-    st = statSync(path);
-  } catch (e) {
-    die(`${what}_unreadable`, `--${what} could not be read (${e && e.code ? e.code : "error"})`);
+    const before = lstatSync(path);
+    if (before.isSymbolicLink()) refuse(`${what}_symlink_refused`, `--${what} must not be a symlink`);
+    if (!before.isFile()) refuse(`${what}_unreadable`, `--${what} must be a regular file`);
+    if (before.size > MAX_GRANT_FILE_BYTES) refuse(`${what}_unreadable`, `--${what} exceeds the byte limit`);
+    if (requirePrivate && (before.mode & 0o077) !== 0) refuse(`${what}_permissions_too_open`, `--${what} carries signature material; use mode 0600 or stricter`);
+    // A concurrent replacement by a no-writer FIFO must reach the descriptor
+    // type/identity check rather than blocking in open before that check.
+    fd = openSync(path, fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0) | (fsConstants.O_NONBLOCK ?? 0));
+    const opened = fstatSync(fd);
+    if (!opened.isFile() || opened.dev !== before.dev || opened.ino !== before.ino) refuse(`${what}_changed_while_opening`, `--${what} changed while opening`);
+    if (requirePrivate && (opened.mode & 0o077) !== 0) refuse(`${what}_permissions_too_open`, `--${what} must be private`);
+    const bytes = Buffer.alloc(MAX_GRANT_FILE_BYTES + 1);
+    let size = 0;
+    while (size < bytes.length) {
+      const n = readSync(fd, bytes, size, bytes.length - size, null);
+      if (n === 0) break;
+      size += n;
+    }
+    if (size > MAX_GRANT_FILE_BYTES) refuse(`${what}_unreadable`, `--${what} exceeds the byte limit`);
+    const after = fstatSync(fd);
+    if (after.size !== opened.size || after.mtimeMs !== opened.mtimeMs || after.ctimeMs !== opened.ctimeMs) refuse(`${what}_changed_while_reading`, `--${what} changed while reading`);
+    value = JSON.parse(bytes.subarray(0, size).toString("utf8"));
+  } catch (error) {
+    failure = error?.reason ? error : { reason: `${what}_unreadable`, detail: `--${what} could not be read as bounded JSON` };
+  } finally {
+    if (fd !== null) try { closeSync(fd); } catch { failure ??= { reason: `${what}_unreadable`, detail: `--${what} could not be closed` }; }
   }
-  if (!st.isFile()) die(`${what}_unreadable`, `--${what} is not a regular file`);
-  if (st.size > MAX_GRANT_FILE_BYTES) die(`${what}_unreadable`, `--${what} is ${st.size} bytes; these documents are small`);
-  try {
-    return JSON.parse(readFileSync(path, "utf8"));
-  } catch {
-    die(`${what}_unreadable`, `--${what} is not valid JSON`);
-  }
+  if (failure) die(failure.reason, failure.detail);
+  return value;
 };
 
 export const invokedAsMain = (argv1, metaUrl) => {
@@ -391,12 +459,14 @@ if (invokedAsMain(process.argv[1], import.meta.url)) {
   if (mode === "preview") {
     const lane = (flags["--lane"] ?? "a").toLowerCase();
     if (lane !== "a" && lane !== "b") die("unknown_lane", "--lane must be a or b");
-    if (Date.now() >= typed.expiresMs) die("grant_expired", `the grant's validity window ended ${clock(m.validBefore)}; re-seal and preview again`);
-    const primaryType = lane === "a" ? "ReceiveWithAuthorization" : "TransferWithAuthorization";
+    if (Math.floor(Date.now() / 1000) >= Number(typed.message.validBefore)) die("grant_expired", `the signed validity window ended ${clock(typed.message.validBefore)}; re-seal and preview again`);
+    const approved = typedAuthorizationFor(terms, terms.expiresAt, lane, flags["--amount"] ?? null);
+    if (!approved.ok) die(approved.reason, approved.detail);
+    const { primaryType, message: m } = approved;
     console.log("PREVIEW  every field the signature commits to, from the grant file");
     console.log(`  grant_hash:      ${terms.grantHash}`);
     console.log(`  chain:           eip155:8453 (Base mainnet)   USDC: ${CANONICAL_USDC_BASE}`);
-    console.log(`  amount:          ${m.value} atomic = ${usdc(m.value)}   (the SDK signs the band's floor; band ${terms.band.min}..${terms.band.max}, the reviewed pin)`);
+    console.log(`  amount:          ${m.value} atomic = ${usdc(m.value)}   (default: the SDK signs the band's floor; band ${terms.band.min}..${terms.band.max}, the reviewed pin)`);
     console.log(`  payer (from):    ${m.from}   <- the wallet that signs MUST be this address`);
     console.log(`  payee (to):      ${m.to}   (frozen into the grant at sealing; the pinned provider's manifest named it then)`);
     console.log(`  provider:        ${EXPECTED_PROVIDER_DID} (the pin; the grant names it)`);
@@ -411,20 +481,22 @@ if (invokedAsMain(process.argv[1], import.meta.url)) {
       console.log(`  submission:      POST /wallet/submit  to=${CANONICAL_USDC_BASE}  chainId=8453  value="0"`);
       console.log(`                   selector ${TRANSFER_WITH_AUTHORIZATION_SELECTOR} transferWithAuthorization(from,to,value,validAfter,validBefore,nonce,v,r,s)`);
       console.log(`                   calldata exists only AFTER signing — check-request decodes it inside the broadcast callback; the fee line there is typical gas (${TYPICAL_TRANSFER_WITH_AUTHORIZATION_GAS}) × the live gas price, and the signed calldata is never sent to any RPC`);
-      console.log(`                   Bankr control: "Arbitrary contract calls" must be enabled by the human (timed opt-in) or /wallet/submit is blocked`);
+      console.log(`                   Bankr control: "Arbitrary contract calls" is on by default today; if effectively disabled, stop. Timers are optional; never loosen a control automatically.`);
     } else {
       console.log(`  submission:      none by you — the provider redeems a receive authorization in its own transaction`);
-      console.log(`                   Bankr control: none applies to this signature unless /wallet/sign prices EIP-3009 typed data (unverified); this preview is the control`);
+      console.log(`                   Bankr spend-limit coverage of provider redemption is unverified; do not promise it.`);
     }
+    console.log("  Bankr policy:    walletApiEnabled and a non-read-only key are required. A configured allowedRecipients restriction blocks EIP-712 signing on BOTH lanes and all raw submissions. Stop; never relax it or switch lanes to bypass it.");
     console.log("  after settling:  node scripts/verify-settlement.mjs --tx <hash> --grant " + safePath(flags["--grant"]));
     process.exit(0);
   }
 
   if (mode === "check-sign-response") {
     if (!flags["--response"]) die("missing_arguments", "check-sign-response needs --response ./sign-response.json");
-    const r = checkSignResponse({ response: loadSmallJson(flags["--response"], "response"), terms });
+    if (!flags["--lane"]) die("signature_lane_required", "check-sign-response requires --lane a or --lane b");
+    const r = checkSignResponse({ response: loadSmallJson(flags["--response"], "response", { requirePrivate: true }), terms, lane: flags["--lane"], typedAmount: flags["--amount"] ?? null });
     if (!r.ok) die(r.reason, r.detail);
-    console.log("ACCEPTED  signature — signer is the grant's payer; hand the signature string back to the SDK verbatim");
+    console.log("ACCEPTED  signature — recovered the grant payer over the exact approved lane, domain and message; hand the checked signature back to the SDK verbatim");
     process.exit(0);
   }
 
@@ -439,10 +511,12 @@ if (invokedAsMain(process.argv[1], import.meta.url)) {
 
   // check-request
   if (!flags["--request"]) die("missing_arguments", "check-request needs --request ./request.json (the SDK's TransactionRequest)");
-  const request = loadSmallJson(flags["--request"], "request");
+  if (!flags["--sign-response"]) die("sign_response_required", "check-request needs the approved Lane B --sign-response ./sign-response.json");
+  const request = loadSmallJson(flags["--request"], "request", { requirePrivate: true });
+  const signResponse = loadSmallJson(flags["--sign-response"], "sign_response", { requirePrivate: true });
   const typedAmount = flags["--amount"] !== undefined ? flags["--amount"] : null;
   if (typedAmount !== null && !DECIMAL.test(typedAmount)) die("bad_amount", "--amount must be a decimal atomic amount");
-  const checked = checkRequestAgainstGrant({ request, terms, expiresAt: terms.expiresAt, typedAmount, signer: flags["--signer"] ?? null });
+  const checked = checkRequestAgainstGrant({ request, terms, expiresAt: terms.expiresAt, typedAmount, signer: flags["--signer"] ?? null, signResponse });
   if (!checked.ok) die(checked.reason, checked.detail);
   const policy = operatorsFor(flags["--rpc"].length ? flags["--rpc"] : DEFAULT_RPCS);
   if (!policy.ok) die(policy.reason, policy.detail);
@@ -474,7 +548,7 @@ if (invokedAsMain(process.argv[1], import.meta.url)) {
   console.log(`  value:           ${checked.decoded.value} atomic = ${usdc(checked.decoded.value)}   (= the previewed amount)`);
   console.log(`  window:          ${checked.decoded.validAfter}..${checked.decoded.validBefore} (${clock(checked.decoded.validBefore)})`);
   console.log(`  nonce:           ${checked.decoded.nonce} (this grant's binding nonce)`);
-  console.log(`  signature:       v=${checked.decoded.v} r=${checked.decoded.r.slice(0, 10)}… s=${checked.decoded.s.slice(0, 10)}…   (never sent anywhere by this tool)`);
+  console.log("  signature:       cryptographically recovered and byte-bound to the approved response (bytes withheld)");
   console.log(`  gas:             ~${TYPICAL_TRANSFER_WITH_AUTHORIZATION_GAS} (typical for transferWithAuthorization; NOT measured — measuring would hand the signed authorization to an RPC operator)`);
   console.log(`  fee estimate:    ~${feeWei} wei ≈ ${(Number(feeWei) / 1e18).toFixed(9)} ETH at ${prices.map((p) => `${p.host} ${p.wei} wei/gas`).join(", ")} (highest used)`);
   console.log("  submit with:     transaction { to, chainId, data } from the SDK request, value \"0\", waitForConfirmation true — then check-submit-response, then the proof");

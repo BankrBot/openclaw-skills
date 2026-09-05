@@ -25,7 +25,8 @@ metadata:
 # Voidly Pay — sealed hires, provable settlement
 
 Bankr moves the money. Voidly protects the connection. Anyone proves the
-settlement. This skill lets a Bankr agent hire a Voidly session provider: the
+settlement. This skill prepares a hire and verifies artifacts; it does not
+execute an end-to-end Bankr hire. For the documented session protocol, the
 brief is sealed client-side before it touches any wire, the result comes back
 sealed to a session key the relay never holds, and settlement verifies against
 a quorum of public Base RPCs — the proof asks no Voidly endpoint. (The
@@ -138,12 +139,14 @@ and grant envelopes with it. That key names you; it moves no money.
 read from the network; `verify-artifacts.mjs receipt` and the other three
 `preview-payment.mjs` modes are fully offline.
 
-Three of them need three packages from the public npm registry —
-`@voidly/session`, `tweetnacl`, `tweetnacl-util` — at the exact versions and
-integrity hashes recorded in this folder's committed `package-lock.json`.
+Discovery, sealing, artifact verification and the payment-preview helper use
+four direct dependencies from the public npm registry: `@voidly/session@1.0.0`,
+`ethers@6.17.0`, `tweetnacl@1.0.3` and `tweetnacl-util@0.15.1`. Their exact
+versions, transitive dependencies and integrity hashes are recorded in this
+folder's committed `package-lock.json`.
 
 **Installing needs the human's go-ahead.** It is the one step here that puts
-third-party code on the machine. Name the three packages and the registry, ask,
+third-party code on the machine. Name the four direct dependencies and the registry, ask,
 and only then:
 
 ```bash
@@ -163,6 +166,10 @@ cleanly today and drifts the moment the lock is regenerated.
 before anything is installed. Reach for it first; the install can wait for a
 yes.
 
+`preview-payment.mjs` requires that approved install, including `ethers` for
+local EIP-712 signature recovery. Offline verification means no network request,
+not no dependency. The settlement checker remains the no-install first step.
+
 The `@voidly/session` README still carries an install caveat saying the
 package is not on the public registry. That caveat is stale, and you should
 confirm that rather than take this file's word: `npm view @voidly/session
@@ -170,7 +177,7 @@ version` returns 1.0.0, which is the version the lockfile pins.
 
 ---
 
-## Leg 1 — encrypted work (fully live, zero funds)
+## Leg 1 — prepare encrypted work (zero funds)
 
 ```bash
 # 1. Discover — the provider index, keyless
@@ -316,18 +323,17 @@ nothing else:
   call is made.
 
 Both endpoints need a key with `walletApiEnabled`; a read-only key is
-refused with `403`, which is the right default until the human has seen the
-preview.
+refused with `403`. Keep that restriction in place for preparation and verification.
+Write permission alone is not sufficient: the recipient and effective wallet
+policy gates below also apply. Human payment approval does not override them.
 
 **Lane A — provider relays (the default).** You sign the `receive` variant;
 only the payee named in it can spend it; the provider pays the gas and writes
 the settlement pointer. Bankr's Wallet API advertises signing and submission,
 but it has not been exercised against this EIP-712 shape end-to-end with a
-Bankr wallet. A read-only key cannot exercise it — `/wallet/sign` answers
-`403` to one — so try the typed-data shape first with a write-enabled key
-against a wallet holding no USDC, then fund. Every step before this
-signature is live; this signature is the single gap between a sealed hire
-and a settled one.
+Bankr wallet. The local checks below do not close that gap, authorize a
+signature, or establish that an account's policy permits it. This skill
+remains PREPARE and VERIFY; no third-party Bankr round trip is claimed.
 
 **Lane B — you settle (the opt-out).** One call:
 `payForGrant({ grant, grantHash, nowMs, signer, broadcast })`. It builds and
@@ -368,8 +374,23 @@ the following a refusal, not a preference:
 The preview is a program, not a paragraph:
 
 ```bash
-node scripts/preview-payment.mjs preview --grant ./keep.grant.json --lane a   # or --lane b
+# Lane A example: preview first; validate only its separately authorized response.
+node scripts/preview-payment.mjs preview --grant ./keep.grant.json --lane a
+node scripts/preview-payment.mjs check-sign-response --grant ./keep.grant.json --lane a \
+  --response ./lane-a-sign-response.json
+
+# Alternative Lane B example: a separate preview and separately authorized response.
+node scripts/preview-payment.mjs preview --grant ./keep.grant.json --lane b
+node scripts/preview-payment.mjs check-sign-response --grant ./keep.grant.json --lane b \
+  --response ./lane-b-sign-response.json
+
+# Lane B only, inside the trusted broadcast callback, before any submission:
+node scripts/preview-payment.mjs check-request --grant ./keep.grant.json \
+  --sign-response ./lane-b-sign-response.json --request ./request.json
 ```
+
+These are alternative lane examples, not a sequence that authorizes both.
+Never feed a Lane A signature response into Lane B's request checker.
 
 It renders every field below from the grant file — the same bytes the SDK
 signs — and refuses `grant_expired` once the window has passed. Its three
@@ -388,6 +409,22 @@ for. **The signed calldata never leaves the machine:** `check-request`'s fee
 line is typical gas (~90,000) × the live gas price read from the two-operator
 quorum, because a real `eth_estimateGas` would hand the bearer `transfer`
 authorization to an RPC operator, who could broadcast it first.
+
+`check-sign-response` requires an explicit `--lane a` or `--lane b`; there
+is no inferred lane. It recovers the payer locally from the exact EIP-712
+domain, lane, amount, nonce and validity window, rather than trusting a
+response's `signer` label. It also requires `success: true` and
+`signatureType: "eth_signTypedData_v4"`. `check-request` requires
+`--sign-response` and compares the calldata's `v`/`r`/`s` with that validated
+Lane B signature before its read-only gas-price requests.
+
+Keep signature responses and signed requests as regular files with permissions
+`0600 or stricter`; symlinks are refused. Never paste those bytes into chat,
+logs or arguments. The helper prints neither the signature nor its limbs.
+Use the same explicitly approved `--amount N` in `preview`,
+`check-sign-response` and `check-request` if paying above the default grant
+floor. Every value must remain in-band; a different amount needs a new preview
+and approval, not a rewritten response.
 
 Before either authorization is signed — and on Lane B again inside the
 `broadcast` callback, before `/wallet/submit` — show the human **every**
@@ -451,10 +488,12 @@ lowercased, `price_payer_account` in `keep.grant.json` minus its
 the right `payer`; do not sign.
 
 **The enforceable binding is inside the `sign` callback.** `/wallet/sign`
-returns the signature together with a `signer` field. Before the callback
-hands the signature back to the SDK, require `signer`, lowercased, to equal
-the grant's payer; on any other value throw (the SDK reports `signer_threw`
-and nothing is submitted). Do the same with the `signer` field of the
+returns a signature and a claimed `signer` field. Before returning it to the
+SDK, run `check-sign-response` for the explicit lane and approved amount:
+both the recovered address and the response's claimed signer must equal the
+grant's payer. A matching label without valid cryptographic recovery proves
+nothing. On any refusal throw (the SDK reports `signer_threw` and nothing is
+submitted). Also check the `signer` field of the
 `/wallet/submit` response before the hash is treated as evidence — there it
 names the wallet that paid the **gas**, which on Lane B must also be the
 payer, since `transferWithAuthorization` is submittable by anyone and the
@@ -491,25 +530,31 @@ transaction Lane B submits, require all of:
   submission path prices the exact transaction; this line is the sanity check
   the human sees first.
 
-**Which Bankr controls actually apply, per lane.** Bankr's own reference is
-the source here, and the two lanes differ:
+**Which Bankr controls apply.** Checked against Bankr's primary documentation
+on 2026-09-05; documentation is not a read of this wallet's actual policy.
 
-- **Lane B** goes through raw `POST /wallet/submit`, which Bankr **blocks
-  while "Arbitrary contract calls" is off — and it is off by default.**
-  Enabling it is a web-authenticated, timed opt-in (10, 30, 60 or 1440
-  minutes, auto-revoking); an API key can read that state but cannot change
-  it, and neither can this skill. So a first `/wallet/submit` on a fresh
-  wallet fails on that control, not on the scanner: the human enables the
-  window in Bankr's security settings, or chooses Lane A. Once enabled, the
-  per-transaction and daily limits (`$500` defaults) gate that submit — the
-  band here (`0.05`–`5` USDC) sits far under them, so never raise one for
-  this skill.
-- **Lane A** hands a `receive` authorization to the provider, who redeems it
-  in **their** transaction. It never passes `/wallet/submit`, so Bankr's
-  spend limits and scanner gate it only if `/wallet/sign` prices EIP-3009
-  typed data — which, as stated above, has not been exercised. Until it is,
-  the human preview and the `signer` check are the **only** controls on Lane
-  A; do not tell a user Bankr's limits cover it.
+- A non-empty `allowedRecipients` restriction blocks typed-data signing in
+  **both lanes**. It also blocks **all raw submissions**, including Lane B's
+  `/wallet/submit`, even when this skill pins the intended payee. These are
+  endpoint refusals, not local decoder failures. See Bankr's
+  [sign access control](https://docs.bankr.bot/wallet-api/sign/) and
+  [submit access control](https://docs.bankr.bot/wallet-api/submit/).
+- **Arbitrary contract calls are on by default**, according to Bankr's
+  [Terminal controls and timers](https://docs.bankr.bot/security/bankr-terminal/). The wallet's
+  current **effective policy** is what matters: if calls are disabled, raw
+  Lane B submission is blocked. A timer is **optional**, not a mandatory
+  setup step. If a timer was configured, honor its resolved expiry; do not
+  infer one from the default.
+- Both API-key restrictions and wallet controls must permit the operation.
+  Keep spending limits, recipient controls and scanner decisions intact.
+  Lane A's provider-side broadcast is not evidence that Bankr prices or
+  limits this exact EIP-3009 signature; that behavior remains unverified here.
+
+If the effective policy is unknown or restrictive, **stop**. Do not remove
+an allowlist, raise a limit, enable a disabled permission, replace a key or
+switch wallet, submitter or lane to make this payment proceed. Report the
+specific restriction to the operator; a separate policy review is not this
+skill's payment authorization. A successful local preview never bypasses Bankr.
 
 Any decode, chain, target, selector, argument, value, ordering, or count
 mismatch rejects the whole transaction. **If `/wallet/submit` refuses with a

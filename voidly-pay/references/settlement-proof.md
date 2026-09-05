@@ -1,5 +1,10 @@
 # Leg 3 — proving a settlement, and the exact limits of the proof
 
+`verify-settlement.mjs` needs no npm package: run this Node-only proof before
+approving any install. The separate payment-preview helper needs the approved
+locked dependencies for cryptographic recovery. A local signature check is
+not evidence of settlement, Bankr policy permission, submission or delivery.
+
 ## The nonce-binding rule
 
 USDC's EIP-3009 authorizations carry a 32-byte nonce, and this rail does not
