@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slug": "noboru-japanese-crypto-voice",
+  "provider": "noboru59631",
+  "providerUrl": "https://github.com/noboru59631",
+  "logo": null,
+  "demo": null,
+  "setup": [],
+  "install": {
+    "type": "bankr",
+    "repoPath": "noboru-japanese-crypto-voice",
+    "command": "install the noboru-japanese-crypto-voice skill from https://github.com/BankrBot/skills/tree/main/noboru-japanese-crypto-voice"
+  }
+}
