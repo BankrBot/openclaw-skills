@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "slug": "chit402-receipt",
+  "provider": "Chit402",
+  "providerUrl": "https://chit402.com",
+  "demo": {
+    "title": "chit402-receipt-flow.sh",
+    "language": "bash",
+    "code": "# 1) Read the 402 challenge (no payment yet)\ncurl -sS -D - -X POST https://api.chit402.com/v1/chat/completions \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"model\":\"xfuel/auto\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hi in five words.\"}]}'\n# Expect HTTP 402 + PAYMENT-REQUIRED (Base USDC, amount \"10000\" = $0.01)\n\n# 2) Agent wallet signs CDP v2 PaymentPayload \u2192 PAYMENT-SIGNATURE (Bankr does this)\n# 3) Retry with payment header + API key; read verify_url from response:\n#    x-xfuel-verify-url  OR  body.xfuel.verify_url\n\n# 4) Offline verify (pinned issuer_jwk \u2014 no JWKS fetch required)\ncurl -sS \"https://api.chit402.com/receipt/<task_id>?format=json\" -o receipt.json\nnpx xfuel-verify receipt.json --json"
+  },
+  "setup": [
+    "Set CHIT_API_URL=https://api.chit402.com (optional; this is the default)",
+    "Set CHIT_API_KEY to your partner key (demo: chit402-demo \u2014 rate-limited, unmetered /v1 only)",
+    "Set CHIT_MAX_USD_PER_CALL (e.g. 0.10) and CHIT_MAX_USD_SESSION (e.g. 1.00) before spending",
+    "Fund the Bankr agent wallet with Base USDC for x402 settlement",
+    "Install: install the chit402-receipt skill from https://github.com/XFuel-Lab/chit402/tree/main/skills/chit402-receipt"
+  ],
+  "install": {
+    "type": "bankr",
+    "repoPath": "chit402-receipt",
+    "command": "install the chit402-receipt skill from https://github.com/BankrBot/skills/tree/main/chit402-receipt"
+  }
+}
